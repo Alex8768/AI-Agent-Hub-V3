@@ -1,3 +1,4 @@
+# 📄 ФАЙЛ: src/layers/base/rag/vector_stores/faiss_store.py (исправленный)
 """
 Реализация VectorStore для FAISS.
 """
@@ -40,9 +41,50 @@ class FAISSVectorStore(VectorStore):
         self._document_store = {}  # id -> VectorDocument
         self._id_to_index = {}     # document_id -> faiss_index
         
-        self._initialize_faiss()
+        # Инициализация будет ленивой
+        self._initialized = False
     
-    def _initialize_faiss(self):
+    # ============ РЕАЛИЗАЦИЯ КОНТРАКТНЫХ МЕТОДОВ ============
+    
+    def configure(self, config: Dict[str, Any]) -> None:
+        """Конфигурация хранилища."""
+        if "index_path" in config:
+            self._index_path = Path(config["index_path"])
+        if "dimension" in config:
+            self._dimension = config["dimension"]
+        self._logger.info("FAISS store reconfigured", context=config)
+    
+    async def initialize(self) -> None:
+        """Инициализация хранилища (ленивая)."""
+        if not self._initialized:
+            await self._initialize_faiss()
+            self._initialized = True
+    
+    async def cleanup(self) -> None:
+        """Очистка ресурсов."""
+        if self._initialized:
+            self._save_index()
+            # Очищаем кэш если используем MPS
+            import torch
+            if torch.backends.mps.is_available():
+                torch.mps.empty_cache()
+            self._logger.info("FAISS store очищен")
+    
+    async def health_check(self) -> Dict[str, Any]:
+        """Проверка здоровья хранилища."""
+        status = "healthy" if self._index and self._initialized else "unhealthy"
+        return {
+            "status": status,
+            "provider": "faiss",
+            "vectors": self._index.ntotal if self._index else 0,
+            "documents": len(self._document_store),
+            "dimension": self._dimension,
+            "initialized": self._initialized
+        }
+    
+    # ============ ОСНОВНЫЕ МЕТОДЫ ============
+    
+    async def _initialize_faiss(self):
         """Инициализация FAISS (ленивая загрузка)."""
         try:
             import faiss
@@ -105,6 +147,10 @@ class FAISSVectorStore(VectorStore):
         Returns:
             Список ID добавленных документов
         """
+        # Убедимся что инициализированы
+        if not self._initialized:
+            await self.initialize()
+        
         if not documents:
             return []
         
@@ -180,6 +226,10 @@ class FAISSVectorStore(VectorStore):
         Returns:
             Список результатов поиска
         """
+        # Убедимся что инициализированы
+        if not self._initialized:
+            await self.initialize()
+        
         try:
             import numpy as np
             import faiss
@@ -266,24 +316,65 @@ class FAISSVectorStore(VectorStore):
             self._logger.error(f"Ошибка сохранения индекса: {e}")
     
     async def delete(self, document_ids: List[str]) -> int:
-        """Удаление документов (упрощённая версия)."""
-        # FAISS не поддерживает удаление, так что помечаем как удалённые
+        """
+        Удаление документов из хранилища.
+        
+        Args:
+            document_ids: Список ID документов для удаления
+            
+        Returns:
+            Количество удаленных документов
+        """
+        if not self._initialized:
+            await self.initialize()
+        
         deleted = 0
         for doc_id in document_ids:
             if doc_id in self._document_store:
-                # Помечаем как удалённый
-                self._document_store[doc_id].metadata['_deleted'] = True
+                # Удаляем из документов
+                del self._document_store[doc_id]
+                # Удаляем из индекса (через ID)
+                index_id = self._id_to_index.pop(doc_id, None)
                 deleted += 1
         
         if deleted > 0:
-            self._save_index()
+            # Перестраиваем индекс
+            await self._rebuild_index()
         
         return deleted
     
+    async def _rebuild_index(self):
+        """Перестраивает индекс после удаления документов."""
+        import numpy as np
+        import faiss
+        
+        # Собираем все векторы заново
+        vectors = []
+        new_id_to_index = {}
+        
+        for doc_id, doc in self._document_store.items():
+            if doc.embedding:
+                vectors.append(doc.embedding)
+                new_id_to_index[doc_id] = len(vectors) - 1
+        
+        if vectors:
+            vectors_array = np.array(vectors, dtype=np.float32)
+            faiss.normalize_L2(vectors_array)
+            
+            # Создаем новый индекс
+            self._index = faiss.IndexFlatIP(self._dimension)
+            self._index.add(vectors_array)
+            self._id_to_index = new_id_to_index
+            
+            # Сохраняем
+            self._save_index()
+    
     async def get_document(self, document_id: str) -> Optional[VectorDocument]:
+        """Получение документа по ID."""
         return self._document_store.get(document_id)
     
     async def update_metadata(self, document_id: str, metadata: Dict[str, Any]) -> bool:
+        """Обновление метаданных документа."""
         if document_id in self._document_store:
             self._document_store[document_id].metadata.update(metadata)
             self._save_index()
@@ -291,6 +382,7 @@ class FAISSVectorStore(VectorStore):
         return False
     
     async def get_stats(self) -> Dict[str, Any]:
+        """Получение статистики хранилища."""
         return {
             "provider": "faiss",
             "total_documents": len(self._document_store),
@@ -298,23 +390,7 @@ class FAISSVectorStore(VectorStore):
             "dimension": self._dimension,
             "index_path": str(self._index_path),
             "active_documents": len([d for d in self._document_store.values() 
-                                     if not d.metadata.get('_deleted', False)])
+                                     if not d.metadata.get('_deleted', False)]),
+            "initialized": self._initialized
         }
     
-    async def initialize(self):
-        """Инициализация (уже сделана в __init__)."""
-        pass
-    
-    async def cleanup(self):
-        """Очистка ресурсов."""
-        self._save_index()
-        self._logger.info("FAISS store очищен")
-    
-    async def health_check(self) -> Dict[str, Any]:
-        return {
-            "status": "healthy" if self._index else "unhealthy",
-            "provider": "faiss",
-            "vectors": self._index.ntotal if self._index else 0,
-            "documents": len(self._document_store),
-            "dimension": self._dimension
-        }
