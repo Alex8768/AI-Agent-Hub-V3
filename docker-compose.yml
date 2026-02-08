@@ -1,0 +1,289 @@
+version: '3.8'
+
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  # Основное приложение AI Agent Hub V3
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.app
+      target: development
+    container_name: ai-agent-hub-v3-app
+    hostname: ai-agent-hub
+    ports:
+      - "8000:8000"      # FastAPI
+      - "9091:9091"      # Metrics
+    volumes:
+      - ./src:/app/src
+      - ./config:/app/config
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./workspace:/app/workspace
+      - ./templates:/app/templates
+    environment:
+      - ENVIRONMENT=development
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/ai_agent_hub
+      - REDIS_URL=redis://redis:6379/0
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - QDRANT_URL=http://qdrant:6333
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      qdrant:
+        condition: service_started
+      ollama:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging: *default-logging
+    networks:
+      - ai-agent-network
+    restart: unless-stopped
+
+  # Локальные LLM модели через Ollama (ключевой компонент)
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ai-agent-hub-ollama
+    hostname: ollama
+    ports:
+      - "11434:11434"    # Ollama API
+    volumes:
+      - ./data/ollama:/root/.ollama
+      - ./models:/models
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+      - OLLAMA_NUM_PARALLEL=3
+      - OLLAMA_KEEP_ALIVE=24h
+    command: >
+      sh -c "
+        echo '🚀 Загружаем локальные модели...' &&
+        ollama pull llama3.2 &&
+        ollama pull mistral &&
+        ollama pull codellama &&
+        ollama serve
+      "
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    logging: *default-logging
+    networks:
+      - ai-agent-network
+    restart: unless-stopped
+
+  # Векторная БД для PRO уровня (Qdrant)
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: ai-agent-hub-qdrant
+    hostname: qdrant
+    ports:
+      - "6333:6333"      # REST API
+      - "6334:6334"      # gRPC
+    volumes:
+      - ./data/qdrant:/qdrant/storage
+    environment:
+      - QDRANT__SERVICE__GRPC_PORT=6334
+      - QDRANT__LOG_LEVEL=INFO
+      - QDRANT__TELEMETRY_ENABLED=false
+    logging: *default-logging
+    networks:
+      - ai-agent-network
+    restart: unless-stopped
+
+  # PostgreSQL для метаданных и пользовательских данных
+  db:
+    image: postgres:16-alpine
+    container_name: ai-agent-hub-db
+    hostname: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: ai_agent_hub
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --locale=C"
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+      - ./docker/initdb:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging: *default-logging
+    networks:
+      - ai-agent-network
+    restart: unless-stopped
+
+  # Redis для кэширования и очередей
+  redis:
+    image: redis:7-alpine
+    container_name: ai-agent-hub-redis
+    hostname: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./data/redis:/data
+    command: >
+      redis-server
+      --appendonly yes
+      --requirepass ""
+      --maxmemory 512mb
+      --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging: *default-logging
+    networks:
+      - ai-agent-network
+    restart: unless-stopped
+
+  # Neo4j для Graph RAG (PRO уровень)
+  neo4j:
+    image: neo4j:5-community
+    container_name: ai-agent-hub-neo4j
+    hostname: neo4j
+    ports:
+      - "7474:7474"      # HTTP
+      - "7687:7687"      # Bolt
+    environment:
+      - NEO4J_AUTH=neo4j/agent-hub-pro
+      - NEO4J_PLUGINS=["apoc", "graph-data-science"]
+      - NEO4J_ACCEPT_LICENSE_AGREEMENT=yes
+      - NEO4J_dbms_memory_heap_max__size=2G
+    volumes:
+      - ./data/neo4j:/data
+      - ./data/neo4j/logs:/logs
+      - ./data/neo4j/import:/var/lib/neo4j/import
+      - ./data/neo4j/plugins:/plugins
+    healthcheck:
+      test: ["CMD", "cypher-shell", "-u", "neo4j", "-p", "agent-hub-pro", "RETURN 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    logging: *default-logging
+    networks:
+      - ai-agent-network
+    restart: unless-stopped
+
+  # Мониторинг - Prometheus
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: ai-agent-hub-prometheus
+    hostname: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./data/prometheus:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    logging: *default-logging
+    networks:
+      - ai-agent-network
+    restart: unless-stopped
+
+  # Мониторинг - Grafana
+  grafana:
+    image: grafana/grafana:latest
+    container_name: ai-agent-hub-grafana
+    hostname: grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+      - ./data/grafana:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel
+      - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
+    logging: *default-logging
+    networks:
+      - ai-agent-network
+    restart: unless-stopped
+
+  # Трассировка - Jaeger
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: ai-agent-hub-jaeger
+    hostname: jaeger
+    ports:
+      - "16686:16686"    # UI
+      - "14268:14268"    # Collector
+      - "4317:4317"      # OTLP gRPC
+      - "4318:4318"      # OTLP HTTP
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+      - LOG_LEVEL=debug
+    logging: *default-logging
+    networks:
+      - ai-agent-network
+    restart: unless-stopped
+
+  # MinIO для хранения документов (опционально)
+  minio:
+    image: minio/minio:latest
+    container_name: ai-agent-hub-minio
+    hostname: minio
+    ports:
+      - "9000:9000"      # API
+      - "9001:9001"      # Console
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+      - MINIO_REGION_NAME=us-east-1
+    volumes:
+      - ./data/minio:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    logging: *default-logging
+    networks:
+      - ai-agent-network
+    restart: unless-stopped
+
+networks:
+  ai-agent-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+    name: ai-agent-hub-network
+
+volumes:
+  postgres_data:
+  redis_data:
+  qdrant_data:
+  neo4j_data:
+  minio_data:
+  ollama_data:
+  prometheus_data:
+  grafana_data:

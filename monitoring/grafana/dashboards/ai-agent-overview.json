@@ -1,0 +1,15 @@
+{
+  "dashboard": {
+    "title": "AI Agent Hub V3 - Overview",
+    "description": "Overview of AI Agent Hub V3 metrics and performance",
+    "tags": ["ai", "agent", "monitoring"],
+    "style": "dark",
+    "timezone": "browser",
+    "panels": [],
+    "time": {
+      "from": "now-6h",
+      "to": "now"
+    },
+    "refresh": "30s"
+  }
+}

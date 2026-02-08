@@ -1,0 +1,3 @@
+[console_scripts]
+ai-agent-hub = src.cli.main:app
+ai-agent-server = src.api.main:run_server
