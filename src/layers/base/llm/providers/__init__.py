@@ -117,12 +117,12 @@ class LLMProviderFactoryImpl(LLMProviderFactory):
         try:
             health = await provider.health_check()
             if health.get("status") != "healthy":
-                await self._logger.warning(
+                self._logger.warning(
                     f"Provider {provider_type} health check: {health.get('status')}",
                     context={"health": health}
                 )
         except Exception as e:
-            await self._logger.warning(
+            self._logger.warning(
                 f"Provider {provider_type} health check failed",
                 context={"error": str(e)}
             )
@@ -130,7 +130,7 @@ class LLMProviderFactoryImpl(LLMProviderFactory):
         # Cache the instance
         self._instances[cache_key] = provider
         
-        await self._logger.info(
+        self._logger.info(
             f"Created LLM provider: {provider_type}",
             context={
                 "provider": provider_type,

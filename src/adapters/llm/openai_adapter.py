@@ -95,7 +95,7 @@ class OpenAIAdapter(LLMProvider):
             if "model" in config:
                 self._model = config["model"]
             
-            await self._logger.info(
+            self._logger.info(
                 "OpenAI adapter reconfigured",
                 context={
                     "model": self._model,
@@ -232,7 +232,7 @@ class OpenAIAdapter(LLMProvider):
             # Convert messages
             openai_messages = self._convert_messages(messages)
             
-            await self._logger.debug(
+            self._logger.debug(
                 "Starting OpenAI completion request",
                 context={
                     "request_id": request_id,
@@ -286,7 +286,7 @@ class OpenAIAdapter(LLMProvider):
                 }
             )
             
-            await self._logger.info(
+            self._logger.info(
                 "OpenAI completion completed",
                 context={
                     "request_id": request_id,
@@ -300,7 +300,7 @@ class OpenAIAdapter(LLMProvider):
             return completion
             
         except AuthenticationError as e:
-            await self._logger.error(
+            self._logger.error(
                 "OpenAI authentication failed",
                 context={
                     "request_id": request_id,
@@ -317,7 +317,7 @@ class OpenAIAdapter(LLMProvider):
             )
             
         except RateLimitError as e:
-            await self._logger.warning(
+            self._logger.warning(
                 "OpenAI rate limit exceeded",
                 context={
                     "request_id": request_id,
@@ -334,7 +334,7 @@ class OpenAIAdapter(LLMProvider):
             )
             
         except APIError as e:
-            await self._logger.error(
+            self._logger.error(
                 "OpenAI API error",
                 context={
                     "request_id": request_id,
@@ -355,7 +355,7 @@ class OpenAIAdapter(LLMProvider):
             )
             
         except Exception as e:
-            await self._logger.error(
+            self._logger.error(
                 "Unexpected error in OpenAI completion",
                 context={
                     "request_id": request_id,
@@ -397,7 +397,7 @@ class OpenAIAdapter(LLMProvider):
             # Convert messages
             openai_messages = self._convert_messages(messages)
             
-            await self._logger.debug(
+            self._logger.debug(
                 "Starting OpenAI streaming request",
                 context={
                     "request_id": request_id,
@@ -457,7 +457,7 @@ class OpenAIAdapter(LLMProvider):
                 finish_reason=finish_reason,
             )
             
-            await self._logger.info(
+            self._logger.info(
                 "OpenAI streaming completed",
                 context={
                     "request_id": request_id,
@@ -469,7 +469,7 @@ class OpenAIAdapter(LLMProvider):
             )
             
         except AuthenticationError as e:
-            await self._logger.error(
+            self._logger.error(
                 "OpenAI authentication failed in streaming",
                 context={
                     "request_id": request_id,
@@ -486,7 +486,7 @@ class OpenAIAdapter(LLMProvider):
             )
             
         except RateLimitError as e:
-            await self._logger.warning(
+            self._logger.warning(
                 "OpenAI rate limit exceeded in streaming",
                 context={
                     "request_id": request_id,
@@ -503,7 +503,7 @@ class OpenAIAdapter(LLMProvider):
             )
             
         except Exception as e:
-            await self._logger.error(
+            self._logger.error(
                 "Unexpected error in OpenAI streaming",
                 context={
                     "request_id": request_id,
@@ -547,7 +547,7 @@ class OpenAIAdapter(LLMProvider):
             # Fallback: rough estimate (4 chars per token)
             return len(text) // 4
         except Exception as e:
-            await self._logger.warning(
+            self._logger.warning(
                 "Failed to count tokens precisely",
                 context={
                     "model": self._model,

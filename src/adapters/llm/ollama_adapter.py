@@ -60,7 +60,7 @@ class OllamaAdapter(LLMProvider):
     async def _initialize(self) -> None:
         """Async initialization."""
         if not self._initialized:
-            await self._logger.info(
+            self._logger.info(
                 "Ollama adapter initialized",
                 context={
                     "model": self._model,
@@ -104,7 +104,7 @@ class OllamaAdapter(LLMProvider):
                     timeout=config.get("timeout", self._config.timeout or 120),
                 )
             
-            await self._logger.info(
+            self._logger.info(
                 "Ollama adapter reconfigured",
                 context={
                     "model": self._model,
@@ -222,7 +222,7 @@ class OllamaAdapter(LLMProvider):
             # Convert messages
             ollama_messages = self._convert_messages(messages)
             
-            await self._logger.debug(
+            self._logger.debug(
                 "Starting Ollama completion request",
                 context={
                     "request_id": request_id,
@@ -275,7 +275,7 @@ class OllamaAdapter(LLMProvider):
                 }
             )
             
-            await self._logger.info(
+            self._logger.info(
                 "Ollama completion completed",
                 context={
                     "request_id": request_id,
@@ -289,7 +289,7 @@ class OllamaAdapter(LLMProvider):
             return completion
             
         except ConnectionError as e:
-            await self._logger.error(
+            self._logger.error(
                 "Ollama connection failed",
                 context={
                     "request_id": request_id,
@@ -310,7 +310,7 @@ class OllamaAdapter(LLMProvider):
             )
             
         except Exception as e:
-            await self._logger.error(
+            self._logger.error(
                 "Unexpected error in Ollama completion",
                 context={
                     "request_id": request_id,
@@ -355,7 +355,7 @@ class OllamaAdapter(LLMProvider):
             # Convert messages
             ollama_messages = self._convert_messages(messages)
             
-            await self._logger.debug(
+            self._logger.debug(
                 "Starting Ollama streaming request",
                 context={
                     "request_id": request_id,
@@ -412,7 +412,7 @@ class OllamaAdapter(LLMProvider):
                 finish_reason="stop",
             )
             
-            await self._logger.info(
+            self._logger.info(
                 "Ollama streaming completed",
                 context={
                     "request_id": request_id,
@@ -424,7 +424,7 @@ class OllamaAdapter(LLMProvider):
             )
             
         except ConnectionError as e:
-            await self._logger.error(
+            self._logger.error(
                 "Ollama connection failed in streaming",
                 context={
                     "request_id": request_id,
@@ -445,7 +445,7 @@ class OllamaAdapter(LLMProvider):
             )
             
         except Exception as e:
-            await self._logger.error(
+            self._logger.error(
                 "Unexpected error in Ollama streaming",
                 context={
                     "request_id": request_id,
