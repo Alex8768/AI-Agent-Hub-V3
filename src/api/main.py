@@ -199,22 +199,53 @@ async def generate_completion(request: LLMRequest):
 
 @app.post("/api/v1/llm/generate-stream", tags=["LLM"])
 async def generate_completion_stream(request: LLMRequest):
-    """Generate streaming text completion."""
+    """Generate streaming text completion (JSON-SSE)."""
     try:
+        import json
         from src.layers.base.llm.providers import get_llm_provider
-        
+        from src.core.types import Message, MessageRole
+
         provider = await get_llm_provider(
             provider_type=request.provider or settings.llm_provider
         )
-        
+
         async def event_generator():
-            async for chunk in provider.generate_stream(
-                prompt=request.prompt,
-                system_prompt=request.system_prompt,
-                temperature=request.temperature,
-            ):
-                yield f"data: {chunk}\n\n"
-        
+            # Build core Message list (system + user)
+            messages = []
+            if request.system_prompt:
+                messages.append(Message(role=MessageRole.SYSTEM, content=request.system_prompt))
+            messages.append(Message(role=MessageRole.USER, content=request.prompt))
+
+            cfg = {}
+            if request.temperature is not None:
+                cfg["temperature"] = request.temperature
+            if request.max_tokens is not None:
+                cfg["max_tokens"] = request.max_tokens
+            if request.model:
+                cfg["model"] = request.model
+
+            buffer = ""
+            min_flush = 40  # characters
+
+            async for chunk in provider.complete_stream(messages=messages, config=cfg or None):
+                text = chunk.content or ""
+                if not text:
+                    continue
+
+                buffer += text
+
+                if len(buffer) >= min_flush or buffer.endswith((".", "!", "?", "\n")):
+                    payload = json.dumps({"delta": buffer}, ensure_ascii=False)
+                    yield f"event: token\ndata: {payload}\n\n"
+                    buffer = ""
+
+            # Final flush
+            if buffer:
+                payload = json.dumps({"delta": buffer}, ensure_ascii=False)
+                yield f"event: token\ndata: {payload}\n\n"
+
+            yield "event: done\ndata: {}\n\n"
+
         return StreamingResponse(
             event_generator(),
             media_type="text/event-stream",
@@ -224,7 +255,7 @@ async def generate_completion_stream(request: LLMRequest):
                 "X-Accel-Buffering": "no",
             }
         )
-        
+
     except Exception as e:
         logger.error(f"LLM stream generation error: {e}")
         raise HTTPException(
@@ -234,6 +265,7 @@ async def generate_completion_stream(request: LLMRequest):
 
 
 # ============ DOCUMENT ENDPOINTS ============
+
 @app.post("/api/v1/documents/upload", response_model=Document, tags=["Documents"])
 async def upload_document(
     file: UploadFile = File(...),
