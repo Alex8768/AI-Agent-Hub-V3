@@ -428,6 +428,20 @@ class IngestService:
     ) -> List[str]:
         """Сохранение в векторное хранилище."""
         try:
+            missing_embeddings = [doc.id for doc in vector_docs if doc.embedding is None]
+            if missing_embeddings:
+                self._logger.error(
+                    "Эмбеддинги не сгенерированы для части чанков; ingest остановлен",
+                    context={
+                        "missing_count": len(missing_embeddings),
+                        "total_chunks": len(vector_docs),
+                        "missing_ids_sample": missing_embeddings[:5],
+                    }
+                )
+                raise EmbeddingError(
+                    message=f"Embeddings missing for {len(missing_embeddings)} chunks"
+                )
+
             # Извлекаем эмбеддинги
             embeddings = [doc.embedding for doc in vector_docs]
             
