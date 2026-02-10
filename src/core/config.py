@@ -196,6 +196,12 @@ class Settings(BaseSettings):
         default="sqlite+aiosqlite:///./data/ai_agent_hub.db",
         description="Database connection URL"
     )
+
+    database_enabled: bool = Field(
+        default=False,
+        description="Enable database layer"
+    )
+
     
     database_pool_size: int = Field(
         default=10,
