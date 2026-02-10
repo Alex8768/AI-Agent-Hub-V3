@@ -131,6 +131,16 @@ class FAISSVectorStore(VectorStore):
     @property
     def dimensions(self) -> int:
         return self._dimension
+
+    def _raise_dimension_mismatch(self, embedder_dimension: int, operation: str) -> None:
+        raise VectorStoreError(
+            message=f"FAISS dimension mismatch: index={self._dimension} embedder={embedder_dimension}",
+            operation=operation,
+            details={
+                "index_dimension": self._dimension,
+                "embedder_dimension": embedder_dimension,
+            }
+        )
     
     async def add_documents(
         self,
@@ -159,10 +169,7 @@ class FAISSVectorStore(VectorStore):
             if embeddings:
                 for emb in embeddings:
                     if len(emb) != self._dimension:
-                        raise VectorStoreError(
-                            message=f"Размерность эмбеддинга {len(emb)} != {self._dimension}",
-                            operation="add_documents"
-                        )
+                        self._raise_dimension_mismatch(len(emb), "add_documents")
             
             # Преобразуем эмбеддинги в numpy
             import numpy as np
@@ -197,6 +204,8 @@ class FAISSVectorStore(VectorStore):
             self._logger.info(f"Добавлено {len(documents)} документов в FAISS")
             return added_ids
             
+        except VectorStoreError:
+            raise
         except Exception as e:
             self._logger.error(f"Ошибка добавления документов: {e}")
             raise VectorStoreError(
@@ -239,6 +248,8 @@ class FAISSVectorStore(VectorStore):
                 # В реальной системе тут бы вызывался embedding model
                 # Для демо создаём случайный вектор
                 query_embedding = np.random.randn(self._dimension).astype(np.float32)
+            elif len(query_embedding) != self._dimension:
+                self._raise_dimension_mismatch(len(query_embedding), "search")
             
             # Преобразуем и нормализуем
             query_vector = np.array([query_embedding], dtype=np.float32)
@@ -276,6 +287,8 @@ class FAISSVectorStore(VectorStore):
             self._logger.info(f"Поиск '{query[:30]}...' → {len(results)} результатов")
             return results
             
+        except VectorStoreError:
+            raise
         except Exception as e:
             self._logger.error(f"Ошибка поиска: {e}")
             raise VectorStoreError(
