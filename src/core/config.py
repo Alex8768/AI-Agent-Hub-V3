@@ -149,6 +149,16 @@ class Settings(BaseSettings):
         default=["http://localhost:3000", "http://localhost:8000"],
         description="Allowed CORS origins"
     )
+
+    allowed_hosts: List[str] = Field(
+        default=["*"],
+        description="Allowed hosts for TrustedHost middleware"
+    )
+
+    reload: bool = Field(
+        default=False,
+        description="Enable auto-reload for development server"
+    )
     
     @field_validator("cors_origins", mode="before")
     @classmethod
@@ -164,6 +174,20 @@ class Settings(BaseSettings):
                     # If JSON parsing fails, treat as comma-separated string
                     pass
             # Parse as comma-separated string
+            return [item.strip() for item in v.split(",") if item.strip()]
+        return v
+
+    @field_validator("allowed_hosts", mode="before")
+    @classmethod
+    def parse_allowed_hosts(cls, v: Union[str, List[str]]) -> List[str]:
+        """Parse allowed hosts from JSON string or comma-separated list."""
+        if isinstance(v, str):
+            v = v.strip()
+            if v.startswith("[") and v.endswith("]"):
+                try:
+                    return json.loads(v)
+                except json.JSONDecodeError:
+                    pass
             return [item.strip() for item in v.split(",") if item.strip()]
         return v
     
@@ -412,6 +436,11 @@ class Settings(BaseSettings):
         ge=1,
         description="Access token expiration in minutes"
     )
+
+    rate_limit_enabled: bool = Field(
+        default=False,
+        description="Enable rate limiting middleware"
+    )
     
     rate_limit_requests: int = Field(
         default=100,
@@ -423,6 +452,27 @@ class Settings(BaseSettings):
         default=60,
         ge=1,
         description="Rate limit period in seconds"
+    )
+
+    # ============ INGEST SETTINGS ============
+    ingest_chunk_size: int = Field(
+        default=1000,
+        ge=100,
+        le=10000,
+        description="Default chunk size for document ingest"
+    )
+
+    ingest_chunk_overlap: int = Field(
+        default=200,
+        ge=0,
+        le=1000,
+        description="Default chunk overlap for document ingest"
+    )
+
+    # ============ STREAMING SETTINGS ============
+    streaming_enabled: bool = Field(
+        default=False,
+        description="Enable SSE streaming endpoints"
     )
     
     # ============ FEATURE FLAGS ============
@@ -471,6 +521,16 @@ class Settings(BaseSettings):
     def is_testing(self) -> bool:
         """Check if environment is testing."""
         return self.environment == Environment.TESTING
+
+    @property
+    def app_name(self) -> str:
+        """Alias for API layer compatibility."""
+        return self.project_name
+
+    @property
+    def app_version(self) -> str:
+        """Alias for API layer compatibility."""
+        return self.version
     
     @property
     def api_base_url(self) -> str:
