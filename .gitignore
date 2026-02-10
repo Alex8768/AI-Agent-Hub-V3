@@ -6,3 +6,8 @@ __pycache__/
 .env
 models/
 sentence_transformers/
+
+# local artifacts
+data/*.index
+data/*.pkl
+repomix-output.xml
