@@ -35,6 +35,7 @@ except ImportError:
         max_tokens: int = None
         timeout: int = 30
     
+        max_retries: int = None
     class VectorStoreConfig(BaseModel):
         provider: str
         path: str
@@ -564,6 +565,7 @@ class Settings(BaseSettings):
                 "api_key": self.openai_api_key.get_secret_value() if self.openai_api_key else None,
                 "base_url": str(self.openai_base_url) if self.openai_base_url else None,
                 "timeout": self.openai_timeout,
+                "max_retries": self.openai_max_retries,
                 "max_tokens": self.openai_max_tokens,
             },
             LLMProvider.ANTHROPIC: {

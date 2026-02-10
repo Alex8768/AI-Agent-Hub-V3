@@ -240,6 +240,7 @@ class LLMConfig(BaseModel):
     timeout: int = 30
 
 
+    max_retries: Optional[int] = None
 class VectorStoreConfig(BaseModel):
     """Configuration for vector stores."""
     provider: str  # "faiss", "qdrant", "chroma"

@@ -161,20 +161,32 @@ async def generate_completion(request: LLMRequest):
             provider_type=request.provider or settings.llm_provider
         )
         
-        response = await provider.generate(
-            prompt=request.prompt,
-            system_prompt=request.system_prompt,
-            temperature=request.temperature,
-            max_tokens=request.max_tokens,
-        )
-        
+        # Build core Message list (system + user)
+        from src.core.types import Message, MessageRole
+
+        messages = []
+        if request.system_prompt:
+            messages.append(Message(role=MessageRole.SYSTEM, content=request.system_prompt))
+        messages.append(Message(role=MessageRole.USER, content=request.prompt))
+
+        # Config overrides
+        cfg = {}
+        if request.temperature is not None:
+            cfg["temperature"] = request.temperature
+        if request.max_tokens is not None:
+            cfg["max_tokens"] = request.max_tokens
+        if request.model:
+            cfg["model"] = request.model
+
+        completion = await provider.complete(messages=messages, config=cfg or None)
+
         return LLMResponse(
-            content=response["content"],
-            model=response["model"],
-            provider=response["provider"],
-            tokens_used=response.get("tokens_used", 0),
-            finish_reason=response.get("finish_reason"),
-            metadata=response.get("metadata", {})
+            content=completion.content,
+            model=completion.model,
+            provider=completion.provider,
+            tokens_used=completion.tokens_used or 0,
+            finish_reason=completion.finish_reason,
+            metadata=completion.metadata or {}
         )
         
     except Exception as e:

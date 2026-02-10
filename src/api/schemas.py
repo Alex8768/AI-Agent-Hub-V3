@@ -6,15 +6,19 @@ from pydantic import BaseModel, Field
 
 class LLMRequest(BaseModel):
     prompt: str = Field(..., description="User prompt")
+    system_prompt: Optional[str] = Field(None, description="Optional system prompt")
+    provider: Optional[str] = Field(None, description="Provider override (e.g., openai, ollama)")
     model: Optional[str] = Field(None, description="Model override")
     temperature: Optional[float] = Field(None, ge=0.0, le=2.0)
     max_tokens: Optional[int] = Field(None, ge=1)
 
 
 class LLMResponse(BaseModel):
-    text: str
+    content: str
     model: Optional[str] = None
-    usage: Optional[Dict[str, Any]] = None
+    provider: Optional[str] = None
+    tokens_used: int = 0
+    finish_reason: Optional[str] = None
     metadata: Dict[str, Any] = Field(default_factory=dict)
 
 
