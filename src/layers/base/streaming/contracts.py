@@ -4,7 +4,7 @@ Based on ARCHITECTURE_V3 design.
 """
 
 from abc import ABC, abstractmethod
-from typing import Dict, Any, Optional, AsyncGenerator
+from typing import Dict, Any, Optional, AsyncGenerator, List
 from dataclasses import dataclass, field
 from enum import Enum
 import time
