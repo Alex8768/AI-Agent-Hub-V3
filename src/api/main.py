@@ -6,9 +6,9 @@ Based on ARCHITECTURE_V3 design.
 import asyncio
 import logging
 from contextlib import asynccontextmanager
-from typing import Dict, Any
+from typing import Dict, Any, List
 
-from fastapi import FastAPI, Request, Depends, HTTPException, status
+from fastapi import FastAPI, Request, Depends, HTTPException, status, File, UploadFile, Query
 from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
@@ -25,7 +25,7 @@ from src.api.middleware import (
     RateLimitMiddleware,
 )
 from src.api.dependencies import get_current_user, get_workspace
-from src.core.types import (
+from src.api.schemas import (
     LLMRequest, LLMResponse, SearchRequest, SearchResult,
     ExportRequest, ExportResult, Document
 )
@@ -116,7 +116,8 @@ async def health_check():
     try:
         from src.infrastructure.database import get_db
         async with get_db() as db:
-            await db.execute("SELECT 1")
+            from sqlalchemy import text
+            await db.execute(text("SELECT 1"))
         services["database"] = "healthy"
     except Exception as e:
         services["database"] = f"unhealthy: {str(e)}"
