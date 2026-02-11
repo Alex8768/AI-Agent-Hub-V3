@@ -4,7 +4,7 @@ __pycache__/
 .DS_Store
 *.pyc
 .env
-models/
+./models/
 sentence_transformers/
 
 # local artifacts

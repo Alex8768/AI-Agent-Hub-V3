@@ -20,6 +20,10 @@ async def initialize_core_components() -> None:
     """
     logger.info("🔧 Core initializer: start")
 
+    # Safe DB init (dev-friendly)
+    from src.infrastructure.database.init_db import init_db
+    await init_db()
+
     # Examples (later):
     # - warm up LLM providers
     # - check vector store connectivity
