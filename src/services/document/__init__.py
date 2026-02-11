@@ -19,3 +19,5 @@ __all__ = [
     "IngestResult",
     "Chunk",
 ]
+
+from .document_service import DocumentService

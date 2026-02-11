@@ -64,3 +64,11 @@ class HealthResponse(BaseModel):
     timestamp: str
     services: Dict[str, str]
 
+class DocumentOut(BaseModel):
+    id: str
+    filename: str
+    size_bytes: int = 0
+    status: str = "unknown"
+    workspace_id: str = "default"
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+

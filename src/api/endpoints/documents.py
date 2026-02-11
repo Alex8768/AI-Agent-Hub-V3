@@ -11,54 +11,43 @@ from fastapi import APIRouter, File, HTTPException, Query, UploadFile, status
 from loguru import logger
 
 from src.core.config import settings
-from src.api.schemas import Document
+from src.api.schemas import DocumentOut
 
 router = APIRouter(tags=["Documents"])
 
 
-@router.post("/api/v1/documents/upload", response_model=Document)
+@router.post("/api/v1/documents/upload", response_model=DocumentOut)
 async def upload_document(
     file: UploadFile = File(...),
     chunk_size: int = Query(default=settings.ingest_chunk_size, ge=100, le=10000),
     chunk_overlap: int = Query(default=settings.ingest_chunk_overlap, ge=0, le=1000),
 ):
-    """Upload and process a document."""
+    """Upload document into registry + storage (Base)."""
+    # NOTE: chunk_size/chunk_overlap will be used in ingest stage (1.3)
     try:
-        from src.layers.base.ingest.pipelines.ingest_pipeline import IngestPipeline
+        from src.infrastructure.database import get_db
+        from src.services.document.document_service import DocumentService
 
-        # Save uploaded file
-        import tempfile
-        import os
+        content = await file.read()
+        svc = DocumentService()
 
-        with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(file.filename)[1]) as tmp:
-            content = await file.read()
-            tmp.write(content)
-            tmp_path = tmp.name
-
-        try:
-            # Process document
-            pipeline = IngestPipeline()
-            result = await pipeline.process(
-                file_path=tmp_path,
-                chunk_size=chunk_size,
-                chunk_overlap=chunk_overlap,
+        async with get_db() as db:
+            rec = await svc.create_from_upload(
+                db,
+                filename=file.filename,
+                data=content,
+                workspace_id="default",
+                mime=getattr(file, "content_type", None),
             )
 
-            return Document(
-                id=result.document_id,
-                name=file.filename,
-                path=tmp_path,
-                format=result.format,
-                size=len(content),
-                status=result.status,
-                chunks=result.chunks,
-                metadata=result.metadata,
-            )
-
-        finally:
-            # Cleanup temp file
-            if os.path.exists(tmp_path):
-                os.unlink(tmp_path)
+        return DocumentOut(
+            id=rec.id,
+            filename=rec.filename,
+            size_bytes=rec.size_bytes,
+            status=rec.status,
+            workspace_id=rec.workspace_id,
+            metadata={},
+        )
 
     except Exception as e:
         logger.error(f"Document upload error: {e}")
@@ -68,15 +57,35 @@ async def upload_document(
         )
 
 
-@router.get("/api/v1/documents", response_model=List[Document])
+@router.get("/api/v1/documents", response_model=List[DocumentOut])
 async def list_documents(
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=100, ge=1, le=1000),
 ):
-    """List documents."""
-    # NOTE: Document listing storage is not wired yet in this repo.
-    # We return a clear status instead of a misleading 500.
-    raise HTTPException(
-        status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail="Document listing is not implemented yet",
-    )
+    """List documents from registry."""
+    try:
+        from src.infrastructure.database import get_db
+        from src.services.document.document_service import DocumentService
+
+        svc = DocumentService()
+        async with get_db() as db:
+            rows = await svc.list_documents(db, skip=skip, limit=limit, workspace_id="default")
+
+        return [
+            DocumentOut(
+                id=r.id,
+                filename=r.filename,
+                size_bytes=r.size_bytes,
+                status=r.status,
+                workspace_id=r.workspace_id,
+                metadata={},
+            )
+            for r in rows
+        ]
+
+    except Exception as e:
+        logger.error(f"List documents error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to list documents: {str(e)}"
+        )
