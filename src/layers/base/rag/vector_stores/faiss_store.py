@@ -255,6 +255,11 @@ class FAISSVectorStore(VectorStore):
             query_vector = np.array([query_embedding], dtype=np.float32)
             faiss.normalize_L2(query_vector)
             
+            # Если индекс пуст — возвращаем пустой результат (нормальное поведение)
+            if not self._index or self._index.ntotal == 0 or k <= 0:
+                self._logger.info("FAISS index is empty → 0 results")
+                return []
+
             # Ищем
             distances, indices = self._index.search(query_vector, min(k, self._index.ntotal))
             
@@ -294,7 +299,7 @@ class FAISSVectorStore(VectorStore):
             raise VectorStoreError(
                 message=f"Ошибка поиска: {str(e)}",
                 operation="search",
-                query=query
+                details={"query": query[:200]},
             )
     
     def _matches_filter(self, doc: VectorDocument, filter: Dict[str, Any]) -> bool:
