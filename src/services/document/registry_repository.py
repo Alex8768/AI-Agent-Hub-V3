@@ -23,6 +23,20 @@ class DocumentRegistryRepository:
         return record
 
 
+
+    async def get(self, db: AsyncSession, document_id: str) -> DocumentRecord | None:
+        stmt = select(DocumentRecord).where(DocumentRecord.id == document_id)
+        res = await db.execute(stmt)
+        return res.scalars().first()
+
+    async def delete_record(self, db: AsyncSession, document_id: str) -> bool:
+        rec = await self.get(db, document_id)
+        if rec is None:
+            return False
+        await db.delete(rec)
+        await db.commit()
+        return True
+
     async def find_by_hash(
         self,
         db: AsyncSession,

@@ -59,6 +59,34 @@ async def upload_document(
         )
 
 
+
+
+@router.delete("/api/v1/documents/{document_id}", tags=["Documents"])
+async def delete_document(document_id: str):
+    """Delete document (DB + storage + vectors)."""
+    try:
+        from src.infrastructure.database import get_db
+        from src.services.document.document_service import DocumentService
+
+        svc = DocumentService()
+        async with get_db() as db:
+            ok = await svc.delete_document(db, document_id=document_id)
+
+        if not ok:
+            raise HTTPException(status_code=404, detail="Document not found")
+
+        return {"status": "deleted", "document_id": document_id}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Delete document error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to delete document: {str(e)}"
+        )
+
+
 @router.get("/api/v1/documents", response_model=List[DocumentOut])
 async def list_documents(
     skip: int = Query(default=0, ge=0),

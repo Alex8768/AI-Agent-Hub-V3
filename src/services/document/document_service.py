@@ -110,6 +110,38 @@ class DocumentService:
         await self.repo.update(db, record)
         return record
 
+
+
+    async def delete_document(self, db: AsyncSession, *, document_id: str) -> bool:
+        # 1) Load record
+        rec = await self.repo.get(db, document_id)
+        if rec is None:
+            return False
+
+        # 2) Delete vectors (all chunks with metadata.document_id == document_id)
+        try:
+            vector_store = await self._get_vector_store()
+            # Find chunk IDs in FAISS document store
+            chunk_ids = []
+            for vid, vdoc in getattr(vector_store, "_document_store", {}).items():
+                meta = getattr(vdoc, "metadata", {}) or {}
+                if meta.get("document_id") == document_id:
+                    chunk_ids.append(vid)
+            if chunk_ids:
+                await vector_store.delete(chunk_ids)
+        except Exception:
+            # Non-fatal: DB/storage deletion still proceeds
+            pass
+
+        # 3) Delete file
+        try:
+            self.storage.delete(rec.storage_key)
+        except Exception:
+            pass
+
+        # 4) Delete DB row
+        return await self.repo.delete_record(db, document_id)
+
     async def list_documents(
         self,
         db: AsyncSession,
