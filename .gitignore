@@ -11,3 +11,6 @@ sentence_transformers/
 data/*.index
 data/*.pkl
 repomix-output.xml
+
+# local runtime data
+data/
