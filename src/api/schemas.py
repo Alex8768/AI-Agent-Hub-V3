@@ -62,7 +62,7 @@ class HealthResponse(BaseModel):
     version: str
     environment: str
     timestamp: str
-    services: Dict[str, str]
+    services: Dict[str, Any]
 
 class DocumentOut(BaseModel):
     id: str
