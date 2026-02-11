@@ -29,6 +29,8 @@ from src.api.schemas import (
     ExportRequest, ExportResult, Document, HealthResponse
 )
 
+from src.api.endpoints.health import router as health_router
+
 # Configure logging
 logging.basicConfig(
     level=getattr(logging, settings.log_level.upper()),
@@ -89,44 +91,10 @@ if settings.rate_limit_enabled:
         period=settings.rate_limit_period
     )
 
-
-# ============ HEALTH ENDPOINTS ============
-@app.get("/health", response_model=HealthResponse, tags=["Health"])
-async def health_check():
-    """Health check endpoint."""
-    import datetime
-    
-    # Check service status
-    services = {
-        "api": "healthy",
-        "environment": settings.environment,
-    }
-    
-    # Check database if configured
-    try:
-        from src.infrastructure.database import get_db
-        async with get_db() as db:
-            from sqlalchemy import text
-            await db.execute(text("SELECT 1"))
-        services["database"] = "healthy"
-    except Exception as e:
-        services["database"] = f"unhealthy: {str(e)}"
-    
-    return HealthResponse(
-        status="healthy",
-        version=settings.app_version,
-        environment=settings.environment,
-        timestamp=datetime.datetime.utcnow().isoformat() + "Z",
-        services=services
-    )
+app.include_router(health_router)
 
 
-@app.get("/api/v1/health", include_in_schema=False)
-async def api_health_check():
-    """API health check."""
-    return await health_check()
-
-
+# ============ ROOT ENDPOINT ============
 # ============ ROOT ENDPOINT ============
 @app.get("/", include_in_schema=False)
 async def root():
