@@ -11,7 +11,7 @@ from fastapi import APIRouter, File, HTTPException, Query, UploadFile, status
 from loguru import logger
 
 from src.core.config import settings
-from src.api.schemas import DocumentOut
+from src.api.schemas import DocumentOut, DocumentDetailOut
 
 router = APIRouter(tags=["Documents"])
 
@@ -84,6 +84,45 @@ async def delete_document(document_id: str):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to delete document: {str(e)}"
+        )
+
+
+
+
+@router.get("/api/v1/documents/{document_id}", response_model=DocumentDetailOut, tags=["Documents"])
+async def get_document(document_id: str):
+    """Get document details by id."""
+    try:
+        from src.infrastructure.database import get_db
+        from src.services.document.document_service import DocumentService
+
+        svc = DocumentService()
+        async with get_db() as db:
+            rec = await svc.get_document(db, document_id=document_id)
+
+        if rec is None:
+            raise HTTPException(status_code=404, detail="Document not found")
+
+        return DocumentDetailOut(
+            id=rec.id,
+            filename=rec.filename,
+            size_bytes=rec.size_bytes,
+            mime=rec.mime,
+            status=rec.status,
+            workspace_id=rec.workspace_id,
+            chunks_count=rec.chunks_count,
+            indexed_at=str(rec.indexed_at) if rec.indexed_at else None,
+            error_message=rec.error_message,
+            metadata={},
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Get document error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get document: {str(e)}"
         )
 
 

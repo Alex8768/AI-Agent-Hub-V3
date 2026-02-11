@@ -72,3 +72,15 @@ class DocumentOut(BaseModel):
     workspace_id: str = "default"
     metadata: Dict[str, Any] = Field(default_factory=dict)
 
+class DocumentDetailOut(BaseModel):
+    id: str
+    filename: str
+    size_bytes: int = 0
+    mime: Optional[str] = None
+    status: str = "unknown"
+    workspace_id: str = "default"
+    chunks_count: Optional[int] = None
+    indexed_at: Optional[str] = None
+    error_message: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+

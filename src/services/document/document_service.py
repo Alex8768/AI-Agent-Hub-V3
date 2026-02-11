@@ -142,6 +142,10 @@ class DocumentService:
         # 4) Delete DB row
         return await self.repo.delete_record(db, document_id)
 
+
+    async def get_document(self, db: AsyncSession, *, document_id: str) -> DocumentRecord | None:
+        return await self.repo.get(db, document_id)
+
     async def list_documents(
         self,
         db: AsyncSession,
