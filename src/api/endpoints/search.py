@@ -31,16 +31,15 @@ async def search_documents(request: SearchRequest):
 
         return [
             SearchResult(
-                document_id=r.metadata.get("document_id", "") if r.metadata else "",
-                chunk_id=r.document_id,
-                content=r.content,
-                score=r.score,
-                metadata=r.metadata or {},
-                source_document=r.metadata.get("filename") if r.metadata else None,
+                document_id=(r.document.metadata.get("document_id", "") if getattr(r, "document", None) and getattr(r.document, "metadata", None) else ""),
+                chunk_id=(r.document.id if getattr(r, "document", None) else ""),
+                content=(r.document.content if getattr(r, "document", None) else ""),
+                score=getattr(r, "score", 0.0),
+                metadata=(r.document.metadata if getattr(r, "document", None) and getattr(r.document, "metadata", None) else {}),
+                source_document=(r.document.metadata.get("filename") if getattr(r, "document", None) and getattr(r.document, "metadata", None) else None),
             )
             for r in results
         ]
-
     except Exception as e:
         logger.error(f"Search error: {e}")
         raise HTTPException(
