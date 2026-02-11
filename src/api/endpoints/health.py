@@ -78,6 +78,9 @@ async def health_check():
             "cached_models": cached,
             "default_model": getattr(settings, "embedding_model", "paraphrase-multilingual-MiniLM-L12-v2"),
             "effective_device": effective_device,
+            "hf_home": str(getattr(settings, "hf_home", None) or ""),
+            "offline_mode": bool(getattr(settings, "hf_hub_offline", False) or getattr(settings, "transformers_offline", False)),
+            "telemetry_disabled": bool(getattr(settings, "hf_hub_disable_telemetry", False)),
         }
     except Exception as e:
         services["embeddings"] = {"status": "unhealthy", "error": str(e)}
