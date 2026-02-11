@@ -125,7 +125,7 @@ class ValidationError(ConfigurationError):
 @dataclass
 class ProviderError(HubError):
     """Base error for all provider-related errors."""
-    
+
     def __init__(
         self,
         message: str,
@@ -133,18 +133,22 @@ class ProviderError(HubError):
         provider_type: Optional[str] = None,
         **kwargs
     ):
-        details = kwargs.get("details", {})
+        # Allow subclasses to override error_code safely
+        error_code = kwargs.pop("error_code", "PROVIDER_ERROR")
+
+        details = kwargs.pop("details", {}) or {}
         if provider_name:
             details["provider_name"] = provider_name
         if provider_type:
             details["provider_type"] = provider_type
-        
+
         super().__init__(
             message=message,
-            error_code="PROVIDER_ERROR",
+            error_code=error_code,
             details=details,
-            **{k: v for k, v in kwargs.items() if k != "details"}
+            **kwargs
         )
+
 
 
 @dataclass
