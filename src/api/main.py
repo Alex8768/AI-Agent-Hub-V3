@@ -32,6 +32,7 @@ from src.api.schemas import (
 from src.api.endpoints.health import router as health_router
 from src.api.endpoints.llm import router as llm_router
 from src.api.endpoints.documents import router as documents_router
+from src.api.endpoints.search import router as search_router
 
 # Configure logging
 logging.basicConfig(
@@ -99,6 +100,8 @@ app.include_router(llm_router)
 
 app.include_router(documents_router)
 
+app.include_router(search_router)
+
 
 # ============ ROOT ENDPOINT ============
 # ============ ROOT ENDPOINT ============
@@ -114,42 +117,7 @@ async def root():
     }
 
 
-# ============ SEARCH ENDPOINTS ============
-# ============ SEARCH ENDPOINTS ============
-@app.post("/api/v1/search", response_model=List[SearchResult], tags=["Search"])
-async def search_documents(request: SearchRequest):
-    """Search documents using vector search."""
-    try:
-        from src.layers.base.rag.engines.rag_engine import RAGEngine
-        
-        engine = RAGEngine()
-        results = await engine.search(
-            query=request.query,
-            k=request.k,
-            filters=request.filters,
-            similarity_threshold=request.similarity_threshold,
-        )
-        
-        return [
-            SearchResult(
-                document_id=r.document_id,
-                chunk_id=r.chunk_id,
-                content=r.content,
-                score=r.score,
-                metadata=r.metadata,
-                source_document=r.source_document,
-            )
-            for r in results
-        ]
-        
-    except Exception as e:
-        logger.error(f"Search error: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Search failed: {str(e)}"
-        )
-
-
+# ============ EXPORT ENDPOINTS ============
 # ============ EXPORT ENDPOINTS ============
 @app.post("/api/v1/export", response_model=ExportResult, tags=["Export"])
 async def export_document(request: ExportRequest):
