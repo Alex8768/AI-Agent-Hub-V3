@@ -48,6 +48,11 @@ class DocumentService:
         doc_id = uuid4().hex
         content_hash = self._hash_bytes(data)
 
+        # Dedup: if same content already exists in this workspace, return it (no new storage/ingest)
+        existing = await self.repo.find_by_hash(db, workspace_id=workspace_id, content_hash=content_hash)
+        if existing is not None and existing.status != "error":
+            return existing
+
         stored = self.storage.save_upload(
             workspace_id=workspace_id,
             doc_id=doc_id,

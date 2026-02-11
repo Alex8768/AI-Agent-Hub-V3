@@ -22,6 +22,24 @@ class DocumentRegistryRepository:
         await db.refresh(record)
         return record
 
+
+    async def find_by_hash(
+        self,
+        db: AsyncSession,
+        *,
+        workspace_id: str,
+        content_hash: str,
+    ) -> DocumentRecord | None:
+        stmt = (
+            select(DocumentRecord)
+            .where(DocumentRecord.workspace_id == workspace_id)
+            .where(DocumentRecord.content_hash == content_hash)
+            .order_by(DocumentRecord.created_at.desc())
+            .limit(1)
+        )
+        res = await db.execute(stmt)
+        return res.scalars().first()
+
     async def list(
         self,
         db: AsyncSession,
