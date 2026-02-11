@@ -34,6 +34,7 @@ from src.api.endpoints.llm import router as llm_router
 from src.api.endpoints.documents import router as documents_router
 from src.api.endpoints.search import router as search_router
 from src.api.endpoints.export import router as export_router
+from src.api.endpoints.streaming import router as streaming_router
 
 # Configure logging
 logging.basicConfig(
@@ -105,6 +106,8 @@ app.include_router(search_router)
 
 app.include_router(export_router)
 
+app.include_router(streaming_router)
+
 
 # ============ ROOT ENDPOINT ============
 # ============ ROOT ENDPOINT ============
@@ -120,70 +123,7 @@ async def root():
     }
 
 
-# ============ STREAMING ENDPOINTS ============
-# ============ STREAMING ENDPOINTS ============
-@app.get("/api/v1/stream/{session_id}", tags=["Streaming"])
-async def stream_events(session_id: str, request: Request):
-    """Stream agent events via Server-Sent Events."""
-    if not settings.streaming_enabled:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Streaming is disabled"
-        )
-    
-    try:
-        from src.layers.base.streaming.publishers.sse_publisher import SSEPublisher
-        
-        publisher = SSEPublisher()
-        
-        async def event_generator():
-            queue = await publisher.subscribe(session_id)
-            
-            try:
-                # Send initial event
-                yield {
-                    "event": "connected",
-                    "data": {
-                        "session_id": session_id,
-                        "message": "Connected to event stream"
-                    }
-                }
-                
-                # Stream events
-                while True:
-                    if await request.is_disconnected():
-                        break
-                    
-                    try:
-                        event = await asyncio.wait_for(queue.get(), timeout=30.0)
-                        yield event
-                    except asyncio.TimeoutError:
-                        # Send keep-alive
-                        yield ": keep-alive\n\n"
-                        
-            except asyncio.CancelledError:
-                pass
-            finally:
-                await publisher.unsubscribe(session_id, queue)
-        
-        return StreamingResponse(
-            event_generator(),
-            media_type="text/event-stream",
-            headers={
-                "Cache-Control": "no-cache",
-                "Connection": "keep-alive",
-                "X-Accel-Buffering": "no",
-            }
-        )
-        
-    except Exception as e:
-        logger.error(f"Stream error: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Stream connection failed: {str(e)}"
-        )
-
-
+# ============ ERROR HANDLERS ============
 # ============ ERROR HANDLERS ============
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException):
