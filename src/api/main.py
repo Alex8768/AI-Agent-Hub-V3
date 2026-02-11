@@ -15,7 +15,6 @@ from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 import uvicorn
 from loguru import logger
-from pydantic import BaseModel
 
 from src.core.config import settings
 from src.api.middleware import (
@@ -27,7 +26,7 @@ from src.api.middleware import (
 from src.api.dependencies import get_current_user, get_workspace
 from src.api.schemas import (
     LLMRequest, LLMResponse, SearchRequest, SearchResult,
-    ExportRequest, ExportResult, Document
+    ExportRequest, ExportResult, Document, HealthResponse
 )
 
 # Configure logging
@@ -92,15 +91,6 @@ if settings.rate_limit_enabled:
 
 
 # ============ HEALTH ENDPOINTS ============
-class HealthResponse(BaseModel):
-    """Health check response."""
-    status: str
-    version: str
-    environment: str
-    timestamp: str
-    services: Dict[str, str]
-
-
 @app.get("/health", response_model=HealthResponse, tags=["Health"])
 async def health_check():
     """Health check endpoint."""

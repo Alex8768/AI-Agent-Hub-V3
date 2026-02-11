@@ -55,3 +55,12 @@ class Document(BaseModel):
     filename: str
     content: Optional[str] = None
     metadata: Dict[str, Any] = Field(default_factory=dict)
+
+class HealthResponse(BaseModel):
+    """Health check response."""
+    status: str
+    version: str
+    environment: str
+    timestamp: str
+    services: Dict[str, str]
+
