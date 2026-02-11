@@ -15,6 +15,13 @@ class DocumentRegistryRepository:
         await db.refresh(record)
         return record
 
+
+
+    async def update(self, db: AsyncSession, record: DocumentRecord) -> DocumentRecord:
+        await db.commit()
+        await db.refresh(record)
+        return record
+
     async def list(
         self,
         db: AsyncSession,

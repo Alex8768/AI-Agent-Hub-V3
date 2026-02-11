@@ -209,7 +209,8 @@ class IngestService:
         self,
         text: str,
         filename: str,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, Any]] = None,
+        document_id: Optional[str] = None,
     ) -> IngestResult:
         """
         Основной метод обработки текста.
@@ -223,7 +224,7 @@ class IngestService:
             Результат обработки
         """
         start_time = time.time()
-        document_id = str(uuid.uuid4())
+        document_id = document_id or str(uuid.uuid4())
         errors = []
         chunk_ids = []
         
@@ -410,6 +411,8 @@ class IngestService:
             # Копируем метаданные, добавляем ID документа
             chunk_metadata = chunk.metadata.copy()
             chunk_metadata["document_id"] = document_id
+            chunk_metadata["workspace_id"] = chunk_metadata.get("workspace_id", "default")
+            chunk_metadata["workspace_id"] = "default"
             
             vector_doc = VectorDocument(
                 id=chunk.id,

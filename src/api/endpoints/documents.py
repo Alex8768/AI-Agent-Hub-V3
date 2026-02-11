@@ -38,6 +38,8 @@ async def upload_document(
                 data=content,
                 workspace_id="default",
                 mime=getattr(file, "content_type", None),
+                chunk_size=chunk_size,
+                chunk_overlap=chunk_overlap,
             )
 
         return DocumentOut(
@@ -46,7 +48,7 @@ async def upload_document(
             size_bytes=rec.size_bytes,
             status=rec.status,
             workspace_id=rec.workspace_id,
-            metadata={},
+            metadata={"chunks_count": rec.chunks_count, "indexed_at": str(rec.indexed_at) if rec.indexed_at else None},
         )
 
     except Exception as e:
