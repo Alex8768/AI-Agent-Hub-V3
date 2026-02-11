@@ -30,6 +30,16 @@ async def initialize_core_components() -> None:
     # - preload embeddings models
     # - validate config
 
+
+    # Safe warmup: embeddings model (prevents first-request slowdown)
+    try:
+        from src.adapters.embedding import get_embedding_factory
+        factory = get_embedding_factory()
+        await factory.create_embedding_model("sentence_transformer")
+        logger.info("✅ Warmup: embeddings ready")
+    except Exception as e:
+        logger.warning(f"⚠️ Warmup: embeddings skipped (non-fatal): {e}")
+
     logger.info("✅ Core initializer: done")
 
 
