@@ -33,6 +33,7 @@ from src.api.endpoints.health import router as health_router
 from src.api.endpoints.llm import router as llm_router
 from src.api.endpoints.documents import router as documents_router
 from src.api.endpoints.search import router as search_router
+from src.api.endpoints.export import router as export_router
 
 # Configure logging
 logging.basicConfig(
@@ -102,6 +103,8 @@ app.include_router(documents_router)
 
 app.include_router(search_router)
 
+app.include_router(export_router)
+
 
 # ============ ROOT ENDPOINT ============
 # ============ ROOT ENDPOINT ============
@@ -117,38 +120,7 @@ async def root():
     }
 
 
-# ============ EXPORT ENDPOINTS ============
-# ============ EXPORT ENDPOINTS ============
-@app.post("/api/v1/export", response_model=ExportResult, tags=["Export"])
-async def export_document(request: ExportRequest):
-    """Export content to various formats."""
-    try:
-        from src.layers.base.export.export_manager import ExportManager
-        
-        manager = ExportManager()
-        result = await manager.export(
-            content=request.content,
-            format=request.format,
-            template=request.template,
-            options=request.options,
-        )
-        
-        return ExportResult(
-            file_path=result.file_path,
-            file_size=result.file_size,
-            format=result.format,
-            download_url=result.download_url,
-            metadata=result.metadata,
-        )
-        
-    except Exception as e:
-        logger.error(f"Export error: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Export failed: {str(e)}"
-        )
-
-
+# ============ STREAMING ENDPOINTS ============
 # ============ STREAMING ENDPOINTS ============
 @app.get("/api/v1/stream/{session_id}", tags=["Streaming"])
 async def stream_events(session_id: str, request: Request):
