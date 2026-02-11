@@ -132,3 +132,75 @@ async def health_check():
 @router.get("/api/v1/health", include_in_schema=False)
 async def api_health_check():
     return await health_check()
+
+
+@router.get("/api/v1/health/deep", tags=["Health"])
+async def health_deep():
+    """
+    Deep health check (manual):
+    - DB query + documents table
+    - Embeddings warm check (embed small text)
+    - FAISS stats (loads index)
+    Returns timings for each stage.
+    """
+    import time
+    from sqlalchemy import text
+
+    started = time.perf_counter()
+    timings = {}
+    details = {}
+
+    # --- DB deep ---
+    t0 = time.perf_counter()
+    try:
+        from src.infrastructure.database import get_db
+        async with get_db() as db:
+            await db.execute(text("SELECT 1"))
+            r = await db.execute(text("SELECT COUNT(1) FROM sqlite_master WHERE type='table' AND name='documents'"))
+            details["documents_table_exists"] = bool(r.scalar() or 0)
+    except Exception as e:
+        details["db_error"] = str(e)
+    timings["db_seconds"] = round(time.perf_counter() - t0, 6)
+
+    # --- Embeddings deep ---
+    t0 = time.perf_counter()
+    try:
+        from src.adapters.embedding import get_embedding_factory
+        factory = get_embedding_factory()
+        model = await factory.create_embedding_model("sentence_transformer")
+        vecs = await model.embed_documents(["deep health ping"])
+        details["embedding_dim"] = len(vecs[0]) if vecs else None
+        details["embeddings_cached_models"] = factory.get_cached_models()
+    except Exception as e:
+        details["embeddings_error"] = str(e)
+    timings["embeddings_seconds"] = round(time.perf_counter() - t0, 6)
+
+    # --- Vector store deep ---
+    t0 = time.perf_counter()
+    try:
+        from src.layers.base.rag.vector_stores.faiss_store import FAISSVectorStore
+        from src.core.config import settings
+
+        cfg = settings.get_vector_store_config()
+        index_path = getattr(cfg, "path", None) or settings.faiss_index_path
+        dimension = getattr(cfg, "dimension", None) or settings.faiss_dimension
+
+        store = FAISSVectorStore(index_path=str(index_path), dimension=int(dimension))
+        await store.initialize()
+        details["vector_store_stats"] = await store.get_stats()
+    except Exception as e:
+        details["vector_store_error"] = str(e)
+    timings["vector_store_seconds"] = round(time.perf_counter() - t0, 6)
+
+    timings["total_seconds"] = round(time.perf_counter() - started, 6)
+
+    overall = "healthy"
+    if any(k.endswith("_error") for k in details.keys()):
+        overall = "unhealthy"
+
+    return {
+        "status": overall,
+        "timestamp": datetime.datetime.utcnow().isoformat() + "Z",
+        "timings": timings,
+        "details": details,
+    }
