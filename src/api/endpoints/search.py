@@ -21,25 +21,41 @@ async def search_documents(request: SearchRequest):
         from src.layers.base.rag.engines.rag_engine import RAGEngine
 
         engine = RAGEngine()
+
         results = await engine.search(
             query=request.query,
             k=request.k,
             filters=request.filters,
-            similarity_threshold=getattr(request, "similarity_threshold", None),
+            similarity_threshold=request.similarity_threshold,
             workspace_id="default",
         )
 
-        return [
-            SearchResult(
-                document_id=(r.document.metadata.get("document_id", "") if getattr(r, "document", None) and getattr(r.document, "metadata", None) else ""),
-                chunk_id=(r.document.id if getattr(r, "document", None) else ""),
-                content=(r.document.content if getattr(r, "document", None) else ""),
-                score=getattr(r, "score", 0.0),
-                metadata=(r.document.metadata if getattr(r, "document", None) and getattr(r.document, "metadata", None) else {}),
-                source_document=(r.document.metadata.get("filename") if getattr(r, "document", None) and getattr(r.document, "metadata", None) else None),
+        response: List[SearchResult] = []
+
+        for r in results:
+            if not getattr(r, "document", None):
+                continue
+
+            doc = r.document
+            content = getattr(doc, "content", "") or ""
+            metadata = getattr(doc, "metadata", {}) or {}
+
+            snippet = content[: request.snippet_len]
+
+            response.append(
+                SearchResult(
+                    document_id=metadata.get("document_id", ""),
+                    chunk_id=getattr(doc, "id", ""),
+                    score=float(getattr(r, "score", 0.0) or 0.0),
+                    snippet=snippet,
+                    content=content if request.include_content else None,
+                    source_document=metadata.get("filename"),
+                    metadata=metadata,
+                )
             )
-            for r in results
-        ]
+
+        return response
+
     except Exception as e:
         logger.error(f"Search error: {e}")
         raise HTTPException(

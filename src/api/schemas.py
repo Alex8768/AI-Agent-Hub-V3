@@ -26,13 +26,18 @@ class SearchRequest(BaseModel):
     query: str
     k: int = Field(5, ge=1, le=50)
     filters: Optional[Dict[str, Any]] = None
+    similarity_threshold: Optional[float] = Field(None, ge=0.0, le=1.0)
+    include_content: bool = Field(False, description="Return full chunk content")
+    snippet_len: int = Field(240, ge=50, le=2000, description="Snippet length when include_content=false")
 
 
 class SearchResult(BaseModel):
     chunk_id: str
     document_id: str
-    content: str
     score: float
+    snippet: str
+    content: Optional[str] = None
+    source_document: Optional[str] = None
     metadata: Dict[str, Any] = Field(default_factory=dict)
 
 
