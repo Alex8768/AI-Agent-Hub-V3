@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import hashlib
 from datetime import datetime
+from time import perf_counter
 from uuid import uuid4
 
 from sqlalchemy.ext.asyncio import AsyncSession
+from loguru import logger
 
 from src.core.config import settings
 from src.infrastructure.database.models import DocumentRecord
@@ -80,6 +82,9 @@ class DocumentService:
             text = self._bytes_to_text(data)
 
             vector_store = await self._get_vector_store()
+            ingest_start = perf_counter()
+            stats_before = await vector_store.get_stats()
+            vectors_before = stats_before.get('total_vectors') or stats_before.get('total_vectors', 0)
             ingest = IngestService(
                 chunk_size=chunk_size or settings.ingest_chunk_size,
                 chunk_overlap=chunk_overlap or settings.ingest_chunk_overlap,
@@ -91,6 +96,22 @@ class DocumentService:
                 filename=filename,
                 metadata={"workspace_id": workspace_id},
                 document_id=record.id,
+            )
+
+            stats_after = await vector_store.get_stats()
+            vectors_after = stats_after.get('total_vectors') or stats_after.get('total_vectors', 0)
+            ingest_ms = int((perf_counter() - ingest_start) * 1000)
+            logger.info(
+                'Ingest completed',
+                extra={
+                    'document_id': record.id,
+                    'filename': filename,
+                    'chunks': getattr(result, 'total_chunks', None),
+                    'ingest_ms': ingest_ms,
+                    'faiss_vectors_before': vectors_before,
+                    'faiss_vectors_after': vectors_after,
+                    'faiss_vectors_delta': (vectors_after - vectors_before),
+                },
             )
 
             if result.success:
