@@ -4,6 +4,7 @@ from typing import Sequence
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.exc import IntegrityError
 
 from src.infrastructure.database.models import DocumentRecord
 
@@ -11,7 +12,15 @@ from src.infrastructure.database.models import DocumentRecord
 class DocumentRegistryRepository:
     async def create(self, db: AsyncSession, record: DocumentRecord) -> DocumentRecord:
         db.add(record)
-        await db.commit()
+        try:
+            await db.commit()
+        except IntegrityError:
+            # Another request inserted the same (workspace_id, content_hash) concurrently
+            await db.rollback()
+            existing = await self.find_by_hash(db, workspace_id=record.workspace_id, content_hash=record.content_hash)
+            if existing is not None:
+                return existing
+            raise
         await db.refresh(record)
         return record
 
