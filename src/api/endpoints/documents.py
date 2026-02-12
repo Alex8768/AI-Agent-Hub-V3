@@ -130,6 +130,7 @@ async def get_document(document_id: str):
 async def list_documents(
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=100, ge=1, le=1000),
+    status: str | None = Query(default=None),
 ):
     """List documents from registry."""
     try:
@@ -138,7 +139,7 @@ async def list_documents(
 
         svc = DocumentService()
         async with get_db() as db:
-            rows = await svc.list_documents(db, skip=skip, limit=limit, workspace_id="default")
+            rows = await svc.list_documents(db, skip=skip, limit=limit, workspace_id="default", status=status)
 
         return [
             DocumentOut(
