@@ -50,7 +50,7 @@ async def search_documents(request: SearchRequest):
                     snippet=snippet,
                     content=content if request.include_content else None,
                     source_document=metadata.get("filename"),
-                    metadata=metadata,
+                    metadata=(metadata if request.include_metadata else {}),
                 )
             )
 

@@ -29,6 +29,7 @@ class SearchRequest(BaseModel):
     similarity_threshold: Optional[float] = Field(None, ge=0.0, le=1.0)
     include_content: bool = Field(False, description="Return full chunk content")
     snippet_len: int = Field(240, ge=50, le=2000, description="Snippet length when include_content=false")
+    include_metadata: bool = Field(True, description="Return metadata in results")
 
 
 class SearchResult(BaseModel):
