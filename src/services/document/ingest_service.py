@@ -257,7 +257,7 @@ class IngestService:
             
             # 5. Генерация эмбеддингов (оптимизация для M4)
             self._logger.info(f"Генерация эмбеддингов для {len(chunks)} чанков")
-            await self._generate_embeddings_batch(chunks)
+            chunks = await self._generate_embeddings_batch(chunks)
             
             # 6. Подготовка VectorDocument
             vector_docs = self._prepare_vector_documents(chunks, document_id)
@@ -367,38 +367,61 @@ class IngestService:
         })
         return final_metadata
     
-    async def _generate_embeddings_batch(self, chunks: List[Chunk]) -> None:
-        """Генерация эмбеддингов для всех чанков (оптимизация для M4)."""
+    async def _generate_embeddings_batch(self, chunks: List[Chunk]) -> List[Chunk]:
+        """Генерация эмбеддингов для всех чанков.
+        
+        Returns:
+            List[Chunk]: чанки с эмбеддингами
+            
+        Raises:
+            EmbeddingError: если не удалось сгенерировать эмбеддинги
+        """
         try:
-            # Получаем модель (будет использовать MPS на M4)
             embedding_factory = get_embedding_factory()
             model = await embedding_factory.create_embedding_model(
                 provider_type="sentence_transformer"
             )
             
-            # Собираем тексты для батча
             texts = [chunk.content for chunk in chunks]
-            
-            # Генерируем эмбеддинги одним батчем (быстрее на GPU)
             embeddings = await model.embed_documents(texts)
             
-            # Присваиваем чанкам
+            if len(embeddings) != len(chunks):
+                raise EmbeddingError(
+                    message=f"Embedding count mismatch: expected {len(chunks)}, got {len(embeddings)}"
+                )
+            
+            result_chunks = []
             for i, chunk in enumerate(chunks):
-                if i < len(embeddings):
-                    chunk.embedding = embeddings[i]
+                chunk_copy = Chunk(
+                    id=chunk.id,
+                    content=chunk.content,
+                    metadata=chunk.metadata.copy(),
+                    embedding=embeddings[i]
+                )
+                result_chunks.append(chunk_copy)
             
             self._logger.info(
-                f"Эмбеддинги сгенерированы",
+                "Эмбеддинги сгенерированы",
                 context={
                     "chunks": len(chunks),
                     "dimensions": len(embeddings[0]) if embeddings else 0
                 }
             )
             
+            return result_chunks
+            
         except Exception as e:
-            self._logger.warning(f"Не удалось сгенерировать эмбеддинги: {e}")
-            # Оставляем None - система сможет работать без них
-    
+            wrapped = wrap_exception(
+                e,
+                EmbeddingError,
+                message="Failed to generate embeddings",
+                operation="embed_documents",
+                details={
+                    "chunks_count": len(chunks),
+                    "error_type": type(e).__name__
+                }
+            )
+            raise wrapped
     def _prepare_vector_documents(
         self,
         chunks: List[Chunk],
@@ -412,8 +435,6 @@ class IngestService:
             chunk_metadata = chunk.metadata.copy()
             chunk_metadata["document_id"] = document_id
             chunk_metadata["workspace_id"] = chunk_metadata.get("workspace_id", "default")
-            chunk_metadata["workspace_id"] = "default"
-            
             vector_doc = VectorDocument(
                 id=chunk.id,
                 content=chunk.content,
