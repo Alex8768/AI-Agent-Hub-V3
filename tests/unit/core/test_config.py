@@ -27,6 +27,20 @@ class TestSettings:
         default_provider = Settings.model_fields["llm_provider"].default
         assert settings.llm_provider == default_provider
     
+    def test_get_llm_config_openai_requires_key(self):
+        """OPENAI provider must fail-fast if key is missing."""
+        from src.core.exceptions import ConfigurationError
+        settings = Settings(_env_file=None)
+        with pytest.raises(ConfigurationError):
+            settings.get_llm_config(provider="openai")
+
+    def test_get_llm_config_anthropic_requires_key(self):
+        """ANTHROPIC provider must fail-fast if key is missing."""
+        from src.core.exceptions import ConfigurationError
+        settings = Settings(_env_file=None)
+        with pytest.raises(ConfigurationError):
+            settings.get_llm_config(provider="anthropic")
+
     def test_cors_origins_parsing(self):
         """Test CORS origins parsing."""
         test_cases = [
