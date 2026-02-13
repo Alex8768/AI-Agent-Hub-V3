@@ -302,17 +302,39 @@ class IngestService:
             
             processing_time_ms = int((time.time() - start_time) * 1000)
             
+            # Пытаемся сохранить максимум информации
+            chunks_count = 0
+            meta = {}
+            
+            # Если chunks уже созданы - сохраняем их количество
+            try:
+                if 'chunks' in locals() and chunks:
+                    chunks_count = len(chunks)
+            except Exception:
+                pass
+                
+            # Если final_metadata уже создана - сохраняем её
+            try:
+                if 'final_metadata' in locals() and final_metadata:
+                    meta = final_metadata.copy()
+            except Exception:
+                pass
+            
+            # Если не удалось получить из locals, пробуем из аргументов
+            if not meta and metadata:
+                meta = metadata.copy()
+            
             return IngestResult(
                 document_id=document_id,
                 filename=filename,
                 format=self._detect_format(filename),
-                total_chunks=0,
+                total_chunks=chunks_count,
                 success=False,
-                errors=[str(e)],
+                errors=[error_msg],
                 chunk_ids=[],
                 processing_time_ms=processing_time_ms,
                 vector_store_stats={},
-                metadata={}
+                metadata=meta
             )
     
     async def _validate_text(self, text: str) -> None:
