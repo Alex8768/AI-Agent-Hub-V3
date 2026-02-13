@@ -20,6 +20,8 @@ from pydantic import (
 from pydantic_settings import BaseSettings, SettingsConfigDict
 import json
 
+from src.core.exceptions import ConfigurationError
+
 try:
     from src.core.types import LLMConfig, VectorStoreConfig, MCPConfig
 except ImportError:
@@ -581,6 +583,18 @@ class Settings(BaseSettings):
     def get_llm_config(self, provider: Optional[LLMProvider] = None) -> LLMConfig:
         """Get LLM configuration for a provider."""
         provider = provider or self.llm_provider
+
+        # Base: fail-fast on missing API keys for remote providers
+        if provider == LLMProvider.OPENAI and not self.openai_api_key:
+            raise ConfigurationError(
+                message="OPENAI provider selected but OPENAI_API_KEY is not set",
+                config_key="OPENAI_API_KEY",
+            )
+        if provider == LLMProvider.ANTHROPIC and not self.anthropic_api_key:
+            raise ConfigurationError(
+                message="ANTHROPIC provider selected but ANTHROPIC_API_KEY is not set",
+                config_key="ANTHROPIC_API_KEY",
+            )
         
         config_map = {
             LLMProvider.OPENAI: {
