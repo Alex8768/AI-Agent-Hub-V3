@@ -8,6 +8,8 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional, AsyncGenerator
 from dataclasses import dataclass
 
+from src.core.types.types import Message
+
 
 # ============ CORE CONTRACTS ============
 class Configurable(ABC):
@@ -166,7 +168,7 @@ class LLMProvider(Configurable, HealthCheckable, ABC):
     @abstractmethod
     async def complete(
         self,
-        messages: List[Any],  # Используем Any вместо конкретного типа Message
+        messages: List[Message],  # Используем Any вместо конкретного типа Message
         config: Optional[Dict[str, Any]] = None
     ) -> LLMCompletion:
         """
@@ -184,7 +186,7 @@ class LLMProvider(Configurable, HealthCheckable, ABC):
     @abstractmethod
     async def complete_stream(
         self,
-        messages: List[Any],
+        messages: List[Message],
         config: Optional[Dict[str, Any]] = None
     ) -> AsyncGenerator[LLMChunk, None]:
         """
