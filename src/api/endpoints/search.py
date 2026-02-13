@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from typing import List
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Request, status
 from loguru import logger
 
 from src.api.schemas import SearchRequest, SearchResult
@@ -15,12 +15,12 @@ router = APIRouter(tags=["Search"])
 
 
 @router.post("/api/v1/search", response_model=List[SearchResult])
-async def search_documents(request: SearchRequest):
+async def search_documents(http: Request, request: SearchRequest):
     """Search documents using vector search."""
     try:
         from src.layers.base.rag.engines.rag_engine import RAGEngine
 
-        engine = RAGEngine()
+        engine = getattr(http.app.state, 'rag_engine', None) or RAGEngine()
 
         results = await engine.search(
             query=request.query,
