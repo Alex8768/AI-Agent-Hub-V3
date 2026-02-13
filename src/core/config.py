@@ -98,6 +98,30 @@ class Settings(BaseSettings):
         extra="ignore",  # Игнорировать лишние поля в .env
         env_prefix="",  # Без префикса для env vars
     )
+
+    # ============ HUGGINGFACE / TRANSFORMERS (EMBEDDINGS) ============
+    # These map directly from .env variables:
+    # HF_HOME, HF_HUB_DISABLE_TELEMETRY, HF_HUB_OFFLINE, TRANSFORMERS_OFFLINE
+    hf_home: Optional[str] = Field(
+        default=None,
+        description="HuggingFace cache dir (HF_HOME)"
+    )
+
+    hf_hub_disable_telemetry: bool = Field(
+        default=False,
+        description="Disable HF telemetry (HF_HUB_DISABLE_TELEMETRY)"
+    )
+
+    hf_hub_offline: bool = Field(
+        default=False,
+        description="HF offline mode (HF_HUB_OFFLINE)"
+    )
+
+    transformers_offline: bool = Field(
+        default=False,
+        description="Transformers offline mode (TRANSFORMERS_OFFLINE)"
+    )
+
     
     # ============ APPLICATION SETTINGS ============
     environment: Environment = Field(
