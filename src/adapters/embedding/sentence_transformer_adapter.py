@@ -5,7 +5,10 @@ Supports Apple M4 (MPS), CUDA, and CPU with automatic device detection.
 import asyncio
 from typing import List, Optional, Dict, Any
 from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
 import torch
+
+from src.core.config import settings
 
 from src.core.contracts import EmbeddingModel
 from src.core.exceptions import EmbeddingError
@@ -43,15 +46,42 @@ class SentenceTransformerAdapter(EmbeddingModel):
         self._logger.info(f"SentenceTransformerAdapter initialized on {self._device}")
 
     def _get_model(self):
-        """Ленивая загрузка модели."""
+        """Lazy model load with strict offline enforcement (no HF network)."""
         if self._model is None:
+            import os
+
+            # Resolve HF cache dir
+            hf_home = getattr(settings, "hf_home", None)
+            if hf_home:
+                hf_home_abs = str(Path(hf_home).resolve())
+                hub_cache = str(Path(hf_home_abs, "hub"))
+                transformers_cache = str(Path(hf_home_abs, "transformers"))
+
+                os.environ["HF_HOME"] = hf_home_abs
+                os.environ["HF_HUB_CACHE"] = hub_cache
+                os.environ["TRANSFORMERS_CACHE"] = transformers_cache
+
+                # SentenceTransformers uses cache_folder as cache root
+                self._cache_folder = hub_cache
+
+            os.environ["HF_HUB_DISABLE_TELEMETRY"] = "1" if getattr(settings, "hf_hub_disable_telemetry", False) else "0"
+            os.environ["HF_HUB_OFFLINE"] = "1" if getattr(settings, "hf_hub_offline", False) else "0"
+            os.environ["TRANSFORMERS_OFFLINE"] = "1" if getattr(settings, "transformers_offline", False) else "0"
+
+            offline = bool(getattr(settings, "hf_hub_offline", False) or getattr(settings, "transformers_offline", False))
+
+            # Import AFTER env is applied (prevents HF Hub network lookups)
             from sentence_transformers import SentenceTransformer
+
             self._model = SentenceTransformer(
-                self._model_name, 
-                device=self._device, 
-                cache_folder=self._cache_folder
+                self._model_name,
+                device=self._device,
+                cache_folder=self._cache_folder,
+                local_files_only=offline,
             )
         return self._model
+
+
 
     @property
     def name(self) -> str:
