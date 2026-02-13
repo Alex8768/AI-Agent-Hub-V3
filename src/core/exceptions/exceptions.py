@@ -8,21 +8,25 @@ from typing import Optional, Dict, Any, List
 from dataclasses import dataclass, field
 
 
-@dataclass
+
 class HubError(Exception):
     """
     Base exception for all AI Agent Hub errors.
     All custom exceptions should inherit from this.
     """
-    message: str
-    error_code: str = "HUB_ERROR"
-    details: Optional[Dict[str, Any]] = None
-    original_exception: Optional[Exception] = None
     
-    def __post_init__(self):
-        super().__init__(self.message)
-        if self.details is None:
-            self.details = {}
+    def __init__(
+        self,
+        message: str,
+        error_code: str = "HUB_ERROR",
+        details: Optional[Dict[str, Any]] = None,
+        original_exception: Optional[Exception] = None
+    ):
+        self.message = message
+        self.error_code = error_code
+        self.details = details or {}
+        self.original_exception = original_exception
+        super().__init__(message)
     
     def __str__(self) -> str:
         base = f"[{self.error_code}] {self.message}"
@@ -43,9 +47,6 @@ class HubError(Exception):
             "original_exception": str(self.original_exception) if self.original_exception else None
         }
 
-
-# ============ CONFIGURATION ERRORS ============
-@dataclass
 class ConfigurationError(HubError):
     """Errors related to configuration."""
     
@@ -62,15 +63,16 @@ class ConfigurationError(HubError):
         if config_value:
             details["config_value"] = config_value
         
+        error_code = kwargs.pop("error_code", "CONFIGURATION_ERROR")
         super().__init__(
             message=message,
-            error_code="CONFIGURATION_ERROR",
+            error_code=error_code,
             details=details,
             **{k: v for k, v in kwargs.items() if k != "details"}
         )
 
 
-@dataclass
+
 class EnvironmentError(ConfigurationError):
     """Errors related to environment variables."""
     
@@ -93,7 +95,7 @@ class EnvironmentError(ConfigurationError):
         )
 
 
-@dataclass
+
 class ValidationError(ConfigurationError):
     """Errors related to data validation."""
     
@@ -122,7 +124,6 @@ class ValidationError(ConfigurationError):
 
 
 # ============ PROVIDER ERRORS ============
-@dataclass
 class ProviderError(HubError):
     """Base error for all provider-related errors."""
 
@@ -131,27 +132,23 @@ class ProviderError(HubError):
         message: str,
         provider_name: Optional[str] = None,
         provider_type: Optional[str] = None,
-        **kwargs
+        error_code: str = "PROVIDER_ERROR",
+        details: Optional[Dict[str, Any]] = None,
+        original_exception: Optional[Exception] = None,
     ):
-        # Allow subclasses to override error_code safely
-        error_code = kwargs.pop("error_code", "PROVIDER_ERROR")
-
-        details = kwargs.pop("details", {}) or {}
+        final_details = details or {}
         if provider_name:
-            details["provider_name"] = provider_name
+            final_details["provider_name"] = provider_name
         if provider_type:
-            details["provider_type"] = provider_type
+            final_details["provider_type"] = provider_type
 
         super().__init__(
             message=message,
             error_code=error_code,
-            details=details,
-            **kwargs
+            details=final_details,
+            original_exception=original_exception,
         )
 
-
-
-@dataclass
 class LLMError(ProviderError):
     """Errors related to LLM operations."""
     
@@ -172,16 +169,17 @@ class LLMError(ProviderError):
         if tokens_used:
             details["tokens_used"] = tokens_used
         
+        error_code = kwargs.pop("error_code", "LLM_ERROR")
         super().__init__(
             message=message,
             provider_type="llm",
-            error_code="LLM_ERROR",
+            error_code=error_code,
             details=details,
             **{k: v for k, v in kwargs.items() if k != "details"}
         )
 
 
-@dataclass
+
 class VectorStoreError(ProviderError):
     """Errors related to vector store operations."""
     
@@ -198,16 +196,17 @@ class VectorStoreError(ProviderError):
         if document_id:
             details["document_id"] = document_id
         
+        error_code = kwargs.pop("error_code", "VECTOR_STORE_ERROR")
         super().__init__(
             message=message,
             provider_type="vector_store",
-            error_code="VECTOR_STORE_ERROR",
+            error_code=error_code,
             details=details,
             **{k: v for k, v in kwargs.items() if k != "details"}
         )
 
 
-@dataclass
+
 class EmbeddingError(VectorStoreError):
     """Errors related to embedding generation."""
     
@@ -224,17 +223,18 @@ class EmbeddingError(VectorStoreError):
         if text:
             details["text"] = text[:50] + "..." if len(text) > 50 else text
         
+        error_code = kwargs.pop("error_code", "EMBEDDING_ERROR")
         super().__init__(
             message=message,
             operation="embedding",
-            error_code="EMBEDDING_ERROR",
+            error_code=error_code,
             details=details,
             **{k: v for k, v in kwargs.items() if k != "details"}
         )
 
 
 # ============ MCP ERRORS ============
-@dataclass
+
 class MCPError(HubError):
     """Errors related to Model Context Protocol."""
     
@@ -259,7 +259,7 @@ class MCPError(HubError):
         )
 
 
-@dataclass
+
 class ToolExecutionError(MCPError):
     """Errors during tool execution."""
     
@@ -284,7 +284,7 @@ class ToolExecutionError(MCPError):
         )
 
 
-@dataclass
+
 class ToolNotFoundError(MCPError):
     """Tool not found in MCP server."""
     
@@ -310,7 +310,7 @@ class ToolNotFoundError(MCPError):
 
 
 # ============ AGENT ERRORS ============
-@dataclass
+
 class AgentError(HubError):
     """Errors related to agent execution."""
     
@@ -338,7 +338,7 @@ class AgentError(HubError):
         )
 
 
-@dataclass
+
 class AgentExecutionError(AgentError):
     """Errors during agent execution."""
     
@@ -363,7 +363,7 @@ class AgentExecutionError(AgentError):
         )
 
 
-@dataclass
+
 class StateTransitionError(AgentError):
     """Errors during state machine transitions."""
     
@@ -391,7 +391,7 @@ class StateTransitionError(AgentError):
         )
 
 
-@dataclass
+
 class GraphExecutionError(AgentError):
     """Errors during LangGraph execution."""
     
@@ -417,7 +417,7 @@ class GraphExecutionError(AgentError):
 
 
 # ============ WORKSPACE ERRORS ============
-@dataclass
+
 class WorkspaceError(HubError):
     """Errors related to workspace operations."""
     
@@ -442,7 +442,7 @@ class WorkspaceError(HubError):
         )
 
 
-@dataclass
+
 class SecurityError(WorkspaceError):
     """Security-related workspace errors."""
     

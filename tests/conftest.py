@@ -18,7 +18,6 @@ def set_test_settings():
     settings.environment = "test"
     settings.debug = True
     settings.database_url = "sqlite+aiosqlite:///:memory:"
-    settings.redis_url = None  # Disable Redis for tests
     settings.llm_provider = "mock"  # Use mock LLM for tests
     yield
 

@@ -23,8 +23,14 @@ class LocalStorage:
 
     def __init__(self, root_dir: str | None = None):
         self.root = Path(root_dir or "./data/uploads")
-        # Синхронное создание директории при инициализации - ок, делается один раз
         self.root.mkdir(parents=True, exist_ok=True)
+        self.data_root = Path("./data")  # для relative_to
+    def _resolve_path(self, storage_key: str) -> Path:
+        p = Path(storage_key)
+        if p.is_absolute():
+            return p
+        return self.data_root / storage_key
+
 
     async def save_upload(
         self, 
@@ -39,20 +45,25 @@ class LocalStorage:
         safe_ws = workspace_id or "default"
         dest_dir = self.root / safe_ws / doc_id
         
-        # Создание директорий в потоке (может быть медленным)
+        # Создание директорий в потоке
         loop = asyncio.get_event_loop()
         await loop.run_in_executor(None, lambda: dest_dir.mkdir(parents=True, exist_ok=True))
         
         dest_path = dest_dir / filename
         
-        # Асинхронная запись файла через aiofiles
+        # Асинхронная запись файла
         async with aiofiles.open(dest_path, 'wb') as f:
             await f.write(data)
         
-        # Получаем размер файла
         size = dest_path.stat().st_size
         
-        storage_key = str(dest_path.relative_to(Path("./data")))
+        # Пытаемся сделать storage_key относительно ./data, если не получается - используем полный путь
+        try:
+            storage_key = str(dest_path.relative_to(self.data_root))
+        except ValueError:
+            # Для тестов с временными директориями
+            storage_key = str(dest_path)
+        
         return StoredObject(
             storage_key=storage_key, 
             path=dest_path, 
@@ -63,12 +74,11 @@ class LocalStorage:
         """
         Асинхронно удаляет файл по storage_key.
         """
-        p = Path("./data") / storage_key
+        p = self._resolve_path(storage_key)
         
         if not p.exists():
             return False
         
-        # Удаление в потоке
         loop = asyncio.get_event_loop()
         await loop.run_in_executor(None, lambda: p.unlink())
         return True
@@ -77,7 +87,7 @@ class LocalStorage:
         """
         Асинхронно проверяет существование файла.
         """
-        p = Path("./data") / storage_key
+        p = self._resolve_path(storage_key)
         loop = asyncio.get_event_loop()
         try:
             await loop.run_in_executor(None, lambda: p.stat())
@@ -89,7 +99,7 @@ class LocalStorage:
         """
         Асинхронно получает размер файла.
         """
-        p = Path("./data") / storage_key
+        p = self._resolve_path(storage_key)
         loop = asyncio.get_event_loop()
         try:
             stat = await loop.run_in_executor(None, lambda: p.stat())
@@ -101,7 +111,7 @@ class LocalStorage:
         """
         Асинхронно читает файл.
         """
-        p = Path("./data") / storage_key
+        p = self._resolve_path(storage_key)
         if not p.exists():
             return None
         

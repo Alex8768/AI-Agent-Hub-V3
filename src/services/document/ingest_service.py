@@ -192,6 +192,8 @@ class IngestService:
             chunk_size: Размер чанка в символах
             chunk_overlap: Перекрытие чанков
         """
+        self._vector_store = vector_store
+        # Compatibility alias (some code paths use self.vector_store)
         self.vector_store = vector_store
         self.chunker = RecursiveCharacterChunker(chunk_size, chunk_overlap)
         self._logger = get_logger()
@@ -219,6 +221,7 @@ class IngestService:
             text: Текст для обработки
             filename: Имя файла
             metadata: Дополнительные метаданные
+            document_id: ID документа (если None, генерируется)
             
         Returns:
             Результат обработки
@@ -227,6 +230,7 @@ class IngestService:
         document_id = document_id or str(uuid.uuid4())
         errors = []
         chunk_ids = []
+        chunks = []  # инициализируем заранее
         
         try:
             # 1. Валидация
@@ -295,7 +299,12 @@ class IngestService:
             )
             
             return result
-            
+        except ValidationError as e:
+            # Base: validation errors should bubble up (bad input)
+            error_msg = f"Ошибка валидации {filename}: {str(e)}"
+            self._logger.error(error_msg)
+            raise
+
         except Exception as e:
             error_msg = f"Ошибка обработки {filename}: {str(e)}"
             self._logger.error(error_msg)
@@ -303,26 +312,8 @@ class IngestService:
             processing_time_ms = int((time.time() - start_time) * 1000)
             
             # Пытаемся сохранить максимум информации
-            chunks_count = 0
-            meta = {}
-            
-            # Если chunks уже созданы - сохраняем их количество
-            try:
-                if 'chunks' in locals() and chunks:
-                    chunks_count = len(chunks)
-            except Exception:
-                pass
-                
-            # Если final_metadata уже создана - сохраняем её
-            try:
-                if 'final_metadata' in locals() and final_metadata:
-                    meta = final_metadata.copy()
-            except Exception:
-                pass
-            
-            # Если не удалось получить из locals, пробуем из аргументов
-            if not meta and metadata:
-                meta = metadata.copy()
+            chunks_count = len(chunks) if chunks else 0
+            meta = final_metadata if 'final_metadata' in locals() and final_metadata else (metadata or {})
             
             return IngestResult(
                 document_id=document_id,
@@ -336,6 +327,7 @@ class IngestService:
                 vector_store_stats={},
                 metadata=meta
             )
+            
     
     async def _validate_text(self, text: str) -> None:
         """Валидация текста."""
@@ -387,6 +379,8 @@ class IngestService:
             "timestamp_iso": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
             "platform": "MacBook M4"
         })
+        # Base: workspace_id must always exist
+        final_metadata.setdefault("workspace_id", "default")
         return final_metadata
     
     async def _generate_embeddings_batch(self, chunks: List[Chunk]) -> List[Chunk]:
@@ -433,17 +427,18 @@ class IngestService:
             return result_chunks
             
         except Exception as e:
+            from src.core.exceptions import wrap_exception, EmbeddingError
             wrapped = wrap_exception(
                 e,
                 EmbeddingError,
-                message="Failed to generate embeddings",
-                operation="embed_documents",
+                message="Embedding failed",
                 details={
                     "chunks_count": len(chunks),
                     "error_type": type(e).__name__
                 }
             )
             raise wrapped
+    
     def _prepare_vector_documents(
         self,
         chunks: List[Chunk],
@@ -453,10 +448,12 @@ class IngestService:
         vector_docs = []
         
         for chunk in chunks:
-            # Копируем метаданные, добавляем ID документа
             chunk_metadata = chunk.metadata.copy()
             chunk_metadata["document_id"] = document_id
-            chunk_metadata["workspace_id"] = chunk_metadata.get("workspace_id", "default")
+            # workspace_id берется из metadata (если есть) или "default"
+            if "workspace_id" not in chunk_metadata:
+                chunk_metadata["workspace_id"] = "default"
+            
             vector_doc = VectorDocument(
                 id=chunk.id,
                 content=chunk.content,
@@ -488,11 +485,9 @@ class IngestService:
                     message=f"Embeddings missing for {len(missing_embeddings)} chunks"
                 )
 
-            # Извлекаем эмбеддинги
             embeddings = [doc.embedding for doc in vector_docs]
             
-            # Сохраняем
-            saved_ids = await self.vector_store.add_documents(
+            saved_ids = await self._vector_store.add_documents(
                 documents=vector_docs,
                 embeddings=embeddings
             )
@@ -504,15 +499,17 @@ class IngestService:
                 e,
                 VectorStoreError,
                 message="Ошибка сохранения в векторное хранилище",
-                operation="add_documents",
-                details={"documents_count": len(vector_docs)}
+                details={
+                    "documents_count": len(vector_docs),
+                    "error": str(e)
+                }
             )
             raise wrapped
     
     async def health_check(self) -> Dict[str, Any]:
         """Проверка здоровья сервиса."""
         try:
-            store_health = await self.vector_store.health_check()
+            store_health = await self._vector_store.health_check()
             
             return {
                 "status": "healthy" if store_health.get("status") == "healthy" else "degraded",
