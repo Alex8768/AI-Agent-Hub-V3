@@ -55,7 +55,7 @@ class DocumentService:
         if existing is not None and existing.status != "error":
             return existing
 
-        stored = self.storage.save_upload(
+        stored = await self.storage.save_upload(
             workspace_id=workspace_id,
             doc_id=doc_id,
             filename=filename,
@@ -156,7 +156,7 @@ class DocumentService:
 
         # 3) Delete file
         try:
-            self.storage.delete(rec.storage_key)
+            await self.storage.delete(rec.storage_key)
         except Exception:
             pass
 
