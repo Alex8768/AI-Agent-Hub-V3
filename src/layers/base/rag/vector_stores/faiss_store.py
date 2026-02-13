@@ -178,8 +178,11 @@ class FAISSVectorStore(VectorStore):
             if embeddings:
                 vectors = np.array(embeddings, dtype=np.float32)
             else:
-                # Если эмбеддингов нет, создаём случайные (для теста)
-                vectors = np.random.randn(len(documents), self._dimension).astype(np.float32)
+                raise VectorStoreError(
+                    message="Embeddings are required for add_documents()",
+                    operation="add_documents",
+                    details={"documents_count": len(documents)},
+                )
             
             # Нормализуем векторы для косинусного сходства
             faiss.normalize_L2(vectors)
@@ -245,9 +248,11 @@ class FAISSVectorStore(VectorStore):
             
             # Если эмбеддинг не предоставлен, нужно его получить
             if query_embedding is None:
-                # В реальной системе тут бы вызывался embedding model
-                # Для демо создаём случайный вектор
-                query_embedding = np.random.randn(self._dimension).astype(np.float32)
+                raise VectorStoreError(
+                    message="query_embedding is required for search()",
+                    operation="search",
+                    details={"query_preview": (query[:80] if query else "")},
+                )
             elif len(query_embedding) != self._dimension:
                 self._raise_dimension_mismatch(len(query_embedding), "search")
             
