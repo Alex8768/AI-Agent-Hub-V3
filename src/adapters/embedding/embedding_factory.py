@@ -87,9 +87,40 @@ class EmbeddingFactoryImpl(EmbeddingFactory):
 
     async def get_available_providers(self) -> List[str]:
         return list(self._providers.keys())
-
-    def get_cached_models(self) -> Dict[str, str]:
+    def get_cached_models_legacy(self) -> Dict[str, str]:
+        """Backward-compatible cached model map (cache_key -> class name)."""
         return {k: type(v).__name__ for k, v in self._instances.items()}
+
+    def get_cached_models(self) -> List[Dict[str, Any]]:
+        """Structured cache introspection for health/observability."""
+        out: List[Dict[str, Any]] = []
+        for cache_key, inst in self._instances.items():
+            # cache_key format: provider_type:hash
+            provider_type = cache_key.split(":", 1)[0] if ":" in cache_key else cache_key
+            info: Dict[str, Any] = {
+                "cache_key": cache_key,
+                "provider_type": provider_type,
+                "class_name": type(inst).__name__,
+            }
+
+            # Best-effort introspection (adapter-dependent)
+            for attr, key in [
+                ("model_name", "model_name"),
+                ("device", "device"),
+                ("dimensions", "dimensions"),
+                ("name", "name"),
+            ]:
+                try:
+                    val = getattr(inst, attr)
+                    # properties may raise / be non-serializable
+                    if callable(val):
+                        val = val()
+                    info[key] = val
+                except Exception:
+                    pass
+
+            out.append(info)
+        return out
 
     async def cleanup_all(self) -> None:
         for model in list(self._instances.values()):

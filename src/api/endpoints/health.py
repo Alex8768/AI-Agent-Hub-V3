@@ -66,6 +66,8 @@ async def health_check():
 
         factory = get_embedding_factory()
         cached = factory.get_cached_models()
+        cached_legacy = getattr(factory, 'get_cached_models_legacy', None)
+        cached_legacy = cached_legacy() if callable(cached_legacy) else None
         providers = await factory.get_available_providers()
 
         effective_device = getattr(settings, "embedding_device", None) or (
@@ -76,6 +78,7 @@ async def health_check():
             "status": "healthy",
             "providers": providers,
             "cached_models": cached,
+            "cached_models_legacy": cached_legacy or {},
             "default_model": getattr(settings, "embedding_model", "paraphrase-multilingual-MiniLM-L12-v2"),
             "effective_device": effective_device,
             "hf_home": str(getattr(settings, "hf_home", None) or ""),
@@ -171,6 +174,8 @@ async def health_deep():
         vecs = await model.embed_documents(["deep health ping"])
         details["embedding_dim"] = len(vecs[0]) if vecs else None
         details["embeddings_cached_models"] = factory.get_cached_models()
+        legacy_fn = getattr(factory, "get_cached_models_legacy", None)
+        details["embeddings_cached_models_legacy"] = legacy_fn() if callable(legacy_fn) else {}
     except Exception as e:
         details["embeddings_error"] = str(e)
     timings["embeddings_seconds"] = round(time.perf_counter() - t0, 6)
@@ -187,7 +192,15 @@ async def health_deep():
 
         store = FAISSVectorStore(index_path=str(index_path), dimension=int(dimension))
         await store.initialize()
-        details["vector_store_stats"] = await store.get_stats()
+        raw_stats = await store.get_stats()
+        # Normalize to stable fields for observability
+        details["vector_store_stats"] = {
+            "provider": "faiss",
+            "index_path": str(index_path),
+            "dimension": int(dimension),
+            "total_vectors": raw_stats.get("total_vectors") if isinstance(raw_stats, dict) else None,
+            "raw": raw_stats,
+        }
     except Exception as e:
         details["vector_store_error"] = str(e)
     timings["vector_store_seconds"] = round(time.perf_counter() - t0, 6)
