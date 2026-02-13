@@ -223,7 +223,7 @@ class Settings(BaseSettings):
     )
 
     database_enabled: bool = Field(
-        default=False,
+        default=True,
         description="Enable database layer"
     )
 
@@ -248,7 +248,7 @@ class Settings(BaseSettings):
     
     # ============ LLM PROVIDER SETTINGS ============
     llm_provider: LLMProvider = Field(
-        default=LLMProvider.HYBRID,
+        default=LLMProvider.OLLAMA,
         description="Default LLM provider"
     )
     
