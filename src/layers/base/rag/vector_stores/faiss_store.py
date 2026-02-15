@@ -16,6 +16,7 @@ from src.adapters.logging_adapter import get_logger
 
 
 class FAISSVectorStore(VectorStore):
+    PREVIEW_MAX_CHARS: int = 512  # Store only a short preview, never full content
     """
     Локальное векторное хранилище на FAISS.
     Оптимизировано для Apple Silicon (MPS).
@@ -41,6 +42,7 @@ class FAISSVectorStore(VectorStore):
         self._document_store = {}  # id -> VectorDocument
         self._id_to_index = {}     # document_id -> faiss_index
         
+        self._index_to_id = {}     # faiss_index -> document_id (reverse map)
         # Инициализация будет ленивой
         self._initialized = False
     
@@ -82,6 +84,22 @@ class FAISSVectorStore(VectorStore):
             "initialized": self._initialized
         }
     
+    def _make_preview(self, content: str | None) -> str:
+        if not content:
+            return ""
+        if len(content) <= self.PREVIEW_MAX_CHARS:
+            return content
+        return content[: self.PREVIEW_MAX_CHARS]
+
+    def _lighten_document(self, doc: VectorDocument) -> VectorDocument:
+        """Return a lightweight copy: keep id/embedding/metadata + preview only."""
+        return VectorDocument(
+            id=doc.id,
+            content=self._make_preview(getattr(doc, 'content', None)),
+            metadata=dict(getattr(doc, 'metadata', {}) or {}),
+            embedding=getattr(doc, 'embedding', None),
+        )
+
     # ============ ОСНОВНЫЕ МЕТОДЫ ============
     
     async def _initialize_faiss(self):
@@ -102,6 +120,21 @@ class FAISSVectorStore(VectorStore):
                         self._document_store = data.get('documents', {})
                         self._id_to_index = data.get('id_to_index', {})
                 
+                        # Sanitize loaded documents: ensure only preview is kept
+                        try:
+                            sanitized = {}
+                            for _did, _doc in (self._document_store or {}).items():
+                                try:
+                                    sanitized[_did] = self._lighten_document(_doc)
+                                except Exception:
+                                    # If something is weird/unpickleable, skip it
+                                    continue
+                            self._document_store = sanitized
+                        except Exception:
+                            pass
+
+                        # Build reverse map for O(1) lookup during search
+                        self._index_to_id = {int(v): k for k, v in (self._id_to_index or {}).items()}
                 self._logger.info(f"Индекс загружен: {self._index.ntotal} векторов")
             else:
                 # Создаём новый индекс
@@ -197,8 +230,10 @@ class FAISSVectorStore(VectorStore):
                 doc_id = doc.id
                 
                 # Сохраняем документ
-                self._document_store[doc_id] = doc
+                light = self._lighten_document(doc)
+                self._document_store[doc_id] = light
                 self._id_to_index[doc_id] = start_idx + i
+                self._index_to_id[start_idx + i] = doc_id
                 added_ids.append(doc_id)
             
             # Сохраняем индекс
@@ -274,12 +309,8 @@ class FAISSVectorStore(VectorStore):
                 if idx == -1:  # FAISS возвращает -1 если недостаточно данных
                     continue
                 
-                # Ищем документ по индексу
-                doc_id = None
-                for did, doc_idx in self._id_to_index.items():
-                    if doc_idx == idx:
-                        doc_id = did
-                        break
+                # Fast lookup by FAISS index
+                doc_id = self._index_to_id.get(int(idx))
                 
                 if doc_id and doc_id in self._document_store:
                     doc = self._document_store[doc_id]
@@ -358,6 +389,8 @@ class FAISSVectorStore(VectorStore):
                 del self._document_store[doc_id]
                 # Удаляем из индекса (через ID)
                 index_id = self._id_to_index.pop(doc_id, None)
+                if index_id is not None:
+                    self._index_to_id.pop(int(index_id), None)
                 deleted += 1
         
         if deleted > 0:
@@ -388,6 +421,7 @@ class FAISSVectorStore(VectorStore):
             self._index = faiss.IndexFlatIP(self._dimension)
             self._index.add(vectors_array)
             self._id_to_index = new_id_to_index
+            self._index_to_id = {int(v): k for k, v in new_id_to_index.items()}
             
             # Сохраняем
             self._save_index()
