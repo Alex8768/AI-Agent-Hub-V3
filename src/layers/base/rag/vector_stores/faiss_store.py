@@ -3,7 +3,7 @@
 Реализация VectorStore для FAISS.
 """
 
-import numpy as np
+import asyncio
 from typing import List, Dict, Any, Optional
 from pathlib import Path
 import json
@@ -205,7 +205,6 @@ class FAISSVectorStore(VectorStore):
                         self._raise_dimension_mismatch(len(emb), "add_documents")
             
             # Преобразуем эмбеддинги в numpy
-            import numpy as np
             import faiss
             
             if embeddings:
@@ -278,7 +277,6 @@ class FAISSVectorStore(VectorStore):
             await self.initialize()
         
         try:
-            import numpy as np
             import faiss
             
             # Если эмбеддинг не предоставлен, нужно его получить
@@ -301,7 +299,21 @@ class FAISSVectorStore(VectorStore):
                 return []
 
             # Ищем
-            distances, indices = self._index.search(query_vector, min(k, self._index.ntotal))
+            # Ищем (в executor + timeout, чтобы не подвешивать event loop)
+            loop = asyncio.get_running_loop()
+            k_eff = min(k, self._index.ntotal)
+            try:
+                distances, indices = await asyncio.wait_for(
+                    loop.run_in_executor(None, lambda: self._index.search(query_vector, k_eff)),
+                    timeout=10.0,
+                )
+            except asyncio.TimeoutError:
+                raise VectorStoreError(
+                    message="Search timeout after 10 seconds",
+                    operation="search",
+                    details={"k": int(k_eff), "index_total": int(self._index.ntotal)},
+                )
+
             
             # Формируем результаты
             results = []
@@ -401,7 +413,6 @@ class FAISSVectorStore(VectorStore):
     
     async def _rebuild_index(self):
         """Перестраивает индекс после удаления документов."""
-        import numpy as np
         import faiss
         
         # Собираем все векторы заново

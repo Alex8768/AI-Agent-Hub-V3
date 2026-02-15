@@ -119,8 +119,7 @@ class OllamaAdapter(LLMProvider):
                 message="Failed to configure Ollama adapter",
                 model=self._model
             )
-            raise wrapped
-    
+            raise wrapped from e
     async def health_check(self) -> Dict[str, Any]:
         """
         Perform health check.

@@ -536,8 +536,7 @@ class IngestService:
                     "error": str(e)
                 }
             )
-            raise wrapped
-    
+            raise wrapped from e
     async def health_check(self) -> Dict[str, Any]:
         """Проверка здоровья сервиса."""
         try:

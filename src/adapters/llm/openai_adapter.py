@@ -99,7 +99,6 @@ class OpenAIAdapter(LLMProvider):
                 "OpenAI adapter reconfigured",
                 context={
                     "model": self._model,
-                    "has_api_key": bool(self._config.api_key)
                 }
             )
             
@@ -110,8 +109,7 @@ class OpenAIAdapter(LLMProvider):
                 message="Failed to configure OpenAI adapter",
                 model=self._model
             )
-            raise wrapped
-    
+            raise wrapped from e
     async def health_check(self) -> Dict[str, Any]:
         """
         Perform health check.
