@@ -27,6 +27,7 @@ class DocumentService:
     def _bytes_to_text(self, data: bytes) -> str:
         # Base: handle text-ish uploads. (pdf/docx parsing later)
         return data.decode("utf-8", errors="ignore")
+
     async def _get_vector_store(self):
         return await get_vector_store_singleton()
 
@@ -44,11 +45,24 @@ class DocumentService:
         doc_id = uuid4().hex
         content_hash = self._hash_bytes(data)
 
-        # Dedup: if same content already exists in this workspace, return it (no new storage/ingest)
+        # 1) Fast dedup: if already ingested successfully, return immediately (no storage IO)
         existing = await self.repo.find_by_hash(db, workspace_id=workspace_id, content_hash=content_hash)
         if existing is not None and existing.status != "error":
             return existing
 
+        # 2) If there is an error record, wipe it deterministically (DB + storage best-effort)
+        if existing is not None and existing.status == "error":
+            try:
+                if getattr(existing, "storage_key", None):
+                    await self.storage.delete(existing.storage_key)
+            except Exception:
+                pass
+            try:
+                await self.repo.delete_record(db, existing.id)
+            except Exception:
+                pass
+
+        # 3) Save upload first, but ALWAYS compensate if DB insert dedups concurrently
         stored = await self.storage.save_upload(
             workspace_id=workspace_id,
             doc_id=doc_id,
@@ -69,9 +83,20 @@ class DocumentService:
             created_at=now,
             updated_at=now,
         )
+
         record = await self.repo.create(db, record)
 
-        # Ingest + index
+        # If create() deduped due to concurrent insert, it returns the existing record.
+        # In that case, delete the file we just saved to avoid orphan storage.
+        if record.id != doc_id:
+            try:
+                await self.storage.delete(stored.storage_key)
+            except Exception:
+                pass
+            # If existing is good, return it; if it's error, caller can retry later.
+            return record
+
+        # 4) Ingest + index (only for the winner that actually created the record)
         try:
             text = self._bytes_to_text(data)
 
@@ -79,6 +104,7 @@ class DocumentService:
             ingest_start = perf_counter()
             stats_before = await vector_store.get_stats()
             vectors_before = stats_before.get('total_vectors') or stats_before.get('total_vectors', 0)
+
             ingest = IngestService(
                 chunk_size=chunk_size or settings.ingest_chunk_size,
                 chunk_overlap=chunk_overlap or settings.ingest_chunk_overlap,
@@ -124,6 +150,9 @@ class DocumentService:
         record.updated_at = datetime.utcnow()
         await self.repo.update(db, record)
         return record
+
+
+
 
 
 
