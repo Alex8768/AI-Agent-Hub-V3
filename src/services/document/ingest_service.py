@@ -383,12 +383,12 @@ class IngestService:
         final_metadata.setdefault("workspace_id", "default")
         return final_metadata
     
-    async def _generate_embeddings_batch(self, chunks: List[Chunk]) -> List[Chunk]:
-        """Генерация эмбеддингов для всех чанков.
-        
+    async def _generate_embeddings_batch(self, chunks: List[Chunk], batch_size: int = 32) -> List[Chunk]:
+        """Генерация эмбеддингов для чанков батчами (защита от OOM на больших документах).
+
         Returns:
             List[Chunk]: чанки с эмбеддингами
-            
+
         Raises:
             EmbeddingError: если не удалось сгенерировать эмбеддинги
         """
@@ -397,48 +397,80 @@ class IngestService:
             model = await embedding_factory.create_embedding_model(
                 provider_type="sentence_transformer"
             )
-            
-            texts = [chunk.content for chunk in chunks]
-            embeddings = await model.embed_documents(texts)
-            
-            if len(embeddings) != len(chunks):
-                raise EmbeddingError(
-                    message=f"Embedding count mismatch: expected {len(chunks)}, got {len(embeddings)}"
+
+            total = len(chunks)
+            if total == 0:
+                return []
+
+            result_chunks: List[Chunk] = []
+
+            for start in range(0, total, batch_size):
+                batch = chunks[start : start + batch_size]
+                texts = [c.content for c in batch]
+
+                self._logger.info(
+                    "Embedding batch",
+                    context={
+                        "start": start,
+                        "end": min(start + batch_size, total),
+                        "total": total,
+                        "batch_size": len(batch),
+                    },
                 )
-            
-            result_chunks = []
-            for i, chunk in enumerate(chunks):
-                chunk_copy = Chunk(
-                    id=chunk.id,
-                    content=chunk.content,
-                    metadata=chunk.metadata.copy(),
-                    embedding=embeddings[i]
-                )
-                result_chunks.append(chunk_copy)
-            
+
+                embeddings = await model.embed_documents(texts)
+                try:
+                    if len(embeddings) != len(batch):
+                        raise EmbeddingError(
+                            message=f"Embedding count mismatch: expected {len(batch)}, got {len(embeddings)}"
+                        )
+
+                    for i, chunk in enumerate(batch):
+                        # Keep content as-is for downstream logic; embedding is attached.
+                        result_chunks.append(
+                            Chunk(
+                                id=chunk.id,
+                                content=chunk.content,
+                                metadata=chunk.metadata.copy(),
+                                embedding=embeddings[i],
+                            )
+                        )
+                finally:
+                    # Release batch embeddings ASAP (important for MPS/unified memory)
+                    try:
+                        del embeddings
+                    except Exception:
+                        pass
+                    try:
+                        import torch
+                        if getattr(torch.backends, "mps", None) is not None and torch.backends.mps.is_available():
+                            torch.mps.empty_cache()
+                    except Exception:
+                        # Non-fatal: cleanup best-effort
+                        pass
+
             self._logger.info(
                 "Эмбеддинги сгенерированы",
                 context={
-                    "chunks": len(chunks),
-                    "dimensions": len(embeddings[0]) if embeddings else 0
-                }
+                    "chunks": len(result_chunks),
+                    "dimensions": len(result_chunks[0].embedding) if result_chunks and result_chunks[0].embedding else 0,
+                    "batch_size": batch_size,
+                },
             )
-            
             return result_chunks
-            
+
         except Exception as e:
-            from src.core.exceptions import wrap_exception, EmbeddingError
             wrapped = wrap_exception(
                 e,
                 EmbeddingError,
                 message="Embedding failed",
                 details={
                     "chunks_count": len(chunks),
-                    "error_type": type(e).__name__
-                }
+                    "batch_size": batch_size,
+                    "error_type": type(e).__name__,
+                },
             )
-            raise wrapped
-    
+            raise wrapped from e
     def _prepare_vector_documents(
         self,
         chunks: List[Chunk],
