@@ -1,11 +1,13 @@
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, TYPE_CHECKING
 
-from src.core.config import settings
 from src.core.contracts import SearchResult as CoreSearchResult
-from src.layers.base.rag.vector_stores.faiss_store import FAISSVectorStore
+from src.layers.base.rag.vector_stores.factory import get_vector_store_singleton
 from src.layers.base.rag.embedders.query_embedder import QueryEmbedder
+
+if TYPE_CHECKING:
+    from src.layers.base.rag.vector_stores.faiss_store import FAISSVectorStore
 
 
 class RAGEngine:
@@ -16,14 +18,13 @@ class RAGEngine:
     """
 
     def __init__(self):
-        cfg = settings.get_vector_store_config()
-
-        # VectorStoreConfig is a typed object (not dict)
-        index_path = getattr(cfg, "path", None) or settings.faiss_index_path
-        dimension = getattr(cfg, "dimension", None) or settings.faiss_dimension
-
-        self.vector_store = FAISSVectorStore(index_path=str(index_path), dimension=int(dimension))
+        self._vector_store: Optional["FAISSVectorStore"] = None
         self.embedder = QueryEmbedder(provider_type="sentence_transformer")
+
+    async def _get_vector_store(self) -> "FAISSVectorStore":
+        if self._vector_store is None:
+            self._vector_store = await get_vector_store_singleton()
+        return self._vector_store
 
     async def search(
         self,
@@ -39,7 +40,7 @@ class RAGEngine:
 
         query_vec = await self.embedder.embed_query(query)
 
-        results = await self.vector_store.search(
+        results = await (await self._get_vector_store()).search(
             query=query,
             query_embedding=query_vec,
             k=k,

@@ -50,8 +50,10 @@ async def lifespan(app: FastAPI):
     # Base polish: initialize and cache one RAGEngine for the whole app process
     try:
         from src.layers.base.rag.engines.rag_engine import RAGEngine
+        from src.layers.base.rag.vector_stores.factory import get_vector_store_singleton
         app.state.rag_engine = RAGEngine()
-        await app.state.rag_engine.vector_store.initialize()
+        # Warm up FAISS singleton once per process
+        await get_vector_store_singleton()
         logger.info("✅ RAGEngine singleton ready (FAISS initialized)")
     except Exception as e:
         logger.warning(f"⚠️ RAGEngine singleton skipped (non-fatal): {e}")

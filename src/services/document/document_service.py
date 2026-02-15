@@ -11,7 +11,7 @@ from loguru import logger
 from src.core.config import settings
 from src.infrastructure.database.models import DocumentRecord
 from src.infrastructure.storage.local_storage import LocalStorage
-from src.layers.base.rag.vector_stores.faiss_store import FAISSVectorStore
+from src.layers.base.rag.vector_stores.factory import get_vector_store_singleton
 from src.services.document.registry_repository import DocumentRegistryRepository
 from src.services.document.ingest_service import IngestService
 
@@ -27,14 +27,8 @@ class DocumentService:
     def _bytes_to_text(self, data: bytes) -> str:
         # Base: handle text-ish uploads. (pdf/docx parsing later)
         return data.decode("utf-8", errors="ignore")
-
-    async def _get_vector_store(self) -> FAISSVectorStore:
-        cfg = settings.get_vector_store_config()
-        index_path = getattr(cfg, "path", None) or settings.faiss_index_path
-        dimension = getattr(cfg, "dimension", None) or settings.faiss_dimension
-        store = FAISSVectorStore(index_path=str(index_path), dimension=int(dimension))
-        await store.initialize()
-        return store
+    async def _get_vector_store(self):
+        return await get_vector_store_singleton()
 
     async def create_from_upload(
         self,
