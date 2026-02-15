@@ -34,7 +34,7 @@ async def _repair_documents_table_if_needed() -> None:
 
 async def _dedupe_documents_rows(conn) -> None:
     """
-    Remove duplicates so we can apply UNIQUE(workspace_id, content_hash).
+    Remove duplicates (SQLite-only) so we can apply UNIQUE(workspace_id, content_hash).
     Keeps the oldest row (MIN(rowid)) per key.
     """
     await conn.execute(text("""
@@ -61,13 +61,20 @@ async def init_db() -> None:
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
 
-            # ensure we can create unique index
-            await _dedupe_documents_rows(conn)
+            # Enforce idempotency constraint.
+            # SQLite: we can dedupe using rowid to allow creating a unique index.
+            # Non-SQLite (e.g., Postgres): rowid doesn't exist; schema should be handled via migrations.
+            dialect = conn.dialect.name if hasattr(conn, "dialect") else ""
+            if dialect == "sqlite":
+                # ensure we can create unique index
+                await _dedupe_documents_rows(conn)
 
-            await conn.execute(text(
-                "CREATE UNIQUE INDEX IF NOT EXISTS uq_documents_ws_hash "
-                "ON documents(workspace_id, content_hash)"
-            ))
+                await conn.execute(text(
+                    "CREATE UNIQUE INDEX IF NOT EXISTS uq_documents_ws_hash "
+                    "ON documents(workspace_id, content_hash)"
+                ))
+            else:
+                logger.info(f"DB init: skipping SQLite rowid dedupe for dialect={dialect}")
 
         logger.info("✅ DB init: tables ensured")
     except Exception as e:
