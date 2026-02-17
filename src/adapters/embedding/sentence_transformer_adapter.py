@@ -7,6 +7,7 @@ from typing import List, Optional, Dict, Any
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 import torch
+from src.core.accelerator import accelerator
 
 from src.core.config import settings
 
@@ -32,15 +33,11 @@ class SentenceTransformerAdapter(EmbeddingModel):
         self._executor = ThreadPoolExecutor(max_workers=max_workers)
         self._logger = get_logger()
         
-        # Автоопределение устройства (M4 = mps)
+        # Auto device selection (single source of truth)
         if device:
             self._device = device
-        elif torch.backends.mps.is_available():
-            self._device = "mps"
-        elif torch.cuda.is_available():
-            self._device = "cuda"
         else:
-            self._device = "cpu"
+            self._device = accelerator.device
             
         self._model = None
         self._logger.info(f"SentenceTransformerAdapter initialized on {self._device}")
@@ -124,8 +121,7 @@ class SentenceTransformerAdapter(EmbeddingModel):
         pass
 
     def clear_cache(self) -> None:
-        if self._model and self._device == "mps":
-            torch.mps.empty_cache()
-
+        if self._model:
+            accelerator.empty_cache()
     async def cleanup(self) -> None:
         self._executor.shutdown()

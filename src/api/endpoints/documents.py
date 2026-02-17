@@ -7,7 +7,8 @@ from __future__ import annotations
 
 from typing import List
 
-from fastapi import APIRouter, File, HTTPException, Query, UploadFile, status
+from fastapi import APIRouter, File, HTTPException, Query, UploadFile
+import starlette.status as http_status
 from loguru import logger
 
 from src.core.config import settings
@@ -54,7 +55,7 @@ async def upload_document(
     except Exception as e:
         logger.error(f"Document upload error: {e}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Document processing failed: {str(e)}"
         )
 
@@ -82,7 +83,7 @@ async def delete_document(document_id: str):
     except Exception as e:
         logger.error(f"Delete document error: {e}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to delete document: {str(e)}"
         )
 
@@ -121,7 +122,7 @@ async def get_document(document_id: str):
     except Exception as e:
         logger.error(f"Get document error: {e}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get document: {str(e)}"
         )
 
@@ -156,6 +157,6 @@ async def list_documents(
     except Exception as e:
         logger.error(f"List documents error: {e}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to list documents: {str(e)}"
         )

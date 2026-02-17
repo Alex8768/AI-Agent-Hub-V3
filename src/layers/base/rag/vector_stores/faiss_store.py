@@ -206,6 +206,7 @@ class FAISSVectorStore(VectorStore):
             
             # Преобразуем эмбеддинги в numpy
             import faiss
+            import numpy as np
             
             if embeddings:
                 vectors = np.array(embeddings, dtype=np.float32)
@@ -278,6 +279,7 @@ class FAISSVectorStore(VectorStore):
         
         try:
             import faiss
+            import numpy as np
             
             # Если эмбеддинг не предоставлен, нужно его получить
             if query_embedding is None:
@@ -414,6 +416,7 @@ class FAISSVectorStore(VectorStore):
     async def _rebuild_index(self):
         """Перестраивает индекс после удаления документов."""
         import faiss
+        import numpy as np
         
         # Собираем все векторы заново
         vectors = []

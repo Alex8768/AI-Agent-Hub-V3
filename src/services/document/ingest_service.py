@@ -14,6 +14,7 @@ from dataclasses import dataclass
 from enum import Enum
 
 from src.core.contracts import VectorStore, VectorDocument
+from src.core.accelerator import accelerator
 from src.adapters.embedding import get_embedding_factory
 from src.adapters.logging_adapter import get_logger
 from src.core.exceptions import (
@@ -441,21 +442,15 @@ class IngestService:
                         del embeddings
                     except Exception:
                         pass
-                    try:
-                        import torch
-                        if getattr(torch.backends, "mps", None) is not None and torch.backends.mps.is_available():
-                            torch.mps.empty_cache()
-                    except Exception:
-                        # Non-fatal: cleanup best-effort
-                        pass
-
+                    # Unified cache cleanup (cuda/mps/no-op)
+                    accelerator.empty_cache()
             self._logger.info(
-                "Эмбеддинги сгенерированы",
-                context={
-                    "chunks": len(result_chunks),
-                    "dimensions": len(result_chunks[0].embedding) if result_chunks and result_chunks[0].embedding else 0,
-                    "batch_size": batch_size,
-                },
+            "Эмбеддинги сгенерированы",
+            context={
+            "chunks": len(result_chunks),
+            "dimensions": len(result_chunks[0].embedding) if result_chunks and result_chunks[0].embedding else 0,
+            "batch_size": batch_size,
+            },
             )
             return result_chunks
 
