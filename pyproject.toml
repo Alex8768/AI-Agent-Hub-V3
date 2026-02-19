@@ -70,6 +70,7 @@ dependencies = [
     "aiofiles>=23.2.0",
     "redis>=5.0.0",
     "sqlalchemy>=2.0.0",
+    "aiosqlite>=0.20.0",
     "asyncpg>=0.29.0",
     
     # Export Layer

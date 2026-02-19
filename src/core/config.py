@@ -109,6 +109,22 @@ class Settings(BaseSettings):
         description="HuggingFace cache dir (HF_HOME)"
     )
 
+    # Hardware/device selection
+    # DEVICE=auto|cpu|cuda|mps
+    device: str = Field(
+        default="auto",
+        description="Compute device preference: auto|cpu|cuda|mps",
+    )
+
+    # Embedding batching (optional override)
+    # EMBEDDING_BATCH_SIZE=32 (or unset to auto-tune)
+    embedding_batch_size: Optional[int] = Field(
+        default=None,
+        description="Embedding batch size override (None = auto)",
+        ge=1,
+        le=4096,
+    )
+
     hf_hub_disable_telemetry: bool = Field(
         default=False,
         description="Disable HF telemetry (HF_HUB_DISABLE_TELEMETRY)"
@@ -361,7 +377,7 @@ class Settings(BaseSettings):
     )
     
     faiss_dimension: int = Field(
-        default=1536,  # OpenAI ada-002 dimension
+        default=384,  # sentence-transformers MiniLM dimension
         ge=1,
         description="FAISS embedding dimension"
     )

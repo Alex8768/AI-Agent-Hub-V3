@@ -14,6 +14,7 @@ from dataclasses import dataclass
 from enum import Enum
 
 from src.core.contracts import VectorStore, VectorDocument
+from src.core.config import settings
 from src.core.accelerator import accelerator
 from src.adapters.embedding import get_embedding_factory
 from src.adapters.logging_adapter import get_logger
@@ -384,7 +385,7 @@ class IngestService:
         final_metadata.setdefault("workspace_id", "default")
         return final_metadata
     
-    async def _generate_embeddings_batch(self, chunks: List[Chunk], batch_size: int = 32) -> List[Chunk]:
+    async def _generate_embeddings_batch(self, chunks: List[Chunk], batch_size: int | None = None) -> List[Chunk]:
         """Генерация эмбеддингов для чанков батчами (защита от OOM на больших документах).
 
         Returns:
@@ -400,6 +401,11 @@ class IngestService:
             )
 
             total = len(chunks)
+            # Resolve batch size (auto by default, overridable via settings.EMBEDDING_BATCH_SIZE)
+            if batch_size is None:
+                base = int(getattr(settings, 'embedding_batch_size', None) or 32)
+                batch_size = accelerator.recommended_batch_size(base=base)
+
             if total == 0:
                 return []
 

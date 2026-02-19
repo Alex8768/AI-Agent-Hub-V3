@@ -33,11 +33,12 @@ class SentenceTransformerAdapter(EmbeddingModel):
         self._executor = ThreadPoolExecutor(max_workers=max_workers)
         self._logger = get_logger()
         
-        # Auto device selection (single source of truth)
+        # Auto device selection (single source of truth) with override via settings.DEVICE
         if device:
             self._device = device
         else:
-            self._device = accelerator.device
+            pref = getattr(settings, "device", "auto") or "auto"
+            self._device = pref if pref != "auto" else accelerator.device
             
         self._model = None
         self._logger.info(f"SentenceTransformerAdapter initialized on {self._device}")
