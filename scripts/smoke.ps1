@@ -1,4 +1,5 @@
 # scripts/smoke.ps1
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 param(
   [string]$BaseUrl = $env:BASE_URL,
   [string]$TmpDir = $env:TMP_DIR,
@@ -105,7 +106,8 @@ if ($docId1 -ne $docId2) { Fail "Dedup failed: ids differ" }
 Write-Host "   ✅ Dedup OK"
 
 Write-Host "5) Search (snippet mode)"
-$search1 = & curl.exe -sS -H "Content-Type: application/json" -d '{"query":"foxes","k":3,"include_metadata":false}' "$Api/api/v1/search"
+$bodySearch1 = '{"query":"foxes","k":3,"include_metadata":false}'
+$search1 = & curl.exe -sS -H "Content-Type: application/json" --data-binary $bodySearch1 "$Api/api/v1/search"
 $count1 = JsonLen $search1
 Write-Host "   results: $count1"
 if ([int]$count1 -lt 1) {
@@ -116,7 +118,8 @@ if ([int]$count1 -lt 1) {
 Write-Host "   ✅ Search OK (snippet)"
 
 Write-Host "6) Search (include_content=true)"
-$search2 = & curl.exe -sS -H "Content-Type: application/json" -d '{"query":"foxes","k":1,"include_content":true,"include_metadata":false}' "$Api/api/v1/search"
+$bodySearch2 = '{"query":"foxes","k":1,"include_content":true,"include_metadata":false}'
+$search2 = & curl.exe -sS -H "Content-Type: application/json" --data-binary $bodySearch2 "$Api/api/v1/search"
 $count2 = JsonLen $search2
 if ([int]$count2 -lt 1) {
   Write-Host "   ❌ Search include_content returned no results"
@@ -126,7 +129,8 @@ if ([int]$count2 -lt 1) {
 Write-Host "   ✅ Search OK (include_content)"
 
 Write-Host "7) Export (content -> pdf) + download"
-$export = & curl.exe -sS -H "Content-Type: application/json" -d '{"content":"Hello export world!","format":"pdf"}' "$Api/api/v1/export"
+$bodyExport = '{"content":"Hello export world!","format":"pdf"}'
+$export = & curl.exe -sS -H "Content-Type: application/json" --data-binary $bodyExport "$Api/api/v1/export"
 $exportId = ($export | python scripts/jsonutil.py export_id)
 if (-not $exportId) {
   Write-Host "   ❌ Export did not return export_id"

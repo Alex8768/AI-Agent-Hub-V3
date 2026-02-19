@@ -45,6 +45,8 @@ class FAISSVectorStore(VectorStore):
         self._index_to_id = {}     # faiss_index -> document_id (reverse map)
         # Инициализация будет ленивой
         self._initialized = False
+        # Write-lock for concurrent add/save operations (important on Win/Linux)
+        self._write_lock = asyncio.Lock()
     
     # ============ РЕАЛИЗАЦИЯ КОНТРАКТНЫХ МЕТОДОВ ============
     
@@ -220,24 +222,25 @@ class FAISSVectorStore(VectorStore):
             # Нормализуем векторы для косинусного сходства
             faiss.normalize_L2(vectors)
             
-            # Добавляем в индекс
-            start_idx = self._index.ntotal
-            self._index.add(vectors)
-            
-            # Сохраняем документы
-            added_ids = []
-            for i, doc in enumerate(documents):
-                doc_id = doc.id
+            # Добавляем в индекс + обновляем маппинги атомарно относительно других writer-операций
+            async with self._write_lock:
+                start_idx = self._index.ntotal
+                self._index.add(vectors)
                 
-                # Сохраняем документ
-                light = self._lighten_document(doc)
-                self._document_store[doc_id] = light
-                self._id_to_index[doc_id] = start_idx + i
-                self._index_to_id[start_idx + i] = doc_id
-                added_ids.append(doc_id)
-            
-            # Сохраняем индекс
-            self._save_index()
+                # Сохраняем документы
+                added_ids = []
+                for i, doc in enumerate(documents):
+                    doc_id = doc.id
+                    
+                    # Сохраняем документ
+                    light = self._lighten_document(doc)
+                    self._document_store[doc_id] = light
+                    self._id_to_index[doc_id] = start_idx + i
+                    self._index_to_id[start_idx + i] = doc_id
+                    added_ids.append(doc_id)
+                
+                # Сохраняем индекс
+                self._save_index()
             
             self._logger.info(f"Добавлено {len(documents)} документов в FAISS")
             return added_ids

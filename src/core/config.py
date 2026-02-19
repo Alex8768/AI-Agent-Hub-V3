@@ -22,6 +22,8 @@ import json
 
 from src.core.exceptions import ConfigurationError
 
+from src.core.paths import get_default_data_dir, ensure_dir
+
 try:
     from src.core.types import LLMConfig, VectorStoreConfig, MCPConfig
 except ImportError:
@@ -169,6 +171,27 @@ class Settings(BaseSettings):
         if info.data.get("environment") == Environment.PRODUCTION:
             return False
         return v
+
+    # ============ DATA DIRECTORIES (CROSS-PLATFORM) ============
+    data_dir: Path = Field(
+        default_factory=get_default_data_dir,
+        description="Cross-platform app data dir (override: AI_AGENT_HUB_DATA_DIR)",
+    )
+
+    @property
+    def storage_dir(self) -> Path:
+        """Local file storage directory (uploads, temp, etc.)."""
+        return ensure_dir(self.data_dir / "storage")
+
+    @property
+    def faiss_dir(self) -> Path:
+        """FAISS indices directory."""
+        return ensure_dir(self.data_dir / "faiss")
+
+    @property
+    def db_dir(self) -> Path:
+        """SQLite / local DB directory."""
+        return ensure_dir(self.data_dir / "db")
     
     # ============ API SETTINGS ============
     api_v1_str: str = Field(
