@@ -76,6 +76,40 @@ class WorkspaceGuard:
 
         return candidate
 
+    def safe_path_root(self, workspace_root: str | Path, user_path: str | Path) -> Path:
+        """Return a safe absolute path inside an explicit workspace root.
+
+        Use-case: MCP filesystem server where root is configured directly (not workspace_id-based).
+        Security:
+        - Reject absolute user paths
+        - Prevent '..' traversal escape
+        - Prevent symlink escape (realpath must stay within root)
+        """
+        root = Path(workspace_root).resolve()
+
+        up = Path(user_path)
+        if up.is_absolute():
+            raise WorkspaceAccessError("Absolute paths are not allowed")
+
+        candidate = (root / up).resolve()
+
+        # Ensure inside root
+        try:
+            candidate.relative_to(root)
+        except Exception:
+            raise WorkspaceAccessError("Path traversal detected")
+
+        # Symlink escape protection
+        real_root = Path(os.path.realpath(root))
+        real_candidate = Path(os.path.realpath(candidate))
+        try:
+            real_candidate.relative_to(real_root)
+        except Exception:
+            raise WorkspaceAccessError("Symlink escape detected")
+
+        return candidate
+
+
     async def validate_workspace_access(self, workspace_id: str, user_id: str) -> bool:
         """Placeholder access policy.
 

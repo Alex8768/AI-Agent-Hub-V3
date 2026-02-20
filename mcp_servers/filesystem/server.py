@@ -52,7 +52,7 @@ class FilesystemMCPServer:
             """List files in directory."""
             try:
                 # Validate path is within workspace
-                safe_path = self.guard.safe_path(settings.workspace_root_path, path)
+                safe_path = self.guard.safe_path_root(settings.workspace_root_path, path)
                 
                 if not safe_path.exists():
                     return f"Path does not exist: {path}"
@@ -113,7 +113,7 @@ class FilesystemMCPServer:
         async def read_file(path: str, encoding: str = "utf-8") -> str:
             """Read file contents."""
             try:
-                safe_path = self.guard.safe_path(settings.workspace_root_path, path)
+                safe_path = self.guard.safe_path_root(settings.workspace_root_path, path)
                 
                 if not safe_path.exists():
                     return f"File does not exist: {path}"
@@ -171,7 +171,7 @@ class FilesystemMCPServer:
         ) -> str:
             """Write content to file."""
             try:
-                safe_path = self.guard.safe_path(settings.workspace_root_path, path)
+                safe_path = self.guard.safe_path_root(settings.workspace_root_path, path)
                 
                 if safe_path.exists() and not overwrite:
                     return f"File already exists: {path}. Use overwrite=true to replace."

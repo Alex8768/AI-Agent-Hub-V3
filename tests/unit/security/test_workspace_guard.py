@@ -57,3 +57,25 @@ def test_safe_path_blocks_symlink_escape(tmp_path: Path):
 
     with pytest.raises(WorkspaceAccessError):
         guard.safe_path(wid, "link_out/secret.txt")
+
+
+def test_safe_path_root_blocks_traversal(tmp_path: Path):
+    guard = WorkspaceGuard(base_dir=tmp_path)
+    root = tmp_path / "root"
+    root.mkdir(parents=True, exist_ok=True)
+
+    with pytest.raises(WorkspaceAccessError):
+        guard.safe_path_root(root, "../outside.txt")
+
+    with pytest.raises(WorkspaceAccessError):
+        guard.safe_path_root(root, "../../etc/passwd")
+
+
+def test_safe_path_root_allows_relative_inside(tmp_path: Path):
+    guard = WorkspaceGuard(base_dir=tmp_path)
+    root = tmp_path / "root"
+    root.mkdir(parents=True, exist_ok=True)
+
+    p = guard.safe_path_root(root, "a/b.txt")
+    assert p.is_absolute()
+    assert str(p).endswith("a/b.txt") or str(p).endswith("a\\b.txt")
