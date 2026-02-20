@@ -6,13 +6,12 @@ import asyncio
 from typing import List, Optional, Dict, Any
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-import torch
 from src.core.accelerator import accelerator
 
 from src.core.config import settings
 
 from src.core.contracts import EmbeddingModel
-from src.core.exceptions import EmbeddingError
+from src.core.exceptions import EmbeddingError, ConfigurationError
 from src.adapters.logging_adapter import get_logger
 
 class SentenceTransformerAdapter(EmbeddingModel):
@@ -46,6 +45,14 @@ class SentenceTransformerAdapter(EmbeddingModel):
     def _get_model(self):
         """Lazy model load with strict offline enforcement (no HF network)."""
         if self._model is None:
+            # sentence-transformers imports torch internally; keep adapter lazy, but fail clearly if used.
+            if not accelerator.torch_available:
+                raise ConfigurationError(
+                    message=(
+                        "SentenceTransformer embedding requires torch + sentence-transformers. "
+                        "Install torch (and sentence-transformers) or use a non-torch embedder."
+                    )
+                )
             import os
 
             # Resolve HF cache dir
@@ -69,7 +76,15 @@ class SentenceTransformerAdapter(EmbeddingModel):
             offline = bool(getattr(settings, "hf_hub_offline", False) or getattr(settings, "transformers_offline", False))
 
             # Import AFTER env is applied (prevents HF Hub network lookups)
-            from sentence_transformers import SentenceTransformer
+            try:
+                from sentence_transformers import SentenceTransformer
+            except Exception as e:
+                raise ConfigurationError(
+                    message=(
+                        "sentence-transformers is not available (or torch backend is missing). "
+                        "Install required dependencies for local embeddings."
+                    )
+                ) from e
 
             self._model = SentenceTransformer(
                 self._model_name,

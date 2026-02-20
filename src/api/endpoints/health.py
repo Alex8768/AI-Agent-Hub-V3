@@ -10,6 +10,7 @@ from pathlib import Path
 from fastapi import APIRouter
 
 from src.core.config import settings
+from src.core.accelerator import accelerator
 from src.api.schemas import HealthResponse
 
 router = APIRouter(tags=["Health"])
@@ -70,9 +71,8 @@ async def health_check():
         cached_legacy = cached_legacy() if callable(cached_legacy) else None
         providers = await factory.get_available_providers()
 
-        effective_device = getattr(settings, "embedding_device", None) or (
-            "mps" if _is_mps_available() else "cpu"
-        )
+        requested = getattr(settings, "device", "auto") or "auto"
+        effective_device = requested if requested != "auto" else accelerator.device
 
         services["embeddings"] = {
             "status": "healthy",

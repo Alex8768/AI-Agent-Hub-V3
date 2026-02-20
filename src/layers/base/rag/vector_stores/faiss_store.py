@@ -13,6 +13,7 @@ import pickle
 from src.core.contracts import VectorStore, VectorDocument, SearchResult
 from src.core.exceptions import VectorStoreError
 from src.adapters.logging_adapter import get_logger
+from src.core.accelerator import accelerator
 
 
 class FAISSVectorStore(VectorStore):
@@ -68,10 +69,8 @@ class FAISSVectorStore(VectorStore):
         """Очистка ресурсов."""
         if self._initialized:
             self._save_index()
-            # Очищаем кэш если используем MPS
-            import torch
-            if torch.backends.mps.is_available():
-                torch.mps.empty_cache()
+            # Best-effort cache cleanup (torch optional, centralized)
+            accelerator.empty_cache()
             self._logger.info("FAISS store очищен")
     
     async def health_check(self) -> Dict[str, Any]:

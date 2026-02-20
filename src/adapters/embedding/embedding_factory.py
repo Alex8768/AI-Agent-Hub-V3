@@ -13,14 +13,12 @@ from src.core.contracts import EmbeddingModel, EmbeddingFactory
 from src.core.exceptions import ConfigurationError
 from src.core.config import settings
 from src.adapters.logging_adapter import get_logger
+from src.core.accelerator import accelerator
 
 
 def _is_mps_available() -> bool:
-    try:
-        import torch
-        return bool(getattr(torch.backends, "mps", None) and torch.backends.mps.is_available())
-    except Exception:
-        return False
+    # Single source of truth: accelerator (torch optional)
+    return accelerator.torch_available and accelerator.device == "mps"
 
 
 class EmbeddingFactoryImpl(EmbeddingFactory):
@@ -51,9 +49,26 @@ class EmbeddingFactoryImpl(EmbeddingFactory):
 
     def _get_default_config(self, provider_type: str) -> Dict[str, Any]:
         if provider_type in ["sentence_transformer", "local"]:
-            device = getattr(settings, "embedding_device", None) or ("mps" if _is_mps_available() else "cpu")
+            # device: single source of truth is settings.device (auto|cpu|cuda|mps)
+            pref = getattr(settings, "device", "auto") or "auto"
+            if pref == "auto":
+                device = accelerator.device
+            else:
+                if pref == "cuda" and accelerator.device != "cuda":
+                    raise ConfigurationError(message="CUDA requested (DEVICE=cuda) but CUDA is not available.")
+                if pref == "mps":
+                    if not accelerator.torch_available:
+                        raise ConfigurationError(message="MPS requested (DEVICE=mps) but torch is not installed.")
+                    if accelerator.device != "mps":
+                        raise ConfigurationError(message="MPS requested (DEVICE=mps) but MPS is not available.")
+                device = pref
+            model_name = (
+                getattr(settings, "embedding_model_name", None)
+                or getattr(settings, "embedding_model", None)
+                or "paraphrase-multilingual-MiniLM-L12-v2"
+            )
             return {
-                "model_name": getattr(settings, "embedding_model", "paraphrase-multilingual-MiniLM-L12-v2"),
+                "model_name": model_name,
                 "device": device,
             }
         return {}
