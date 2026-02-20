@@ -14,3 +14,5 @@ repomix-output.xml
 
 # local runtime data
 data/
+# build artifacts
+src/*.egg-info/
