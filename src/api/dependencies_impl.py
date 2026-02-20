@@ -7,6 +7,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from src.core.config import settings
+from src.security.auth.jwt import verify_token, JWTError
 
 
 security = HTTPBearer(auto_error=False)
@@ -15,7 +16,11 @@ security = HTTPBearer(auto_error=False)
 async def get_current_user(
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)
 ):
-    """Get current user from token."""
+    """Get current user from Bearer JWT.
+
+    - In production: requires valid JWT (HS256) with at least `sub`
+    - In debug mode: allows anonymous access (debug_user) if no token provided
+    """
     if not settings.debug:
         if not credentials:
             raise HTTPException(
@@ -23,13 +28,66 @@ async def get_current_user(
                 detail="Authentication required",
                 headers={"WWW-Authenticate": "Bearer"},
             )
-        
-        # TODO: Implement actual token validation
-        # For now, return a mock user
-        return {"id": "user_123", "username": "demo_user"}
-    
-    # In debug mode, allow anonymous access
-    return {"id": "debug_user", "username": "debug"}
+
+        secret = getattr(settings, "jwt_secret", None) or getattr(settings, "secret_key", None) or ""
+        if not secret:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="JWT secret is not configured",
+            )
+
+        token = credentials.credentials
+        try:
+            claims = verify_token(
+                token,
+                secret,
+                issuer=getattr(settings, "jwt_issuer", None),
+                audience=getattr(settings, "jwt_audience", None),
+            )
+        except JWTError as e:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail=f"Invalid token: {e}",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        user_id = claims.get("sub") or claims.get("user_id") or claims.get("id")
+        if not user_id:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token: missing sub",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        return {
+            "id": str(user_id),
+            "username": claims.get("username") or claims.get("preferred_username") or str(user_id),
+            "roles": claims.get("roles") or [],
+            "claims": claims,
+        }
+
+    # Debug mode: allow anonymous access, but if token provided — still validate (best effort)
+    if credentials:
+        secret = getattr(settings, "jwt_secret", None) or getattr(settings, "secret_key", None) or ""
+        if secret:
+            try:
+                claims = verify_token(
+                    credentials.credentials,
+                    secret,
+                    issuer=getattr(settings, "jwt_issuer", None),
+                    audience=getattr(settings, "jwt_audience", None),
+                )
+                user_id = claims.get("sub") or claims.get("user_id") or claims.get("id") or "debug_user"
+                return {
+                    "id": str(user_id),
+                    "username": claims.get("username") or claims.get("preferred_username") or str(user_id),
+                    "roles": claims.get("roles") or [],
+                    "claims": claims,
+                }
+            except Exception:
+                pass
+
+    return {"id": "debug_user", "username": "debug", "roles": [], "claims": {}}
 
 
 async def get_workspace(
