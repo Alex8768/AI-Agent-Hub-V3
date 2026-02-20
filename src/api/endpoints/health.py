@@ -90,7 +90,7 @@ async def health_check():
 
     # --- Export storage ---
     try:
-        exports_dir = Path("./data/exports")
+        exports_dir = Path(settings.data_dir) / "exports"
         exports_dir.mkdir(parents=True, exist_ok=True)
         probe = exports_dir / ".health_probe"
         probe.write_text("ok", encoding="utf-8")

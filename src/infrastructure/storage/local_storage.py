@@ -7,6 +7,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
+from src.core.config import settings
+
 from src.security.workspace_guard import WorkspaceGuard, WorkspaceAccessError
 
 
@@ -27,12 +29,12 @@ class LocalStorage:
     """
 
     def __init__(self, root_dir: str | None = None):
-        self.root = Path(root_dir or "./data/uploads")
+        self.root = Path(root_dir) if root_dir else (settings.data_dir / "uploads")
         self.root.mkdir(parents=True, exist_ok=True)
 
         # canonical roots
         self.uploads_root = self.root.resolve()
-        self.data_root = Path("./data").resolve()
+        self.data_root = Path(settings.data_dir).resolve()
 
         # WorkspaceGuard base_dir points to uploads_root so workspace_root(workspace_id) == uploads_root/<ws>
         self._guard = WorkspaceGuard(base_dir=self.uploads_root)

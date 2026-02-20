@@ -395,7 +395,7 @@ class Settings(BaseSettings):
     
     # FAISS
     faiss_index_path: str = Field(
-        default="./data/vector_store/faiss_index",
+        default_factory=lambda: str(get_default_data_dir() / "faiss" / "faiss_index"),
         description="Path to FAISS index file"
     )
     

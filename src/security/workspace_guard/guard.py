@@ -31,7 +31,9 @@ class WorkspaceGuard:
     def __init__(self, base_dir: Optional[str | Path] = None) -> None:
         # Keep default simple; can be wired to settings.data_dir later (P0.5/P2)
         if base_dir is None:
-            base_dir = Path("./data/workspaces")
+            # Default workspace base dir under settings.data_dir
+            from src.core.config import settings
+            base_dir = settings.data_dir / "workspaces"
         self._base_dir = Path(base_dir)
 
     def workspace_root(self, workspace_id: str) -> Path:

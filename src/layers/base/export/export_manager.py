@@ -3,6 +3,7 @@ from __future__ import annotations
 import base64
 from dataclasses import dataclass
 from pathlib import Path
+from src.core.config import settings
 from uuid import uuid4
 
 from sqlalchemy import select
@@ -28,7 +29,8 @@ class ExportManager:
     - returns ExportArtifact (download via /api/v1/export/{export_id}/download)
     """
 
-    def __init__(self, exports_root: str = "./data/exports"):
+    def __init__(self, exports_root: str | None = None):
+        exports_root = exports_root or str(settings.data_dir / "exports")
         self.root = Path(exports_root)
         self.root.mkdir(parents=True, exist_ok=True)
 
@@ -43,7 +45,7 @@ class ExportManager:
         if rec is None:
             raise ValueError(f"Document not found: {document_id}")
 
-        storage_path = Path("./data") / rec.storage_key
+        storage_path = Path(settings.data_dir) / rec.storage_key
         if not storage_path.exists():
             raise FileNotFoundError(f"Stored file not found: {storage_path}")
 
@@ -135,7 +137,7 @@ class ExportManager:
         elif fmt == "docx":
             self._write_docx(out_file, content, title=title)
 
-        rel = str(out_file.relative_to(Path("./data")))
+        rel = str(out_file.relative_to(Path(settings.data_dir)))
         size = out_file.stat().st_size
         download_url = f"/api/v1/export/{export_id}/download"
 
