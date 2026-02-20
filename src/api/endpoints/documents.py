@@ -7,12 +7,13 @@ from __future__ import annotations
 
 from typing import List
 
-from fastapi import APIRouter, File, HTTPException, Query, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 import starlette.status as http_status
 from loguru import logger
 
 from src.core.config import settings
 from src.api.schemas import DocumentOut, DocumentDetailOut
+from src.api.dependencies import get_workspace
 
 router = APIRouter(tags=["Documents"])
 
@@ -20,6 +21,7 @@ router = APIRouter(tags=["Documents"])
 @router.post("/api/v1/documents/upload", response_model=DocumentOut)
 async def upload_document(
     file: UploadFile = File(...),
+    workspace_id: str = Depends(get_workspace),
     chunk_size: int = Query(default=settings.ingest_chunk_size, ge=100, le=10000),
     chunk_overlap: int = Query(default=settings.ingest_chunk_overlap, ge=0, le=1000),
 ):
@@ -37,7 +39,7 @@ async def upload_document(
                 db,
                 filename=file.filename,
                 data=content,
-                workspace_id="default",
+                workspace_id=workspace_id,
                 mime=getattr(file, "content_type", None),
                 chunk_size=chunk_size,
                 chunk_overlap=chunk_overlap,
@@ -64,6 +66,7 @@ async def upload_document(
 
 @router.delete("/api/v1/documents/{document_id}", tags=["Documents"])
 async def delete_document(document_id: str):
+    workspace_id: str = Depends(get_workspace),
     """Delete document (DB + storage + vectors)."""
     try:
         from src.infrastructure.database import get_db
@@ -92,6 +95,7 @@ async def delete_document(document_id: str):
 
 @router.get("/api/v1/documents/{document_id}", response_model=DocumentDetailOut, tags=["Documents"])
 async def get_document(document_id: str):
+    workspace_id: str = Depends(get_workspace),
     """Get document details by id."""
     try:
         from src.infrastructure.database import get_db
@@ -140,7 +144,7 @@ async def list_documents(
 
         svc = DocumentService()
         async with get_db() as db:
-            rows = await svc.list_documents(db, skip=skip, limit=limit, workspace_id="default", status=status)
+            rows = await svc.list_documents(db, skip=skip, limit=limit, workspace_id=workspace_id, status=status)
 
         return [
             DocumentOut(

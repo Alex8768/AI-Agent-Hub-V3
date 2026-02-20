@@ -6,16 +6,17 @@ from __future__ import annotations
 
 from typing import List
 
-from fastapi import APIRouter, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from loguru import logger
 
 from src.api.schemas import SearchRequest, SearchResult
+from src.api.dependencies import get_workspace
 
 router = APIRouter(tags=["Search"])
 
 
 @router.post("/api/v1/search", response_model=List[SearchResult])
-async def search_documents(http: Request, request: SearchRequest):
+async def search_documents(http: Request, request: SearchRequest, workspace_id: str = Depends(get_workspace)):
     """Search documents using vector search."""
     try:
         from src.layers.base.rag.engines.rag_engine import RAGEngine
@@ -27,7 +28,7 @@ async def search_documents(http: Request, request: SearchRequest):
             k=request.k,
             filters=request.filters,
             similarity_threshold=request.similarity_threshold,
-            workspace_id="default",
+            workspace_id=workspace_id,
         )
 
         response: List[SearchResult] = []
