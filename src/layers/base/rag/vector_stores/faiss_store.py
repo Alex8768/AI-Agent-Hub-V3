@@ -9,6 +9,10 @@ from pathlib import Path
 import json
 import hashlib
 import pickle
+import os
+import time
+import tempfile
+from concurrent.futures import ThreadPoolExecutor
 
 from src.core.contracts import VectorStore, VectorDocument, SearchResult
 from src.core.exceptions import VectorStoreError
@@ -48,6 +52,8 @@ class FAISSVectorStore(VectorStore):
         self._initialized = False
         # Write-lock for concurrent add/save operations (important on Win/Linux)
         self._write_lock = asyncio.Lock()
+        # Single-thread executor for blocking FAISS IO (Win/Linux safe)
+        self._executor = ThreadPoolExecutor(max_workers=1)
     
     # ============ РЕАЛИЗАЦИЯ КОНТРАКТНЫХ МЕТОДОВ ============
     
@@ -68,9 +74,13 @@ class FAISSVectorStore(VectorStore):
     async def cleanup(self) -> None:
         """Очистка ресурсов."""
         if self._initialized:
-            self._save_index()
+            await self._save_index()
             # Best-effort cache cleanup (torch optional, centralized)
             accelerator.empty_cache()
+            try:
+                self._executor.shutdown(wait=True)
+            except Exception:
+                pass
             self._logger.info("FAISS store очищен")
     
     async def health_check(self) -> Dict[str, Any]:
@@ -107,35 +117,42 @@ class FAISSVectorStore(VectorStore):
         """Инициализация FAISS (ленивая загрузка)."""
         try:
             import faiss
-            
+
+            loop = asyncio.get_running_loop()
+
             if self._index_path.exists():
                 # Загружаем существующий индекс
                 self._logger.info(f"Загружаем FAISS индекс из {self._index_path}")
-                self._index = faiss.read_index(str(self._index_path))
-                
-                # Загружаем метаданные
                 meta_path = self._index_path.with_suffix('.meta.pkl')
-                if meta_path.exists():
-                    with open(meta_path, 'rb') as f:
-                        data = pickle.load(f)
-                        self._document_store = data.get('documents', {})
-                        self._id_to_index = data.get('id_to_index', {})
-                
-                        # Sanitize loaded documents: ensure only preview is kept
-                        try:
-                            sanitized = {}
-                            for _did, _doc in (self._document_store or {}).items():
-                                try:
-                                    sanitized[_did] = self._lighten_document(_doc)
-                                except Exception:
-                                    # If something is weird/unpickleable, skip it
-                                    continue
-                            self._document_store = sanitized
-                        except Exception:
-                            pass
 
-                        # Build reverse map for O(1) lookup during search
-                        self._index_to_id = {int(v): k for k, v in (self._id_to_index or {}).items()}
+                def _load_blocking():
+                    idx = faiss.read_index(str(self._index_path))
+                    docs = {}
+                    id_to = {}
+                    if meta_path.exists():
+                        with open(meta_path, 'rb') as f:
+                            data = pickle.load(f)
+                            docs = data.get('documents', {})
+                            id_to = data.get('id_to_index', {})
+                    return idx, docs, id_to
+
+                self._index, self._document_store, self._id_to_index = await loop.run_in_executor(self._executor, _load_blocking)
+                
+                # Sanitize loaded documents: ensure only preview is kept
+                try:
+                    sanitized = {}
+                    for _did, _doc in (self._document_store or {}).items():
+                        try:
+                            sanitized[_did] = self._lighten_document(_doc)
+                        except Exception:
+                            # If something is weird/unpickleable, skip it
+                            continue
+                    self._document_store = sanitized
+                except Exception:
+                    pass
+
+                # Build reverse map for O(1) lookup during search
+                self._index_to_id = {int(v): k for k, v in (self._id_to_index or {}).items()}
                 self._logger.info(f"Индекс загружен: {self._index.ntotal} векторов")
             else:
                 # Создаём новый индекс
@@ -239,7 +256,7 @@ class FAISSVectorStore(VectorStore):
                     added_ids.append(doc_id)
                 
                 # Сохраняем индекс
-                self._save_index()
+                await self._save_index()
             
             self._logger.info(f"Добавлено {len(documents)} документов в FAISS")
             return added_ids
@@ -363,107 +380,144 @@ class FAISSVectorStore(VectorStore):
             else:
                 return False
         return True
-    
-    def _save_index(self):
-        """Сохраняет индекс и метаданные."""
-        try:
-            import faiss
-            
-            # Сохраняем FAISS индекс
-            faiss.write_index(self._index, str(self._index_path))
-            
-            # Сохраняем метаданные
-            meta_path = self._index_path.with_suffix('.meta.pkl')
-            with open(meta_path, 'wb') as f:
-                pickle.dump({
-                    'documents': self._document_store,
-                    'id_to_index': self._id_to_index
-                }, f)
-            
-            self._logger.debug(f"Индекс сохранён: {self._index_path}")
-            
-        except Exception as e:
-            self._logger.error(f"Ошибка сохранения индекса: {e}")
-    
+
+
     async def delete(self, document_ids: List[str]) -> int:
-        """
-        Удаление документов из хранилища.
-        
-        Args:
-            document_ids: Список ID документов для удаления
-            
-        Returns:
-            Количество удаленных документов
-        """
+        """Удаление документов из хранилища (writer-safe)."""
         if not self._initialized:
             await self.initialize()
-        
-        deleted = 0
-        for doc_id in document_ids:
-            if doc_id in self._document_store:
-                # Удаляем из документов
-                del self._document_store[doc_id]
-                # Удаляем из индекса (через ID)
-                index_id = self._id_to_index.pop(doc_id, None)
-                if index_id is not None:
-                    self._index_to_id.pop(int(index_id), None)
-                deleted += 1
-        
-        if deleted > 0:
-            # Перестраиваем индекс
-            await self._rebuild_index()
-        
-        return deleted
-    
+
+        if not document_ids:
+            return 0
+
+        async with self._write_lock:
+            deleted = 0
+            for doc_id in document_ids:
+                if doc_id in self._document_store:
+                    del self._document_store[doc_id]
+                    index_id = self._id_to_index.pop(doc_id, None)
+                    if index_id is not None:
+                        self._index_to_id.pop(int(index_id), None)
+                    deleted += 1
+
+            if deleted > 0:
+                await self._rebuild_index()
+            return deleted
+
     async def _rebuild_index(self):
-        """Перестраивает индекс после удаления документов."""
-        import faiss
-        import numpy as np
-        
-        # Собираем все векторы заново
-        vectors = []
-        new_id_to_index = {}
-        
-        for doc_id, doc in self._document_store.items():
-            if doc.embedding:
-                vectors.append(doc.embedding)
-                new_id_to_index[doc_id] = len(vectors) - 1
-        
-        if vectors:
-            vectors_array = np.array(vectors, dtype=np.float32)
-            faiss.normalize_L2(vectors_array)
-            
-            # Создаем новый индекс
-            self._index = faiss.IndexFlatIP(self._dimension)
-            self._index.add(vectors_array)
-            self._id_to_index = new_id_to_index
-            self._index_to_id = {int(v): k for k, v in new_id_to_index.items()}
-            
-            # Сохраняем
-            self._save_index()
-    
+        """Перестраивает индекс после удаления документов (non-blocking)."""
+        if not self._initialized:
+            await self.initialize()
+
+        # Snapshot for executor
+        docs_snapshot = list((self._document_store or {}).items())
+        loop = asyncio.get_running_loop()
+
+        def _rebuild_blocking():
+            import faiss
+            import numpy as np
+
+            vectors = []
+            new_id_to_index = {}
+
+            for doc_id, doc in docs_snapshot:
+                emb = getattr(doc, "embedding", None)
+                if emb:
+                    vectors.append(emb)
+                    new_id_to_index[doc_id] = len(vectors) - 1
+
+            idx = faiss.IndexFlatIP(self._dimension)
+            if vectors:
+                vectors_array = np.array(vectors, dtype=np.float32)
+                faiss.normalize_L2(vectors_array)
+                idx.add(vectors_array)
+
+            new_index_to_id = {int(v): k for k, v in new_id_to_index.items()}
+            return idx, new_id_to_index, new_index_to_id
+
+        self._index, self._id_to_index, self._index_to_id = await loop.run_in_executor(self._executor, _rebuild_blocking)
+        await self._save_index()
     async def get_document(self, document_id: str) -> Optional[VectorDocument]:
         """Получение документа по ID."""
-        return self._document_store.get(document_id)
-    
+        return (self._document_store or {}).get(document_id)
     async def update_metadata(self, document_id: str, metadata: Dict[str, Any]) -> bool:
-        """Обновление метаданных документа."""
-        if document_id in self._document_store:
-            self._document_store[document_id].metadata.update(metadata)
-            self._save_index()
-            return True
+        """Обновление метаданных документа (writer-safe)."""
+        if not self._initialized:
+            await self.initialize()
+
+        async with self._write_lock:
+            if document_id in (self._document_store or {}):
+                self._document_store[document_id].metadata.update(metadata)
+                await self._save_index()
+                return True
         return False
-    
     async def get_stats(self) -> Dict[str, Any]:
         """Получение статистики хранилища."""
+        total_vectors = int(self._index.ntotal) if self._index else 0
+        active_documents = len([
+            d for d in (self._document_store or {}).values()
+            if not (getattr(d, "metadata", {}) or {}).get("_deleted", False)
+        ])
         return {
             "provider": "faiss",
             "total_documents": len(self._document_store),
-            "total_vectors": self._index.ntotal if self._index else 0,
+            "total_vectors": total_vectors,
             "dimension": self._dimension,
             "index_path": str(self._index_path),
-            "active_documents": len([d for d in self._document_store.values() 
-                                     if not d.metadata.get('_deleted', False)]),
-            "initialized": self._initialized
+            "active_documents": active_documents,
+            "initialized": self._initialized,
         }
-    
+    async def _save_index(self):
+        """Сохраняет индекс и метаданные (atomic, non-blocking)."""
+        if not self._index:
+            return
+        loop = asyncio.get_running_loop()
+        await loop.run_in_executor(self._executor, self._save_index_blocking)
+
+    def _save_index_blocking(self):
+        import faiss
+
+        # Ensure dir exists
+        self._index_path.parent.mkdir(parents=True, exist_ok=True)
+        meta_path = self._index_path.with_suffix(".meta.pkl")
+
+        def _atomic_replace(src: Path, dst: Path):
+            os.replace(str(src), str(dst))
+
+        def _write_temp_path(dst: Path) -> Path:
+            ts = int(time.time() * 1000)
+            return dst.with_name(dst.name + f".tmp.{os.getpid()}.{ts}")
+
+        def _retry(op, attempts: int = 3):
+            delay = 0.05
+            last = None
+            for _ in range(attempts):
+                try:
+                    return op()
+                except PermissionError as e:
+                    last = e
+                    time.sleep(delay)
+                    delay *= 2
+            if last:
+                raise last
+
+        # 1) Write index atomically
+        tmp_index = _write_temp_path(self._index_path)
+
+        def _write_index():
+            faiss.write_index(self._index, str(tmp_index))
+            _atomic_replace(tmp_index, self._index_path)
+
+        _retry(_write_index)
+
+        # 2) Write meta atomically
+        tmp_meta = _write_temp_path(meta_path)
+
+        def _write_meta():
+            with open(tmp_meta, "wb") as f:
+                pickle.dump({"documents": self._document_store, "id_to_index": self._id_to_index}, f)
+            _atomic_replace(tmp_meta, meta_path)
+
+        _retry(_write_meta)
+
+        self._logger.debug(f"Индекс сохранён: {self._index_path}")
