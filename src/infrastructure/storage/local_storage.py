@@ -22,7 +22,7 @@ class StoredObject:
 class LocalStorage:
     """Async local filesystem storage for Base.
 
-    Root: <root_dir>/uploads_root (default ./data/uploads)
+    Root: <root_dir>/uploads_root (default settings.data_dir / "uploads")
     Security:
     - Never allow reading/writing/deleting outside uploads_root
     - storage_key may be relative (preferred) or absolute (legacy/tests), but absolute must be inside uploads_root

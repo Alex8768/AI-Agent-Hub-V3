@@ -25,7 +25,7 @@ class ExportManager:
     """
     Base ExportManager:
     - takes content OR document_id
-    - writes artifact into ./data/exports/<export_id>.<ext>
+    - writes artifact into settings.data_dir / "exports" / <export_id>.<ext>
     - returns ExportArtifact (download via /api/v1/export/{export_id}/download)
     """
 
