@@ -45,13 +45,31 @@ async def initialize_core_components() -> None:
 
 async def cleanup_core_components() -> None:
     """
-    Cleanup core subsystems on shutdown.
+    Cleanup core subsystems on shutdown (best-effort).
+    Never raises fatal errors.
     """
     logger.info("🧹 Core cleanup: start")
 
-    # Examples (later):
-    # - close DB connections
-    # - flush queues
-    # - shutdown background workers
+    # 1) Embedding factory cleanup (shutdown executors / release model refs)
+    try:
+        from src.adapters.embedding import get_embedding_factory
+        factory = get_embedding_factory()
+        await factory.cleanup_all()
+        logger.info("✅ Cleanup: embedding factory cleaned")
+    except Exception as e:
+        logger.warning(f"⚠️ Cleanup: embedding factory skipped (non-fatal): {e}")
+
+    # 2) Vector store singleton cleanup (flush + shutdown executor)
+    try:
+        from src.layers.base.rag.vector_stores.factory import get_vector_store_singleton
+        store = await get_vector_store_singleton()
+        try:
+            await store.cleanup()
+            logger.info("✅ Cleanup: vector store cleaned")
+        except Exception as e:
+            logger.warning(f"⚠️ Cleanup: vector store cleanup failed (non-fatal): {e}")
+    except Exception as e:
+        logger.warning(f"⚠️ Cleanup: vector store singleton unavailable (non-fatal): {e}")
 
     logger.info("👋 Core cleanup: done")
+

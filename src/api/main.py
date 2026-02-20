@@ -4,6 +4,7 @@ Bootstrap-only: app init, middleware, router wiring, error handlers.
 """
 
 import logging
+import asyncio
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Request, status
@@ -63,7 +64,12 @@ async def lifespan(app: FastAPI):
 
     logger.info("👋 Shutting down AI Agent Hub V3...")
     from src.core.initializer import cleanup_core_components
-    await cleanup_core_components()
+    try:
+        await asyncio.wait_for(cleanup_core_components(), timeout=10.0)
+    except asyncio.TimeoutError:
+        logger.warning("⚠️ Core cleanup timed out after 10s (non-fatal)")
+    except Exception as e:
+        logger.warning(f"⚠️ Core cleanup failed (non-fatal): {e}")
 
 
 app = FastAPI(
