@@ -27,6 +27,6 @@ else {
 }
 
 python -m compileall src
-pytest -q
+python -m pytest -q
 
 Write-Host "OK: install + compile + tests" -ForegroundColor Green
