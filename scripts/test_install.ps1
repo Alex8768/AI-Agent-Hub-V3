@@ -1,4 +1,3 @@
-\
 Param(
   [ValidateSet("base","base_full")]
   [string]$Profile = "base"
