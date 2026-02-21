@@ -40,7 +40,14 @@ jobs:
         run: |
           python -m compileall src
 
-      - name: Tests
+      - name: Smoke (base)
+        if: matrix.profile == 'base'
+        shell: bash
+        run: |
+          python -c "import src.api.main; print('import ok')"
+
+      - name: Tests (base_full)
+        if: matrix.profile == 'base_full'
         shell: bash
         run: |
           pytest -q
