@@ -37,7 +37,7 @@ else {
 }
 
 & $Py -m compileall src
-& $Py -m pip install pytest
+& $Py -m pip install pytest pytest-asyncio pytest-mock
 
 & $Py -m pytest -q
 
