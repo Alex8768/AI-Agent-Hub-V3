@@ -11,7 +11,7 @@ $VenvDir = Join-Path $WorkDir ".venv_test_install_$Profile"
 
 if (Test-Path $VenvDir) { Remove-Item -Recurse -Force $VenvDir }
 
-python -m venv $VenvDir
+& "C:\Users\Александр\AppData\Local\Programs\Python\Python312\python.exe" -m venv $VenvDir
 & (Join-Path $VenvDir "Scripts\Activate.ps1")
 
 # Use venv-local python explicitly (service/runner PATH can be weird)
@@ -39,6 +39,6 @@ else {
 & $Py -m compileall src
 & $Py -m pip install pytest pytest-asyncio pytest-mock
 
-& $Py -m pytest -q
+& $Py -m & "C:\Users\Александр\AppData\Local\Programs\Python\Python312\python.exe" -m pytest -q
 
 Write-Host "OK: install + compile + tests" -ForegroundColor Green
