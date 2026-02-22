@@ -16,7 +16,7 @@ jobs:
       - name: Python info
         shell: powershell
         run: |
-          python3 --version
+          python --version
           python3 -c "import sys; print(sys.executable)"
 
       - name: Clean install test (base_full)
