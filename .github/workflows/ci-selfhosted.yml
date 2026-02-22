@@ -16,13 +16,13 @@ jobs:
       - name: Python info
         shell: powershell
         run: |
-          py -3.12 --version
-          py -3.12 -c "import sys; print(sys.executable)"
+          & "C:\Users\Александр\AppData\Local\Programs\Python\Python312\python.exe" --version
+          & "C:\Users\Александр\AppData\Local\Programs\Python\Python312\python.exe" -c "import sys; print(sys.executable)"
 
       - name: Clean install test (base_full)
         shell: powershell
         run: |
-          py -3.12 -c \"import sys; print('using', sys.executable)\"`n.\scripts\test_install.ps1 -Profile base_full
+          & "C:\Users\Александр\AppData\Local\Programs\Python\Python312\python.exe" -c \"import sys; print('using', sys.executable)\"`n.\scripts\test_install.ps1 -Profile base_full
 
       - name: CUDA smoke
         shell: powershell
