@@ -24,7 +24,11 @@ jobs:
       - name: Clean install test (base_full)
         shell: powershell
         run: |
-          & "C:\Users\Александр\AppData\Local\Programs\Python\Python312\python.exe" -c \"import sys; print('using', sys.executable)\"`n.\scripts\test_install.ps1 -Profile base_full -PyVersion 3.12
+          # Force Python 3.12 for runner service account (no USERPROFILE paths)
+          $env:PATH = "C:\Program Files\Python312;C:\Program Files\Python312\Scripts;$env:PATH"
+          python --version
+          python -m pip --version
+          .\scripts\test_install.ps1 -Profile base_full
 
       - name: CUDA smoke
         shell: powershell
