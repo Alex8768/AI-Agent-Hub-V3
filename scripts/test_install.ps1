@@ -14,24 +14,31 @@ if (Test-Path $VenvDir) { Remove-Item -Recurse -Force $VenvDir }
 python -m venv $VenvDir
 & (Join-Path $VenvDir "Scripts\Activate.ps1")
 
+# Use venv-local python explicitly (service/runner PATH can be weird)
+$Py = Join-Path $VenvDir 'Scripts\python.exe'
+
+# Ensure pip exists inside venv
+& $Py -m ensurepip --upgrade
+& $Py -m pip install -U pip setuptools wheel
+
 # Ensure pip exists inside the venv (Windows can be missing pip)
 python -m ensurepip --upgrade
 
-python -m pip install -U pip setuptools wheel
+# (moved to venv-local $Py pip bootstrap)
 
 if ($Profile -eq "base") {
-  python -m pip install -e '.[base]'
+  & $Py -m pip install -e '.[base]'
 }
 elseif ($Profile -eq "base_full") {
-  python -m pip install -e '.[base,security,embeddings,faiss,ingest,test]'
+  & $Py -m pip install -e '.[base,security,embeddings,faiss,ingest,test]'
 }
 else {
   throw "Unknown profile: $Profile"
 }
 
-python -m compileall src
-python -m python -m pip install pytest
+& $Py -m compileall src
+python -m & $Py -m pip install pytest
 
-python -m pytest -q
+& $Py -m pytest -q
 
 Write-Host "OK: install + compile + tests" -ForegroundColor Green
