@@ -37,7 +37,7 @@ else {
 }
 
 & $Py -m compileall src
-python -m & $Py -m pip install pytest
+& $Py -m pip install pytest
 
 & $Py -m pytest -q
 
