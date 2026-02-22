@@ -17,10 +17,10 @@ python -m venv $VenvDir
 python -m pip install -U pip setuptools wheel
 
 if ($Profile -eq "base") {
-  python -m pip install -e ".[base]"
+  python -m pip install -e '.[base]'
 }
 elseif ($Profile -eq "base_full") {
-  python -m pip install -e ".[base,security,embeddings,faiss,ingest,test]"
+  python -m pip install -e '.[base,security,embeddings,faiss,ingest,test]'
 }
 else {
   throw "Unknown profile: $Profile"
