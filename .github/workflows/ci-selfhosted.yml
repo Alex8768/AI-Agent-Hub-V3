@@ -16,8 +16,8 @@ jobs:
       - name: Python info
         shell: powershell
         run: |
-          python --version
-          python -c "import sys; print(sys.executable)"
+          python3 --version
+          python3 -c "import sys; print(sys.executable)"
 
       - name: Clean install test (base_full)
         shell: powershell
@@ -40,8 +40,8 @@ jobs:
         shell: bash
         run: |
           python3 --version || true
-          python --version
-          python -c "import sys; print(sys.executable)"
+          python3 --version
+          python3 -c "import sys; print(sys.executable)"
 
       - name: Clean install test (base_full)
         shell: bash
@@ -51,4 +51,4 @@ jobs:
       - name: MPS smoke
         shell: bash
         run: |
-          python -c "from src.core.accelerator import accelerator; print('accelerator.device=', accelerator.device); print('torch_available=', accelerator.torch_available)"
+          python3 -c "from src.core.accelerator import accelerator; print('accelerator.device=', accelerator.device); print('torch_available=', accelerator.torch_available)"

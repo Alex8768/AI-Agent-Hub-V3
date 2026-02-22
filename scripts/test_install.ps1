@@ -14,6 +14,9 @@ if (Test-Path $VenvDir) { Remove-Item -Recurse -Force $VenvDir }
 python -m venv $VenvDir
 & (Join-Path $VenvDir "Scripts\Activate.ps1")
 
+# Ensure pip exists inside the venv (Windows can be missing pip)
+python -m ensurepip --upgrade
+
 python -m pip install -U pip setuptools wheel
 
 if ($Profile -eq "base") {
