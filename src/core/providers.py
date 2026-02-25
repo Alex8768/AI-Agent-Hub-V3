@@ -41,6 +41,40 @@ class NoopMemoryStore:
     async def query(self, *, workspace_id: str, text: str, limit: int = 10) -> list[dict[str, Any]]:
         return []
 
+@dataclass
+class DBBackedMemoryStore:
+    """DB-backed MemoryStore wrapper (no DI required).
+
+    Opens DB session per call using src.infrastructure.database.get_db().
+    Internally delegates to SQLiteMemoryStore.
+    """
+
+    async def put(self, *, workspace_id: str, key: str, value: Any, metadata: Optional[dict[str, Any]] = None) -> None:
+        from src.infrastructure.database import get_db
+        from src.layers.pro.memory.stores.sqlite_memory_store import SQLiteMemoryStore
+
+        async with get_db() as db:
+            store = SQLiteMemoryStore(db)
+            await store.put(workspace_id=workspace_id, key=key, value=value, metadata=metadata)
+
+    async def get(self, *, workspace_id: str, key: str) -> Optional[Any]:
+        from src.infrastructure.database import get_db
+        from src.layers.pro.memory.stores.sqlite_memory_store import SQLiteMemoryStore
+
+        async with get_db() as db:
+            store = SQLiteMemoryStore(db)
+            return await store.get(workspace_id=workspace_id, key=key)
+
+    async def query(self, *, workspace_id: str, text: str, limit: int = 10) -> list[dict[str, Any]]:
+        from src.infrastructure.database import get_db
+        from src.layers.pro.memory.stores.sqlite_memory_store import SQLiteMemoryStore
+
+        async with get_db() as db:
+            store = SQLiteMemoryStore(db)
+            return await store.query(workspace_id=workspace_id, text=text, limit=limit)
+
+
+
 
 # -------------------------
 # Facade providers (single entry for feature flags)
@@ -75,5 +109,5 @@ def get_authorizer() -> Authorizer:
 def get_memory_store() -> MemoryStore:
     from src.core.config import settings
     if getattr(settings, "feature_memory", False):
-        raise RuntimeError("feature_memory is enabled but MemoryStore is not implemented yet")
+        return DBBackedMemoryStore()
     return NoopMemoryStore()
