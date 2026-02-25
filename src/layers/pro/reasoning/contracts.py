@@ -57,6 +57,9 @@ class AnswerResponse(BaseModel):
     answer: str
     confidence: float = Field(ge=0.0, le=1.0)
 
+    # Deterministic packed preview of context evidence (MVP, UI-friendly)
+    context_preview: str = Field(default="")
+
     provenance: list[ProvenanceItem] = Field(default_factory=list)
 
     # For diagnostics / UI (ids only; full graph is returned by retrieval endpoints).
