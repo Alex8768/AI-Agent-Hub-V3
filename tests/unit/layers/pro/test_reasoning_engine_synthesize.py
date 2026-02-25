@@ -54,3 +54,6 @@ async def test_reasoning_engine_synthesize_stub_orchestration():
     assert p.id == "chunk:1"
     assert p.source_refs == ["doc:A#1"]
     assert p.confidence == 0.9
+
+    # context preview packed from provenance source_refs (MVP)
+    assert resp.context_preview == "doc:A#1"
