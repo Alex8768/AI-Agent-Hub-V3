@@ -16,6 +16,7 @@ class ReasoningEngine:
 
     retriever: object
     llm: object | None = None
+    llm_timeout_s: float = 15.0
 
     async def synthesize(self, request):
         """Synthesize an answer from retrieval evidence.
@@ -50,10 +51,14 @@ class ReasoningEngine:
                 provenance=provenance,
             )
             # Minimal LLM contract: async generate(prompt: str) -> str
-                        # Minimal LLM contract: async generate(prompt: str) -> str
+            import asyncio
+
             try:
-                answer_text = await self.llm.generate(prompt)
-            except Exception:
+                answer_text = await asyncio.wait_for(
+                    self.llm.generate(prompt),
+                    timeout=float(self.llm_timeout_s),
+                )
+            except (asyncio.TimeoutError, Exception):
                 # Fail-safe fallback (MVP): keep system responsive and deterministic
                 answer_text = "(reasoning layer stub)"
         else:
