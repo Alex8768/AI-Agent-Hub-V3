@@ -13,14 +13,9 @@ jobs:
 
     services:
       qdrant:
-        image: qdrant/qdrant:latest
+        image: qdrant/qdrant:1.9.6
         ports:
           - 6333:6333
-        options: >-
-          --health-cmd="wget -qO- http://localhost:6333/healthz || exit 1"
-          --health-interval=5s
-          --health-timeout=3s
-          --health-retries=30
 
     steps:
       - name: Checkout
@@ -46,6 +41,20 @@ jobs:
         shell: bash
         run: |
           python -m compileall src
+
+      - name: Wait for Qdrant
+        shell: bash
+        run: |
+          for i in {1..60}; do
+            if curl -fsS "http://localhost:6333/healthz" >/dev/null 2>&1; then
+              echo "Qdrant is ready"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Qdrant did not become ready in time"
+          curl -v "http://localhost:6333/healthz" || true
+          exit 1
 
       - name: Run Qdrant integration tests
         shell: bash
