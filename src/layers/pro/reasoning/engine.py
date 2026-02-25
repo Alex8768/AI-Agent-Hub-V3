@@ -50,6 +50,7 @@ class ReasoningEngine:
 
         from src.layers.pro.reasoning.contracts import AnswerResponse, ProvenanceItem
         from src.layers.pro.reasoning.confidence import compute_confidence
+        from src.layers.pro.reasoning.context_packer import pack_context
 
         provenance = []
         for p in provenance_raw:
@@ -59,9 +60,16 @@ class ReasoningEngine:
                 # ignore malformed provenance
                 continue
 
+        # Build deterministic context preview from provenance source_refs (MVP)
+        preview_items: list[str] = []
+        for p in provenance:
+            preview_items.extend([s for s in p.source_refs if s])
+        context_preview, _ = pack_context(preview_items, max_chars=int(getattr(request, 'max_context_chars', 12000)))
+
         return AnswerResponse(
             answer="(reasoning layer stub)",
             confidence=compute_confidence(provenance),
+            context_preview=context_preview,
             provenance=provenance,
             used_chunks=[c for c in used_chunks if c],
             used_nodes=[n for n in used_nodes if n],
