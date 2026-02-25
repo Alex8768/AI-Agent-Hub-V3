@@ -1,3 +1,4 @@
+# IO_GUARD: allow
 """
 Health endpoints.
 Diagnostic, fast, non-fatal.

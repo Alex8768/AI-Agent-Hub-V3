@@ -310,6 +310,15 @@ class IngestService:
         except Exception as e:
             error_msg = f"Ошибка обработки {filename}: {str(e)}"
             self._logger.error(error_msg)
+            # Best-effort rollback to avoid partial vector writes
+            # Prefer known ids from prepared vector_docs if store failed before returning saved_ids
+            rollback_ids = chunk_ids
+            if (not rollback_ids) and ('vector_docs' in locals()) and vector_docs:
+                try:
+                    rollback_ids = [d.id for d in vector_docs]
+                except Exception:
+                    rollback_ids = chunk_ids
+            await self._rollback_vectors(rollback_ids, document_id=document_id)
             
             processing_time_ms = int((time.time() - start_time) * 1000)
             
@@ -331,6 +340,56 @@ class IngestService:
             )
             
     
+    
+    async def _rollback_vectors(self, chunk_ids: list[str], *, document_id: str | None = None) -> None:
+        """Best-effort rollback for partially ingested vectors.
+
+        Base policy: avoid leaving partial vectors after a failed ingest.
+        Uses duck-typing to support different VectorStore implementations.
+        """
+        if (not chunk_ids) and (not document_id):
+            return
+
+        store = getattr(self, "_vector_store", None)
+        if store is None:
+            store = getattr(self, "vector_store", None)
+        if store is None:
+            return
+
+        try:
+            # Prefer document-level delete if available
+            if document_id and hasattr(store, "delete_by_document_id"):
+                await store.delete_by_document_id(document_id)
+                return
+
+            # Otherwise delete by ids if supported
+            if chunk_ids:
+                if hasattr(store, "delete_documents"):
+                    await store.delete_documents(chunk_ids)
+                    return
+                if hasattr(store, "delete"):
+                    await store.delete(chunk_ids)
+                    return
+
+            self._logger.warning(
+                "Vector rollback skipped: store has no delete API",
+                context={
+                    "document_id": document_id,
+                    "count": len(chunk_ids),
+                    "sample": chunk_ids[:5],
+                    "store_type": type(store).__name__,
+                    "has_delete_by_document_id": bool(hasattr(store, "delete_by_document_id")),
+                    "has_delete_documents": bool(hasattr(store, "delete_documents")),
+                    "has_delete": bool(hasattr(store, "delete")),
+                },
+            )
+        except Exception as e:
+            # Rollback must never mask original error.
+            self._logger.warning(
+                f"Vector rollback failed: {e}",
+                context={"document_id": document_id, "count": len(chunk_ids), "sample": chunk_ids[:5]},
+            )
+
     async def _validate_text(self, text: str) -> None:
         """Валидация текста."""
         if not text or not text.strip():
