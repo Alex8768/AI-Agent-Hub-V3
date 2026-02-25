@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import uuid
 from typing import Any, Dict, List, Optional, Tuple
 
 from src.core.exceptions import VectorStoreError
@@ -77,7 +78,8 @@ class QdrantMemoryIndex:
         self._dim = dim
 
     def _point_id(self, workspace_id: str, key: str) -> str:
-        return f"memory:{workspace_id}:{key}"
+        # Qdrant point id must be int or UUID. Use deterministic UUIDv5.
+        return str(uuid.uuid5(uuid.NAMESPACE_URL, f"memory://{workspace_id}/{key}"))
 
     async def upsert(
         self,
