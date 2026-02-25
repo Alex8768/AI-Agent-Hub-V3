@@ -392,6 +392,29 @@ class Settings(BaseSettings):
         default=VectorStoreProvider.FAISS,
         description="Default vector store provider"
     )
+
+    # ============ PRO FEATURE FLAGS (OFF BY DEFAULT) ============
+    # These flags gate Pro-only capabilities. Base must remain stable when all are False.
+    feature_qdrant: bool = Field(
+        default=False,
+        description="Enable Pro Qdrant vector store adapter (Pro)"
+    )
+
+    feature_acl: bool = Field(
+        default=False,
+        description="Enable Pro ACL/Authorizer layer (Pro)"
+    )
+
+    feature_memory: bool = Field(
+        default=False,
+        description="Enable Pro durable memory layer (Pro)"
+    )
+
+    feature_graphrag: bool = Field(
+        default=False,
+        description="Enable Pro GraphRAG layer (Pro)"
+    )
+
     
     # FAISS
     faiss_index_path: str = Field(
