@@ -1,6 +1,6 @@
 [project]
 name = "ai-agent-hub-v3"
-version = "3.0.0-alpha.1"
+version = "3.1.0-dev.0"
 description = "Enterprise AI Agent Platform - ARCHITECTURE_V3 Implementation"
 readme = "README.md"
 requires-python = ">=3.12,<3.14"  # ⚠️ Ограничение для совместимости M4
