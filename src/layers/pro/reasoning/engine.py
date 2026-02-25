@@ -50,7 +50,12 @@ class ReasoningEngine:
                 provenance=provenance,
             )
             # Minimal LLM contract: async generate(prompt: str) -> str
-            answer_text = await self.llm.generate(prompt)
+                        # Minimal LLM contract: async generate(prompt: str) -> str
+            try:
+                answer_text = await self.llm.generate(prompt)
+            except Exception:
+                # Fail-safe fallback (MVP): keep system responsive and deterministic
+                answer_text = "(reasoning layer stub)"
         else:
             answer_text = "(reasoning layer stub)"
 
