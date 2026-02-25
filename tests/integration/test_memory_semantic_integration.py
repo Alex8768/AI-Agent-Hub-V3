@@ -19,19 +19,24 @@ async def test_memory_semantic_put_and_query(tmp_path, monkeypatch):
     monkeypatch.setattr(settings, "feature_memory", True, raising=False)
     monkeypatch.setattr(settings, "feature_memory_embeddings", True, raising=False)
 
-    # Point DB to temp sqlite file
+    # Point DB URL to temp sqlite file
     db_path = tmp_path / "mem_semantic_it.db"
     url = f"sqlite+aiosqlite:///{db_path}"
 
     import src.infrastructure.database.config as db_config
     monkeypatch.setattr(db_config, "get_database_url", lambda: url, raising=True)
 
+    # Reset engine/sessionmaker
     import src.infrastructure.database.session as db_session
     db_session._engine = None
     db_session._sessionmaker = None
 
+    # IMPORTANT: import model before create_all so it's registered in Base.metadata
+    import src.infrastructure.database.models.memory_item  # noqa: F401
+
     from src.infrastructure.database.base import Base
     from src.infrastructure.database.session import get_engine
+
     engine = get_engine()
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
@@ -40,7 +45,6 @@ async def test_memory_semantic_put_and_query(tmp_path, monkeypatch):
     import src.layers.base.rag.embedders.query_embedder as qe
 
     async def _fake_embed(self, query: str):
-        # deterministic but different-ish: depends on first char
         base = 0.2 if ("hello" in query.lower()) else 0.1
         return [base] * 8
 
