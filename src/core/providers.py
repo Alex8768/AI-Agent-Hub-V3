@@ -67,7 +67,8 @@ async def get_vector_store():
 def get_authorizer() -> Authorizer:
     from src.core.config import settings
     if getattr(settings, "feature_acl", False):
-        raise RuntimeError("feature_acl is enabled but ACL authorizer is not implemented yet")
+        from src.security.acl.authorizer import ACLAuthorizer
+        return ACLAuthorizer()
     return NoopAuthorizer()
 
 
