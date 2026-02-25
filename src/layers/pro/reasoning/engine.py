@@ -15,6 +15,7 @@ class ReasoningEngine:
     """
 
     retriever: object
+    llm: object | None = None
 
     async def synthesize(self, request):
         """Synthesize an answer from retrieval evidence.
@@ -40,8 +41,21 @@ class ReasoningEngine:
             max_chars=int(getattr(request, "max_context_chars", 12000)),
         )
 
+        from src.layers.pro.reasoning.prompt_builder import build_reasoning_prompt
+
+        if self.llm is not None:
+            prompt = build_reasoning_prompt(
+                request,
+                context_preview=context_preview,
+                provenance=provenance,
+            )
+            # Minimal LLM contract: async generate(prompt: str) -> str
+            answer_text = await self.llm.generate(prompt)
+        else:
+            answer_text = "(reasoning layer stub)"
+
         return AnswerResponse(
-            answer="(reasoning layer stub)",
+            answer=answer_text,
             confidence=compute_confidence(provenance),
             context_preview=context_preview,
             provenance=provenance,
