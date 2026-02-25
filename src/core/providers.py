@@ -27,26 +27,7 @@ class MemoryStore(Protocol):
     async def put(self, *, workspace_id: str, key: str, value: Any, metadata: Optional[dict[str, Any]] = None) -> None: ...
     async def get(self, *, workspace_id: str, key: str) -> Optional[Any]: ...
     async def query(self, *, workspace_id: str, text: str, limit: int = 10) -> list[dict[str, Any]]: ...
-
-    async def semantic_query(self, *, workspace_id: str, text: str, limit: int = 10) -> list[dict[str, Any]]:
-        """Semantic memory search via Qdrant index (requires feature_memory_embeddings)."""
-        from src.core.config import settings
-        if not getattr(settings, "feature_memory_embeddings", False):
-            raise RuntimeError("Semantic memory embeddings are disabled")
-
-        from src.layers.base.rag.embedders.query_embedder import QueryEmbedder
-        from src.layers.pro.memory.indexing.qdrant_memory_index import QdrantMemoryIndex
-
-        embedder = QueryEmbedder()
-        qvec = await embedder.embed_query(text)
-
-        index = QdrantMemoryIndex(
-            host=str(getattr(settings, "qdrant_host", "localhost")),
-            port=int(getattr(settings, "qdrant_port", 6333)),
-            timeout=int(getattr(settings, "qdrant_timeout", 10)),
-        )
-        hits = await index.search(workspace_id=workspace_id, query_embedding=qvec, limit=int(limit))
-        return hits
+    async def semantic_query(self, *, workspace_id: str, text: str, limit: int = 10) -> list[dict[str, Any]]: ...
 
 
 class GraphStoreAPI(Protocol):
@@ -107,6 +88,9 @@ class NoopMemoryStore:
     async def query(self, *, workspace_id: str, text: str, limit: int = 10) -> list[dict[str, Any]]:
         return []
 
+    async def semantic_query(self, *, workspace_id: str, text: str, limit: int = 10) -> list[dict[str, Any]]:
+        raise RuntimeError("Semantic memory embeddings are disabled")
+
 @dataclass
 class DBBackedMemoryStore:
     """DB-backed MemoryStore wrapper (no DI required).
@@ -160,6 +144,25 @@ class DBBackedMemoryStore:
         async with get_db() as db:
             store = SQLiteMemoryStore(db)
             return await store.query(workspace_id=workspace_id, text=text, limit=limit)
+
+    async def semantic_query(self, *, workspace_id: str, text: str, limit: int = 10) -> list[dict[str, Any]]:
+        """Semantic memory search via Qdrant index (requires feature_memory_embeddings)."""
+        from src.core.config import settings
+        if not getattr(settings, "feature_memory_embeddings", False):
+            raise RuntimeError("Semantic memory embeddings are disabled")
+
+        from src.layers.base.rag.embedders.query_embedder import QueryEmbedder
+        from src.layers.pro.memory.indexing.qdrant_memory_index import QdrantMemoryIndex
+
+        embedder = QueryEmbedder()
+        qvec = await embedder.embed_query(text)
+
+        index = QdrantMemoryIndex(
+            host=str(getattr(settings, "qdrant_host", "localhost")),
+            port=int(getattr(settings, "qdrant_port", 6333)),
+            timeout=int(getattr(settings, "qdrant_timeout", 10)),
+        )
+        return await index.search(workspace_id=workspace_id, query_embedding=qvec, limit=int(limit))
 
 
 
