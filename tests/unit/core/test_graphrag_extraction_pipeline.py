@@ -71,11 +71,9 @@ async def test_graphrag_pipeline_idempotent(tmp_path, monkeypatch):
     r2 = await pipe.process_chunk(workspace_id="default", document_id="d1", chunk_id="c1", text="x")
     assert r1["status"] == "ok"
     assert r2["status"] == "ok"
-
     # Query graph and ensure single edge
     from src.core.providers import get_graph_store
     gs = get_graph_store()
-    sub = await gs.neighbors(workspace_id="default", node_id=list({e for e in []}) or "person:alice:" + "0"*10, depth=1, limit=50)  # dummy call won't help
 
     # Better: search and then neighbors by found node_id
     nodes = await gs.search_nodes(workspace_id="default", text="Alice", limit=10)
