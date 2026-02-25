@@ -420,6 +420,12 @@ class Settings(BaseSettings):
         description="Enable Pro GraphRAG layer (Pro)"
     )
 
+    feature_reasoning: bool = Field(
+        default=False,
+        description="Enable graph-aware reasoning answer synthesis layer (Pro)",
+    )
+
+
     
     # FAISS
     faiss_index_path: str = Field(

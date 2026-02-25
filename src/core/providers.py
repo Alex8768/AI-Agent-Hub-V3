@@ -209,3 +209,25 @@ def get_graph_store() -> GraphStoreAPI | None:
     if getattr(settings, "feature_graphrag", False):
         return DBBackedGraphStore()
     return None
+
+
+def get_reasoning_engine():
+    """Return ReasoningEngine instance (Pro), or None when disabled.
+
+    Strict rules:
+      - feature_reasoning must be enabled
+      - feature_graphrag must be enabled (reasoning is graph-aware)
+      - Reasoning lives in Pro layer; Base must remain untouched
+    """
+    from src.core.config import get_settings
+
+    s = get_settings()
+    if not getattr(s, "feature_reasoning", False):
+        return None
+    if not getattr(s, "feature_graphrag", False):
+        raise RuntimeError("feature_reasoning requires feature_graphrag=True")
+
+    # Import lazily to keep Base import graph clean.
+    from src.layers.pro.reasoning.engine import ReasoningEngine
+
+    return ReasoningEngine()
