@@ -211,7 +211,11 @@ def get_graph_store() -> GraphStoreAPI | None:
     return None
 
 
-def get_reasoning_engine(retriever: object | None = None):
+def get_reasoning_engine(
+    retriever: object | None = None,
+    llm: object | None = None,
+    llm_timeout_s: float | None = None,
+):
     """Return ReasoningEngine instance (Pro), or None when disabled.
 
     Strict rules:
@@ -221,6 +225,8 @@ def get_reasoning_engine(retriever: object | None = None):
 
     DI rule:
       - retriever must be injected by the composition root (API/service layer)
+      - llm may be injected (optional; when absent engine returns stub)
+      - llm_timeout_s may be injected (optional override)
     """
     from src.core.config import get_settings
 
@@ -236,4 +242,6 @@ def get_reasoning_engine(retriever: object | None = None):
     # Import lazily to keep Base import graph clean.
     from src.layers.pro.reasoning.engine import ReasoningEngine
 
-    return ReasoningEngine(retriever=retriever)
+    if llm_timeout_s is None:
+        return ReasoningEngine(retriever=retriever, llm=llm)
+    return ReasoningEngine(retriever=retriever, llm=llm, llm_timeout_s=float(llm_timeout_s))
