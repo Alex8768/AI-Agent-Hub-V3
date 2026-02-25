@@ -63,4 +63,4 @@ jobs:
           QDRANT_HOST: "localhost"
           QDRANT_PORT: "6333"
         run: |
-          pytest -q tests/integration/test_qdrant_integration.py
+          pytest -q tests/integration/test_qdrant_integration.py tests/integration/test_memory_semantic_integration.py
