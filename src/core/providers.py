@@ -59,8 +59,9 @@ async def get_vector_store():
         from src.layers.base.rag.vector_stores.factory import get_vector_store_singleton
         return await get_vector_store_singleton()
 
-    # Pro route placeholder (kept explicit for future PR-2)
-    raise RuntimeError("feature_qdrant is enabled but Qdrant adapter is not implemented yet")
+    # Pro route
+    from src.layers.pro.rag.vector_stores.factory import get_qdrant_store_singleton
+    return await get_qdrant_store_singleton()
 
 
 def get_authorizer() -> Authorizer:
