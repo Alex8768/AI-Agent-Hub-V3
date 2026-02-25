@@ -49,6 +49,7 @@ class ReasoningEngine:
             used_chunks = [r.get("chunk_id") for r in res if isinstance(r, dict) and r.get("chunk_id")]
 
         from src.layers.pro.reasoning.contracts import AnswerResponse, ProvenanceItem
+        from src.layers.pro.reasoning.confidence import compute_confidence
 
         provenance = []
         for p in provenance_raw:
@@ -60,7 +61,7 @@ class ReasoningEngine:
 
         return AnswerResponse(
             answer="(reasoning layer stub)",
-            confidence=0.0,
+            confidence=compute_confidence(provenance),
             provenance=provenance,
             used_chunks=[c for c in used_chunks if c],
             used_nodes=[n for n in used_nodes if n],

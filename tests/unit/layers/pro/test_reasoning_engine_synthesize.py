@@ -40,7 +40,7 @@ async def test_reasoning_engine_synthesize_stub_orchestration():
 
     # deterministic stub
     assert resp.answer == "(reasoning layer stub)"
-    assert resp.confidence == 0.0
+    assert resp.confidence == 0.9
 
     # best-effort ids collected
     assert resp.used_chunks == ["chunk:1", "chunk:2"]
