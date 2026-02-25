@@ -28,6 +28,27 @@ class MemoryStore(Protocol):
     async def get(self, *, workspace_id: str, key: str) -> Optional[Any]: ...
     async def query(self, *, workspace_id: str, text: str, limit: int = 10) -> list[dict[str, Any]]: ...
 
+    async def semantic_query(self, *, workspace_id: str, text: str, limit: int = 10) -> list[dict[str, Any]]:
+        """Semantic memory search via Qdrant index (requires feature_memory_embeddings)."""
+        from src.core.config import settings
+        if not getattr(settings, "feature_memory_embeddings", False):
+            raise RuntimeError("Semantic memory embeddings are disabled")
+
+        from src.layers.base.rag.embedders.query_embedder import QueryEmbedder
+        from src.layers.pro.memory.indexing.qdrant_memory_index import QdrantMemoryIndex
+
+        embedder = QueryEmbedder()
+        qvec = await embedder.embed_query(text)
+
+        index = QdrantMemoryIndex(
+            host=str(getattr(settings, "qdrant_host", "localhost")),
+            port=int(getattr(settings, "qdrant_port", 6333)),
+            timeout=int(getattr(settings, "qdrant_timeout", 10)),
+        )
+        hits = await index.search(workspace_id=workspace_id, query_embedding=qvec, limit=int(limit))
+        return hits
+
+
 class GraphStoreAPI(Protocol):
     async def upsert_node(self, *, workspace_id: str, node_id: str, node_type: str, name: str, metadata: Optional[dict[str, Any]] = None) -> None: ...
     async def upsert_edge(self, *, workspace_id: str, edge_id: str, src_id: str, dst_id: str, rel_type: str, metadata: Optional[dict[str, Any]] = None) -> None: ...
@@ -101,6 +122,28 @@ class DBBackedMemoryStore:
         async with get_db() as db:
             store = SQLiteMemoryStore(db)
             await store.put(workspace_id=workspace_id, key=key, value=value, metadata=metadata)
+
+        # Semantic memory embeddings index (Pro, optional)
+        from src.core.config import settings
+        if getattr(settings, "feature_memory_embeddings", False):
+            from src.layers.base.rag.embedders.query_embedder import QueryEmbedder
+            from src.layers.pro.memory.indexing.qdrant_memory_index import QdrantMemoryIndex
+
+            embedder = QueryEmbedder()
+            vec = await embedder.embed_query(str(value))
+
+            index = QdrantMemoryIndex(
+                host=str(getattr(settings, "qdrant_host", "localhost")),
+                port=int(getattr(settings, "qdrant_port", 6333)),
+                timeout=int(getattr(settings, "qdrant_timeout", 10)),
+            )
+            await index.upsert(
+                workspace_id=workspace_id,
+                key=key,
+                text=str(value),
+                embedding=vec,
+                metadata=metadata,
+            )
 
     async def get(self, *, workspace_id: str, key: str) -> Optional[Any]:
         from src.infrastructure.database import get_db
