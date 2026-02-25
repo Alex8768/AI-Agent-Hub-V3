@@ -311,7 +311,14 @@ class IngestService:
             error_msg = f"Ошибка обработки {filename}: {str(e)}"
             self._logger.error(error_msg)
             # Best-effort rollback to avoid partial vector writes
-            await self._rollback_vectors(chunk_ids, document_id=document_id)
+            # Prefer known ids from prepared vector_docs if store failed before returning saved_ids
+            rollback_ids = chunk_ids
+            if (not rollback_ids) and ('vector_docs' in locals()) and vector_docs:
+                try:
+                    rollback_ids = [d.id for d in vector_docs]
+                except Exception:
+                    rollback_ids = chunk_ids
+            await self._rollback_vectors(rollback_ids, document_id=document_id)
             
             processing_time_ms = int((time.time() - start_time) * 1000)
             
@@ -343,7 +350,9 @@ class IngestService:
         if (not chunk_ids) and (not document_id):
             return
 
-        store = getattr(self, "_vector_store", None) or getattr(self, "vector_store", None)
+        store = getattr(self, "_vector_store", None)
+        if store is None:
+            store = getattr(self, "vector_store", None)
         if store is None:
             return
 
@@ -364,7 +373,15 @@ class IngestService:
 
             self._logger.warning(
                 "Vector rollback skipped: store has no delete API",
-                context={"document_id": document_id, "count": len(chunk_ids), "sample": chunk_ids[:5]},
+                context={
+                    "document_id": document_id,
+                    "count": len(chunk_ids),
+                    "sample": chunk_ids[:5],
+                    "store_type": type(store).__name__,
+                    "has_delete_by_document_id": bool(hasattr(store, "delete_by_document_id")),
+                    "has_delete_documents": bool(hasattr(store, "delete_documents")),
+                    "has_delete": bool(hasattr(store, "delete")),
+                },
             )
         except Exception as e:
             # Rollback must never mask original error.
