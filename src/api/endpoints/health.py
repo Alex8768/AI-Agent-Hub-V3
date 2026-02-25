@@ -184,14 +184,14 @@ async def health_deep():
     # --- Vector store deep ---
     t0 = time.perf_counter()
     try:
-        from src.layers.base.rag.vector_stores.factory import get_vector_store_singleton
+        from src.core.providers import get_vector_store
         from src.core.config import settings
 
         cfg = settings.get_vector_store_config()
         index_path = getattr(cfg, "path", None) or settings.faiss_index_path
         dimension = getattr(cfg, "dimension", None) or settings.faiss_dimension
 
-        store = await get_vector_store_singleton()
+        store = await get_vector_store()
         raw_stats = await store.get_stats()
         # Normalize to stable fields for observability
         details["vector_store_stats"] = {
