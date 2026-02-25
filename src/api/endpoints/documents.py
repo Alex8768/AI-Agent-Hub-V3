@@ -65,8 +65,10 @@ async def upload_document(
 
 
 @router.delete("/api/v1/documents/{document_id}", tags=["Documents"])
-async def delete_document(document_id: str):
+async def delete_document(
+    document_id: str,
     workspace_id: str = Depends(get_workspace),
+):
     """Delete document (DB + storage + vectors)."""
     try:
         from src.infrastructure.database import get_db
@@ -94,8 +96,10 @@ async def delete_document(document_id: str):
 
 
 @router.get("/api/v1/documents/{document_id}", response_model=DocumentDetailOut, tags=["Documents"])
-async def get_document(document_id: str):
+async def get_document(
+    document_id: str,
     workspace_id: str = Depends(get_workspace),
+):
     """Get document details by id."""
     try:
         from src.infrastructure.database import get_db
