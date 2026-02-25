@@ -50,7 +50,7 @@ def verify_token(
 
     Validates:
     - signature (HS256)
-    - exp (required if present)
+    - exp (required)
     - nbf (if present)
     - iss/aud (optional if provided)
     """
@@ -87,13 +87,14 @@ def verify_token(
             raise JWTError("Token not yet valid (nbf)")
 
     exp = payload.get("exp")
-    if exp is not None:
-        try:
-            exp_i = int(exp)
-        except Exception:
-            raise JWTError("Invalid exp claim")
-        if now - leeway_seconds >= exp_i:
-            raise JWTError("Token expired")
+    if exp is None:
+        raise JWTError("Missing exp claim")
+    try:
+        exp_i = int(exp)
+    except Exception:
+        raise JWTError("Invalid exp claim")
+    if now - leeway_seconds >= exp_i:
+        raise JWTError("Token expired")
 
     if issuer is not None:
         if payload.get("iss") != issuer:
