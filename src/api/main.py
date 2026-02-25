@@ -27,6 +27,7 @@ from src.api.endpoints.health import router as health_router
 from src.api.endpoints.llm import router as llm_router
 from src.api.endpoints.documents import router as documents_router
 from src.api.endpoints.search import router as search_router
+from src.api.endpoints.search_hybrid import router as search_hybrid_router
 from src.api.endpoints.export import router as export_router
 from src.api.endpoints.streaming import router as streaming_router
 
@@ -109,6 +110,7 @@ app.include_router(health_router)
 app.include_router(llm_router)
 app.include_router(documents_router)
 app.include_router(search_router)
+app.include_router(search_hybrid_router)
 app.include_router(export_router)
 app.include_router(streaming_router)
 
