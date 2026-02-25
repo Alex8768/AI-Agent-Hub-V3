@@ -96,16 +96,30 @@ async def get_workspace(
 ):
     """Get or validate workspace."""
     from src.security.workspace_guard import WorkspaceGuard
+    from src.core.providers import get_authorizer
     
     guard = WorkspaceGuard()
     
     if workspace_id:
-        # Validate workspace access
+        # Validate workspace access (filesystem-level)
         if not await guard.validate_workspace_access(workspace_id, user["id"]):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Access to workspace denied",
             )
+
+        # Pro ACL enforcement (feature-flagged via providers)
+        try:
+            authorizer = get_authorizer()
+            # authorize_workspace is async in ACLAuthorizer
+            if hasattr(authorizer, "authorize_workspace"):
+                await authorizer.authorize_workspace(user, workspace_id)  # type: ignore[attr-defined]
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=str(e) or "Access denied by ACL",
+            )
+
         return workspace_id
     else:
         # Get default workspace
