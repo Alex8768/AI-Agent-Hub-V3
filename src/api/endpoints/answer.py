@@ -34,7 +34,10 @@ async def answer(
     from src.layers.base.rag.engines.rag_engine import RAGEngine
     from src.layers.pro.rag.retrieval.hybrid_retriever import HybridRetriever
 
-    engine = getattr(http.app.state, "rag_engine", None) or RAGEngine()
+    engine = getattr(http.app.state, "rag_engine", None)
+    if engine is None:
+        engine = RAGEngine()
+        http.app.state.rag_engine = engine
     hybrid = getattr(http.app.state, "hybrid_retriever", None)
     if hybrid is None:
         hybrid = HybridRetriever()
