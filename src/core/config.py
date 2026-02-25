@@ -410,6 +410,11 @@ class Settings(BaseSettings):
         description="Enable Pro durable memory layer (Pro)"
     )
 
+    feature_memory_embeddings: bool = Field(
+        default=False,
+        description="Enable semantic memory embeddings index (Pro)"
+    )
+
     feature_graphrag: bool = Field(
         default=False,
         description="Enable Pro GraphRAG layer (Pro)"
