@@ -28,6 +28,27 @@ async def answer(
         # Hide Pro API surface when disabled
         raise HTTPException(status_code=404, detail="Not Found")
 
+    # Observability (MVP): correlate request + workspace (best-effort, non-fatal)
+    try:
+        from loguru import logger
+
+        rid = (
+            getattr(getattr(http, "state", None), "request_id", None)
+            or http.headers.get("x-request-id")
+            or http.headers.get("X-Request-ID")
+            or http.headers.get("X-Request-Id")
+        )
+        logger.info(
+            "answer.endpoint request_id={} workspace={} qlen={} k={} depth={}",
+            rid,
+            workspace_id,
+            len(req.query or ""),
+            int(req.k or 0),
+            int(req.graph_depth or 0),
+        )
+    except Exception:
+        pass
+
     # Composition root (MVP):
     # - retriever/llm are injected from the outer layer later.
     # For now we fail-fast until proper DI wiring is added.
@@ -68,5 +89,26 @@ async def answer(
     reasoning = get_reasoning_engine(retriever=_RetrieverAdapter(), llm=llm)
     if reasoning is None:
         raise HTTPException(status_code=404, detail="Not Found")
+
+    # Observability (MVP): correlate request + workspace (best-effort, non-fatal)
+    try:
+        from loguru import logger
+
+        rid = (
+            getattr(getattr(http, "state", None), "request_id", None)
+            or http.headers.get("x-request-id")
+            or http.headers.get("X-Request-ID")
+            or http.headers.get("X-Request-Id")
+        )
+        logger.info(
+            "answer.endpoint request_id={} workspace={} qlen={} k={} depth={}",
+            rid,
+            workspace_id,
+            len(req.query or ""),
+            int(req.k or 0),
+            int(req.graph_depth or 0),
+        )
+    except Exception:
+        pass
 
     return await reasoning.synthesize(req)
