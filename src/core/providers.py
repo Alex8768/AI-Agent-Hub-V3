@@ -28,6 +28,51 @@ class MemoryStore(Protocol):
     async def get(self, *, workspace_id: str, key: str) -> Optional[Any]: ...
     async def query(self, *, workspace_id: str, text: str, limit: int = 10) -> list[dict[str, Any]]: ...
 
+class GraphStoreAPI(Protocol):
+    async def upsert_node(self, *, workspace_id: str, node_id: str, node_type: str, name: str, metadata: Optional[dict[str, Any]] = None) -> None: ...
+    async def upsert_edge(self, *, workspace_id: str, edge_id: str, src_id: str, dst_id: str, rel_type: str, metadata: Optional[dict[str, Any]] = None) -> None: ...
+    async def search_nodes(self, *, workspace_id: str, text: str, limit: int = 20) -> list[dict[str, Any]]: ...
+    async def neighbors(self, *, workspace_id: str, node_id: str, depth: int = 1, limit: int = 50) -> dict[str, Any]: ...
+
+
+@dataclass
+class DBBackedGraphStore:
+    """DB-backed GraphStore wrapper (no DI required)."""
+
+    async def upsert_node(self, *, workspace_id: str, node_id: str, node_type: str, name: str, metadata: Optional[dict[str, Any]] = None) -> None:
+        from src.infrastructure.database import get_db
+        from src.layers.pro.graph_rag.graph.store import GraphStore
+
+        async with get_db() as db:
+            store = GraphStore(db)
+            await store.upsert_node(workspace_id=workspace_id, node_id=node_id, node_type=node_type, name=name, metadata=metadata)
+
+    async def upsert_edge(self, *, workspace_id: str, edge_id: str, src_id: str, dst_id: str, rel_type: str, metadata: Optional[dict[str, Any]] = None) -> None:
+        from src.infrastructure.database import get_db
+        from src.layers.pro.graph_rag.graph.store import GraphStore
+
+        async with get_db() as db:
+            store = GraphStore(db)
+            await store.upsert_edge(workspace_id=workspace_id, edge_id=edge_id, src_id=src_id, dst_id=dst_id, rel_type=rel_type, metadata=metadata)
+
+    async def search_nodes(self, *, workspace_id: str, text: str, limit: int = 20) -> list[dict[str, Any]]:
+        from src.infrastructure.database import get_db
+        from src.layers.pro.graph_rag.graph.store import GraphStore
+
+        async with get_db() as db:
+            store = GraphStore(db)
+            return await store.search_nodes(workspace_id=workspace_id, text=text, limit=limit)
+
+    async def neighbors(self, *, workspace_id: str, node_id: str, depth: int = 1, limit: int = 50) -> dict[str, Any]:
+        from src.infrastructure.database import get_db
+        from src.layers.pro.graph_rag.graph.store import GraphStore
+
+        async with get_db() as db:
+            store = GraphStore(db)
+            return await store.neighbors(workspace_id=workspace_id, node_id=node_id, depth=depth, limit=limit)
+
+
+
 
 @dataclass
 class NoopMemoryStore:
@@ -111,3 +156,10 @@ def get_memory_store() -> MemoryStore:
     if getattr(settings, "feature_memory", False):
         return DBBackedMemoryStore()
     return NoopMemoryStore()
+
+
+def get_graph_store() -> GraphStoreAPI | None:
+    from src.core.config import settings
+    if getattr(settings, "feature_graphrag", False):
+        return DBBackedGraphStore()
+    return None
