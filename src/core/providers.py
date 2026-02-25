@@ -211,13 +211,16 @@ def get_graph_store() -> GraphStoreAPI | None:
     return None
 
 
-def get_reasoning_engine():
+def get_reasoning_engine(retriever: object | None = None):
     """Return ReasoningEngine instance (Pro), or None when disabled.
 
     Strict rules:
       - feature_reasoning must be enabled
       - feature_graphrag must be enabled (reasoning is graph-aware)
       - Reasoning lives in Pro layer; Base must remain untouched
+
+    DI rule:
+      - retriever must be injected by the composition root (API/service layer)
     """
     from src.core.config import get_settings
 
@@ -227,7 +230,10 @@ def get_reasoning_engine():
     if not getattr(s, "feature_graphrag", False):
         raise RuntimeError("feature_reasoning requires feature_graphrag=True")
 
+    if retriever is None:
+        raise RuntimeError("ReasoningEngine requires retriever injection")
+
     # Import lazily to keep Base import graph clean.
     from src.layers.pro.reasoning.engine import ReasoningEngine
 
-    return ReasoningEngine()
+    return ReasoningEngine(retriever=retriever)

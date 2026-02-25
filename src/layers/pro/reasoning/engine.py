@@ -7,16 +7,63 @@ from dataclasses import dataclass
 class ReasoningEngine:
     """Graph-aware reasoning answer synthesis (Pro).
 
-    This is an intentionally minimal skeleton.
-    Retrieval remains in HybridRetriever; this layer will:
-      - expand graph strategically (policy-driven)
-      - aggregate evidence (chunks/nodes/edges)
-      - pack bounded context (budget + dedupe + ranking)
-      - synthesize answer via LLM
-      - return answer + provenance + confidence
+    Orchestration layer above retrieval (HybridRetriever-compatible).
+    Architecture rules:
+      - dependency injection for retriever/llm (llm later)
+      - no side effects in __init__
+      - schema-first contracts in reasoning.contracts
     """
 
-    # NOTE: real dependencies will be injected later (schema-first, tests-first).
-    def __init__(self) -> None:
-        # Keep init side-effect free.
-        pass
+    retriever: object
+
+    async def synthesize(self, request):
+        """Synthesize an answer from retrieval evidence.
+
+        MVP: orchestration only (no LLM yet).
+        - Calls injected retriever
+        - Pass-through provenance (best-effort) if retriever provides it
+        - Returns deterministic stub answer
+        """
+        result = await self.retriever.retrieve(request)
+
+        provenance_raw = []
+        used_chunks: list[str] = []
+        used_nodes: list[str] = []
+        used_edges: list[str] = []
+
+        if isinstance(result, dict):
+            # Accept common hybrid shape: {results, graph, evidence}
+            evid = result.get("evidence") or []
+            for item in evid:
+                if isinstance(item, dict) and "type" in item and "id" in item:
+                    provenance_raw.append(item)
+
+            g = result.get("graph") or {}
+            nodes = g.get("nodes") or []
+            edges = g.get("edges") or []
+            used_nodes = [n.get("id") for n in nodes if isinstance(n, dict) and n.get("id")]
+            used_edges = [e.get("id") for e in edges if isinstance(e, dict) and e.get("id")]
+
+            res = result.get("results") or []
+            # If SearchResult contains chunk_id, collect it (best-effort)
+            used_chunks = [r.get("chunk_id") for r in res if isinstance(r, dict) and r.get("chunk_id")]
+
+        from src.layers.pro.reasoning.contracts import AnswerResponse, ProvenanceItem
+
+        provenance = []
+        for p in provenance_raw:
+            try:
+                provenance.append(ProvenanceItem.model_validate(p))
+            except Exception:
+                # ignore malformed provenance
+                continue
+
+        return AnswerResponse(
+            answer="(reasoning layer stub)",
+            confidence=0.0,
+            provenance=provenance,
+            used_chunks=[c for c in used_chunks if c],
+            used_nodes=[n for n in used_nodes if n],
+            used_edges=[e for e in used_edges if e],
+        )
+
