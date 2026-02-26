@@ -71,16 +71,24 @@ if ([int]$count -lt 1) {
 Write-Host "   ✅ Search OK"
 
 Write-Host "5) Export"
-$export = CurlJson "$BaseUrl/api/v1/export" "POST" '{"content":"Hello export world!","format":"pdf"}'
+
+# Write JSON to file (UTF-8 without BOM) to avoid PowerShell quoting issues
+$exportJsonPath = Join-Path $tmp "export.json"
+$exportBody = '{"content":"Hello export world!","format":"pdf"}'
+[System.IO.File]::WriteAllText($exportJsonPath, $exportBody, [System.Text.UTF8Encoding]::new($false))
+
+$export = & curl.exe -sS -H "Content-Type: application/json" --data-binary "@$exportJsonPath" "$BaseUrl/api/v1/export"
 $exportId = ($export | python scripts/jsonutil.py export_id)
 if (-not $exportId) {
   Write-Host $export
   Fail "Export did not return export_id"
 }
 Write-Host "   export_id=$exportId"
+
 $dl = Join-Path $tmp "export.pdf"
 $code = & curl.exe -sS -o $dl -w "%{http_code}" "$BaseUrl/api/v1/export/$exportId/download"
 if ($code -ne "200") { Fail "Export download failed (HTTP $code)" }
 Write-Host "   ✅ Export OK"
 
+Write-Host "✅ SMOKE PASSED"
 Write-Host "✅ SMOKE PASSED"
