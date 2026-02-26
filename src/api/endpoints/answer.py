@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from time import perf_counter
+
 from fastapi import APIRouter, Depends, HTTPException, Request
 
 from src.core.config import get_settings
@@ -100,4 +102,32 @@ async def answer(
     if reasoning is None:
         raise HTTPException(status_code=404, detail="Not Found")
 
-    return await reasoning.synthesize(req)
+    t0 = perf_counter()
+    resp = await reasoning.synthesize(req)
+    total_ms = (perf_counter() - t0) * 1000.0
+
+    # Enrich response with API-level correlation/timings (contract v1)
+    try:
+        resp.request_id = _get_request_id(http) or ""
+    except Exception:
+        resp.request_id = ""
+    try:
+        resp.workspace_id = workspace_id or ""
+    except Exception:
+        resp.workspace_id = ""
+
+    try:
+        resp.timings = dict(resp.timings or {})
+        resp.timings.setdefault("total_ms", float(total_ms))
+    except Exception:
+        pass
+
+    try:
+        if llm is None:
+            resp.warnings = list(resp.warnings or [])
+            if "llm_missing" not in resp.warnings:
+                resp.warnings.append("llm_missing")
+    except Exception:
+        pass
+
+    return resp

@@ -66,3 +66,13 @@ class AnswerResponse(BaseModel):
     used_chunks: list[str] = Field(default_factory=list)
     used_nodes: list[str] = Field(default_factory=list)
     used_edges: list[str] = Field(default_factory=list)
+
+    # API-level correlation (set by the API layer; safe defaults keep compatibility)
+    request_id: str = Field(default="")
+    workspace_id: str = Field(default="")
+
+    # Minimal performance envelope (ms). Extended timings can be added later.
+    timings: dict[str, float] = Field(default_factory=dict)
+
+    # Warnings for clients/UI (e.g., llm_missing, fallback_used, timeout)
+    warnings: list[str] = Field(default_factory=list)
