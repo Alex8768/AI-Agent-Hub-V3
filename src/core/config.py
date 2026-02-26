@@ -430,6 +430,11 @@ class Settings(BaseSettings):
         description="Enable deterministic dry-run LLM mode for reasoning (Pro)",
     )
 
+    feature_reasoning_llm_enabled: bool = Field(
+        default=False,
+        description="Enable real LLM calls in reasoning (Pro). When False, LLM is never resolved.",
+    )
+
 
 
     

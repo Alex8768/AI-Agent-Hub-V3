@@ -23,7 +23,6 @@ def _get_request_id(http: Request) -> str | None:
 
 
 def _log_observability(http: Request, *, workspace_id: str, req: AnswerRequest) -> None:
-    # best-effort, non-fatal
     try:
         from loguru import logger
 
@@ -58,7 +57,6 @@ class _RetrieverAdapter:
             graph_depth=request.graph_depth,
         )
 
-        # Support both dict-like and object-like results
         graph = getattr(out, "graph", None)
         evidence = getattr(out, "evidence", None)
         results = getattr(out, "results", None)
@@ -72,13 +70,9 @@ class _RetrieverAdapter:
         evidence = list(evidence or [])
         results = list(results or [])
 
-        # Merge retriever-provided stats (if any) into last_stats (best-effort)
+        # merge retriever stats (best-effort)
         try:
-            stats = None
-            if isinstance(out, dict):
-                stats = out.get("stats")
-            else:
-                stats = getattr(out, "stats", None)
+            stats = out.get("stats") if isinstance(out, dict) else getattr(out, "stats", None)
             if isinstance(stats, dict) and stats:
                 self.last_stats = dict(self.last_stats or {})
                 for k, v in stats.items():
@@ -86,7 +80,7 @@ class _RetrieverAdapter:
         except Exception:
             pass
 
-        # Apply retrieval policy (best-effort)
+        # apply policy (best-effort)
         try:
             from src.layers.pro.rag.retrieval.policy import RetrievalPolicy, apply_policy
 
@@ -97,7 +91,6 @@ class _RetrieverAdapter:
             )
             evidence_filtered, stats = apply_policy(evidence, policy=policy)
             self.last_stats = dict(stats or {})
-            # add raw counts for diagnostics
             try:
                 self.last_stats.setdefault("vector_candidates_count", int(len(results or [])))
                 self.last_stats.setdefault("graph_nodes_count", int(len((graph or {}).get("nodes") or [])))
@@ -111,38 +104,66 @@ class _RetrieverAdapter:
         return {"results": results, "graph": graph, "evidence": evidence}
 
 
+class _LLMGenerateAdapter:
+    """Adapt Base LLM provider (complete/messages) to ReasoningEngine contract (generate(prompt)->str)."""
+
+    def __init__(self, provider: object, *, provider_name: str = "", model: str = ""):
+        self._p = provider
+        self.provider_name = provider_name
+        self.model = model
+
+    async def generate(self, prompt: str) -> str:
+        from src.core.types import Message, MessageRole
+
+        messages = [Message(role=MessageRole.USER, content=str(prompt or ""))]
+        cfg = {}
+        if self.model:
+            cfg["model"] = self.model
+
+        if hasattr(self._p, "complete"):
+            c = await self._p.complete(messages=messages, config=(cfg or None))
+            text = getattr(c, "content", None)
+            return str(text if text is not None else c)
+
+        raise RuntimeError("LLM provider does not implement complete()")
+
+
 @router.post("/answer", response_model=AnswerResponse)
 async def answer(
     http: Request,
     req: AnswerRequest,
     workspace_id: str = Depends(get_workspace),
 ) -> AnswerResponse:
-    """Graph-aware answer synthesis (Pro).
-
-    Feature-gated:
-      - feature_reasoning
-      - feature_graphrag
-    """
     s = get_settings()
     if not getattr(s, "feature_reasoning", False) or not getattr(s, "feature_graphrag", False):
         raise HTTPException(status_code=404, detail="Not Found")
 
     _log_observability(http, workspace_id=workspace_id, req=req)
 
-    # Composition root rule: heavyweight deps must be wired in lifespan (or outer layer)
     engine = getattr(http.app.state, "rag_engine", None)
     hybrid = getattr(http.app.state, "hybrid_retriever", None)
     if engine is None or hybrid is None:
         raise HTTPException(status_code=503, detail="Reasoning stack not initialized")
 
-    # Lazy LLM provider acquisition (do not resolve dependencies before feature-gate)
-    llm = None
-    try:
-        from src.api.dependencies_impl import get_llm_provider
+    # LLM resolution is gated to prevent accidental cloud calls
+    llm_enabled = bool(getattr(s, "feature_reasoning_llm_enabled", False))
 
-        llm = await get_llm_provider()
-    except Exception:
-        llm = None
+    llm = None
+    llm_provider_name = ""
+    llm_model = ""
+    llm_error = ""
+
+    if llm_enabled:
+        try:
+            from src.api.dependencies_impl import get_llm_provider
+
+            p = await get_llm_provider()
+            llm_provider_name = str(getattr(p, "provider", "") or getattr(s, "llm_provider", "") or "")
+            llm_model = str(getattr(p, "model", "") or getattr(s, "ollama_model", "") or getattr(s, "openai_model", "") or "")
+            llm = _LLMGenerateAdapter(p, provider_name=llm_provider_name, model=llm_model)
+        except Exception as e:
+            llm = None
+            llm_error = str(e)
 
     retriever = _RetrieverAdapter(engine=engine, hybrid=hybrid, workspace_id=workspace_id)
     reasoning = get_reasoning_engine(retriever=retriever, llm=llm)
@@ -153,7 +174,7 @@ async def answer(
     resp = await reasoning.synthesize(req)
     total_ms = (perf_counter() - t0) * 1000.0
 
-    # Enrich response with API-level correlation/timings (contract v1)
+    # correlation/timing
     try:
         resp.request_id = _get_request_id(http) or ""
     except Exception:
@@ -169,7 +190,7 @@ async def answer(
     except Exception:
         pass
 
-    # Diagnostics (contract v1): explainability counters + flags (best-effort)
+    # base diagnostics + trace
     try:
         diag = dict(getattr(resp, "diagnostics", None) or {})
         diag.setdefault("retrieved_provenance_count", int(len(getattr(resp, "provenance", []) or [])))
@@ -181,7 +202,6 @@ async def answer(
         diag.setdefault("k", int(req.k or 0))
         diag.setdefault("graph_depth", int(req.graph_depth or 0))
 
-        # trace_id
         try:
             from src.observability.trace import make_trace_id
 
@@ -201,7 +221,7 @@ async def answer(
     except Exception:
         pass
 
-    # Retrieval policy diagnostics (from retriever adapter, best-effort)
+    # retrieval stats
     try:
         stats = getattr(retriever, "last_stats", None) or {}
         if stats:
@@ -212,56 +232,55 @@ async def answer(
     except Exception:
         pass
 
-    # Debug-only snapshot for evaluation (no content leakage; ids/counts only)
+    # debug snapshot
     try:
         if getattr(s, "debug", False):
             diag = dict(getattr(resp, "diagnostics", None) or {})
-
             counts: dict[str, int] = {}
             for pitem in (getattr(resp, "provenance", None) or []):
-                try:
-                    t = str(getattr(pitem, "type", "") or "")
-                except Exception:
-                    t = ""
-                if not t:
-                    t = "unknown"
+                t = str(getattr(pitem, "type", "") or "") or "unknown"
                 counts[t] = int(counts.get(t, 0)) + 1
             diag.setdefault("evidence_type_counts", counts)
 
             top: list[str] = []
             for pitem in (getattr(resp, "provenance", None) or [])[:20]:
-                try:
-                    t = str(getattr(pitem, "type", "") or "")
-                    i = str(getattr(pitem, "id", "") or "")
-                    if t and i:
-                        top.append(f"{t}:{i}")
-                except Exception:
-                    continue
+                t = str(getattr(pitem, "type", "") or "")
+                i = str(getattr(pitem, "id", "") or "")
+                if t and i:
+                    top.append(f"{t}:{i}")
             diag.setdefault("top_evidence", top)
-
             resp.diagnostics = diag
     except Exception:
         pass
 
-    # LLM mode diagnostics (dry-run / disabled / real)
+    # llm mode diagnostics
     try:
         diag = dict(getattr(resp, "diagnostics", None) or {})
         if llm is not None:
             diag.setdefault("llm_mode", "real")
+            if llm_provider_name:
+                diag.setdefault("llm_provider", llm_provider_name)
+            if llm_model:
+                diag.setdefault("llm_model", llm_model)
         elif bool(getattr(s, "feature_reasoning_llm_dry_run", False)):
             diag.setdefault("llm_mode", "dry_run")
         else:
             diag.setdefault("llm_mode", "disabled")
 
+        if llm_error:
+            diag.setdefault("llm_error", llm_error)
+
         fr = getattr(resp, "_fallback_reason", None)
         if fr:
             diag.setdefault("fallback_reason", str(fr))
+
         resp.diagnostics = diag
     except Exception:
         pass
 
+    # warnings
     try:
-        if llm is None:
+        if llm is None and llm_enabled:
             resp.warnings = list(resp.warnings or [])
             if "llm_missing" not in resp.warnings:
                 resp.warnings.append("llm_missing")

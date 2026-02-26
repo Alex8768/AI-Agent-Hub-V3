@@ -133,14 +133,21 @@ async def get_workspace(
         # Get default workspace (deterministic for Base/Smoke)
         return "default"
 
-
 async def get_llm_provider(
     provider_type: Optional[str] = None
 ):
-    """Get LLM provider based on configuration."""
-    from src.layers.base.llm.providers import LLMProviderFactory
-    
+    """Get LLM provider based on configuration.
+
+    IMPORTANT: Do not instantiate abstract factories here.
+    Delegate to src.layers.base.llm.providers.get_llm_provider (concrete wiring).
+    """
+    # Normalize provider name (Enum -> str) for base provider router
     provider_name = provider_type or settings.llm_provider
-    factory = LLMProviderFactory()
-    
-    return await factory.get_provider(provider_name)
+    try:
+        provider_name = provider_name.value  # type: ignore[attr-defined]
+    except Exception:
+        provider_name = str(provider_name)
+
+    from src.layers.base.llm.providers import get_llm_provider as _get
+
+    return await _get(provider_type=provider_name)
