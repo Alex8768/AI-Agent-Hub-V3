@@ -25,6 +25,7 @@ class HybridRetrievalResult:
     graph: dict[str, Any]
     evidence: list[dict[str, Any]]
     results: list[dict[str, Any]] = field(default_factory=list)  # normalized vector results for reasoning.normalizer
+    stats: dict[str, Any] = field(default_factory=dict)  # retrieval diagnostics (memory/vector/graph)
 
 
 class HybridRetriever:
@@ -99,6 +100,10 @@ class HybridRetriever:
                 }
             )
 
+        mem_mode = "off"
+        mem_candidates = 0
+        mem_added = 0
+
         # 2) Memory retrieval (Pro, feature-flagged)
         # - If feature_memory_embeddings: semantic_query via Qdrant index
         # - Else if feature_memory: fallback SQL LIKE query
@@ -107,11 +112,13 @@ class HybridRetriever:
             mem_hits: list[dict[str, Any]] = []
             try:
                 if getattr(s, "feature_memory_embeddings", False):
+                    mem_mode = "semantic"
                     mem_hits = await ms.semantic_query(
                         workspace_id=workspace_id,
                         text=query,
                         limit=int(memory_limit),
                     )
+                    mem_candidates = int(len(mem_hits or []))
                     for h in mem_hits or []:
                         key = h.get("key")
                         if not key:
@@ -124,6 +131,7 @@ class HybridRetriever:
                         evidence.append(
                             {
                                 "type": "memory",
+                                # memory evidence
                                 "id": str(key),
                                 "source_refs": [str(snippet)] if snippet else [],
                                 "score": float(score) if score is not None else None,
@@ -132,11 +140,14 @@ class HybridRetriever:
                             }
                         )
                 else:
+                    mem_mode = "like"
                     mem_hits = await ms.query(
                         workspace_id=workspace_id,
                         text=query,
                         limit=int(memory_limit),
                     )
+                    mem_candidates = int(len(mem_hits or []))
+                    mem_candidates = int(len(mem_hits or []))
                     for h in mem_hits or []:
                         key = h.get("key")
                         if not key:
@@ -148,6 +159,7 @@ class HybridRetriever:
                         evidence.append(
                             {
                                 "type": "memory",
+                                # memory evidence
                                 "id": str(key),
                                 "source_refs": [value[:240]] if value else [],
                                 "score": None,
@@ -167,6 +179,7 @@ class HybridRetriever:
                 graph={"nodes": [], "edges": []},
                 evidence=evidence,
                 results=results_norm,
+                stats={"memory_mode": mem_mode, "memory_candidates_count": mem_candidates, "memory_added_evidence_count": mem_added},
             )
 
         seeds = await gs.search_nodes(workspace_id=workspace_id, text=query, limit=int(graph_seed_limit))
@@ -220,4 +233,5 @@ class HybridRetriever:
             graph={"nodes": nodes, "edges": edges},
             evidence=evidence,
             results=results_norm,
+            stats={"memory_mode": mem_mode, "memory_candidates_count": mem_candidates, "memory_added_evidence_count": mem_added},
         )

@@ -72,6 +72,20 @@ class _RetrieverAdapter:
         evidence = list(evidence or [])
         results = list(results or [])
 
+        # Merge retriever-provided stats (if any) into last_stats (best-effort)
+        try:
+            stats = None
+            if isinstance(out, dict):
+                stats = out.get("stats")
+            else:
+                stats = getattr(out, "stats", None)
+            if isinstance(stats, dict) and stats:
+                self.last_stats = dict(self.last_stats or {})
+                for k, v in stats.items():
+                    self.last_stats.setdefault(str(k), v)
+        except Exception:
+            pass
+
         # Apply retrieval policy (best-effort)
         try:
             from src.layers.pro.rag.retrieval.policy import RetrievalPolicy, apply_policy
