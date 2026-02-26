@@ -1,6 +1,6 @@
 # scripts/run_and_smoke.ps1
 param(
-  [string]$Host = "127.0.0.1",
+  [string]$BindHost = "127.0.0.1",
   [int]$Port = 0,
   [int]$HealthTimeoutSec = 25
 )
@@ -23,7 +23,7 @@ function Get-FreePort {
 
 if ($Port -eq 0) { $Port = Get-FreePort }
 
-$BaseUrl = "http://$Host`:$Port"
+$BaseUrl = "http://$BindHost`:$Port"
 $env:BASE_URL = $BaseUrl
 
 function Fail($msg) { Write-Host "❌ $msg"; exit 1 }
@@ -45,7 +45,7 @@ Write-Host "BASE_URL=$BaseUrl"
 Write-Host ""
 
 $uvicorn = Start-Process -FilePath "uvicorn" `
-  -ArgumentList "src.api.main:app --host $Host --port $Port" `
+  -ArgumentList "src.api.main:app --host $BindHost --port $Port" `
   -PassThru -NoNewWindow
 
 try {
