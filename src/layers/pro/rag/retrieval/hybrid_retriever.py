@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
 from src.core.providers import get_graph_store
@@ -23,13 +23,16 @@ class HybridRetrievalResult:
     vector_results: list[Any]
     graph: dict[str, Any]
     evidence: list[dict[str, Any]]
+    results: list[dict[str, Any]] = field(default_factory=list)  # normalized vector results for reasoning.normalizer
 
 
 class HybridRetriever:
-    """
-    Hybrid retrieval MVP:
-    - Vector retrieval via existing engine.search()
+    """Hybrid retrieval MVP (2026-ready wiring):
+
+    - Vector retrieval via engine.search()
     - Optional GraphRAG augmentation (if feature_graphrag enabled)
+    - Evidence is unified into ProvenanceItem-like dicts:
+        {"type": "...", "id": "...", "source_refs": [...], "score": ..., "confidence": ..., "meta": {...}}
     """
 
     async def retrieve(
@@ -54,43 +57,100 @@ class HybridRetriever:
             workspace_id=workspace_id,
         )
 
+        # Normalize vector results into reasoning-friendly 'results' + 'evidence'
+        results_norm: list[dict[str, Any]] = []
+        evidence: list[dict[str, Any]] = []
+
+        for r in (vector_results or []):
+            # CoreSearchResult is object-like; best-effort attr access
+            chunk_id = getattr(r, "chunk_id", None) or getattr(r, "id", None)
+            if not chunk_id:
+                continue
+            score = getattr(r, "score", None)
+            meta = getattr(r, "metadata", None) or getattr(r, "meta", None) or {}
+            if not isinstance(meta, dict):
+                meta = {}
+
+            results_norm.append({"chunk_id": str(chunk_id), "score": score, "meta": meta})
+
+            # Evidence item for provenance (chunk)
+            src_refs = meta.get("source_refs") or meta.get("sources") or meta.get("source") or []
+            if isinstance(src_refs, str):
+                src_refs = [src_refs]
+            if not isinstance(src_refs, list):
+                src_refs = []
+            evidence.append(
+                {
+                    "type": "chunk",
+                    "id": str(chunk_id),
+                    "source_refs": [str(s) for s in src_refs if s],
+                    "score": float(score) if score is not None else None,
+                    "confidence": meta.get("confidence"),
+                    "meta": meta,
+                }
+            )
+
         # 2) Graph augmentation (Pro, feature-flagged in providers)
         gs = get_graph_store()
         if gs is None:
-            return HybridRetrievalResult(vector_results=vector_results, graph={"nodes": [], "edges": []}, evidence=[])
+            return HybridRetrievalResult(
+                vector_results=vector_results,
+                graph={"nodes": [], "edges": []},
+                evidence=evidence,
+                results=results_norm,
+            )
 
         # Seed nodes by query text
         seeds = await gs.search_nodes(workspace_id=workspace_id, text=query, limit=int(graph_seed_limit))
-        seed_ids = [n["node_id"] for n in seeds if n.get("node_id")]
+        seed_ids = [n.get("node_id") for n in (seeds or []) if isinstance(n, dict) and n.get("node_id")]
 
-        nodes: list[dict[str, Any]] = []
-        edges: list[dict[str, Any]] = []
+        nodes_raw: list[dict[str, Any]] = []
+        edges_raw: list[dict[str, Any]] = []
 
         # Expand neighbors
         for nid in seed_ids:
-            sub = await gs.neighbors(workspace_id=workspace_id, node_id=nid, depth=int(graph_depth), limit=int(graph_limit))
-            nodes.extend(sub.get("nodes") or [])
-            edges.extend(sub.get("edges") or [])
+            sub = await gs.neighbors(
+                workspace_id=workspace_id,
+                node_id=str(nid),
+                depth=int(graph_depth),
+                limit=int(graph_limit),
+            )
+            nodes_raw.extend(sub.get("nodes") or [])
+            edges_raw.extend(sub.get("edges") or [])
 
-        nodes = _dedup_by(nodes, "node_id")
-        edges = _dedup_by(edges, "edge_id")
+        nodes_raw = _dedup_by(nodes_raw, "node_id")
+        edges_raw = _dedup_by(edges_raw, "edge_id")
 
-        # Evidence extraction for UI (source_refs)
-        evidence: list[dict[str, Any]] = []
-        for e in edges:
+        # Normalize graph ids to match evidence_normalizer expectations (id)
+        nodes = [{"id": n.get("node_id"), **{k: v for k, v in n.items() if k != "node_id"}} for n in nodes_raw if n.get("node_id")]
+        edges = [{"id": e.get("edge_id"), **{k: v for k, v in e.items() if k != "edge_id"}} for e in edges_raw if e.get("edge_id")]
+
+        # Evidence extraction from graph edges (source_refs)
+        for e in edges_raw:
             meta = (e.get("metadata") or {})
             src_refs = meta.get("source_refs") or []
+            if isinstance(src_refs, str):
+                src_refs = [src_refs]
+            if not isinstance(src_refs, list):
+                src_refs = []
             if src_refs:
                 evidence.append(
                     {
                         "type": "edge",
-                        "edge_id": e.get("edge_id"),
-                        "rel_type": e.get("rel_type"),
-                        "src_id": e.get("src_id"),
-                        "dst_id": e.get("dst_id"),
-                        "source_refs": src_refs,
+                        "id": str(e.get("edge_id")),
+                        "source_refs": [str(s) for s in src_refs if s],
                         "confidence": meta.get("confidence"),
+                        "meta": {
+                            "rel_type": e.get("rel_type"),
+                            "src_id": e.get("src_id"),
+                            "dst_id": e.get("dst_id"),
+                        },
                     }
                 )
 
-        return HybridRetrievalResult(vector_results=vector_results, graph={"nodes": nodes, "edges": edges}, evidence=evidence)
+        return HybridRetrievalResult(
+            vector_results=vector_results,
+            graph={"nodes": nodes, "edges": edges},
+            evidence=evidence,
+            results=results_norm,
+        )

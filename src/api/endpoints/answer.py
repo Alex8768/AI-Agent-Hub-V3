@@ -45,9 +45,9 @@ class _RetrieverAdapter:
         self._engine = engine
         self._hybrid = hybrid
         self._workspace_id = workspace_id
+        self.last_stats: dict[str, object] = {}
 
     async def retrieve(self, request: AnswerRequest):
-        # HybridRetriever API: retrieve(engine=..., workspace_id=..., ...)
         out = await self._hybrid.retrieve(
             engine=self._engine,
             workspace_id=self._workspace_id,
@@ -57,8 +57,44 @@ class _RetrieverAdapter:
             similarity_threshold=0.0,
             graph_depth=request.graph_depth,
         )
-        # ReasoningEngine expects dict-like shape with evidence/graph
-        return {"results": [], "graph": getattr(out, "graph", None), "evidence": getattr(out, "evidence", [])}
+
+        # Support both dict-like and object-like results
+        graph = getattr(out, "graph", None)
+        evidence = getattr(out, "evidence", None)
+        results = getattr(out, "results", None)
+
+        if isinstance(out, dict):
+            graph = out.get("graph")
+            evidence = out.get("evidence")
+            results = out.get("results")
+
+        graph = graph or {"nodes": [], "edges": []}
+        evidence = list(evidence or [])
+        results = list(results or [])
+
+        # Apply retrieval policy (best-effort)
+        try:
+            from src.layers.pro.rag.retrieval.policy import RetrievalPolicy, apply_policy
+
+            policy = RetrievalPolicy(
+                similarity_threshold=0.0,
+                max_evidence=int(getattr(request, "k", 8) or 8) * 5,
+                dedupe=True,
+            )
+            evidence_filtered, stats = apply_policy(evidence, policy=policy)
+            self.last_stats = dict(stats or {})
+            # add raw counts for diagnostics
+            try:
+                self.last_stats.setdefault("vector_candidates_count", int(len(results or [])))
+                self.last_stats.setdefault("graph_nodes_count", int(len((graph or {}).get("nodes") or [])))
+                self.last_stats.setdefault("graph_edges_count", int(len((graph or {}).get("edges") or [])))
+            except Exception:
+                pass
+            evidence = evidence_filtered
+        except Exception:
+            self.last_stats = {}
+
+        return {"results": results, "graph": graph, "evidence": evidence}
 
 
 @router.post("/answer", response_model=AnswerResponse)
@@ -75,13 +111,11 @@ async def answer(
     """
     s = get_settings()
     if not getattr(s, "feature_reasoning", False) or not getattr(s, "feature_graphrag", False):
-        # Hide Pro API surface when disabled
         raise HTTPException(status_code=404, detail="Not Found")
 
     _log_observability(http, workspace_id=workspace_id, req=req)
 
-    # Composition root rule:
-    # - heavyweight deps must be wired in lifespan (or outer layer), not inside endpoint.
+    # Composition root rule: heavyweight deps must be wired in lifespan (or outer layer)
     engine = getattr(http.app.state, "rag_engine", None)
     hybrid = getattr(http.app.state, "hybrid_retriever", None)
     if engine is None or hybrid is None:
@@ -97,7 +131,6 @@ async def answer(
         llm = None
 
     retriever = _RetrieverAdapter(engine=engine, hybrid=hybrid, workspace_id=workspace_id)
-
     reasoning = get_reasoning_engine(retriever=retriever, llm=llm)
     if reasoning is None:
         raise HTTPException(status_code=404, detail="Not Found")
@@ -134,6 +167,17 @@ async def answer(
         diag.setdefault("k", int(req.k or 0))
         diag.setdefault("graph_depth", int(req.graph_depth or 0))
         resp.diagnostics = diag
+    except Exception:
+        pass
+
+    # Retrieval policy diagnostics (from retriever adapter, best-effort)
+    try:
+        stats = getattr(retriever, "last_stats", None) or {}
+        if stats:
+            diag = dict(getattr(resp, "diagnostics", None) or {})
+            for k, v in dict(stats).items():
+                diag.setdefault(f"retrieval_{k}", v)
+            resp.diagnostics = diag
     except Exception:
         pass
 
