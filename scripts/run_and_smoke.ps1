@@ -5,8 +5,12 @@ param(
   [int]$HealthTimeoutSec = 25
 )
 
-# After param() — allowed
+
+# After param() — PowerShell requires param to be first
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$ErrorActionPreference = "Stop"
+
+# After param() — allowed
 $ErrorActionPreference = "Stop"
 
 function Get-FreePort {
