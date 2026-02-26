@@ -57,10 +57,12 @@ def deterministic_rerank(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
         # smaller is better
         if t == "chunk":
             return 0
-        if t == "node":
+        if t == "memory":
             return 1
-        if t == "edge":
+        if t == "node":
             return 2
+        if t == "edge":
+            return 3
         return 9
 
     def key(it: dict[str, Any]):

@@ -36,3 +36,14 @@ def test_retrieval_policy_deterministic_rerank_orders_by_score_confidence_type_i
 
     assert stats["rerank_applied"] is True
     assert stats["rerank_strategy"] == "score_confidence_type_id"
+
+
+def test_retrieval_policy_memory_ranks_above_edge_on_ties():
+    evidence = [
+        {"type": "edge", "id": "e1", "score": 0.9, "confidence": 0.5},
+        {"type": "memory", "id": "m1", "score": 0.9, "confidence": 0.5},
+    ]
+    policy = RetrievalPolicy(similarity_threshold=0.0, max_evidence=50, dedupe=True, rerank=True)
+    out, _ = apply_policy(evidence, policy=policy)
+    ids = [(x.get("type"), x.get("id")) for x in out]
+    assert ids[0] == ("memory", "m1")
