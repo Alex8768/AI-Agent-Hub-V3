@@ -57,7 +57,7 @@ try {
   Write-Host ""
 
   Write-Host "2) Running smoke.ps1"
-  & "$PSScriptRoot\smoke.ps1"
+  & powershell.exe -ExecutionPolicy Bypass -File "$PSScriptRoot\smoke.ps1" -BaseUrl $BaseUrl
   if ($LASTEXITCODE -ne 0) { Fail "smoke.ps1 failed" }
 
   Write-Host ""
