@@ -106,6 +106,10 @@ def main() -> int:
 
     # Start server (same idea as scripts/run_and_smoke.sh)
     env = os.environ.copy()
+    # Enable Pro features for evaluation runs (keeps production feature-gates intact)
+    if os.environ.get("EVAL_ENABLE_PRO", "1") == "1":
+        env.setdefault("FEATURE_REASONING", "true")
+        env.setdefault("FEATURE_GRAPHRAG", "true")
     env["HOST"] = host
     env["PORT"] = str(port)
 
