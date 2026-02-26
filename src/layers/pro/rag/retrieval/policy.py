@@ -9,11 +9,14 @@ class RetrievalPolicy:
     # Similarity threshold (applies to items that have 'score')
     similarity_threshold: float = 0.0
 
-    # Max evidence items after filtering/dedupe
+    # Max evidence items after filtering/dedupe/rerank
     max_evidence: int = 50
 
     # Dedupe by (type, id)
     dedupe: bool = True
+
+    # Deterministic rerank (score/confidence/type/id)
+    rerank: bool = True
 
 
 def _dedupe_type_id(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -30,6 +33,46 @@ def _dedupe_type_id(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
         seen.add(key)
         out.append(it)
     return out
+
+
+def deterministic_rerank(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Deterministic rerank for evidence items.
+
+    Strategy (stable, 2026-friendly):
+      1) score desc (missing -> -inf)
+      2) confidence desc (missing -> -inf)
+      3) type priority: chunk > node > edge > other
+      4) id asc (stable tie-break)
+
+    This ensures repeatable ordering across runs and platforms.
+    """
+
+    def _score(v: Any) -> float:
+        try:
+            return float(v)
+        except Exception:
+            return float("-inf")
+
+    def _type_rank(t: str) -> int:
+        # smaller is better
+        if t == "chunk":
+            return 0
+        if t == "node":
+            return 1
+        if t == "edge":
+            return 2
+        return 9
+
+    def key(it: dict[str, Any]):
+        t = str(it.get("type") or "")
+        i = str(it.get("id") or "")
+        sc = _score(it.get("score", None))
+        cf = _score(it.get("confidence", None))
+        tr = _type_rank(t)
+        # python sorts ascending; we want score/confidence descending
+        return (-sc, -cf, tr, i)
+
+    return sorted(list(items or []), key=key)
 
 
 def apply_policy(
@@ -51,6 +94,8 @@ def apply_policy(
         "evidence_total_before_policy": int(len(evidence or [])),
         "similarity_threshold": float(policy.similarity_threshold),
         "dedupe_applied": bool(policy.dedupe),
+        "rerank_applied": bool(policy.rerank),
+        "rerank_strategy": "score_confidence_type_id" if policy.rerank else "none",
     }
 
     items = list(evidence or [])
@@ -78,6 +123,12 @@ def apply_policy(
         items = _dedupe_type_id(items)
 
     stats["evidence_after_dedupe_count"] = int(len(items))
+
+    # Deterministic rerank (after filtering/dedupe, before clamp)
+    if policy.rerank:
+        items = deterministic_rerank(items)
+
+    stats["evidence_after_rerank_count"] = int(len(items))
 
     # Clamp
     if policy.max_evidence is not None and int(policy.max_evidence) > 0:
