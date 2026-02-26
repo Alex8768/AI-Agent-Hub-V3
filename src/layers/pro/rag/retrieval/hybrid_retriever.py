@@ -32,7 +32,7 @@ class HybridRetriever:
     """Hybrid retrieval (Pro):
 
     Sources:
-      - Vector retrieval (Base): engine.search()
+      - Vector retrieval (Base): engine.search() -> SearchResult(document=VectorDocument, score, distance)
       - Memory retrieval (Pro): semantic_query (Qdrant) or fallback query (LIKE)
       - Graph augmentation (Pro): GraphStore neighbors
 
@@ -74,21 +74,36 @@ class HybridRetriever:
         evidence: list[dict[str, Any]] = []
 
         for r in (vector_results or []):
-            chunk_id = getattr(r, "chunk_id", None) or getattr(r, "id", None)
-            if not chunk_id:
+            # RAGEngine.search() returns src.core.contracts.contracts.SearchResult:
+            # {document: VectorDocument, score: float, distance: float}
+            doc = getattr(r, "document", None)
+            if doc is None:
                 continue
-            score = getattr(r, "score", None)
-            meta = getattr(r, "metadata", None) or getattr(r, "meta", None) or {}
+
+            meta = getattr(doc, "metadata", None) or {}
             if not isinstance(meta, dict):
                 meta = {}
 
+            # Prefer explicit chunk_id from metadata; fallback to VectorDocument.id
+            chunk_id = meta.get("chunk_id") or getattr(doc, "id", None)
+            if not chunk_id:
+                continue
+
+            score = getattr(r, "score", None)
+
+            # results_norm drives used_chunks in reasoning.normalizer
             results_norm.append({"chunk_id": str(chunk_id), "score": score, "meta": meta})
 
-            src_refs = meta.get("source_refs") or meta.get("sources") or meta.get("source") or []
+            # Evidence item for provenance (chunk)
+            content_preview = getattr(doc, "content", None) or ""
+            src_refs = meta.get("source_refs") or meta.get("sources") or meta.get("source")
+            if not src_refs:
+                src_refs = [content_preview] if content_preview else []
             if isinstance(src_refs, str):
                 src_refs = [src_refs]
             if not isinstance(src_refs, list):
                 src_refs = []
+
             evidence.append(
                 {
                     "type": "chunk",
@@ -100,13 +115,11 @@ class HybridRetriever:
                 }
             )
 
+        # 2) Memory retrieval (Pro, feature-flagged)
         mem_mode = "off"
         mem_candidates = 0
         mem_added = 0
 
-        # 2) Memory retrieval (Pro, feature-flagged)
-        # - If feature_memory_embeddings: semantic_query via Qdrant index
-        # - Else if feature_memory: fallback SQL LIKE query
         if getattr(s, "feature_memory", False):
             ms = get_memory_store()
             mem_hits: list[dict[str, Any]] = []
@@ -131,7 +144,6 @@ class HybridRetriever:
                         evidence.append(
                             {
                                 "type": "memory",
-                                # memory evidence
                                 "id": str(key),
                                 "source_refs": [str(snippet)] if snippet else [],
                                 "score": float(score) if score is not None else None,
@@ -139,6 +151,7 @@ class HybridRetriever:
                                 "meta": payload,
                             }
                         )
+                        mem_added += 1
                 else:
                     mem_mode = "like"
                     mem_hits = await ms.query(
@@ -147,29 +160,34 @@ class HybridRetriever:
                         limit=int(memory_limit),
                     )
                     mem_candidates = int(len(mem_hits or []))
-                    mem_candidates = int(len(mem_hits or []))
                     for h in mem_hits or []:
                         key = h.get("key")
                         if not key:
                             continue
                         value = str(h.get("value") or "")
-                        meta = h.get("metadata") or {}
-                        if not isinstance(meta, dict):
-                            meta = {}
+                        meta2 = h.get("metadata") or {}
+                        if not isinstance(meta2, dict):
+                            meta2 = {}
                         evidence.append(
                             {
                                 "type": "memory",
-                                # memory evidence
                                 "id": str(key),
                                 "source_refs": [value[:240]] if value else [],
                                 "score": None,
-                                "confidence": meta.get("confidence"),
-                                "meta": meta,
+                                "confidence": meta2.get("confidence"),
+                                "meta": meta2,
                             }
                         )
+                        mem_added += 1
             except Exception:
-                # best-effort: memory is optional and must not break retrieval
+                # best-effort: memory must not break retrieval
                 pass
+
+        stats: dict[str, Any] = {
+            "memory_mode": mem_mode,
+            "memory_candidates_count": mem_candidates,
+            "memory_added_evidence_count": mem_added,
+        }
 
         # 3) Graph augmentation (Pro, feature-flagged in providers)
         gs = get_graph_store()
@@ -179,7 +197,7 @@ class HybridRetriever:
                 graph={"nodes": [], "edges": []},
                 evidence=evidence,
                 results=results_norm,
-                stats={"memory_mode": mem_mode, "memory_candidates_count": mem_candidates, "memory_added_evidence_count": mem_added},
+                stats=stats,
             )
 
         seeds = await gs.search_nodes(workspace_id=workspace_id, text=query, limit=int(graph_seed_limit))
@@ -202,24 +220,32 @@ class HybridRetriever:
         edges_raw = _dedup_by(edges_raw, "edge_id")
 
         # Normalize ids to match evidence_normalizer expectations (id)
-        nodes = [{"id": n.get("node_id"), **{k: v for k, v in n.items() if k != "node_id"}} for n in nodes_raw if n.get("node_id")]
-        edges = [{"id": e.get("edge_id"), **{k: v for k, v in e.items() if k != "edge_id"}} for e in edges_raw if e.get("edge_id")]
+        nodes = [
+            {"id": n.get("node_id"), **{k: v for k, v in n.items() if k != "node_id"}}
+            for n in nodes_raw
+            if n.get("node_id")
+        ]
+        edges = [
+            {"id": e.get("edge_id"), **{k: v for k, v in e.items() if k != "edge_id"}}
+            for e in edges_raw
+            if e.get("edge_id")
+        ]
 
         # Evidence from graph edges (source_refs)
         for e in edges_raw:
-            meta = (e.get("metadata") or {})
-            src_refs = meta.get("source_refs") or []
-            if isinstance(src_refs, str):
-                src_refs = [src_refs]
-            if not isinstance(src_refs, list):
-                src_refs = []
-            if src_refs:
+            meta3 = (e.get("metadata") or {})
+            src_refs3 = meta3.get("source_refs") or []
+            if isinstance(src_refs3, str):
+                src_refs3 = [src_refs3]
+            if not isinstance(src_refs3, list):
+                src_refs3 = []
+            if src_refs3:
                 evidence.append(
                     {
                         "type": "edge",
                         "id": str(e.get("edge_id")),
-                        "source_refs": [str(s) for s in src_refs if s],
-                        "confidence": meta.get("confidence"),
+                        "source_refs": [str(s) for s in src_refs3 if s],
+                        "confidence": meta3.get("confidence"),
                         "meta": {
                             "rel_type": e.get("rel_type"),
                             "src_id": e.get("src_id"),
@@ -233,5 +259,5 @@ class HybridRetriever:
             graph={"nodes": nodes, "edges": edges},
             evidence=evidence,
             results=results_norm,
-            stats={"memory_mode": mem_mode, "memory_candidates_count": mem_candidates, "memory_added_evidence_count": mem_added},
+            stats=stats,
         )
