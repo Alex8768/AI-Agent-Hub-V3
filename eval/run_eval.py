@@ -21,6 +21,7 @@ class Case:
     k: int = 8
     graph_depth: int = 1
     expect_any_prefix: list[str] | None = None
+    requires_env: dict[str, str] | None = None
     notes: str = ""
 
 
@@ -33,12 +34,19 @@ def _pick_free_port(host: str = "127.0.0.1") -> int:
 
 
 def _load_cases(path: Path) -> list[Case]:
+    raw = path.read_text(encoding="utf-8")
+    # tolerate accidental literal "\n" sequences
+    raw = raw.replace("\\n", "\n")
+
     cases: list[Case] = []
-    for line in path.read_text(encoding="utf-8").splitlines():
+    for line in raw.splitlines():
         line = line.strip()
         if not line or line.startswith("#"):
             continue
         obj = json.loads(line)
+        req_env = obj.get("requires_env") or None
+        if req_env is not None and not isinstance(req_env, dict):
+            req_env = None
         cases.append(
             Case(
                 id=str(obj.get("id") or obj.get("case_id") or f"case-{len(cases)+1:03d}"),
@@ -47,6 +55,7 @@ def _load_cases(path: Path) -> list[Case]:
                 k=int(obj.get("k", 8)),
                 graph_depth=int(obj.get("graph_depth", 1)),
                 expect_any_prefix=list(obj.get("expect_any_prefix") or obj.get("expect_any_prefixes") or []),
+                requires_env={str(k): str(v) for k, v in (req_env or {}).items()} if req_env else None,
                 notes=str(obj.get("notes") or ""),
             )
         )
@@ -87,6 +96,13 @@ def _p95(values: list[float]) -> float:
     return float(vals[idx])
 
 
+def _env_satisfies(req: dict[str, str]) -> bool:
+    for k, v in (req or {}).items():
+        if os.environ.get(k, "") != str(v):
+            return False
+    return True
+
+
 def main() -> int:
     cases_path = Path(os.environ.get("CASES", "eval/cases.jsonl"))
     out_path = Path(os.environ.get("OUT", "eval/results.jsonl"))
@@ -114,19 +130,35 @@ def main() -> int:
     print(f"OUT={out_path}")
     print()
 
-    # Start server (same idea as scripts/run_and_smoke.sh)
     env = os.environ.copy()
-    # Enable Pro features for evaluation runs (keeps production feature-gates intact)
+
+    # Pro surface for eval
     if os.environ.get("EVAL_ENABLE_PRO", "1") == "1":
         env.setdefault("FEATURE_REASONING", "true")
         env.setdefault("FEATURE_GRAPHRAG", "true")
-        if os.environ.get("EVAL_ENABLE_DRYRUN", "0") == "1":
+
+        # Default mode: dry-run unless explicitly using Ollama
+        if os.environ.get("EVAL_ENABLE_OLLAMA", "0") != "1":
+            env.setdefault("FEATURE_REASONING_LLM_ENABLED", "false")
             env.setdefault("FEATURE_REASONING_LLM_DRY_RUN", "true")
-    # Optional: enable memory retrieval during eval
+        else:
+            env.setdefault("FEATURE_REASONING_LLM_ENABLED", "true")
+            env.setdefault("FEATURE_REASONING_LLM_DRY_RUN", "false")
+            env.setdefault("LLM_PROVIDER", "ollama")
+            # Use an installed model by default (override via OLLAMA_MODEL)
+            env.setdefault("OLLAMA_MODEL", "llama3.1:latest")
+
+        # If caller explicitly wants dryrun, force it
+        if os.environ.get("EVAL_ENABLE_DRYRUN", "0") == "1":
+            env["FEATURE_REASONING_LLM_ENABLED"] = "false"
+            env["FEATURE_REASONING_LLM_DRY_RUN"] = "true"
+
+    # Memory toggles
     if os.environ.get("EVAL_ENABLE_MEMORY", "0") == "1":
         env.setdefault("FEATURE_MEMORY", "true")
     if os.environ.get("EVAL_ENABLE_MEMORY_EMBEDDINGS", "0") == "1":
         env.setdefault("FEATURE_MEMORY_EMBEDDINGS", "true")
+
     env["HOST"] = host
     env["PORT"] = str(port)
 
@@ -138,7 +170,8 @@ def main() -> int:
         print("✅ /health ready")
         print()
 
-        total = 0
+        total_run = 0
+        skipped = 0
         ok = 0
         http200 = 0
 
@@ -148,9 +181,14 @@ def main() -> int:
         vector_candidates: list[float] = []
 
         with out_path.open("a", encoding="utf-8") as f_out:
-            with httpx.Client(timeout=60.0) as client:
+            with httpx.Client(timeout=120.0) as client:
                 for c in cases:
-                    total += 1
+                    if c.requires_env and not _env_satisfies(c.requires_env):
+                        skipped += 1
+                        print(f"- {c.id}: SKIP (requires_env={c.requires_env})")
+                        continue
+
+                    total_run += 1
                     t0 = time.time()
                     r = client.post(
                         f"{base_url}/api/v1/answer",
@@ -164,6 +202,7 @@ def main() -> int:
                         "workspace_id": c.workspace_id,
                         "status_code": r.status_code,
                         "latency_ms": float(dt_ms),
+                        "requires_env": c.requires_env or {},
                     }
 
                     if r.status_code == 200:
@@ -173,7 +212,6 @@ def main() -> int:
                         top_evidence = diag.get("top_evidence") or []
                         trace_id = diag.get("trace_id") or ""
 
-                        # derived metrics
                         prov_n = int(diag.get("retrieved_provenance_count") or 0)
                         if prov_n > 0:
                             with_evidence += 1
@@ -190,9 +228,6 @@ def main() -> int:
                         except Exception:
                             pass
 
-                        # expectation logic:
-                        # - if case specifies prefixes -> use it
-                        # - otherwise, pass if any evidence exists
                         hit_prefix = _count_prefix_hits(list(top_evidence), list(c.expect_any_prefix or []))
                         hit_any_evidence = (prov_n > 0) or (len(top_evidence) > 0)
                         passed = bool(hit_prefix or (not (c.expect_any_prefix or []) and hit_any_evidence))
@@ -223,9 +258,11 @@ def main() -> int:
         vc_avg = (sum(vector_candidates) / len(vector_candidates)) if vector_candidates else 0.0
 
         print("== Summary ==")
-        print(f"cases: {total}")
-        print(f"http_200: {http200}/{total}")
-        print(f"expectation_pass: {ok}/{total}")
+        print(f"cases_total: {len(cases)}")
+        print(f"cases_run: {total_run}")
+        print(f"cases_skipped: {skipped}")
+        print(f"http_200: {http200}/{total_run}" if total_run else "http_200: 0/0")
+        print(f"expectation_pass: {ok}/{total_run}" if total_run else "expectation_pass: 0/0")
         print(f"with_evidence: {with_evidence}/{http200}" if http200 else "with_evidence: 0/0")
         print(f"with_memory: {with_memory}/{http200}" if http200 else "with_memory: 0/0")
         print(f"latency_ms_avg: {avg:.1f}")
@@ -235,7 +272,6 @@ def main() -> int:
         return 0
 
     finally:
-        # shutdown server
         try:
             proc.terminate()
             proc.wait(timeout=5)
@@ -244,7 +280,6 @@ def main() -> int:
                 proc.kill()
             except Exception:
                 pass
-        # print tail of logs
         if proc.stdout is not None:
             try:
                 tail = proc.stdout.read()[-4000:]
