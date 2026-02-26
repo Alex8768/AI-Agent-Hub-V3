@@ -180,6 +180,19 @@ async def answer(
         diag.setdefault("query_len", int(len(req.query or "")))
         diag.setdefault("k", int(req.k or 0))
         diag.setdefault("graph_depth", int(req.graph_depth or 0))
+        try:
+            from src.observability.trace import make_trace_id
+            diag.setdefault(
+                "trace_id",
+                make_trace_id(
+                    workspace_id=str(workspace_id or ""),
+                    query=str(req.query or ""),
+                    k=int(req.k or 0),
+                    graph_depth=int(req.graph_depth or 0),
+                ),
+            )
+        except Exception:
+            pass
         resp.diagnostics = diag
     except Exception:
         pass
