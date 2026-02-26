@@ -55,7 +55,13 @@ if ($docId1 -ne $docId2) { Fail "Dedup failed: ids differ" }
 Write-Host "   ✅ Dedup OK"
 
 Write-Host "4) Search"
-$search = CurlJson "$BaseUrl/api/v1/search" "POST" '{"query":"foxes","k":3,"include_metadata":false}'
+$bodySearch = @{
+  query = "foxes"
+  k = 3
+  include_metadata = $false
+} | ConvertTo-Json -Compress
+
+$search = CurlJson "$BaseUrl/api/v1/search" "POST" $bodySearch
 $count = ($search | python scripts/jsonutil.py len)
 Write-Host "   results: $count"
 if ([int]$count -lt 1) {
