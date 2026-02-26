@@ -120,6 +120,11 @@ def main() -> int:
     if os.environ.get("EVAL_ENABLE_PRO", "1") == "1":
         env.setdefault("FEATURE_REASONING", "true")
         env.setdefault("FEATURE_GRAPHRAG", "true")
+    # Optional: enable memory retrieval during eval
+    if os.environ.get("EVAL_ENABLE_MEMORY", "0") == "1":
+        env.setdefault("FEATURE_MEMORY", "true")
+    if os.environ.get("EVAL_ENABLE_MEMORY_EMBEDDINGS", "0") == "1":
+        env.setdefault("FEATURE_MEMORY_EMBEDDINGS", "true")
     env["HOST"] = host
     env["PORT"] = str(port)
 
