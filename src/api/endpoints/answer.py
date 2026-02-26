@@ -11,6 +11,54 @@ from src.layers.pro.reasoning.contracts import AnswerRequest, AnswerResponse
 router = APIRouter(prefix="/api/v1", tags=["reasoning"])
 
 
+def _get_request_id(http: Request) -> str | None:
+    return (
+        getattr(getattr(http, "state", None), "request_id", None)
+        or http.headers.get("x-request-id")
+        or http.headers.get("X-Request-ID")
+        or http.headers.get("X-Request-Id")
+    )
+
+
+def _log_observability(http: Request, *, workspace_id: str, req: AnswerRequest) -> None:
+    # best-effort, non-fatal
+    try:
+        from loguru import logger
+
+        rid = _get_request_id(http)
+        logger.info(
+            "answer.endpoint request_id={} workspace={} qlen={} k={} depth={}",
+            rid,
+            workspace_id,
+            len(req.query or ""),
+            int(req.k or 0),
+            int(req.graph_depth or 0),
+        )
+    except Exception:
+        pass
+
+
+class _RetrieverAdapter:
+    def __init__(self, *, engine: object, hybrid: object, workspace_id: str):
+        self._engine = engine
+        self._hybrid = hybrid
+        self._workspace_id = workspace_id
+
+    async def retrieve(self, request: AnswerRequest):
+        # HybridRetriever API: retrieve(engine=..., workspace_id=..., ...)
+        out = await self._hybrid.retrieve(
+            engine=self._engine,
+            workspace_id=self._workspace_id,
+            query=request.query,
+            k=request.k,
+            filters=request.filters,
+            similarity_threshold=0.0,
+            graph_depth=request.graph_depth,
+        )
+        # ReasoningEngine expects dict-like shape with evidence/graph
+        return {"results": [], "graph": getattr(out, "graph", None), "evidence": getattr(out, "evidence", [])}
+
+
 @router.post("/answer", response_model=AnswerResponse)
 async def answer(
     http: Request,
@@ -28,87 +76,28 @@ async def answer(
         # Hide Pro API surface when disabled
         raise HTTPException(status_code=404, detail="Not Found")
 
-    # Observability (MVP): correlate request + workspace (best-effort, non-fatal)
-    try:
-        from loguru import logger
+    _log_observability(http, workspace_id=workspace_id, req=req)
 
-        rid = (
-            getattr(getattr(http, "state", None), "request_id", None)
-            or http.headers.get("x-request-id")
-            or http.headers.get("X-Request-ID")
-            or http.headers.get("X-Request-Id")
-        )
-        logger.info(
-            "answer.endpoint request_id={} workspace={} qlen={} k={} depth={}",
-            rid,
-            workspace_id,
-            len(req.query or ""),
-            int(req.k or 0),
-            int(req.graph_depth or 0),
-        )
-    except Exception:
-        pass
-
-    # Composition root (MVP):
-    # - retriever/llm are injected from the outer layer later.
-    # For now we fail-fast until proper DI wiring is added.
-    from src.layers.base.rag.engines.rag_engine import RAGEngine
-    from src.layers.pro.rag.retrieval.hybrid_retriever import HybridRetriever
-
+    # Composition root rule:
+    # - heavyweight deps must be wired in lifespan (or outer layer), not inside endpoint.
     engine = getattr(http.app.state, "rag_engine", None)
-    if engine is None:
-        engine = RAGEngine()
-        http.app.state.rag_engine = engine
     hybrid = getattr(http.app.state, "hybrid_retriever", None)
-    if hybrid is None:
-        hybrid = HybridRetriever()
-        http.app.state.hybrid_retriever = hybrid
+    if engine is None or hybrid is None:
+        raise HTTPException(status_code=503, detail="Reasoning stack not initialized")
 
     # Lazy LLM provider acquisition (do not resolve dependencies before feature-gate)
     llm = None
     try:
         from src.api.dependencies_impl import get_llm_provider
+
         llm = await get_llm_provider()
     except Exception:
         llm = None
 
-    class _RetrieverAdapter:
-        async def retrieve(self, request: AnswerRequest):
-            out = await hybrid.retrieve(
-                engine=engine,
-                workspace_id=workspace_id,
-                query=request.query,
-                k=request.k,
-                filters=request.filters,
-                similarity_threshold=0.0,
-                graph_depth=request.graph_depth,
-            )
-            # ReasoningEngine expects dict-like shape with evidence/graph (vector results optional here)
-            return {"results": [], "graph": out.graph, "evidence": out.evidence}
+    retriever = _RetrieverAdapter(engine=engine, hybrid=hybrid, workspace_id=workspace_id)
 
-    reasoning = get_reasoning_engine(retriever=_RetrieverAdapter(), llm=llm)
+    reasoning = get_reasoning_engine(retriever=retriever, llm=llm)
     if reasoning is None:
         raise HTTPException(status_code=404, detail="Not Found")
-
-    # Observability (MVP): correlate request + workspace (best-effort, non-fatal)
-    try:
-        from loguru import logger
-
-        rid = (
-            getattr(getattr(http, "state", None), "request_id", None)
-            or http.headers.get("x-request-id")
-            or http.headers.get("X-Request-ID")
-            or http.headers.get("X-Request-Id")
-        )
-        logger.info(
-            "answer.endpoint request_id={} workspace={} qlen={} k={} depth={}",
-            rid,
-            workspace_id,
-            len(req.query or ""),
-            int(req.k or 0),
-            int(req.graph_depth or 0),
-        )
-    except Exception:
-        pass
 
     return await reasoning.synthesize(req)

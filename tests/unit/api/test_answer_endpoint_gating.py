@@ -35,6 +35,10 @@ def test_answer_endpoint_returns_200_when_enabled_unit_stub(monkeypatch):
 
     monkeypatch.setattr(hr.HybridRetriever, "retrieve", _fake_retrieve, raising=True)
 
+    # Endpoint now requires hybrid_retriever to be wired by composition root;
+    # for unit-test we stub it in app.state.
+    app.state.hybrid_retriever = hr.HybridRetriever()
+
     c = TestClient(app)
     r = c.post("/api/v1/answer", json={"query": "Q"})
     assert r.status_code == 200
@@ -43,3 +47,13 @@ def test_answer_endpoint_returns_200_when_enabled_unit_stub(monkeypatch):
     assert body["answer"]  # stub answer
     assert "confidence" in body
     assert "context_preview" in body
+
+    # Best-effort cleanup to reduce state leakage across tests
+    try:
+        delattr(app.state, "hybrid_retriever")
+    except Exception:
+        pass
+    try:
+        delattr(app.state, "rag_engine")
+    except Exception:
+        pass

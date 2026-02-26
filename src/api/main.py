@@ -61,6 +61,17 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"⚠️ RAGEngine singleton skipped (non-fatal): {e}")
 
+    # Pro polish: wire HybridRetriever once per process (only when Pro flags enabled)
+    try:
+        from src.core.config import get_settings
+        s = get_settings()
+        if getattr(s, "feature_reasoning", False) and getattr(s, "feature_graphrag", False):
+            from src.layers.pro.rag.retrieval.hybrid_retriever import HybridRetriever
+            app.state.hybrid_retriever = HybridRetriever()
+            logger.info("✅ HybridRetriever singleton ready (Pro)")
+    except Exception as e:
+        logger.warning(f"⚠️ HybridRetriever singleton skipped (non-fatal): {e}")
+
 
     yield
 
