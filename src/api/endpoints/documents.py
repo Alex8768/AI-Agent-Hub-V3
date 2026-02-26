@@ -140,6 +140,7 @@ async def list_documents(
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=100, ge=1, le=1000),
     status: str | None = Query(default=None),
+    workspace_id: str = Depends(get_workspace),
 ):
     """List documents from registry."""
     try:
