@@ -69,12 +69,22 @@ def _wait_health(base_url: str, timeout_s: float = 25.0) -> None:
 
 def _count_prefix_hits(top_evidence: list[str], prefixes: list[str]) -> bool:
     if not prefixes:
-        return True
+        return False
     for x in top_evidence:
         for p in prefixes:
             if x.startswith(p):
                 return True
     return False
+
+
+def _p95(values: list[float]) -> float:
+    if not values:
+        return 0.0
+    if len(values) == 1:
+        return float(values[0])
+    vals = sorted(values)
+    idx = int(0.95 * (len(vals) - 1))
+    return float(vals[idx])
 
 
 def main() -> int:
@@ -123,7 +133,13 @@ def main() -> int:
 
         total = 0
         ok = 0
+        http200 = 0
+
         latencies: list[float] = []
+        with_evidence = 0
+        with_memory = 0
+        vector_candidates: list[float] = []
+
         with out_path.open("a", encoding="utf-8") as f_out:
             with httpx.Client(timeout=60.0) as client:
                 for c in cases:
@@ -144,10 +160,36 @@ def main() -> int:
                     }
 
                     if r.status_code == 200:
+                        http200 += 1
                         body = r.json()
                         diag = body.get("diagnostics") or {}
                         top_evidence = diag.get("top_evidence") or []
                         trace_id = diag.get("trace_id") or ""
+
+                        # derived metrics
+                        prov_n = int(diag.get("retrieved_provenance_count") or 0)
+                        if prov_n > 0:
+                            with_evidence += 1
+
+                        type_counts = diag.get("evidence_type_counts") or {}
+                        mem_n = int(type_counts.get("memory") or 0) if isinstance(type_counts, dict) else 0
+                        if mem_n > 0:
+                            with_memory += 1
+
+                        vc = diag.get("retrieval_vector_candidates_count")
+                        try:
+                            if vc is not None:
+                                vector_candidates.append(float(vc))
+                        except Exception:
+                            pass
+
+                        # expectation logic:
+                        # - if case specifies prefixes -> use it
+                        # - otherwise, pass if any evidence exists
+                        hit_prefix = _count_prefix_hits(list(top_evidence), list(c.expect_any_prefix or []))
+                        hit_any_evidence = (prov_n > 0) or (len(top_evidence) > 0)
+                        passed = bool(hit_prefix or (not (c.expect_any_prefix or []) and hit_any_evidence))
+
                         rec.update(
                             {
                                 "trace_id": trace_id,
@@ -155,27 +197,33 @@ def main() -> int:
                                 "timings": body.get("timings") or {},
                                 "diagnostics": diag,
                                 "top_evidence": top_evidence,
+                                "expectation_pass": passed,
                             }
                         )
-                        hit = _count_prefix_hits(list(top_evidence), list(c.expect_any_prefix or []))
-                        rec["expectation_pass"] = bool(hit)
-                        if hit:
+                        if passed:
                             ok += 1
                         latencies.append(float(dt_ms))
                     else:
                         rec["body"] = r.text
+                        rec["expectation_pass"] = False
 
                     f_out.write(json.dumps(rec, ensure_ascii=False) + "\n")
                     print(f"- {c.id}: HTTP {r.status_code}  {dt_ms:7.1f}ms")
 
         print()
         avg = (sum(latencies) / len(latencies)) if latencies else 0.0
-        p95 = sorted(latencies)[int(0.95 * (len(latencies) - 1))] if len(latencies) >= 2 else (latencies[0] if latencies else 0.0)
+        p95 = _p95(latencies)
+        vc_avg = (sum(vector_candidates) / len(vector_candidates)) if vector_candidates else 0.0
+
         print("== Summary ==")
         print(f"cases: {total}")
+        print(f"http_200: {http200}/{total}")
         print(f"expectation_pass: {ok}/{total}")
+        print(f"with_evidence: {with_evidence}/{http200}" if http200 else "with_evidence: 0/0")
+        print(f"with_memory: {with_memory}/{http200}" if http200 else "with_memory: 0/0")
         print(f"latency_ms_avg: {avg:.1f}")
         print(f"latency_ms_p95: {p95:.1f}")
+        print(f"vector_candidates_avg: {vc_avg:.2f}" if vector_candidates else "vector_candidates_avg: n/a")
         print(f"results: {out_path}")
         return 0
 
@@ -189,7 +237,7 @@ def main() -> int:
                 proc.kill()
             except Exception:
                 pass
-        # if failed, print tail of logs
+        # print tail of logs
         if proc.stdout is not None:
             try:
                 tail = proc.stdout.read()[-4000:]
