@@ -5,7 +5,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, Field
 
 
-ProvenanceType = Literal["chunk", "node", "edge"]
+ProvenanceType = Literal["chunk", "node", "edge", "memory"]
 
 
 class ProvenanceItem(BaseModel):
