@@ -1,9 +1,17 @@
 # scripts/smoke.ps1
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 param(
-  [string]$BaseUrl = $env:BASE_URL,
-  [string]$TmpDir = $env:TMP_DIR,
-  [int]$DeepHealth = $(if ($env:DEEP_HEALTH) { [int]$env:DEEP_HEALTH } else { 0 }),
+    [string]$BaseUrl,
+    [string]$TmpDir,
+    [int]$DeepHealth = 0,
+    [int]$StreamOnce = 1
+)
+
+if (-not $BaseUrl) { $BaseUrl = $env:BASE_URL }
+if (-not $TmpDir) { $TmpDir = $env:TEMP + "\ai-agent-hub-smoke" }
+if ($env:DEEP_HEALTH) { $DeepHealth = [int]$env:DEEP_HEALTH }
+if ($env:STREAM_ONCE) { $StreamOnce = [int]$env:STREAM_ONCE }
+ { [int]$env:DEEP_HEALTH } else { 0 }),
   [int]$StreamOnce = $(if ($env:STREAM_ONCE) { [int]$env:STREAM_ONCE } else { 1 })
 )
 
