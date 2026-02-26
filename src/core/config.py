@@ -425,6 +425,12 @@ class Settings(BaseSettings):
         description="Enable graph-aware reasoning answer synthesis layer (Pro)",
     )
 
+    feature_reasoning_llm_dry_run: bool = Field(
+        default=False,
+        description="Enable deterministic dry-run LLM mode for reasoning (Pro)",
+    )
+
+
 
     
     # FAISS

@@ -120,6 +120,8 @@ def main() -> int:
     if os.environ.get("EVAL_ENABLE_PRO", "1") == "1":
         env.setdefault("FEATURE_REASONING", "true")
         env.setdefault("FEATURE_GRAPHRAG", "true")
+        if os.environ.get("EVAL_ENABLE_DRYRUN", "0") == "1":
+            env.setdefault("FEATURE_REASONING_LLM_DRY_RUN", "true")
     # Optional: enable memory retrieval during eval
     if os.environ.get("EVAL_ENABLE_MEMORY", "0") == "1":
         env.setdefault("FEATURE_MEMORY", "true")

@@ -180,8 +180,11 @@ async def answer(
         diag.setdefault("query_len", int(len(req.query or "")))
         diag.setdefault("k", int(req.k or 0))
         diag.setdefault("graph_depth", int(req.graph_depth or 0))
+
+        # trace_id
         try:
             from src.observability.trace import make_trace_id
+
             diag.setdefault(
                 "trace_id",
                 make_trace_id(
@@ -193,6 +196,7 @@ async def answer(
             )
         except Exception:
             pass
+
         resp.diagnostics = diag
     except Exception:
         pass
@@ -210,11 +214,9 @@ async def answer(
 
     # Debug-only snapshot for evaluation (no content leakage; ids/counts only)
     try:
-        s = get_settings()
         if getattr(s, "debug", False):
             diag = dict(getattr(resp, "diagnostics", None) or {})
 
-            # Count provenance types
             counts: dict[str, int] = {}
             for pitem in (getattr(resp, "provenance", None) or []):
                 try:
@@ -226,7 +228,6 @@ async def answer(
                 counts[t] = int(counts.get(t, 0)) + 1
             diag.setdefault("evidence_type_counts", counts)
 
-            # Top-N evidence ids ("type:id") for trace/debug
             top: list[str] = []
             for pitem in (getattr(resp, "provenance", None) or [])[:20]:
                 try:
@@ -239,6 +240,23 @@ async def answer(
             diag.setdefault("top_evidence", top)
 
             resp.diagnostics = diag
+    except Exception:
+        pass
+
+    # LLM mode diagnostics (dry-run / disabled / real)
+    try:
+        diag = dict(getattr(resp, "diagnostics", None) or {})
+        if llm is not None:
+            diag.setdefault("llm_mode", "real")
+        elif bool(getattr(s, "feature_reasoning_llm_dry_run", False)):
+            diag.setdefault("llm_mode", "dry_run")
+        else:
+            diag.setdefault("llm_mode", "disabled")
+
+        fr = getattr(resp, "_fallback_reason", None)
+        if fr:
+            diag.setdefault("fallback_reason", str(fr))
+        resp.diagnostics = diag
     except Exception:
         pass
 
