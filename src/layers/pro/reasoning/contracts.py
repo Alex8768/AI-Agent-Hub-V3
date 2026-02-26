@@ -76,3 +76,6 @@ class AnswerResponse(BaseModel):
 
     # Warnings for clients/UI (e.g., llm_missing, fallback_used, timeout)
     warnings: list[str] = Field(default_factory=list)
+
+    # Diagnostics for clients/UI (explainability counters, flags, small metadata)
+    diagnostics: dict[str, Any] = Field(default_factory=dict)

@@ -122,6 +122,21 @@ async def answer(
     except Exception:
         pass
 
+    # Diagnostics (contract v1): explainability counters + flags (best-effort)
+    try:
+        diag = dict(getattr(resp, "diagnostics", None) or {})
+        diag.setdefault("retrieved_provenance_count", int(len(getattr(resp, "provenance", []) or [])))
+        diag.setdefault("used_chunks_count", int(len(getattr(resp, "used_chunks", []) or [])))
+        diag.setdefault("used_nodes_count", int(len(getattr(resp, "used_nodes", []) or [])))
+        diag.setdefault("used_edges_count", int(len(getattr(resp, "used_edges", []) or [])))
+        diag.setdefault("has_llm", bool(llm is not None))
+        diag.setdefault("query_len", int(len(req.query or "")))
+        diag.setdefault("k", int(req.k or 0))
+        diag.setdefault("graph_depth", int(req.graph_depth or 0))
+        resp.diagnostics = diag
+    except Exception:
+        pass
+
     try:
         if llm is None:
             resp.warnings = list(resp.warnings or [])
