@@ -208,6 +208,40 @@ async def answer(
     except Exception:
         pass
 
+    # Debug-only snapshot for evaluation (no content leakage; ids/counts only)
+    try:
+        s = get_settings()
+        if getattr(s, "debug", False):
+            diag = dict(getattr(resp, "diagnostics", None) or {})
+
+            # Count provenance types
+            counts: dict[str, int] = {}
+            for pitem in (getattr(resp, "provenance", None) or []):
+                try:
+                    t = str(getattr(pitem, "type", "") or "")
+                except Exception:
+                    t = ""
+                if not t:
+                    t = "unknown"
+                counts[t] = int(counts.get(t, 0)) + 1
+            diag.setdefault("evidence_type_counts", counts)
+
+            # Top-N evidence ids ("type:id") for trace/debug
+            top: list[str] = []
+            for pitem in (getattr(resp, "provenance", None) or [])[:20]:
+                try:
+                    t = str(getattr(pitem, "type", "") or "")
+                    i = str(getattr(pitem, "id", "") or "")
+                    if t and i:
+                        top.append(f"{t}:{i}")
+                except Exception:
+                    continue
+            diag.setdefault("top_evidence", top)
+
+            resp.diagnostics = diag
+    except Exception:
+        pass
+
     try:
         if llm is None:
             resp.warnings = list(resp.warnings or [])
