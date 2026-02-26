@@ -56,22 +56,19 @@ Write-Host "   ✅ Dedup OK"
 
 Write-Host "4) Search"
 
-$bodySearch = '{"query":"foxes","k":3,"include_metadata":false}'
+# Write JSON to file (UTF-8 without BOM) to avoid PowerShell quoting issues
+$searchJsonPath = Join-Path $tmp "search.json"
+$searchBody = '{"query":"foxes","k":3,"include_metadata":false}'
+[System.IO.File]::WriteAllText($searchJsonPath, $searchBody, [System.Text.UTF8Encoding]::new($false))
 
-$search = & curl.exe -sS -H "Content-Type: application/json" `
-  --data-binary $bodySearch `
-  "$BaseUrl/api/v1/search"
-
+$search = & curl.exe -sS -H "Content-Type: application/json" --data-binary "@$searchJsonPath" "$BaseUrl/api/v1/search"
 $count = ($search | python scripts/jsonutil.py len)
 Write-Host "   results: $count"
-
 if ([int]$count -lt 1) {
   Write-Host $search
   Fail "Search returned no results"
 }
-
 Write-Host "   ✅ Search OK"
-
 
 Write-Host "5) Export"
 $export = CurlJson "$BaseUrl/api/v1/export" "POST" '{"content":"Hello export world!","format":"pdf"}'
