@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
-from sqlalchemy import select, update, delete
+from sqlalchemy import select, delete, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.infrastructure.database.models.memory_item import MemoryItem
@@ -21,8 +21,14 @@ class SQLiteMemoryStore:
     def __init__(self, session: AsyncSession) -> None:
         self._db = session
 
-    async def put(self, *, workspace_id: str, key: str, value: Any, metadata: Optional[dict[str, Any]] = None) -> None:
-        # store as plain text for MVP
+    async def put(
+        self,
+        *,
+        workspace_id: str,
+        key: str,
+        value: Any,
+        metadata: Optional[dict[str, Any]] = None,
+    ) -> None:
         val = str(value)
         meta = dict(metadata or {})
 
@@ -44,13 +50,34 @@ class SQLiteMemoryStore:
         row = res.scalar_one_or_none()
         return None if row is None else row.value
 
+    def _tokenize(self, text: str) -> list[str]:
+        # Simple tokenizer for MVP LIKE search:
+        # - split on whitespace
+        # - strip punctuation
+        # - keep tokens >= 3 chars
+        # - limit to first 3 tokens to avoid huge OR queries
+        punct = ".,!?;:()[]{}\"'"
+        tokens = [t.strip(punct).lower() for t in (text or "").split()]
+        tokens = [t for t in tokens if len(t) >= 3]
+        return tokens[:3]
+
     async def query(self, *, workspace_id: str, text: str, limit: int = 10) -> list[dict[str, Any]]:
-        # Simple LIKE search over value (MVP)
-        # Note: For SQLite, LIKE is case-insensitive by default depending on collation.
-        pattern = f"%{text}%"
+        """
+        Fallback memory search (MVP):
+        - If text has tokens, do OR(LIKE %token%) for up to 3 tokens.
+        - If no tokens, fallback to LIKE %text%.
+        """
+        tokens = self._tokenize(text)
+
+        if tokens:
+            conds = [MemoryItem.value.ilike(f"%{t}%") for t in tokens]
+            where = or_(*conds)
+        else:
+            where = MemoryItem.value.ilike(f"%{text}%")
+
         q = (
             select(MemoryItem)
-            .where(MemoryItem.workspace_id == workspace_id, MemoryItem.value.like(pattern))
+            .where(MemoryItem.workspace_id == workspace_id, where)
             .order_by(MemoryItem.id.desc())
             .limit(int(limit))
         )
@@ -74,5 +101,4 @@ class SQLiteMemoryStore:
         q = delete(MemoryItem).where(MemoryItem.workspace_id == workspace_id, MemoryItem.key == key)
         res = await self._db.execute(q)
         await self._db.commit()
-        # res.rowcount may be None on some dialects; normalize
         return int(res.rowcount or 0)
