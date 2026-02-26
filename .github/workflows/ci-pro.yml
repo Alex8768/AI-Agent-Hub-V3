@@ -30,12 +30,8 @@ jobs:
         shell: bash
         run: |
           python -m pip install -U pip setuptools wheel
-          # Try project-defined extras first. If not available, fallback to qdrant-client.
-          python -m pip install -e ".[base,test]" || true
-          python -m pip install -e ".[pro,test]" || true
-          python -m pip install -e ".[qdrant,test]" || true
-          python -m pip install qdrant-client || true
-          python -m pip install -e ".[base,test]"
+          # Deterministic install: integration tests require qdrant + embeddings/faiss.
+          python -m pip install -e ".[test,qdrant,embeddings,faiss]"
 
       - name: Compile
         shell: bash
