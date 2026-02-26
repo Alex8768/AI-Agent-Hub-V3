@@ -7,13 +7,20 @@ param(
     [int]$StreamOnce = 1
 )
 
+if (-not $BaseUrl) { $BaseUrl = "http://localhost:8000" }
+if (-not $TmpDir) { $TmpDir = "$env:TEMP\ai-agent-hub-smoke" }
+
+if ($env:DEEP_HEALTH) {
+    $DeepHealth = [int]$env:DEEP_HEALTH
+}
+if ($env:STREAM_ONCE) {
+    $StreamOnce = [int]$env:STREAM_ONCE
+}
+
+
 if (-not $BaseUrl) { $BaseUrl = $env:BASE_URL }
 if (-not $TmpDir) { $TmpDir = $env:TEMP + "\ai-agent-hub-smoke" }
-if ($env:DEEP_HEALTH) { $DeepHealth = [int]$env:DEEP_HEALTH }
-if ($env:STREAM_ONCE) { $StreamOnce = [int]$env:STREAM_ONCE }
- { [int]$env:DEEP_HEALTH } else { 0 }),
-  [int]$StreamOnce = $(if ($env:STREAM_ONCE) { [int]$env:STREAM_ONCE } else { 1 })
-)
+if (if ( { [int]  [int]$StreamOnce = $(if ()
 
 if (-not $BaseUrl) { $BaseUrl = "http://localhost:8000" }
 if (-not $TmpDir) { $TmpDir = "$env:TEMP\ai-agent-hub-smoke" }
