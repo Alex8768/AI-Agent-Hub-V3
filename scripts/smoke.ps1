@@ -55,20 +55,23 @@ if ($docId1 -ne $docId2) { Fail "Dedup failed: ids differ" }
 Write-Host "   ✅ Dedup OK"
 
 Write-Host "4) Search"
-$bodySearch = @{
-  query = "foxes"
-  k = 3
-  include_metadata = $false
-} | ConvertTo-Json -Compress
 
-$search = CurlJson "$BaseUrl/api/v1/search" "POST" $bodySearch
+$bodySearch = '{"query":"foxes","k":3,"include_metadata":false}'
+
+$search = & curl.exe -sS -H "Content-Type: application/json" `
+  --data-binary $bodySearch `
+  "$BaseUrl/api/v1/search"
+
 $count = ($search | python scripts/jsonutil.py len)
 Write-Host "   results: $count"
+
 if ([int]$count -lt 1) {
   Write-Host $search
   Fail "Search returned no results"
 }
+
 Write-Host "   ✅ Search OK"
+
 
 Write-Host "5) Export"
 $export = CurlJson "$BaseUrl/api/v1/export" "POST" '{"content":"Hello export world!","format":"pdf"}'
