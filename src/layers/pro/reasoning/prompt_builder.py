@@ -10,17 +10,26 @@ Cite evidence by referencing source_refs when available.
 Be concise and precise.
 """
 
-
 def build_reasoning_prompt(
-    request: AnswerRequest,
-    *,
+    query: str | AnswerRequest,
     context_preview: str,
     provenance: list[ProvenanceItem] | None = None,
+    instruction: str | None = None,
 ) -> str:
     """Build a deterministic prompt for answer synthesis (MVP).
 
-    Domain-level (no API coupling).
+    Args:
+        query: query string or AnswerRequest object
+        context_preview: packed context preview
+        provenance: list of provenance items
+        instruction: optional custom instruction (for agent nodes)
     """
+    # Извлекаем query
+    if isinstance(query, AnswerRequest):
+        query_text = query.query
+    else:
+        query_text = query
+
     prov_lines: list[str] = []
     if provenance:
         # Deterministic order: as provided
@@ -36,7 +45,7 @@ def build_reasoning_prompt(
     parts: list[str] = [
         _SYSTEM_RULES.strip(),
         "",
-        f"Question: {request.query}",
+        f"Question: {query_text}",
         "",
         "Context:",
         (context_preview or "(empty)").strip(),
@@ -44,6 +53,9 @@ def build_reasoning_prompt(
 
     if prov_block:
         parts.extend(["", "Provenance:", prov_block])
+
+    if instruction:
+        parts.extend(["", "Instruction:", instruction])
 
     parts.extend(["", "Answer:"])
     return "\n".join(parts).strip() + "\n"
