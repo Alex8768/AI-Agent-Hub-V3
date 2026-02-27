@@ -203,6 +203,33 @@ class OpenAIAdapter(LLMProvider):
             openai_messages.append(message_dict)
         
         return openai_messages
+
+
+    def _extract_text_from_responses(self, resp: Any) -> str:
+        """Best-effort extraction of output text from Responses API result."""
+        try:
+            # New SDK typically provides output_text
+            ot = getattr(resp, "output_text", None)
+            if ot:
+                return str(ot)
+        except Exception:
+            pass
+
+        # Fallback: walk output items
+        try:
+            out = getattr(resp, "output", None) or []
+            parts: list[str] = []
+            for item in out:
+                content = getattr(item, "content", None) or []
+                for c in content:
+                    if getattr(c, "type", None) == "output_text":
+                        parts.append(str(getattr(c, "text", "") or ""))
+            if parts:
+                return "".join(parts)
+        except Exception:
+            pass
+
+        return ""
     
     async def complete(
         self,
@@ -258,11 +285,46 @@ class OpenAIAdapter(LLMProvider):
             
             # Make API call
             start_time = datetime.utcnow()
-            response: ChatCompletion = await self._client.chat.completions.create(
-                **request_params
-            )
-            latency = (datetime.utcnow() - start_time).total_seconds()
-            
+            try:
+                response: ChatCompletion = await self._client.chat.completions.create(
+                    **request_params
+                )
+                latency = (datetime.utcnow() - start_time).total_seconds()
+            except APIError as e:
+                # Some environments/proxies may not support Chat Completions; fallback to Responses API when 404.
+                if getattr(e, "status_code", None) == 404:
+                    # Responses API input: use a single user message string
+                    prompt_text = "\n".join([m.get("content","") for m in openai_messages if m.get("role") == "user"])
+                    r2 = await self._client.responses.create(
+                        model=request_params.get("model", self._model),
+                        input=prompt_text or "Hello",
+                    )
+                    latency = (datetime.utcnow() - start_time).total_seconds()
+                    content = self._extract_text_from_responses(r2) or ""
+                    completion = LLMCompletion(
+                        content=content,
+                        model=getattr(r2, "model", request_params.get("model", self._model)),
+                        provider=self.name,
+                        tokens_used=int(getattr(getattr(r2, "usage", None), "total_tokens", 0) or 0),
+                        finish_reason=str(getattr(r2, "status", "stop") or "stop"),
+                        metadata={
+                            "id": getattr(r2, "id", None),
+                            "latency_seconds": latency,
+                            "request_id": request_id,
+                            "fallback_api": "responses",
+                        },
+                    )
+                    self._logger.info(
+                        "OpenAI completion completed (responses fallback)",
+                        context={
+                            "request_id": request_id,
+                            "model": completion.model,
+                            "tokens_used": completion.tokens_used,
+                            "latency_seconds": latency,
+                        }
+                    )
+                    return completion
+                raise
             # Extract response
             choice = response.choices[0]
             content = choice.message.content or ""
