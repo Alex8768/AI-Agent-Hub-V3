@@ -106,9 +106,10 @@ class DocumentService:
             vectors_before = stats_before.get('total_vectors') or stats_before.get('total_vectors', 0)
 
             ingest = IngestService(
+                vector_store=vector_store,
+                embedding_model=None,  # будет внедряться позже через DI
                 chunk_size=chunk_size or settings.ingest_chunk_size,
                 chunk_overlap=chunk_overlap or settings.ingest_chunk_overlap,
-                vector_store=vector_store,
             )
 
             result = await ingest.ingest_text(

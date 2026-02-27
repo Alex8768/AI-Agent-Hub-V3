@@ -13,7 +13,7 @@ from pathlib import Path
 from dataclasses import dataclass
 from enum import Enum
 
-from src.core.contracts import VectorStore, VectorDocument
+from src.core.contracts import VectorStore, VectorDocument, EmbeddingModel
 from src.core.config import settings
 from src.core.accelerator import accelerator
 from src.adapters.embedding import get_embedding_factory
@@ -183,6 +183,7 @@ class IngestService:
     def __init__(
         self,
         vector_store: VectorStore,
+        embedding_model: Optional[EmbeddingModel] = None,
         chunk_size: int = 1000,
         chunk_overlap: int = 200
     ):
@@ -191,12 +192,13 @@ class IngestService:
         
         Args:
             vector_store: Векторное хранилище (FAISS)
+            embedding_model: Модель эмбеддингов (если не передана, создаётся через фабрику)
             chunk_size: Размер чанка в символах
             chunk_overlap: Перекрытие чанков
         """
         self._vector_store = vector_store
-        # Compatibility alias (some code paths use self.vector_store)
         self.vector_store = vector_store
+        self._embedding_model = embedding_model
         self.chunker = RecursiveCharacterChunker(chunk_size, chunk_overlap)
         self._logger = get_logger()
         
@@ -205,9 +207,19 @@ class IngestService:
             context={
                 "chunk_size": chunk_size,
                 "chunk_overlap": chunk_overlap,
-                "vector_store": vector_store.name if hasattr(vector_store, 'name') else "FAISS"
+                "vector_store": vector_store.name if hasattr(vector_store, 'name') else "FAISS",
+                "embedding_model_provided": embedding_model is not None
             }
         )
+    
+    async def _get_embedding_model(self) -> EmbeddingModel:
+        """Возвращает модель эмбеддингов (свою или создаёт через фабрику)."""
+        if self._embedding_model is not None:
+            return self._embedding_model
+        
+        # Fallback для обратной совместимости
+        factory = get_embedding_factory()
+        return await factory.create_embedding_model("sentence_transformer")
     
     async def ingest_text(
         self,
@@ -454,10 +466,7 @@ class IngestService:
             EmbeddingError: если не удалось сгенерировать эмбеддинги
         """
         try:
-            embedding_factory = get_embedding_factory()
-            model = await embedding_factory.create_embedding_model(
-                provider_type="sentence_transformer"
-            )
+            model = await self._get_embedding_model()
 
             total = len(chunks)
             # Resolve batch size (auto by default, overridable via settings.EMBEDDING_BATCH_SIZE)
