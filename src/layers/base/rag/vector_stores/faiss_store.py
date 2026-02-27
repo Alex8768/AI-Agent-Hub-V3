@@ -79,8 +79,8 @@ class FAISSVectorStore(VectorStore):
             accelerator.empty_cache()
             try:
                 self._executor.shutdown(wait=True)
-            except Exception:
-                pass
+            except Exception as e:
+                self._logger.warning(f"Executor shutdown failed: {e}")
             self._logger.info("FAISS store очищен")
     
     async def health_check(self) -> Dict[str, Any]:
