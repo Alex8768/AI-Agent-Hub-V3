@@ -32,12 +32,8 @@ from src.api.endpoints.answer import router as answer_router
 from src.api.endpoints.export import router as export_router
 from src.api.endpoints.streaming import router as streaming_router
 
-
-# Configure logging
-logging.basicConfig(
-    level=getattr(logging, settings.log_level.upper()),
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-)
+# OpenTelemetry
+from src.observability.tracing.setup import setup_tracing
 
 
 @asynccontextmanager
@@ -46,6 +42,13 @@ async def lifespan(app: FastAPI):
     logger.info(f"🚀 Starting {settings.app_name} v{settings.app_version}")
     logger.info(f"📁 Environment: {settings.environment}")
     logger.info(f"🔧 Debug mode: {settings.debug}")
+
+    # Настраиваем трассировку
+    try:
+        tracer = setup_tracing(app, service_name="ai-agent-hub")
+        logger.info("✅ OpenTelemetry tracing initialized")
+    except Exception as e:
+        logger.warning(f"⚠️ Tracing initialization skipped (non-fatal): {e}")
 
     from src.core.initializer import initialize_core_components
     await initialize_core_components()
