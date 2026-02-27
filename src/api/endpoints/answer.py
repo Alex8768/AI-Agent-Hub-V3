@@ -158,8 +158,17 @@ async def answer(
             from src.api.dependencies_impl import get_llm_provider
 
             p = await get_llm_provider()
-            llm_provider_name = str(getattr(p, "provider", "") or getattr(s, "llm_provider", "") or "")
-            llm_model = str(getattr(p, "model", "") or getattr(s, "ollama_model", "") or getattr(s, "openai_model", "") or "")
+            # Determine provider/model for diagnostics in a provider-aware way
+            try:
+                llm_provider_name = str(getattr(s, "llm_provider").value)
+            except Exception:
+                llm_provider_name = str(getattr(s, "llm_provider", "") or "")
+            if llm_provider_name == "openai":
+                llm_model = str(getattr(s, "openai_model", "") or "")
+            elif llm_provider_name == "ollama":
+                llm_model = str(getattr(s, "ollama_model", "") or "")
+            else:
+                llm_model = str(getattr(p, "model", "") or "")
             llm = _LLMGenerateAdapter(p, provider_name=llm_provider_name, model=llm_model)
         except Exception as e:
             llm = None
