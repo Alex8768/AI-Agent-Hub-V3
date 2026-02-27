@@ -31,6 +31,7 @@ from src.api.endpoints.search_hybrid import router as search_hybrid_router
 from src.api.endpoints.answer import router as answer_router
 from src.api.endpoints.export import router as export_router
 from src.api.endpoints.streaming import router as streaming_router
+from src.api.endpoints.trace_test import router as trace_test_router
 
 # OpenTelemetry
 from src.observability.tracing.setup import setup_tracing
@@ -129,6 +130,7 @@ app.include_router(search_hybrid_router)
 app.include_router(answer_router)
 app.include_router(export_router)
 app.include_router(streaming_router)
+app.include_router(trace_test_router)
 
 
 @app.get("/", include_in_schema=False)
