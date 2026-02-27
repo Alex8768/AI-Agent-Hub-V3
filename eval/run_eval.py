@@ -137,16 +137,22 @@ def main() -> int:
         env.setdefault("FEATURE_REASONING", "true")
         env.setdefault("FEATURE_GRAPHRAG", "true")
 
-        # Default mode: dry-run unless explicitly using Ollama
-        if os.environ.get("EVAL_ENABLE_OLLAMA", "0") != "1":
-            env.setdefault("FEATURE_REASONING_LLM_ENABLED", "false")
-            env.setdefault("FEATURE_REASONING_LLM_DRY_RUN", "true")
-        else:
+        # Default mode: dry-run unless explicitly using a real provider
+        if os.environ.get("EVAL_ENABLE_OPENAI", "0") == "1":
+            env.setdefault("FEATURE_REASONING_LLM_ENABLED", "true")
+            env.setdefault("FEATURE_REASONING_LLM_DRY_RUN", "false")
+            env.setdefault("LLM_PROVIDER", "openai")
+            # Safe default for eval (override via OPENAI_MODEL)
+            env.setdefault("OPENAI_MODEL", "gpt-4o-mini")
+        elif os.environ.get("EVAL_ENABLE_OLLAMA", "0") == "1":
             env.setdefault("FEATURE_REASONING_LLM_ENABLED", "true")
             env.setdefault("FEATURE_REASONING_LLM_DRY_RUN", "false")
             env.setdefault("LLM_PROVIDER", "ollama")
             # Use an installed model by default (override via OLLAMA_MODEL)
             env.setdefault("OLLAMA_MODEL", "llama3.1:latest")
+        else:
+            env.setdefault("FEATURE_REASONING_LLM_ENABLED", "false")
+            env.setdefault("FEATURE_REASONING_LLM_DRY_RUN", "true")
 
         # If caller explicitly wants dryrun, force it
         if os.environ.get("EVAL_ENABLE_DRYRUN", "0") == "1":
