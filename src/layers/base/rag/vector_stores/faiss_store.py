@@ -238,11 +238,12 @@ class FAISSVectorStore(VectorStore):
             # Нормализуем векторы для косинусного сходства
             faiss.normalize_L2(vectors)
             
-            # Добавляем в индекс + обновляем маппинги атомарно относительно других writer-операций
+            loop = asyncio.get_running_loop()
+# Добавляем в индекс + обновляем маппинги атомарно относительно других writer-операций
             async with self._write_lock:
                 start_idx = self._index.ntotal
-                self._index.add(vectors)
-                
+                # Add to FAISS index in the single-thread executor (cross-platform safe)
+                await loop.run_in_executor(self._executor, lambda: self._index.add(vectors))
                 # Сохраняем документы
                 added_ids = []
                 for i, doc in enumerate(documents):
@@ -323,17 +324,19 @@ class FAISSVectorStore(VectorStore):
             # Ищем (в executor + timeout, чтобы не подвешивать event loop)
             loop = asyncio.get_running_loop()
             k_eff = min(k, self._index.ntotal)
-            try:
-                distances, indices = await asyncio.wait_for(
-                    loop.run_in_executor(None, lambda: self._index.search(query_vector, k_eff)),
-                    timeout=10.0,
-                )
-            except asyncio.TimeoutError:
-                raise VectorStoreError(
-                    message="Search timeout after 10 seconds",
-                    operation="search",
-                    details={"k": int(k_eff), "index_total": int(self._index.ntotal)},
-                )
+            # Serialize search with writer operations for safety (FAISS thread-safety)
+            async with self._write_lock:
+                try:
+                    distances, indices = await asyncio.wait_for(
+                        loop.run_in_executor(self._executor, lambda: self._index.search(query_vector, k_eff)),
+                        timeout=10.0,
+                    )
+                except asyncio.TimeoutError:
+                    raise VectorStoreError(
+                        message="Search timeout after 10 seconds",
+                        operation="search",
+                        details={"k": int(k_eff), "index_total": int(self._index.ntotal)},
+                    )
 
             
             # Формируем результаты
