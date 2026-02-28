@@ -12,6 +12,7 @@ from pydantic import (
     Field, 
     validator, 
     field_validator,
+    model_validator,
     ConfigDict, 
     SecretStr, 
     EmailStr,
@@ -420,6 +421,38 @@ class Settings(BaseSettings):
         description="Enable Pro GraphRAG layer (Pro)"
     )
 
+
+    # ---- Backward/compat alias ----
+    # NOTE:
+    # Historically we had both `feature_graphrag` and `feature_graph_rag`.
+    # Canonical flag: feature_graphrag
+    # Alias (deprecated): feature_graph_rag
+    #
+    # We keep the alias field for env/backward compatibility but normalize it.
+    feature_graph_rag: bool = Field(
+        default=False,
+        description="DEPRECATED alias for feature_graphrag (kept for backward compatibility)",
+    )
+
+    @model_validator(mode="after")
+    def _normalize_feature_flag_aliases(self) -> "Settings":
+        """Normalize deprecated aliases for feature flags.
+
+        - If only alias is enabled, enable canonical flag.
+        - If both are set but disagree, raise ConfigurationError (fail-fast).
+        """
+        # Canonical: feature_graphrag
+        # Alias: feature_graph_rag
+        if bool(self.feature_graph_rag) and not bool(self.feature_graphrag):
+            object.__setattr__(self, "feature_graphrag", True)
+
+        # If canonical True but alias False -> misconfiguration (prevents silent surprises)
+        if bool(self.feature_graphrag) and not bool(self.feature_graph_rag):
+            raise ConfigurationError(
+                "Inconsistent feature flags: feature_graphrag=True but feature_graph_rag=False. "
+                "Use only feature_graphrag (canonical) or set both consistently."
+            )
+        return self
     feature_reasoning: bool = Field(
         default=False,
         description="Enable graph-aware reasoning answer synthesis layer (Pro)",
@@ -602,12 +635,6 @@ class Settings(BaseSettings):
         default=False,
         description="Enable Pro Layer features"
     )
-    
-    feature_graph_rag: bool = Field(
-        default=False,
-        description="Enable Graph RAG feature"
-    )
-    
     feature_canvas: bool = Field(
         default=False,
         description="Enable Split View Canvas feature"
