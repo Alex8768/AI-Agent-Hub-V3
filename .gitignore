@@ -7,3 +7,11 @@ __pycache__/
 build/
 dist/
 .eggs/
+# --- Local/dev artifacts ---
+.DS_Store
+.env
+.env.*
+data/
+repomix-output.xml
+eval/results.jsonl
+.pytest_cache/
