@@ -42,7 +42,7 @@ async def get_current_user(
             claims = verify_token(
                 token,
                 secret,
-                issuer=getattr(settings, "jwt_issuer", None),
+                issuer=getattr(settings, "jwt_issuer", None, backend=getattr(s, 'jwt_backend', 'internal')),
                 audience=getattr(settings, "jwt_audience", None),
             )
         except JWTError as e:
@@ -75,7 +75,7 @@ async def get_current_user(
                 claims = verify_token(
                     credentials.credentials,
                     secret,
-                    issuer=getattr(settings, "jwt_issuer", None),
+                    issuer=getattr(settings, "jwt_issuer", None, backend=getattr(s, 'jwt_backend', 'internal')),
                     audience=getattr(settings, "jwt_audience", None),
                 )
                 user_id = claims.get("sub") or claims.get("user_id") or claims.get("id") or "debug_user"

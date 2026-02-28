@@ -222,6 +222,21 @@ class Settings(BaseSettings):
         description="Allowed hosts for TrustedHost middleware"
     )
 
+
+    # ============ AUTH / SECURITY SETTINGS ============
+    jwt_backend: str = Field(
+        default="internal",
+        description="JWT backend: 'internal' (no deps) or 'jose' (python-jose)",
+    )
+
+    @field_validator("jwt_backend")
+    @classmethod
+    def validate_jwt_backend(cls, v: str) -> str:
+        v2 = (v or "").strip().lower()
+        if v2 not in ("internal", "jose"):
+            raise ValueError("jwt_backend must be one of: internal, jose")
+        return v2
+
     reload: bool = Field(
         default=False,
         description="Enable auto-reload for development server"
