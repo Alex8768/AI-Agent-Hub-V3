@@ -4,8 +4,6 @@ Bootstrap-only: app init, middleware, router wiring, error handlers.
 """
 
 import logging
-import asyncio
-from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -16,6 +14,8 @@ from loguru import logger
 import uvicorn
 
 from src.core.config import settings
+from src.api.bootstrap import lifespan
+
 from src.api.middleware import (
     RequestIDMiddleware,
     LoggingMiddleware,
@@ -33,60 +33,7 @@ from src.api.endpoints.export import router as export_router
 from src.api.endpoints.streaming import router as streaming_router
 from src.api.endpoints.trace_test import router as trace_test_router
 
-# OpenTelemetry
-from src.observability.tracing.setup import setup_tracing
 
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    """Lifespan context manager."""
-    logger.info(f"🚀 Starting {settings.app_name} v{settings.app_version}")
-    logger.info(f"📁 Environment: {settings.environment}")
-    logger.info(f"🔧 Debug mode: {settings.debug}")
-
-    # Настраиваем трассировку
-    try:
-        tracer = setup_tracing(app, service_name="ai-agent-hub")
-        logger.info("✅ OpenTelemetry tracing initialized")
-    except Exception as e:
-        logger.warning(f"⚠️ Tracing initialization skipped (non-fatal): {e}")
-
-    from src.core.initializer import initialize_core_components
-    await initialize_core_components()
-
-    # Base polish: initialize and cache one RAGEngine for the whole app process
-    try:
-        from src.layers.base.rag.engines.rag_engine import RAGEngine
-        from src.core.providers import get_vector_store
-        app.state.rag_engine = RAGEngine()
-        # Warm up FAISS singleton once per process
-        await get_vector_store()
-        logger.info("✅ RAGEngine singleton ready (FAISS initialized)")
-    except Exception as e:
-        logger.warning(f"⚠️ RAGEngine singleton skipped (non-fatal): {e}")
-
-    # Pro polish: wire HybridRetriever once per process (only when Pro flags enabled)
-    try:
-        from src.core.config import get_settings
-        s = get_settings()
-        if getattr(s, "feature_reasoning", False) and getattr(s, "feature_graphrag", False):
-            from src.layers.pro.rag.retrieval.hybrid_retriever import HybridRetriever
-            app.state.hybrid_retriever = HybridRetriever()
-            logger.info("✅ HybridRetriever singleton ready (Pro)")
-    except Exception as e:
-        logger.warning(f"⚠️ HybridRetriever singleton skipped (non-fatal): {e}")
-
-
-    yield
-
-    logger.info("👋 Shutting down AI Agent Hub V3...")
-    from src.core.initializer import cleanup_core_components
-    try:
-        await asyncio.wait_for(cleanup_core_components(), timeout=10.0)
-    except asyncio.TimeoutError:
-        logger.warning("⚠️ Core cleanup timed out after 10s (non-fatal)")
-    except Exception as e:
-        logger.warning(f"⚠️ Core cleanup failed (non-fatal): {e}")
 
 
 app = FastAPI(
