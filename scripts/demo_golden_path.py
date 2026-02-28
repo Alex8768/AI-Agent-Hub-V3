@@ -6,6 +6,20 @@ from pathlib import Path
 # Ensure project root is importable when running as a script
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+
+# --- Quiet mode for demo (suppress HF/transformers noise) ---
+import os
+os.environ.setdefault("TRANSFORMERS_VERBOSITY", "error")
+os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
+os.environ.setdefault("HF_HUB_DISABLE_TELEMETRY", "1")
+os.environ.setdefault("HF_HUB_DISABLE_PROGRESS_BARS", "1")
+
+try:
+    import transformers
+    transformers.logging.set_verbosity_error()
+except Exception:
+    pass
+
 def _maybe_enable_reasoning_for_demo():
     import os
     if os.getenv("DEMO_ENABLE_REASONING") == "1":
