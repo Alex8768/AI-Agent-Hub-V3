@@ -21,6 +21,8 @@ from pydantic import (
 from pydantic_settings import BaseSettings, SettingsConfigDict
 import json
 
+from src.core.config_parts.parsers import parse_json_or_csv_list
+
 from src.core.exceptions import ConfigurationError
 
 from src.core.paths import get_default_data_dir, ensure_dir
@@ -218,34 +220,15 @@ class Settings(BaseSettings):
     
     @field_validator("cors_origins", mode="before")
     @classmethod
-    def parse_cors_origins(cls, v: Union[str, List[str]]) -> List[str]:
+    def parse_cors_origins(cls, v):
         """Parse CORS origins from JSON string or comma-separated list."""
-        if isinstance(v, str):
-            v = v.strip()
-            # Try to parse as JSON array first
-            if v.startswith("[") and v.endswith("]"):
-                try:
-                    return json.loads(v)
-                except json.JSONDecodeError:
-                    # If JSON parsing fails, treat as comma-separated string
-                    pass
-            # Parse as comma-separated string
-            return [item.strip() for item in v.split(",") if item.strip()]
-        return v
+        return parse_json_or_csv_list(v)
 
     @field_validator("allowed_hosts", mode="before")
     @classmethod
-    def parse_allowed_hosts(cls, v: Union[str, List[str]]) -> List[str]:
+    def parse_allowed_hosts(cls, v):
         """Parse allowed hosts from JSON string or comma-separated list."""
-        if isinstance(v, str):
-            v = v.strip()
-            if v.startswith("[") and v.endswith("]"):
-                try:
-                    return json.loads(v)
-                except json.JSONDecodeError:
-                    pass
-            return [item.strip() for item in v.split(",") if item.strip()]
-        return v
+        return parse_json_or_csv_list(v)
     
     # ============ DATABASE SETTINGS ============
     database_url: str = Field(
@@ -534,17 +517,9 @@ class Settings(BaseSettings):
     
     @field_validator("mcp_servers", mode="before")
     @classmethod
-    def parse_mcp_servers(cls, v: Union[str, List[str]]) -> List[str]:
+    def parse_mcp_servers(cls, v):
         """Parse MCP servers from JSON string or comma-separated list."""
-        if isinstance(v, str):
-            v = v.strip()
-            if v.startswith("[") and v.endswith("]"):
-                try:
-                    return json.loads(v)
-                except json.JSONDecodeError:
-                    pass
-            return [item.strip() for item in v.split(",") if item.strip()]
-        return v
+        return parse_json_or_csv_list(v)
     
     mcp_max_tools: int = Field(
         default=10,
