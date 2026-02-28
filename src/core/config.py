@@ -25,33 +25,7 @@ from src.core.exceptions import ConfigurationError
 
 from src.core.paths import get_default_data_dir, ensure_dir
 
-try:
-    from src.core.types import LLMConfig, VectorStoreConfig, MCPConfig
-except ImportError:
-    # Fallback для случаев, когда импорт не работает
-    from pydantic import BaseModel
-    
-    class LLMConfig(BaseModel):
-        provider: str
-        model: str
-        api_key: str = None
-        base_url: str = None
-        temperature: float = 0.7
-        max_tokens: int = None
-        timeout: int = 30
-    
-        max_retries: int = None
-    class VectorStoreConfig(BaseModel):
-        provider: str
-        path: str
-        index_name: str = None
-        dimension: int = None
-        similarity_metric: str = "cosine"
-    
-    class MCPConfig(BaseModel):
-        enabled: bool = False
-        servers: list = []
-        max_tools_per_server: int = 10
+from src.core.types import LLMConfig, VectorStoreConfig, MCPConfig
 
 
 class LogLevel(str, Enum):
