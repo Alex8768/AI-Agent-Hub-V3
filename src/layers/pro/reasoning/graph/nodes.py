@@ -1,6 +1,28 @@
 import json
 from typing import Dict, Any, List, Optional
-from opentelemetry import trace
+# Optional OpenTelemetry (CI may not install it)
+try:
+    from opentelemetry import trace as _otel_trace  # type: ignore
+except Exception:  # pragma: no cover
+    _otel_trace = None
+
+class _NoopSpan:
+    def __enter__(self):
+        return self
+    def __exit__(self, exc_type, exc, tb):
+        return False
+
+class _NoopTracer:
+    def start_as_current_span(self, *args, **kwargs):
+        return _NoopSpan()
+
+class _TraceShim:
+    def get_tracer(self, name: str):
+        if _otel_trace is not None:
+            return _otel_trace.get_tracer(name)
+        return _NoopTracer()
+
+trace = _TraceShim()
 
 from src.layers.pro.reasoning.graph.state import AgentState
 from src.layers.pro.reasoning.prompt_builder import build_reasoning_prompt
