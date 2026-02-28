@@ -1,5 +1,11 @@
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
+# Ensure project root is importable when running as a script
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
 import asyncio
 import uuid
 from dataclasses import dataclass
@@ -65,20 +71,28 @@ async def _warm_singletons(app_state: _DummyAppState):
 
 
 async def _ingest_demo_text(workspace_id: str) -> str | None:
-    """Ingest small demo text. Returns a document_id if available."""
+    """Ingest small demo text via DocumentService (same path as API)."""
     text = "AI Agent Hub V3 golden path demo. This is a small document about retrieval and reasoning."
     try:
-        from src.services.document.ingest_service import IngestService
+        from src.infrastructure.database import get_db
+        from src.services.document.document_service import DocumentService
 
-        ingest = IngestService()
-        out = await ingest.ingest_text(
-            text=text,
-            workspace_id=workspace_id,
-            filename="golden_path_demo.txt",
-            mime="text/plain",
-        )
-        doc_id = getattr(out, "document_id", None) or getattr(out, "id", None)
-        print("✅ Ingest ok", {"doc_id": doc_id, "chunks": getattr(out, "chunks_count", None)})
+        svc = DocumentService()
+        data = text.encode("utf-8")
+
+        async with get_db() as db:
+            rec = await svc.create_from_upload(
+                db,
+                filename="golden_path_demo.txt",
+                data=data,
+                workspace_id=workspace_id,
+                mime="text/plain",
+                chunk_size=800,
+                chunk_overlap=120,
+            )
+
+        doc_id = getattr(rec, "id", None)
+        print("✅ Ingest ok", {"doc_id": doc_id, "chunks": getattr(rec, "chunks_count", None), "status": getattr(rec, "status", None)})
         return str(doc_id) if doc_id else None
     except Exception as e:
         print("❌ Ingest failed:", e)
