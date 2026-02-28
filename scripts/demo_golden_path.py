@@ -24,6 +24,7 @@ def _maybe_enable_reasoning_for_demo():
 
 import asyncio
 import uuid
+import json
 from dataclasses import dataclass
 
 
@@ -194,9 +195,30 @@ async def main():
     await _init_core()
     try:
         await _warm_singletons(app_state)
-        await _ingest_demo_text(workspace_id)
-        await _search_demo(app_state, workspace_id)
-        await _answer_demo(app_state, workspace_id)
+
+        doc_id = await _ingest_demo_text(workspace_id)
+        search_res = await _search_demo(app_state, workspace_id)
+        answer_res = await _answer_demo(app_state, workspace_id)
+
+        # --- JSON summary (for demos / copy-paste / CI artifacts) ---
+        summary = {
+            "workspace_id": workspace_id,
+            "doc_id": doc_id,
+            "search_ok": bool(search_res is not None),
+            "answer_ok": bool(answer_res is not None),
+        }
+
+        try:
+            if answer_res is not None:
+                diag = dict(getattr(answer_res, "diagnostics", {}) or {})
+                summary["trace_id"] = diag.get("trace_id")
+                summary["top_evidence"] = list((diag.get("top_evidence") or [])[:10])
+                summary["timings"] = dict(getattr(answer_res, "timings", {}) or {})
+        except Exception:
+            pass
+
+        print("\n=== GOLDEN_PATH_SUMMARY_JSON ===")
+        print(json.dumps(summary, ensure_ascii=False))
     finally:
         await _cleanup_core()
 
