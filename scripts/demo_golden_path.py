@@ -6,6 +6,22 @@ from pathlib import Path
 # Ensure project root is importable when running as a script
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+def _maybe_enable_reasoning_for_demo():
+    import os
+    if os.getenv("DEMO_ENABLE_REASONING") == "1":
+        print("🔵 DEMO: Enabling Pro reasoning flags via env override")
+        os.environ["FEATURE_GRAPHRAG"] = "true"
+        os.environ["FEATURE_GRAPH_RAG"] = "true"
+        os.environ["FEATURE_REASONING"] = "true"
+        os.environ.setdefault("FEATURE_REASONING_LLM_ENABLED", "false")
+
+        # Reload settings to apply env
+        from src.core.config import reload_settings
+        reload_settings()
+    else:
+        print("ℹ️ DEMO: Pro reasoning disabled (set DEMO_ENABLE_REASONING=1 to enable)")
+
+
 import asyncio
 import uuid
 from dataclasses import dataclass
@@ -172,6 +188,8 @@ async def _answer_demo(app_state: _DummyAppState, workspace_id: str):
 async def main():
     workspace_id = "default"
     app_state = _DummyAppState()
+
+    _maybe_enable_reasoning_for_demo()
 
     await _init_core()
     try:
