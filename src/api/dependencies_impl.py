@@ -8,7 +8,7 @@ from fastapi import Header
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from src.core.config import settings
-from src.security.auth.jwt import verify_token, JWTError
+from src.security.auth.jwt_provider import verify_token, JWTError
 
 
 security = HTTPBearer(auto_error=False)
