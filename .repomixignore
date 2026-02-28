@@ -1,0 +1,13 @@
+data/
+data/**
+models/
+models/**
+.venv/
+.venv*/
+__pycache__/
+*.db
+*.index
+*.pkl
+*.log
+.git/
+hf_cache/
