@@ -22,6 +22,7 @@ from src.core.accelerator import accelerator
 
 class FAISSVectorStore(VectorStore):
     PREVIEW_MAX_CHARS: int = 512  # Store only a short preview, never full content
+    SEARCH_TIMEOUT_SECONDS: float = 10.0  # Prevent event-loop hangs on slow FAISS ops
     """
     Локальное векторное хранилище на FAISS.
     Оптимизировано для Apple Silicon (MPS).
@@ -329,11 +330,11 @@ class FAISSVectorStore(VectorStore):
                 try:
                     distances, indices = await asyncio.wait_for(
                         loop.run_in_executor(self._executor, lambda: self._index.search(query_vector, k_eff)),
-                        timeout=10.0,
+                        timeout=self.SEARCH_TIMEOUT_SECONDS,
                     )
                 except asyncio.TimeoutError:
                     raise VectorStoreError(
-                        message="Search timeout after 10 seconds",
+                        message=f"Search timeout after {self.SEARCH_TIMEOUT_SECONDS} seconds",
                         operation="search",
                         details={"k": int(k_eff), "index_total": int(self._index.ntotal)},
                     )
@@ -341,7 +342,7 @@ class FAISSVectorStore(VectorStore):
             
             # Формируем результаты
             results = []
-            for i, (distance, idx) in enumerate(zip(distances[0], indices[0])):
+            for i, (similarity, idx) in enumerate(zip(distances[0], indices[0])):
                 if idx == -1:  # FAISS возвращает -1 если недостаточно данных
                     continue
                 
@@ -357,8 +358,8 @@ class FAISSVectorStore(VectorStore):
                     
                     results.append(SearchResult(
                         document=doc,
-                        score=float(distance),
-                        distance=float(1.0 - distance)  # Преобразуем в расстояние
+                        score=float(similarity),
+                        distance=float(1.0 - similarity)  # Преобразуем в расстояние
                     ))
             
             self._logger.info(f"Поиск '{query[:30]}...' → {len(results)} результатов")
