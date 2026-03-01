@@ -34,6 +34,31 @@ src/
 
 ## 🚀 Quick Start
 
+
+## ⚡ Operational Quick Start (Verified)
+
+These commands match the current repo wiring (Base + Pro feature flags).
+
+### Base install
+python -m pip install -e ".[base,test]"
+
+### Full base
+python -m pip install -e ".[base,security,embeddings,faiss,ingest,test]"
+
+### Pro (Qdrant tests)
+python -m pip install -e ".[test,qdrant,embeddings,faiss]"
+
+### Run API
+uvicorn src.api.main:app --reload
+
+### Golden Path (Base)
+python scripts/demo_golden_path.py
+
+### Golden Path (Pro)
+DEMO_ENABLE_REASONING=1 python scripts/demo_golden_path.py
+
+
+
 ### Prerequisites
 - Python 3.12+
 - Docker & Docker Compose
