@@ -36,6 +36,7 @@ class InMemoryEntityExtractionJobRegistry:
     def __init__(self) -> None:
         self._lock = RLock()
         self._jobs: dict[str, EntityExtractionJob] = {}
+        self._latest_by_document: dict[tuple[str, str], str] = {}
 
     def create(self, *, workspace_id: str, document_id: str, total_chunks: int) -> EntityExtractionJob:
         job = EntityExtractionJob(
@@ -48,10 +49,18 @@ class InMemoryEntityExtractionJobRegistry:
         )
         with self._lock:
             self._jobs[job.job_id] = job
+            self._latest_by_document[(job.workspace_id, job.document_id)] = job.job_id
         return job
 
     def get(self, job_id: str) -> EntityExtractionJob | None:
         with self._lock:
+            return self._jobs.get(job_id)
+
+    def get_latest_by_document(self, *, workspace_id: str, document_id: str) -> EntityExtractionJob | None:
+        with self._lock:
+            job_id = self._latest_by_document.get((workspace_id, document_id))
+            if not job_id:
+                return None
             return self._jobs.get(job_id)
 
     def mark_running(self, job_id: str) -> EntityExtractionJob | None:

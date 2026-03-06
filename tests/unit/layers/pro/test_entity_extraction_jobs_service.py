@@ -48,6 +48,9 @@ async def test_start_document_job_success(monkeypatch) -> None:
     assert final.status == "completed"
     assert final.total_chunks == 2
     assert final.processed_chunks == 2
+    latest = svc.get_latest_document_job(workspace_id="w1", document_id="d1")
+    assert latest is not None
+    assert latest.job_id == job.job_id
 
 
 @pytest.mark.asyncio

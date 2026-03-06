@@ -60,3 +60,16 @@ def test_registry_returns_none_for_unknown_job() -> None:
     assert reg.mark_running("missing") is None
     assert reg.mark_chunk_result(job_id="missing", success=True) is None
     assert reg.finalize("missing") is None
+    assert reg.get_latest_by_document(workspace_id="w1", document_id="d1") is None
+
+
+def test_registry_tracks_latest_job_per_document() -> None:
+    reg = InMemoryEntityExtractionJobRegistry()
+
+    first = reg.create(workspace_id="w1", document_id="d1", total_chunks=1)
+    second = reg.create(workspace_id="w1", document_id="d1", total_chunks=2)
+
+    latest = reg.get_latest_by_document(workspace_id="w1", document_id="d1")
+    assert latest is not None
+    assert latest.job_id == second.job_id
+    assert latest.job_id != first.job_id

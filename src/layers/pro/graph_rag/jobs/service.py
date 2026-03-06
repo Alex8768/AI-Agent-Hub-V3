@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from threading import RLock
 from typing import Any
 
 from src.core.config import settings
@@ -55,6 +56,9 @@ class EntityExtractionJobsService:
     def get_job(self, job_id: str) -> EntityExtractionJob | None:
         return self._runner.get_job(job_id)
 
+    def get_latest_document_job(self, *, workspace_id: str, document_id: str) -> EntityExtractionJob | None:
+        return self._runner.get_latest_document_job(workspace_id=workspace_id, document_id=document_id)
+
     @staticmethod
     def _collect_document_chunks(
         *,
@@ -86,3 +90,17 @@ class EntityExtractionJobsService:
 
         result.sort(key=lambda x: x.chunk_id)
         return result
+
+
+_jobs_service_lock = RLock()
+_jobs_service_singleton: EntityExtractionJobsService | None = None
+
+
+def get_entity_extraction_jobs_service() -> EntityExtractionJobsService:
+    global _jobs_service_singleton
+    if _jobs_service_singleton is not None:
+        return _jobs_service_singleton
+    with _jobs_service_lock:
+        if _jobs_service_singleton is None:
+            _jobs_service_singleton = EntityExtractionJobsService()
+        return _jobs_service_singleton

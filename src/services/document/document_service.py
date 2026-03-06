@@ -12,6 +12,7 @@ from src.core.config import settings
 from src.infrastructure.database.models import DocumentRecord
 from src.infrastructure.storage.local_storage import LocalStorage
 from src.layers.base.rag.vector_stores.factory import get_vector_store_singleton
+from src.layers.pro.graph_rag.jobs.service import get_entity_extraction_jobs_service
 from src.services.document.registry_repository import DocumentRegistryRepository
 from src.services.document.ingest_service import IngestService
 
@@ -140,6 +141,29 @@ class DocumentService:
                 record.chunks_count = result.total_chunks
                 record.indexed_at = datetime.utcnow()
                 record.error_message = None
+                # A1.3: managed best-effort background extraction job for graph entities.
+                try:
+                    jobs = get_entity_extraction_jobs_service()
+                    job = await jobs.start_document_job(workspace_id=workspace_id, document_id=record.id)
+                    logger.info(
+                        "Entity extraction job started",
+                        extra={
+                            "document_id": record.id,
+                            "workspace_id": workspace_id,
+                            "job_id": job.job_id,
+                            "chunks_total": job.total_chunks,
+                        },
+                    )
+                except Exception as e:
+                    # Extraction is additive for GraphRAG; ingest success must not be rolled back.
+                    logger.warning(
+                        "Entity extraction job was not started",
+                        extra={
+                            "document_id": record.id,
+                            "workspace_id": workspace_id,
+                            "reason": str(e),
+                        },
+                    )
             else:
                 record.status = "error"
                 record.error_message = "; ".join(result.errors)[:1000]

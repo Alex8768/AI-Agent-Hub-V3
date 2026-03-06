@@ -68,6 +68,9 @@ class EntityExtractionJobRunner:
     def get_job(self, job_id: str) -> EntityExtractionJob | None:
         return self._registry.get(job_id)
 
+    def get_latest_document_job(self, *, workspace_id: str, document_id: str) -> EntityExtractionJob | None:
+        return self._registry.get_latest_by_document(workspace_id=workspace_id, document_id=document_id)
+
     def is_running(self, job_id: str) -> bool:
         task = self._tasks.get(job_id)
         return bool(task is not None and not task.done())
