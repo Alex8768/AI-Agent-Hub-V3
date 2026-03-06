@@ -27,7 +27,3 @@ async def search_documents(http: Request, request: SearchRequest, workspace_id: 
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=f"Search backend unavailable: {str(e)}",
         )
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=f"Search backend unavailable: {str(e)}",
-        )

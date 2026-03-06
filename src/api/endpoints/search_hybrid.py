@@ -32,7 +32,3 @@ async def search_documents_hybrid(http: Request, request: SearchRequest, workspa
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=f"Hybrid search backend unavailable: {str(e)}",
         )
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=f"Hybrid search backend unavailable: {str(e)}",
-        )

@@ -42,8 +42,9 @@ async def get_current_user(
             claims = verify_token(
                 token,
                 secret,
-                issuer=getattr(settings, "jwt_issuer", None, backend=getattr(s, 'jwt_backend', 'internal')),
+                issuer=getattr(settings, "jwt_issuer", None),
                 audience=getattr(settings, "jwt_audience", None),
+                backend=getattr(settings, "jwt_backend", "internal"),
             )
         except JWTError as e:
             raise HTTPException(
@@ -75,8 +76,9 @@ async def get_current_user(
                 claims = verify_token(
                     credentials.credentials,
                     secret,
-                    issuer=getattr(settings, "jwt_issuer", None, backend=getattr(s, 'jwt_backend', 'internal')),
+                    issuer=getattr(settings, "jwt_issuer", None),
                     audience=getattr(settings, "jwt_audience", None),
+                    backend=getattr(settings, "jwt_backend", "internal"),
                 )
                 user_id = claims.get("sub") or claims.get("user_id") or claims.get("id") or "debug_user"
                 return {
