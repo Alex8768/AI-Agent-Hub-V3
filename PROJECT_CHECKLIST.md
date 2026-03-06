@@ -121,7 +121,7 @@ Why this matters:
 ---
 
 ### A1.4 Graph retriever
-Status: IN_PROGRESS
+Status: DONE
 
 Why this matters:
 Система должна уметь расширять найденный контекст через связи между сущностями, а не только искать похожие куски текста.
@@ -129,7 +129,7 @@ Why this matters:
 ---
 
 ### A1.5 Hybrid retrieval
-Status: TODO
+Status: IN_PROGRESS
 
 Why this matters:
 Нужен гибридный путь: векторный поиск даёт стартовые точки, граф расширяет и углубляет контекст.

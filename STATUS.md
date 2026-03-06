@@ -4,13 +4,13 @@
 Phase 0 -> Base stabilization
 
 ## Last Completed Anchor
-A1.3 Entity extraction jobs
-
-## Current Active Anchor
 A1.4 Graph retriever
 
-## Next Anchor
+## Current Active Anchor
 A1.5 Hybrid retrieval
+
+## Next Anchor
+A2.1 Session memory
 
 ## Current Goal
 Подготовить устойчивую и понятную базу для развития Pro слоя без архитектурного хаоса.

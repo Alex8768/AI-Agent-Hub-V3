@@ -60,10 +60,10 @@ Phase 0 -> Base stabilization
 Phase 0 -> Base stabilization
 
 Current active anchor:
-A1.4 Graph retriever
+A1.5 Hybrid retrieval
 
 Next anchor:
-A1.5 Hybrid retrieval
+A2.1 Session memory
 
 ## What is explicitly postponed
 
