@@ -108,11 +108,13 @@ class SearchService:
         vector_results = getattr(out, "vector_results", None)
         graph = getattr(out, "graph", None)
         evidence = getattr(out, "evidence", None)
+        stats = getattr(out, "stats", None)
 
         if isinstance(out, dict):
             vector_results = out.get("vector_results") or out.get("results")
             graph = out.get("graph")
             evidence = out.get("evidence")
+            stats = out.get("stats")
 
         response = self._format_results(list(vector_results or []), request)
 
@@ -120,4 +122,5 @@ class SearchService:
             "results": response,
             "graph": graph,
             "evidence": evidence,
+            "stats": (stats if isinstance(stats, dict) else {}),
         }
