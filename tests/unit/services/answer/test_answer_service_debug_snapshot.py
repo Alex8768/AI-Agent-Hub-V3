@@ -261,6 +261,8 @@ async def test_answer_service_loads_session_memory_before_reasoning(monkeypatch)
     assert getattr(probe.last_req, "session_memory_last_answer", "") == "previous turn answer"
     assert diag.get("session_memory_loaded") is True
     assert diag.get("session_memory_hit") is True
+    assert any(str(x).startswith("memory:session:s-42:last_answer") for x in (diag.get("top_evidence") or []))
+    assert int((diag.get("evidence_type_counts") or {}).get("memory", 0)) >= 1
 
 
 @pytest.mark.asyncio

@@ -263,6 +263,10 @@ class AnswerService:
                     tops = [f"chunk:{x}" for x in (getattr(resp, "used_chunks", []) or [])[:10]]
                 except Exception:
                     tops = []
+            if session_memory_hit:
+                sid = str(getattr(req, "session_id", "") or "default")
+                tops = [f"memory:session:{sid}:last_answer", *list(tops or [])]
+                tops = tops[:10]
             diag.setdefault("top_evidence", tops)            # trace_id must be present in diagnostics (debug snapshot expects it)
             rid = str(get_request_id(http) or "")
             try:
@@ -284,6 +288,15 @@ class AnswerService:
             diag.setdefault("llm_provider", llm_provider_name)
             diag.setdefault("llm_model", llm_model)
             diag.setdefault("llm_error", llm_error)
+
+            # Memory evidence observability (A2.1)
+            try:
+                etc = dict(diag.get("evidence_type_counts") or {})
+                if session_memory_hit:
+                    etc["memory"] = int(etc.get("memory", 0)) + 1
+                diag["evidence_type_counts"] = etc
+            except Exception:
+                pass
 
             # Retriever stats (best-effort)
             try:
