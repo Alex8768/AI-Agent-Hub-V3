@@ -90,6 +90,7 @@ async def think_node(state: AgentState, llm: Any) -> AgentState:
                     raise
             raw_plan = data.get("plan")
             parsed_plan: list[str] = []
+            effective_plan: list[str] = list(getattr(state, "plan", []) or [])
             allowed = {"SEARCH", "REASON", "ANSWER"}
             if isinstance(raw_plan, list):
                 for item in raw_plan:
@@ -97,8 +98,9 @@ async def think_node(state: AgentState, llm: Any) -> AgentState:
                     if step in allowed:
                         parsed_plan.append(step)
                 parsed_plan = parsed_plan[:5]
-                if parsed_plan:
+                if parsed_plan and (not state.plan or int(getattr(state, "current_step", 0) or 0) == 0):
                     state.plan = parsed_plan
+                    effective_plan = parsed_plan
             elif isinstance(raw_plan, str):
                 # Robustness: some LLMs return plan as a comma/arrow-separated string.
                 s = raw_plan.upper().replace("->", ",").replace(";", ",")
@@ -107,20 +109,21 @@ async def think_node(state: AgentState, llm: Any) -> AgentState:
                     if step in allowed:
                         parsed_plan.append(step)
                 parsed_plan = parsed_plan[:5]
-                if parsed_plan:
+                if parsed_plan and (not state.plan or int(getattr(state, "current_step", 0) or 0) == 0):
                     state.plan = parsed_plan
+                    effective_plan = parsed_plan
 
             allowed_actions = {"SEARCH", "REASON", "ANSWER"}
             action = str(data.get("action") or "").strip().upper()
-            if parsed_plan:
+            if effective_plan:
                 # Planner is the source of truth for routing when structured plan exists.
                 step_idx = int(getattr(state, "current_step", 0) or 0)
                 if step_idx < 0:
                     step_idx = 0
-                if step_idx >= len(parsed_plan):
-                    step_idx = len(parsed_plan) - 1
-                action = parsed_plan[step_idx]
-                if step_idx < len(parsed_plan) - 1:
+                if step_idx >= len(effective_plan):
+                    step_idx = len(effective_plan) - 1
+                action = effective_plan[step_idx]
+                if step_idx < len(effective_plan) - 1:
                     state.current_step = step_idx + 1
                 else:
                     state.current_step = step_idx

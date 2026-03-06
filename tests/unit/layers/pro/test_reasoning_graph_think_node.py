@@ -45,6 +45,17 @@ class _LLMPlanAsString:
         return '{"plan": "SEARCH, REASON, ANSWER", "reason": "string plan"}'
 
 
+class _LLMChangingPlan:
+    def __init__(self):
+        self.calls = 0
+
+    async def generate(self, prompt: str) -> str:
+        self.calls += 1
+        if self.calls == 1:
+            return '{"plan": ["SEARCH", "REASON", "ANSWER"], "reason": "first"}'
+        return '{"plan": ["ANSWER"], "reason": "changed"}'
+
+
 @pytest.mark.asyncio
 async def test_think_node_uses_structured_plan_when_action_missing():
     state = AgentState(query="Q?", workspace_id="default")
@@ -127,3 +138,18 @@ async def test_think_node_parses_string_plan_and_uses_first_step():
 
     assert out.current_action == "SEARCH"
     assert out.plan == ["SEARCH", "REASON", "ANSWER"]
+
+
+@pytest.mark.asyncio
+async def test_think_node_does_not_override_in_progress_plan():
+    llm = _LLMChangingPlan()
+    state = AgentState(query="Q?", workspace_id="default")
+
+    s1 = await think_node(state, llm)
+    assert s1.plan == ["SEARCH", "REASON", "ANSWER"]
+    assert s1.current_action == "SEARCH"
+    assert s1.current_step == 1
+
+    s2 = await think_node(s1, llm)
+    assert s2.plan == ["SEARCH", "REASON", "ANSWER"]
+    assert s2.current_action == "REASON"
