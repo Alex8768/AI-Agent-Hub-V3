@@ -97,7 +97,7 @@ Done when:
 ## Phase 1 — Graph RAG MVP
 
 ### A1.1 Graph schema and indexes
-Status: TODO
+Status: IN_PROGRESS
 
 Why this matters:
 Чтобы граф не был медленным и бесполезным, нужна нормальная схема хранения и индексы для быстрых переходов по связям.

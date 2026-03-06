@@ -15,6 +15,13 @@ class GraphStore:
     """DB-backed graph store (per-session)."""
     db: AsyncSession
 
+    @staticmethod
+    def _require_text(name: str, value: str) -> str:
+        v = str(value or "").strip()
+        if not v:
+            raise ValueError(f"{name} is required")
+        return v
+
     async def upsert_node(
         self,
         *,
@@ -24,6 +31,10 @@ class GraphStore:
         name: str,
         metadata: Optional[dict[str, Any]] = None,
     ) -> None:
+        workspace_id = self._require_text("workspace_id", workspace_id)
+        node_id = self._require_text("node_id", node_id)
+        node_type = self._require_text("node_type", node_type)
+        name = self._require_text("name", name)
         meta = dict(metadata or {})
         q = select(GraphNode).where(GraphNode.workspace_id == workspace_id, GraphNode.node_id == node_id)
         res = await self.db.execute(q)
@@ -46,6 +57,13 @@ class GraphStore:
         rel_type: str,
         metadata: Optional[dict[str, Any]] = None,
     ) -> None:
+        workspace_id = self._require_text("workspace_id", workspace_id)
+        edge_id = self._require_text("edge_id", edge_id)
+        src_id = self._require_text("src_id", src_id)
+        dst_id = self._require_text("dst_id", dst_id)
+        rel_type = self._require_text("rel_type", rel_type)
+        if src_id == dst_id:
+            raise ValueError("src_id and dst_id must differ")
         meta = dict(metadata or {})
         q = select(GraphEdge).where(GraphEdge.workspace_id == workspace_id, GraphEdge.edge_id == edge_id)
         res = await self.db.execute(q)
@@ -69,7 +87,8 @@ class GraphStore:
         await self.db.commit()
 
     async def search_nodes(self, *, workspace_id: str, text: str, limit: int = 20) -> list[dict[str, Any]]:
-        pattern = f"%{text}%"
+        workspace_id = self._require_text("workspace_id", workspace_id)
+        pattern = f"%{str(text or '').strip()}%"
         q = (
             select(GraphNode)
             .where(GraphNode.workspace_id == workspace_id)
@@ -96,6 +115,8 @@ class GraphStore:
         Expand neighbors up to depth (BFS).
         Returns: {"nodes": [...], "edges": [...]}
         """
+        workspace_id = self._require_text("workspace_id", workspace_id)
+        node_id = self._require_text("node_id", node_id)
         depth = max(1, int(depth))
         limit = max(1, int(limit))
 
