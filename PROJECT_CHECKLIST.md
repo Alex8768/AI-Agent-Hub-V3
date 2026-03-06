@@ -69,7 +69,7 @@ Done when:
 ---
 
 ### A0.5 Unified logging and request context
-Status: TODO
+Status: DONE
 
 Why this matters:
 Когда Pro начнёт усложняться, без единого контекста логов быстро начнётся хаос. Нужно заранее упростить трассировку запросов и ошибок.
@@ -82,7 +82,7 @@ Done when:
 ---
 
 ### A0.6 Feature flags for risky Pro capabilities
-Status: TODO
+Status: IN_PROGRESS
 
 Why this matters:
 Новые возможности нужно включать по рубильнику, а не выпускать сразу на весь поток. Это снижает риск случайно сломать стабильный путь.

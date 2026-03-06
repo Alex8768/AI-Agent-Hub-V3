@@ -94,6 +94,7 @@ async def get_current_user(
 
 
 async def get_workspace(
+    request: Request = None,  # type: ignore[assignment]
     workspace_id: Optional[str] = None,
     user: dict = Depends(get_current_user),
     x_workspace_id: Optional[str] = Header(default=None, alias="X-Workspace-Id"),
@@ -130,10 +131,22 @@ async def get_workspace(
                 detail=str(e) or "Access denied by ACL",
             )
 
+        # Save resolved workspace into request context for unified logs/middleware.
+        if request is not None:
+            try:
+                request.state.workspace_id = workspace_id
+            except Exception:
+                pass
         return workspace_id
     else:
         # Get default workspace (deterministic for Base/Smoke)
-        return "default"
+        ws = "default"
+        if request is not None:
+            try:
+                request.state.workspace_id = ws
+            except Exception:
+                pass
+        return ws
 
 async def get_llm_provider(
     provider_type: Optional[str] = None

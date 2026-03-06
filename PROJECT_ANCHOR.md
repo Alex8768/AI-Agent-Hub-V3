@@ -60,10 +60,10 @@ Phase 0 -> Base stabilization
 Phase 0 -> Base stabilization
 
 Current active anchor:
-A0.5 Unified logging and request context
+A0.6 Feature flags for risky Pro capabilities
 
 Next anchor:
-A0.6 Feature flags for risky Pro capabilities
+A1.1 Graph schema and indexes
 
 ## What is explicitly postponed
 

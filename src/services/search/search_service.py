@@ -6,15 +6,7 @@ from fastapi import Request
 from loguru import logger
 
 from src.api.schemas import SearchRequest, SearchResult
-
-
-def get_request_id(http: Request) -> str | None:
-    return (
-        getattr(getattr(http, "state", None), "request_id", None)
-        or http.headers.get("x-request-id")
-        or http.headers.get("X-Request-ID")
-        or http.headers.get("X-Request-Id")
-    )
+from src.observability.request_context import get_request_id
 
 
 def log_observability(http: Request, *, workspace_id: str, req: SearchRequest, kind: str) -> None:

@@ -1,22 +1,13 @@
 from __future__ import annotations
 
-from time import perf_counter
-
 from fastapi import APIRouter, Depends, HTTPException, Request
 
 from src.core.config import get_settings
-from src.core.providers import get_reasoning_engine
 from src.api.dependencies import get_workspace
 from src.api.dependencies_impl import get_hybrid_retriever, get_rag_engine
 from src.layers.pro.reasoning.contracts import AnswerRequest, AnswerResponse
 
 from src.services.answer.answer_service import AnswerService
-from src.services.answer.answer_service import (
-    get_request_id as _get_request_id,
-    log_observability as _log_observability,
-    RetrieverAdapter as _RetrieverAdapter,
-    LLMGenerateAdapter as _LLMGenerateAdapter,
-)
 
 
 router = APIRouter(prefix="/api/v1", tags=["reasoning"])
