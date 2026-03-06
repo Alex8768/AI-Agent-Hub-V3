@@ -3,7 +3,7 @@ Dependencies for AI Agent Hub V3 API.
 """
 
 from typing import Optional
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi import Header
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
@@ -153,3 +153,29 @@ async def get_llm_provider(
     from src.layers.base.llm.providers import get_llm_provider as _get
 
     return await _get(provider_type=provider_name)
+
+
+async def get_rag_engine(http: Request):
+    """Get or create RAGEngine instance for search endpoints.
+
+    Uses process-level singleton from app.state when available, otherwise creates
+    a per-process instance and caches it.
+    """
+    from src.layers.base.rag.engines.rag_engine import RAGEngine
+
+    engine = getattr(http.app.state, "rag_engine", None)
+    if engine is None:
+        engine = RAGEngine()
+        http.app.state.rag_engine = engine
+    return engine
+
+
+async def get_hybrid_retriever(http: Request):
+    """Get or create HybridRetriever instance for hybrid search endpoints."""
+    from src.layers.pro.rag.retrieval.hybrid_retriever import HybridRetriever
+
+    retriever = getattr(http.app.state, "hybrid_retriever", None)
+    if retriever is None:
+        retriever = HybridRetriever()
+        http.app.state.hybrid_retriever = retriever
+    return retriever

@@ -59,12 +59,19 @@ class SearchService:
             )
         return response
 
-    async def search(self, http: Request, request: SearchRequest, *, workspace_id: str) -> List[SearchResult]:
+    async def search(
+        self,
+        http: Request,
+        request: SearchRequest,
+        *,
+        workspace_id: str,
+        engine: Any | None = None,
+    ) -> List[SearchResult]:
         log_observability(http, workspace_id=workspace_id, req=request, kind="vector")
 
         from src.layers.base.rag.engines.rag_engine import RAGEngine
 
-        engine = getattr(http.app.state, "rag_engine", None) or RAGEngine()
+        engine = engine or getattr(http.app.state, "rag_engine", None) or RAGEngine()
 
         results = await engine.search(
             query=request.query,
@@ -82,16 +89,18 @@ class SearchService:
         *,
         workspace_id: str,
         graph_depth: int = 1,
+        engine: Any | None = None,
+        retriever: Any | None = None,
     ) -> Dict[str, Any]:
         log_observability(http, workspace_id=workspace_id, req=request, kind="hybrid")
 
         from src.layers.base.rag.engines.rag_engine import RAGEngine
         from src.layers.pro.rag.retrieval.hybrid_retriever import HybridRetriever
 
-        engine = getattr(http.app.state, "rag_engine", None) or RAGEngine()
+        engine = engine or getattr(http.app.state, "rag_engine", None) or RAGEngine()
 
         # Prefer process singleton if present, otherwise create per call (keeps Base path working)
-        retriever = getattr(http.app.state, "hybrid_retriever", None) or HybridRetriever()
+        retriever = retriever or getattr(http.app.state, "hybrid_retriever", None) or HybridRetriever()
 
         out = await retriever.retrieve(
             engine=engine,
