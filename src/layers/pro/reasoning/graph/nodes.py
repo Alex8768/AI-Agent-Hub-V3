@@ -45,6 +45,13 @@ async def think_node(state: AgentState, llm: Any) -> AgentState:
     with tracer.start_as_current_span("agent.think") as span:
         span.set_attribute("agent.iteration", state.iteration_count)
         span.set_attribute("agent.current_action", getattr(state, "current_action", "unknown"))
+
+        # Hard stop for planner loop safety.
+        if int(getattr(state, "iteration_count", 0) or 0) >= int(getattr(state, "max_iterations", 10) or 10):
+            state.current_action = "ANSWER"
+            state.messages.append({"role": "system", "content": "Planner reached max_iterations; forcing ANSWER"})
+            state.iteration_count += 1
+            return state
         
         # Собираем контекст для промпта
         prompt = build_reasoning_prompt(

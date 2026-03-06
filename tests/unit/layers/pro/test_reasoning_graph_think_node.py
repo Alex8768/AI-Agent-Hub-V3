@@ -16,6 +16,15 @@ class _LLMActionConflictsPlan:
         return '{"action": "ANSWER", "plan": ["search", "reason", "answer"], "reason": "Structured plan should win"}'
 
 
+class _LLMShouldNotBeCalled:
+    def __init__(self):
+        self.calls = 0
+
+    async def generate(self, prompt: str) -> str:
+        self.calls += 1
+        return '{"action":"REASON","reason":"unexpected call"}'
+
+
 @pytest.mark.asyncio
 async def test_think_node_uses_structured_plan_when_action_missing():
     state = AgentState(query="Q?", workspace_id="default")
@@ -50,3 +59,16 @@ async def test_think_node_advances_structured_plan_steps_between_iterations():
     s3 = await think_node(s2, _LLMPlanOnly())
     assert s3.current_action == "ANSWER"
     assert s3.current_step == 2
+
+
+@pytest.mark.asyncio
+async def test_think_node_forces_answer_when_max_iterations_reached():
+    llm = _LLMShouldNotBeCalled()
+    state = AgentState(query="Q?", workspace_id="default", iteration_count=10, max_iterations=10)
+
+    out = await think_node(state, llm)
+
+    assert llm.calls == 0
+    assert out.current_action == "ANSWER"
+    assert out.iteration_count == 11
+    assert any("max_iterations" in str(m.get("content", "")) for m in out.messages)
