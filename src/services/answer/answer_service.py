@@ -147,7 +147,15 @@ class AnswerService:
     Keeps FastAPI endpoint thin and concentrates gating/wiring/diagnostics here.
     """
 
-    async def handle(self, http: Request, req, *, workspace_id: str):
+    async def handle(
+        self,
+        http: Request,
+        req,
+        *,
+        workspace_id: str,
+        engine: object | None = None,
+        retriever: object | None = None,
+    ):
         from src.core.config import get_settings
         from src.core.providers import get_reasoning_engine
 
@@ -159,8 +167,8 @@ class AnswerService:
 
         log_observability(http, workspace_id=workspace_id, req=req)
 
-        engine = getattr(http.app.state, "rag_engine", None)
-        hybrid = getattr(http.app.state, "hybrid_retriever", None)
+        engine = engine or getattr(http.app.state, "rag_engine", None)
+        hybrid = retriever or getattr(http.app.state, "hybrid_retriever", None)
         if engine is None or hybrid is None:
             from fastapi import HTTPException
             raise HTTPException(status_code=503, detail="Reasoning stack not initialized")
