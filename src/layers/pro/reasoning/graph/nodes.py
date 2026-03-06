@@ -71,8 +71,21 @@ async def think_node(state: AgentState, llm: Any) -> AgentState:
         
         try:
             response = await llm.generate(prompt)
-            # Парсим JSON
-            data = json.loads(response.strip())
+            # Парсим JSON (предпочтительный формат). If raw text is returned,
+            # recover action from keywords to keep planner flow robust.
+            txt = str(response or "").strip()
+            try:
+                data = json.loads(txt)
+            except Exception:
+                up = txt.upper()
+                if "SEARCH" in up:
+                    data = {"action": "SEARCH", "reason": "parsed from plain text"}
+                elif "REASON" in up:
+                    data = {"action": "REASON", "reason": "parsed from plain text"}
+                elif "ANSWER" in up:
+                    data = {"action": "ANSWER", "reason": "parsed from plain text"}
+                else:
+                    raise
             raw_plan = data.get("plan")
             parsed_plan: list[str] = []
             if isinstance(raw_plan, list):

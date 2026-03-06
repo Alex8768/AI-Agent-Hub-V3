@@ -30,6 +30,11 @@ class _LLMInvalidAction:
         return '{"action":"TOOL","reason":"unsupported action"}'
 
 
+class _LLMPlainTextAction:
+    async def generate(self, prompt: str) -> str:
+        return "Next best step is REASON based on available evidence."
+
+
 @pytest.mark.asyncio
 async def test_think_node_uses_structured_plan_when_action_missing():
     state = AgentState(query="Q?", workspace_id="default")
@@ -83,6 +88,15 @@ async def test_think_node_forces_answer_when_max_iterations_reached():
 async def test_think_node_falls_back_to_reason_on_invalid_action():
     state = AgentState(query="Q?", workspace_id="default")
     out = await think_node(state, _LLMInvalidAction())
+
+    assert out.current_action == "REASON"
+    assert out.iteration_count == 1
+
+
+@pytest.mark.asyncio
+async def test_think_node_recovers_action_from_plain_text_response():
+    state = AgentState(query="Q?", workspace_id="default")
+    out = await think_node(state, _LLMPlainTextAction())
 
     assert out.current_action == "REASON"
     assert out.iteration_count == 1
