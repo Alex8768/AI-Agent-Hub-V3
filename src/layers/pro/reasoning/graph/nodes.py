@@ -66,7 +66,23 @@ async def think_node(state: AgentState, llm: Any) -> AgentState:
             response = await llm.generate(prompt)
             # Парсим JSON
             data = json.loads(response.strip())
-            action = data.get("action", "REASON")
+            raw_plan = data.get("plan")
+            parsed_plan: list[str] = []
+            if isinstance(raw_plan, list):
+                allowed = {"SEARCH", "REASON", "ANSWER"}
+                for item in raw_plan:
+                    step = str(item or "").strip().upper()
+                    if step in allowed:
+                        parsed_plan.append(step)
+                parsed_plan = parsed_plan[:5]
+                if parsed_plan:
+                    state.plan = parsed_plan
+
+            action = str(data.get("action") or "").strip().upper()
+            if not action and parsed_plan:
+                action = parsed_plan[0]
+            if not action:
+                action = "REASON"
             reason = data.get("reason", "")
             
             # Добавляем атрибуты в спан
@@ -77,7 +93,7 @@ async def think_node(state: AgentState, llm: Any) -> AgentState:
             state.messages.append({"role": "assistant", "content": f"Action: {action} ({reason})"})
             
             # Обновляем план (если нужно)
-            if action not in ["ANSWER"]:
+            if action not in ["ANSWER"] and not parsed_plan:
                 state.plan.append(action)
             
             # Сохраняем выбранное действие в состоянии для следующего узла

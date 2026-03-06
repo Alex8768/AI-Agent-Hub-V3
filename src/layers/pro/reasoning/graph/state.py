@@ -19,6 +19,7 @@ class AgentState(BaseModel):
     # Текущий контекст
     messages: List[Dict[str, str]] = Field(default_factory=list)  # роль, контент
     plan: List[str] = Field(default_factory=list)  # список запланированных действий
+    current_action: Literal["SEARCH", "REASON", "ANSWER"] = "REASON"
     current_step: int = 0
     
     # Накопленные свидетельства
