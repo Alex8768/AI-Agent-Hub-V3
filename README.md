@@ -122,24 +122,22 @@ Architecture principles:
 
 
 ## System Architecture
+```mermaid
+flowchart TD
+    Client[Client / UI] --> API[FastAPI API Layer]
+    API --> Services[Service Layer]
 
-    Client / UI
-        |
-    FastAPI API Layer
-        |
-    Service Layer
-    /     |      \
- RAG   Memory   Agent Orchestration
-  |       |            |
-FAISS/   Context      Tool
-Qdrant   State        Integrations
-   \      |            /
-      LLM Layer (OpenAI / Ollama)
+    Services --> RAG[RAG Retrieval]
+    Services --> Memory[Memory System]
+    Services --> Agents[Agent Orchestration]
 
-Detailed architecture documentation:
+    RAG --> Vector[(Vector DB: FAISS / Qdrant)]
+    Agents --> Tools[Tool Integrations]
 
-docs/architecture/ARCHITECTURE_V3.md
-
+    RAG --> LLM[LLM Layer]
+    Agents --> LLM
+    Memory --> LLM
+```
 ---
 
 ## Project status
