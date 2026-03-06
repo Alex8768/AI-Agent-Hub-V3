@@ -242,3 +242,23 @@ Building applied AI systems focused on:
 - knowledge systems
 - AI automation workflows
 
+
+## System Architecture
+
+```mermaid
+flowchart TD
+
+Client[Client / UI] --> API[FastAPI API Layer]
+API --> Services[Service Layer]
+
+Services --> RAG[RAG Retrieval]
+Services --> Memory[Memory System]
+Services --> Agents[Agent Orchestration]
+
+RAG --> Vector[(Vector DB<br>FAISS / Qdrant)]
+Agents --> Tools[Tool Integrations]
+
+RAG --> LLM[LLM Layer<br>OpenAI / Ollama]
+Agents --> LLM
+Memory --> LLM
+```
