@@ -27,6 +27,15 @@ class _FakeRetriever:
         }
 
 
+class _EmptyRetriever:
+    async def retrieve(self, request):
+        return {
+            "results": [],
+            "graph": {"nodes": [], "edges": []},
+            "evidence": [],
+        }
+
+
 @pytest.mark.asyncio
 async def test_reasoning_engine_synthesize_stub_orchestration():
     retriever = _FakeRetriever()
@@ -57,3 +66,14 @@ async def test_reasoning_engine_synthesize_stub_orchestration():
 
     # context preview packed from provenance source_refs (MVP)
     assert resp.context_preview == "doc:A#1"
+
+
+@pytest.mark.asyncio
+async def test_reasoning_engine_uses_session_memory_when_retrieval_context_empty():
+    eng = ReasoningEngine(retriever=_EmptyRetriever())
+    req = AnswerRequest(query="follow up", session_memory_last_answer="previous answer from session")
+
+    resp = await eng.synthesize(req)
+
+    assert resp.answer == "(reasoning layer stub)"
+    assert resp.context_preview == "previous answer from session"

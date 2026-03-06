@@ -118,6 +118,9 @@ class ReasoningEngine:
             preview_items,
             max_chars=int(getattr(request, "max_context_chars", 12000)),
         )
+        if not context_preview:
+            # A2.1: keep session continuity when retrieval returns empty context.
+            context_preview = str(getattr(request, "session_memory_last_answer", "") or "")
 
         s = get_settings()
         dry_run = bool(getattr(s, "feature_reasoning_llm_dry_run", False))
