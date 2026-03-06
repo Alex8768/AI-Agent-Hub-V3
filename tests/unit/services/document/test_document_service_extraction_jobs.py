@@ -59,6 +59,17 @@ class _FakeVectorStore:
         return {"total_vectors": 0}
 
 
+class _JobsWithLookup:
+    async def start_document_job(self, *, workspace_id: str, document_id: str):
+        return SimpleNamespace(job_id="job-lookup", total_chunks=1)
+
+    def get_latest_document_job(self, *, workspace_id: str, document_id: str):
+        return SimpleNamespace(job_id="latest-1", workspace_id=workspace_id, document_id=document_id)
+
+    def get_job(self, job_id: str):
+        return SimpleNamespace(job_id=job_id, status="running")
+
+
 @pytest.mark.asyncio
 async def test_document_service_starts_extraction_job_on_success(monkeypatch) -> None:
     calls: list[tuple[str, str]] = []
@@ -132,3 +143,18 @@ async def test_document_service_keeps_success_if_job_start_fails(monkeypatch) ->
     assert rec.status == "completed"
     assert rec.chunks_count == 2
     assert rec.error_message is None
+
+
+def test_document_service_exposes_job_lookup_contract() -> None:
+    svc = DocumentService(extraction_jobs_service=_JobsWithLookup())
+
+    latest = svc.get_latest_extraction_job(workspace_id="w1", document_id="d1")
+    assert latest is not None
+    assert latest.job_id == "latest-1"
+    assert latest.workspace_id == "w1"
+    assert latest.document_id == "d1"
+
+    by_id = svc.get_extraction_job(job_id="job-42")
+    assert by_id is not None
+    assert by_id.job_id == "job-42"
+    assert by_id.status == "running"

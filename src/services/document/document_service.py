@@ -33,6 +33,9 @@ class DocumentService:
     async def _get_vector_store(self):
         return await get_vector_store_singleton()
 
+    def _get_extraction_jobs_service(self):
+        return self._extraction_jobs_service or get_entity_extraction_jobs_service()
+
     async def create_from_upload(
         self,
         db: AsyncSession,
@@ -144,7 +147,7 @@ class DocumentService:
                 record.error_message = None
                 # A1.3: managed best-effort background extraction job for graph entities.
                 try:
-                    jobs = self._extraction_jobs_service or get_entity_extraction_jobs_service()
+                    jobs = self._get_extraction_jobs_service()
                     job = await jobs.start_document_job(workspace_id=workspace_id, document_id=record.id)
                     logger.info(
                         "Entity extraction job started",
@@ -176,6 +179,14 @@ class DocumentService:
         record.updated_at = datetime.utcnow()
         await self.repo.update(db, record)
         return record
+
+    def get_latest_extraction_job(self, *, workspace_id: str, document_id: str):
+        jobs = self._get_extraction_jobs_service()
+        return jobs.get_latest_document_job(workspace_id=workspace_id, document_id=document_id)
+
+    def get_extraction_job(self, *, job_id: str):
+        jobs = self._get_extraction_jobs_service()
+        return jobs.get_job(job_id)
 
 
 
