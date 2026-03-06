@@ -33,3 +33,20 @@ async def test_think_node_prioritizes_plan_over_conflicting_action():
 
     assert out.current_action == "SEARCH"
     assert out.plan == ["SEARCH", "REASON", "ANSWER"]
+
+
+@pytest.mark.asyncio
+async def test_think_node_advances_structured_plan_steps_between_iterations():
+    state = AgentState(query="Q?", workspace_id="default")
+
+    s1 = await think_node(state, _LLMPlanOnly())
+    assert s1.current_action == "SEARCH"
+    assert s1.current_step == 1
+
+    s2 = await think_node(s1, _LLMPlanOnly())
+    assert s2.current_action == "REASON"
+    assert s2.current_step == 2
+
+    s3 = await think_node(s2, _LLMPlanOnly())
+    assert s3.current_action == "ANSWER"
+    assert s3.current_step == 2
