@@ -40,6 +40,11 @@ class _LLMPlainTextMultipleActions:
         return "We should ANSWER now; SEARCH is optional later."
 
 
+class _LLMPlanAsString:
+    async def generate(self, prompt: str) -> str:
+        return '{"plan": "SEARCH, REASON, ANSWER", "reason": "string plan"}'
+
+
 @pytest.mark.asyncio
 async def test_think_node_uses_structured_plan_when_action_missing():
     state = AgentState(query="Q?", workspace_id="default")
@@ -113,3 +118,12 @@ async def test_think_node_uses_first_plain_text_action_occurrence():
     out = await think_node(state, _LLMPlainTextMultipleActions())
 
     assert out.current_action == "ANSWER"
+
+
+@pytest.mark.asyncio
+async def test_think_node_parses_string_plan_and_uses_first_step():
+    state = AgentState(query="Q?", workspace_id="default")
+    out = await think_node(state, _LLMPlanAsString())
+
+    assert out.current_action == "SEARCH"
+    assert out.plan == ["SEARCH", "REASON", "ANSWER"]

@@ -90,10 +90,20 @@ async def think_node(state: AgentState, llm: Any) -> AgentState:
                     raise
             raw_plan = data.get("plan")
             parsed_plan: list[str] = []
+            allowed = {"SEARCH", "REASON", "ANSWER"}
             if isinstance(raw_plan, list):
-                allowed = {"SEARCH", "REASON", "ANSWER"}
                 for item in raw_plan:
                     step = str(item or "").strip().upper()
+                    if step in allowed:
+                        parsed_plan.append(step)
+                parsed_plan = parsed_plan[:5]
+                if parsed_plan:
+                    state.plan = parsed_plan
+            elif isinstance(raw_plan, str):
+                # Robustness: some LLMs return plan as a comma/arrow-separated string.
+                s = raw_plan.upper().replace("->", ",").replace(";", ",")
+                parts = [p.strip() for p in s.split(",") if p.strip()]
+                for step in parts:
                     if step in allowed:
                         parsed_plan.append(step)
                 parsed_plan = parsed_plan[:5]
