@@ -55,6 +55,7 @@ def test_search_hybrid_endpoint_contract(monkeypatch):
             vector_results=[DummyResult()],
             graph={"nodes": [{"node_id": "n1"}], "edges": [{"edge_id": "e1", "metadata": {"source_refs": [{"document_id":"doc1","chunk_id":"chunk1","snippet":"x"}]}}]},
             evidence=[{"type": "edge", "edge_id": "e1", "source_refs": [{"document_id":"doc1","chunk_id":"chunk1","snippet":"x"}]}],
+            stats={"graph_enabled": True, "graph_seed_count": 1, "graph_edge_count": 1},
         )
 
     import src.layers.pro.rag.retrieval.hybrid_retriever as hr
@@ -79,11 +80,14 @@ def test_search_hybrid_endpoint_contract(monkeypatch):
     assert "results" in data
     assert "graph" in data
     assert "evidence" in data
+    assert "stats" in data
 
     assert isinstance(data["results"], list)
     assert data["graph"]["nodes"]
     assert data["graph"]["edges"]
     assert data["evidence"]
+    assert data["stats"]["graph_enabled"] is True
+    assert data["stats"]["graph_seed_count"] == 1
 
     # Restore best-effort
     monkeypatch.setattr(s, "feature_hybrid_search_api", prev_hybrid_api, raising=False)
