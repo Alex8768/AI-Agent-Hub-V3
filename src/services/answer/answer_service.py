@@ -68,26 +68,15 @@ class RetrieverAdapter:
         except Exception:
             pass
 
-        # apply policy (best-effort)
+        # Hybrid retriever owns evidence policy in A1.5. Keep adapter diagnostics additive only.
+        self.last_stats = dict(self.last_stats or {})
         try:
-            from src.layers.pro.rag.retrieval.policy import RetrievalPolicy, apply_policy
-
-            policy = RetrievalPolicy(
-                similarity_threshold=0.0,
-                max_evidence=int(getattr(request, "k", 8) or 8) * 5,
-                dedupe=True,
-            )
-            evidence_filtered, stats = apply_policy(evidence, policy=policy)
-            self.last_stats = dict(stats or {})
-            try:
-                self.last_stats.setdefault("vector_candidates_count", int(len(results or [])))
-                self.last_stats.setdefault("graph_nodes_count", int(len((graph or {}).get("nodes") or [])))
-                self.last_stats.setdefault("graph_edges_count", int(len((graph or {}).get("edges") or [])))
-            except Exception:
-                pass
-            evidence = evidence_filtered
+            self.last_stats.setdefault("vector_candidates_count", int(len(results or [])))
+            self.last_stats.setdefault("graph_nodes_count", int(len((graph or {}).get("nodes") or [])))
+            self.last_stats.setdefault("graph_edges_count", int(len((graph or {}).get("edges") or [])))
+            self.last_stats.setdefault("evidence_after_policy_count", int(len(evidence or [])))
         except Exception:
-            self.last_stats = {}
+            pass
 
 
         # Build debug "top_evidence" list (best-effort). Test expects at least one "chunk:*" when evidence exists.
