@@ -86,6 +86,15 @@ class _FakeReasoningEngine:
         return _FakeResp()
 
 
+class _ProbeReasoningEngine:
+    def __init__(self):
+        self.last_req = None
+
+    async def synthesize(self, req):
+        self.last_req = req
+        return _FakeResp()
+
+
 @pytest.mark.asyncio
 async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
     # --- settings flags ---
@@ -210,3 +219,45 @@ async def test_answer_service_saves_session_memory_best_effort(monkeypatch):
     assert (calls.get("metadata") or {}).get("session_id") == "s-1"
     assert (calls.get("metadata") or {}).get("query") == "what?"
     assert (getattr(resp, "diagnostics", {}) or {}).get("session_memory_saved") is True
+
+
+@pytest.mark.asyncio
+async def test_answer_service_loads_session_memory_before_reasoning(monkeypatch):
+    class _S:
+        feature_reasoning = True
+        feature_graphrag = True
+        feature_reasoning_llm_enabled = False
+        llm_provider = "ollama"
+        openai_model = ""
+        ollama_model = "llama3.2:latest"
+
+    monkeypatch.setattr("src.core.config.get_settings", lambda: _S())
+    monkeypatch.setattr("src.observability.trace.make_trace_id", lambda **kwargs: "trace-123", raising=False)
+
+    probe = _ProbeReasoningEngine()
+
+    def _fake_get_reasoning_engine(*, retriever=None, llm=None, llm_timeout_s=None):
+        return probe
+
+    monkeypatch.setattr("src.core.providers.get_reasoning_engine", _fake_get_reasoning_engine)
+
+    class _Mem:
+        async def get(self, *, workspace_id, key):
+            assert workspace_id == "default"
+            assert key == "session:s-42:last_answer"
+            return "previous turn answer"
+
+        async def put(self, *, workspace_id, key, value, metadata=None):
+            return None
+
+    monkeypatch.setattr("src.core.providers.get_memory_store", lambda: _Mem())
+
+    http = _DummyHTTP(request_id="rid-4", rag_engine=object(), hybrid_retriever=_FakeHybrid())
+    req = AnswerRequest(query="follow up", session_id="s-42")
+    resp = await AnswerService().handle(http, req, workspace_id="default")
+    diag = dict(getattr(resp, "diagnostics", {}) or {})
+
+    assert probe.last_req is not None
+    assert getattr(probe.last_req, "session_memory_last_answer", "") == "previous turn answer"
+    assert diag.get("session_memory_loaded") is True
+    assert diag.get("session_memory_hit") is True

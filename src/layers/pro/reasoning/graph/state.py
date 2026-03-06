@@ -11,6 +11,7 @@ class AgentState(BaseModel):
     query: str
     workspace_id: str
     session_id: str = "default"
+    session_memory_last_answer: str = ""
     k: int = 8
     graph_depth: int = 1
     max_context_chars: int = 12000

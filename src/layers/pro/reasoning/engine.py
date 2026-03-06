@@ -37,9 +37,11 @@ class ReasoningEngine:
             query=request.query,
             workspace_id=getattr(request, "workspace_id", "default"),
             session_id=getattr(request, "session_id", "default"),
+            session_memory_last_answer=str(getattr(request, "session_memory_last_answer", "") or ""),
             k=request.k,
             graph_depth=request.graph_depth,
             max_context_chars=request.max_context_chars,
+            context_preview=str(getattr(request, "session_memory_last_answer", "") or ""),
         )
 
         # Запускаем граф

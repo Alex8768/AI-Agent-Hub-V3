@@ -166,6 +166,8 @@ class AnswerService:
         llm_provider_name = ""
         llm_model = ""
         llm_error = ""
+        session_memory_loaded = False
+        session_memory_hit = False
 
         if llm_enabled:
             try:
@@ -187,6 +189,19 @@ class AnswerService:
             except Exception as e:
                 llm = None
                 llm_error = str(e)
+
+        # A2.1 session memory (MVP): load latest turn per session, best-effort.
+        try:
+            sid = str(getattr(req, "session_id", "") or "default")
+            mem = get_memory_store()
+            prev = await mem.get(workspace_id=workspace_id, key=f"session:{sid}:last_answer")
+            req.session_memory_last_answer = str(prev or "")
+            session_memory_loaded = True
+            session_memory_hit = bool(req.session_memory_last_answer)
+        except Exception:
+            req.session_memory_last_answer = ""
+            session_memory_loaded = False
+            session_memory_hit = False
 
         retriever = RetrieverAdapter(engine=engine, hybrid=hybrid, workspace_id=workspace_id)
         reasoning = get_reasoning_engine(retriever=retriever, llm=llm)
@@ -226,6 +241,8 @@ class AnswerService:
             diag.setdefault("k", int(req.k or 0))
             diag.setdefault("graph_depth", int(req.graph_depth or 0))
             diag.setdefault("session_id", str(getattr(req, "session_id", "") or ""))
+            diag.setdefault("session_memory_loaded", bool(session_memory_loaded))
+            diag.setdefault("session_memory_hit", bool(session_memory_hit))
             diag.setdefault("evidence_type_counts", {})
                         # top_evidence: prefer retriever snapshot; fallback to response used_chunks
             try:

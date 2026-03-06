@@ -51,6 +51,8 @@ class AnswerRequest(BaseModel):
     filters: dict[str, Any] = Field(default_factory=dict)
     # Session-scoped correlation for incremental memory (A2.1).
     session_id: str = Field(default="default", min_length=1, max_length=128)
+    # Best-effort loaded session context (set by orchestration layer).
+    session_memory_last_answer: str = Field(default="", max_length=4000)
 
     # Hybrid evidence policy controls (A1.5)
     evidence_max_total: int = Field(default=50, ge=1, le=500)
