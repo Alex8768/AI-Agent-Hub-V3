@@ -18,9 +18,10 @@ from src.services.document.ingest_service import IngestService
 
 
 class DocumentService:
-    def __init__(self):
+    def __init__(self, *, extraction_jobs_service=None):
         self.repo = DocumentRegistryRepository()
         self.storage = LocalStorage()
+        self._extraction_jobs_service = extraction_jobs_service
 
     def _hash_bytes(self, data: bytes) -> str:
         return hashlib.sha256(data).hexdigest()
@@ -143,7 +144,7 @@ class DocumentService:
                 record.error_message = None
                 # A1.3: managed best-effort background extraction job for graph entities.
                 try:
-                    jobs = get_entity_extraction_jobs_service()
+                    jobs = self._extraction_jobs_service or get_entity_extraction_jobs_service()
                     job = await jobs.start_document_job(workspace_id=workspace_id, document_id=record.id)
                     logger.info(
                         "Entity extraction job started",
