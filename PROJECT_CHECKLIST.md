@@ -139,7 +139,7 @@ Why this matters:
 ## Phase 2 — Reasoning MVP
 
 ### A2.1 Session memory
-Status: IN_PROGRESS
+Status: DONE
 
 Why this matters:
 Reasoning должен помнить полезные промежуточные выводы внутри сессии, а не каждый раз начинать почти заново.
@@ -147,7 +147,7 @@ Reasoning должен помнить полезные промежуточны�
 ---
 
 ### A2.2 Planner
-Status: TODO
+Status: IN_PROGRESS
 
 Why this matters:
 Сложные задачи нужно разбивать на шаги, а не пытаться решить одним прыжком.

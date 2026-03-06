@@ -1,16 +1,16 @@
 # PROJECT STATUS
 
 ## Current Phase
-Phase 0 -> Base stabilization
+Phase 2 -> Reasoning MVP
 
 ## Last Completed Anchor
-A1.5 Hybrid retrieval
-
-## Current Active Anchor
 A2.1 Session memory
 
-## Next Anchor
+## Current Active Anchor
 A2.2 Planner
+
+## Next Anchor
+A2.3 Evidence contract
 
 ## Current Goal
 Подготовить устойчивую и понятную базу для развития Pro слоя без архитектурного хаоса.

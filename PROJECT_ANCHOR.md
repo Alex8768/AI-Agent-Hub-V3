@@ -10,7 +10,7 @@ AI Agent Hub v3.1-dev
 Стабилизировать Base слой перед развитием Pro, чтобы Pro MVP строился на прочном фундаменте, а не на скрытых проблемах.
 
 ## Current Stage
-Phase 0 -> Base stabilization
+Phase 2 -> Reasoning MVP
 
 ## Approved Roadmap
 
@@ -60,10 +60,10 @@ Phase 0 -> Base stabilization
 Phase 0 -> Base stabilization
 
 Current active anchor:
-A2.1 Session memory
+A2.2 Planner
 
 Next anchor:
-A2.2 Planner
+A2.3 Evidence contract
 
 ## What is explicitly postponed
 
