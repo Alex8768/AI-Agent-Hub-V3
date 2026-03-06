@@ -60,10 +60,10 @@ Phase 0 -> Base stabilization
 Phase 0 -> Base stabilization
 
 Current active anchor:
-A1.3 Entity extraction jobs
+A1.4 Graph retriever
 
 Next anchor:
-A1.4 Graph retriever
+A1.5 Hybrid retrieval
 
 ## What is explicitly postponed
 

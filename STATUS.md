@@ -4,13 +4,13 @@
 Phase 0 -> Base stabilization
 
 ## Last Completed Anchor
-A1.2 Chunk -> entity linkage contract
-
-## Current Active Anchor
 A1.3 Entity extraction jobs
 
-## Next Anchor
+## Current Active Anchor
 A1.4 Graph retriever
+
+## Next Anchor
+A1.5 Hybrid retrieval
 
 ## Current Goal
 Подготовить устойчивую и понятную базу для развития Pro слоя без архитектурного хаоса.

@@ -113,7 +113,7 @@ Why this matters:
 ---
 
 ### A1.3 Entity extraction jobs
-Status: IN_PROGRESS
+Status: DONE
 
 Why this matters:
 Извлечение сущностей должно быть управляемой фоновой задачей со статусом, а не потерянным create_task.
@@ -121,7 +121,7 @@ Why this matters:
 ---
 
 ### A1.4 Graph retriever
-Status: TODO
+Status: IN_PROGRESS
 
 Why this matters:
 Система должна уметь расширять найденный контекст через связи между сущностями, а не только искать похожие куски текста.
