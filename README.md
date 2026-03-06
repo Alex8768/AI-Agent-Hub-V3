@@ -1,151 +1,68 @@
-# 🏗️ AI Agent Hub Enterprise V3
+# Aleksandr Ladygin
 
-**Enterprise-grade AI Agent Platform** based on ARCHITECTURE_V3 design with hybrid LLM support (Local + Cloud).
+AI / LLM Engineer & Systems Architect
 
-## 🌟 Features
+I build applied AI systems focused on:
 
-### 🎯 ARCHITECTURE_V3 Core
-- **Modular Layer Architecture** (Base + Pro levels)
-- **Contract-Oriented Development** with clear interfaces
-- **Inversion of Control** for easy component replacement
-- **Test-Driven Development** from day one
+- Retrieval Augmented Generation (RAG)
+- AI agents
+- knowledge retrieval systems
+- AI automation pipelines
+- tool-integrated LLM systems
 
-### 🤖 AI Capabilities
-- **Hybrid LLM Support**: Local (Ollama) + Cloud (OpenAI, Anthropic, Google)
-- **Smart Document Ingestion**: PDF, DOCX, TXT, MD, HTML parsing
-- **Vector RAG**: FAISS/Qdrant with semantic search
-- **Graph RAG**: Knowledge graph integration (Pro level)
+My work explores architectures for **real-world AI systems** that combine retrieval, memory and orchestration.
 
-### 🚀 Production Ready
-- **Docker Compose** with full infrastructure
-- **Monitoring**: Prometheus + Grafana + Jaeger
-- **Security**: Workspace guard, rate limiting, audit logs
-- **Scalability**: Async-first, connection pooling, caching
+---
 
-## 🏗️ Architecture Overview
-```
-src/
-├── core/           # Ядро системы (контракты, типы, граф)
-├── layers/         # Уровни: Base (Level 1) и Pro (Level 2)
-├── api/            # FastAPI REST API
-├── adapters/       # Адаптеры внешних систем
-└── services/       # Бизнес-сервисы
-```
+## Main Project
 
-## 🚀 Quick Start
+### AI Agent Hub
 
-### Prerequisites
-- Python 3.12+
-- Docker & Docker Compose
-- UV (modern Python package manager)
+AI Agent Hub is an experimental platform for building AI agent systems with retrieval, memory and tool orchestration.
 
-### Installation
-```bash
-# 1. Clone and initialize
-./init-ai-agent-v3.sh
+Key areas explored in the project:
 
-# 2. Start services
-docker-compose up -d ollama qdrant redis db
+- RAG pipelines
+- agent orchestration
+- memory systems
+- reasoning workflows
+- AI automation
 
-# 3. Install dependencies
-uv sync
+Repository:
 
-# 4. Initialize database
-python scripts/database/init_db.py
+https://github.com/Alex8768/AI-Agent-Hub-V3
 
-# 5. Run the application
-uvicorn src.api.main:app --reload
-```
+---
 
-### Configuration
-Copy `.env.example` to `.env` and configure:
-```bash
-cp .env.example .env
-# Edit .env with your API keys and settings
-```
+## Tech Focus
 
-## 📦 Components
+- Python
+- FastAPI
+- FAISS
+- Qdrant
+- LLM integration
+- AI orchestration architectures
 
-### Base Layer (Level 1)
-- **Smart Ingest**: Intelligent document parsing
-- **Vector RAG**: Semantic search with FAISS/Qdrant
-- **Process Streaming**: Real-time agent thought streaming
-- **Export Layer**: DOCX, PDF, HTML, Markdown export
+---
 
-### Pro Layer (Level 2) - Enterprise
-- **Graph RAG**: Knowledge graphs with Neo4j
-- **Split View Canvas**: Interactive workspace
-- **Semantic Memory**: User preference learning
-- **Multi-Agent**: Coordinated agent systems
+## Current Focus
 
-## 🔧 Development
+Building AI systems that combine:
 
-### Running Tests
-```bash
-./scripts/test.sh
-```
+- retrieval
+- reasoning
+- memory
+- tool usage
 
-### Code Quality
-```bash
-# Format code
-black src/ tests/
+into production-ready AI workflows.
 
-# Lint code
-ruff check src/ tests/
+---
 
-# Type checking
-mypy src/
-```
+## Connect
 
-## 📊 Monitoring
-- **Metrics**: Prometheus on port 9090
-- **Dashboards**: Grafana on port 3000 (admin/admin)
-- **Tracing**: Jaeger on port 16686
+LinkedIn  
+https://www.linkedin.com/in/aleksandr-ladygin
 
-## 🐳 Docker Deployment
-```bash
-# Development
-docker-compose up -d
+GitHub  
+https://github.com/Alex8768
 
-# Production
-docker-compose -f docker-compose.prod.yml up -d
-```
-
-## 📚 Documentation
-- [Architecture](./docs/architecture/ARCHITECTURE_V3.md)
-- [API Reference](./docs/api/README.md)
-- [Deployment Guide](./docs/deployment/README.md)
-- [Development Guide](./docs/development/README.md)
-
-## 🛡️ Security
-- Workspace isolation with guard system
-- Rate limiting and API key authentication
-- Audit logging for all operations
-- Safe path validation
-
-## 🔄 Roadmap
-- [x] Base Layer implementation
-- [ ] Pro Layer components
-- [ ] Advanced MCP tool integration
-- [ ] Multi-tenant support
-- [ ] Plugin system
-
-## 🤝 Contributing
-1. Fork the repository
-2. Create a feature branch
-3. Add tests for new functionality
-4. Submit a pull request
-
-## 📄 License
-MIT License - see [LICENSE](LICENSE) for details.
-
-## 🙏 Acknowledgments
-- Built with [FastAPI](https://fastapi.tiangolo.com/)
-- Vector search with [FAISS](https://github.com/facebookresearch/faiss) and [Qdrant](https://qdrant.tech/)
-- Local LLMs with [Ollama](https://ollama.ai/)
-- Architecture inspired by Clean Architecture and Hexagonal patterns
-
-## 📞 Support
-- Issues: [GitHub Issues](https://github.com/ai-agent-hub/v3/issues)
-- Discussions: [GitHub Discussions](https://github.com/ai-agent-hub/v3/discussions)
-- Email: team@ai-agent-hub.com
