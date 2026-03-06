@@ -3,29 +3,48 @@
 ## Core principle
 One patch = one reason.
 
-## Development loop
+## Work style
+Assistant analyzes, prepares autopatch and gives terminal commands.
+User executes commands in terminal.
+After each successful step, project anchor files must be updated.
 
-1. Analyze problem
-2. Prepare autopatch
-3. Apply patch
-4. Run checks:
+## Standard loop
+
+1. Identify current anchor
+2. Analyze only that anchor
+3. Prepare autopatch
+4. Apply patch
+5. Run checks:
    python -m compileall -q src
    pytest -q
-5. If green -> commit
-6. Move to next anchor
+6. If green -> update STATUS.md and PROJECT_CHECKLIST.md
+7. Commit
+8. Move to next anchor
 
-## Important rules
+## Hard rules
 
-Do not mix multiple architectural changes in one commit.
+- Do not mix multiple architectural topics in one commit
+- Do not silently redesign roadmap
+- Do not skip anchor tracking
+- Do not continue after red tests without fixing the actual failure
+- Do not start delayed expansions before the core path is stable
 
-If tests fail:
-fix only the failure cause.
+## Anchor update rule
 
-## Chat collaboration
+After each completed anchor:
+- mark the anchor as DONE in PROJECT_CHECKLIST.md
+- move the next anchor to IN_PROGRESS if work starts immediately
+- update STATUS.md with:
+  - last completed anchor
+  - current active anchor
+  - next anchor
+  - short notes
 
-Assistant provides:
-- analysis
-- autopatch
-- terminal commands
+## Collaboration rule
 
-User executes commands in terminal.
+If there is uncertainty:
+- inspect relevant files
+- ask for outputs if needed
+- then produce a focused autopatch
+
+No broad unfocused rewrites.
