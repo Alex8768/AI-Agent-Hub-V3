@@ -27,4 +27,7 @@ class GraphEdge(Base):
     __table_args__ = (
         Index("ix_graph_edges_ws_edgeid", "workspace_id", "edge_id", unique=True),
         Index("ix_graph_edges_ws_src_dst", "workspace_id", "src_id", "dst_id"),
+        Index("ix_graph_edges_ws_src", "workspace_id", "src_id"),
+        Index("ix_graph_edges_ws_dst", "workspace_id", "dst_id"),
+        Index("ix_graph_edges_ws_rel_type", "workspace_id", "rel_type"),
     )

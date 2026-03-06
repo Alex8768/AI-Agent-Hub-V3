@@ -24,4 +24,6 @@ class GraphNode(Base):
 
     __table_args__ = (
         Index("ix_graph_nodes_ws_nodeid", "workspace_id", "node_id", unique=True),
+        Index("ix_graph_nodes_ws_name", "workspace_id", "name"),
+        Index("ix_graph_nodes_ws_type", "workspace_id", "node_type"),
     )
