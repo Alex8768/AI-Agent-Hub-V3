@@ -43,6 +43,12 @@ class RetrieverAdapter:
             filters=request.filters,
             similarity_threshold=0.0,
             graph_depth=request.graph_depth,
+            evidence_max_total=int(getattr(request, "evidence_max_total", 50) or 50),
+            evidence_max_chunks=getattr(request, "evidence_max_chunks", None),
+            evidence_max_memory=getattr(request, "evidence_max_memory", None),
+            evidence_max_edges=getattr(request, "evidence_max_edges", None),
+            evidence_dedupe=bool(getattr(request, "evidence_dedupe", True)),
+            evidence_rerank=bool(getattr(request, "evidence_rerank", True)),
         )
 
         graph = getattr(out, "graph", None)

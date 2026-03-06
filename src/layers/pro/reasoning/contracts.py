@@ -50,6 +50,14 @@ class AnswerRequest(BaseModel):
     # Optional filters (workspace, doc_ids, tags, etc.), kept generic.
     filters: dict[str, Any] = Field(default_factory=dict)
 
+    # Hybrid evidence policy controls (A1.5)
+    evidence_max_total: int = Field(default=50, ge=1, le=500)
+    evidence_max_chunks: int | None = Field(default=None, ge=0, le=200)
+    evidence_max_memory: int | None = Field(default=None, ge=0, le=200)
+    evidence_max_edges: int | None = Field(default=None, ge=0, le=200)
+    evidence_dedupe: bool = Field(default=True)
+    evidence_rerank: bool = Field(default=True)
+
 
 class AnswerResponse(BaseModel):
     """Domain-level response: answer + provenance + confidence."""
