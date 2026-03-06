@@ -8,6 +8,15 @@ from fastapi import Request
 from src.layers.pro.reasoning.contracts import AnswerRequest
 from src.observability.request_context import get_request_id
 
+SESSION_MEMORY_MAX_CHARS = 4000
+
+
+def _clip_text(value: object, *, max_chars: int = SESSION_MEMORY_MAX_CHARS) -> str:
+    text = str(value or "")
+    if len(text) <= max_chars:
+        return text
+    return text[:max_chars]
+
 
 def log_observability(http: Request, *, workspace_id: str, req: AnswerRequest) -> None:
     try:
@@ -195,7 +204,7 @@ class AnswerService:
             sid = str(getattr(req, "session_id", "") or "default")
             mem = get_memory_store()
             prev = await mem.get(workspace_id=workspace_id, key=f"session:{sid}:last_answer")
-            req.session_memory_last_answer = str(prev or "")
+            req.session_memory_last_answer = _clip_text(prev)
             session_memory_loaded = True
             session_memory_hit = bool(req.session_memory_last_answer)
         except Exception:
@@ -293,7 +302,7 @@ class AnswerService:
             await mem.put(
                 workspace_id=workspace_id,
                 key=f"session:{sid}:last_answer",
-                value=str(getattr(resp, "answer", "") or ""),
+                value=_clip_text(getattr(resp, "answer", "")),
                 metadata={
                     "session_id": sid,
                     "query": str(getattr(req, "query", "") or ""),

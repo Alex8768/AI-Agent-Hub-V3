@@ -261,3 +261,54 @@ async def test_answer_service_loads_session_memory_before_reasoning(monkeypatch)
     assert getattr(probe.last_req, "session_memory_last_answer", "") == "previous turn answer"
     assert diag.get("session_memory_loaded") is True
     assert diag.get("session_memory_hit") is True
+
+
+@pytest.mark.asyncio
+async def test_answer_service_clips_session_memory_payload(monkeypatch):
+    class _S:
+        feature_reasoning = True
+        feature_graphrag = True
+        feature_reasoning_llm_enabled = False
+        llm_provider = "ollama"
+        openai_model = ""
+        ollama_model = "llama3.2:latest"
+
+    monkeypatch.setattr("src.core.config.get_settings", lambda: _S())
+    monkeypatch.setattr("src.observability.trace.make_trace_id", lambda **kwargs: "trace-123", raising=False)
+
+    long_answer = "A" * 5000
+    long_prev = "B" * 5000
+    calls = {}
+
+    class _Engine:
+        def __init__(self):
+            self.last_req = None
+
+        async def synthesize(self, req):
+            self.last_req = req
+            r = _FakeResp()
+            r.answer = long_answer
+            return r
+
+    eng = _Engine()
+
+    def _fake_get_reasoning_engine(*, retriever=None, llm=None, llm_timeout_s=None):
+        return eng
+
+    monkeypatch.setattr("src.core.providers.get_reasoning_engine", _fake_get_reasoning_engine)
+
+    class _Mem:
+        async def get(self, *, workspace_id, key):
+            return long_prev
+
+        async def put(self, *, workspace_id, key, value, metadata=None):
+            calls["value"] = value
+
+    monkeypatch.setattr("src.core.providers.get_memory_store", lambda: _Mem())
+
+    http = _DummyHTTP(request_id="rid-5", rag_engine=object(), hybrid_retriever=_FakeHybrid())
+    req = AnswerRequest(query="long", session_id="s-long")
+    await AnswerService().handle(http, req, workspace_id="default")
+
+    assert len(getattr(eng.last_req, "session_memory_last_answer", "")) == 4000
+    assert len(calls.get("value", "")) == 4000
