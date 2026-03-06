@@ -22,6 +22,52 @@ class GraphStore:
             raise ValueError(f"{name} is required")
         return v
 
+    @staticmethod
+    def _dedupe_list(values: list[Any]) -> list[Any]:
+        out: list[Any] = []
+        seen: set[str] = set()
+        for x in values:
+            key = repr(x)
+            if key in seen:
+                continue
+            seen.add(key)
+            out.append(x)
+        return out
+
+    def _merge_metadata(self, old_meta: dict[str, Any], new_meta: dict[str, Any]) -> dict[str, Any]:
+        merged = dict(old_meta or {})
+        incoming = dict(new_meta or {})
+
+        old_refs = list(merged.get("source_refs") or [])
+        new_refs = list(incoming.get("source_refs") or [])
+        merged["source_refs"] = self._dedupe_list([*old_refs, *new_refs])
+
+        old_links = list(merged.get("source_links") or [])
+        new_links = list(incoming.get("source_links") or [])
+        merged["source_links"] = self._dedupe_list([*old_links, *new_links])
+
+        if "aliases" in incoming:
+            merged["aliases"] = self._dedupe_list([*(list(merged.get("aliases") or [])), *(list(incoming.get("aliases") or []))])
+
+        if "attributes" in incoming:
+            attrs = dict(merged.get("attributes") or {})
+            attrs.update(dict(incoming.get("attributes") or {}))
+            merged["attributes"] = attrs
+
+        old_conf = merged.get("confidence")
+        new_conf = incoming.get("confidence")
+        if isinstance(old_conf, (int, float)) and isinstance(new_conf, (int, float)):
+            merged["confidence"] = float(max(old_conf, new_conf))
+        elif isinstance(new_conf, (int, float)):
+            merged["confidence"] = float(new_conf)
+
+        for k, v in incoming.items():
+            if k in {"source_refs", "source_links", "aliases", "attributes", "confidence"}:
+                continue
+            merged[k] = v
+
+        return merged
+
     async def upsert_node(
         self,
         *,
@@ -44,7 +90,7 @@ class GraphStore:
         else:
             row.node_type = node_type
             row.name = name
-            row.meta = meta
+            row.meta = self._merge_metadata(dict(row.meta or {}), meta)
         await self.db.commit()
 
     async def upsert_edge(
@@ -83,7 +129,7 @@ class GraphStore:
             row.src_id = src_id
             row.dst_id = dst_id
             row.rel_type = rel_type
-            row.meta = meta
+            row.meta = self._merge_metadata(dict(row.meta or {}), meta)
         await self.db.commit()
 
     async def search_nodes(self, *, workspace_id: str, text: str, limit: int = 20) -> list[dict[str, Any]]:

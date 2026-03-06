@@ -31,6 +31,22 @@ def make_edge_id(rel_type: str, src_id: str, dst_id: str) -> str:
     return f"{rel_type}:{src_id}->{dst_id}"
 
 
+def _source_link(*, workspace_id: str, document_id: str, chunk_id: str, snippet: str) -> dict[str, str]:
+    return {
+        "workspace_id": str(workspace_id or "default"),
+        "document_id": str(document_id or ""),
+        "chunk_id": str(chunk_id or ""),
+        "snippet": str(snippet or "")[:240],
+    }
+
+
+def _source_ref_text(link: dict[str, str]) -> str:
+    doc = link.get("document_id", "")
+    chunk = link.get("chunk_id", "")
+    snip = link.get("snippet", "")
+    return f"doc:{doc}#chunk:{chunk} {snip}".strip()
+
+
 async def process_chunk(
     *,
     workspace_id: str,
@@ -57,12 +73,19 @@ async def process_chunk(
     for ent in extraction.entities[:20]:
         nid = make_node_id(ent.node_type, ent.name)
         name_to_node[(ent.node_type, ent.name)] = nid
+        link = _source_link(
+            workspace_id=workspace_id,
+            document_id=ent.source_ref.document_id,
+            chunk_id=ent.source_ref.chunk_id,
+            snippet=ent.source_ref.snippet,
+        )
 
         meta = {
             "confidence": ent.confidence,
             "aliases": ent.aliases,
             "attributes": ent.attributes,
-            "source_refs": [ent.source_ref.model_dump()],
+            "source_refs": [_source_ref_text(link)],
+            "source_links": [link],
         }
         await gs.upsert_node(
             workspace_id=workspace_id,
@@ -77,6 +100,12 @@ async def process_chunk(
     for rel in extraction.relations[:30]:
         src_id = name_to_node.get((rel.src_type, rel.src_name)) or make_node_id(rel.src_type, rel.src_name)
         dst_id = name_to_node.get((rel.dst_type, rel.dst_name)) or make_node_id(rel.dst_type, rel.dst_name)
+        rel_link = _source_link(
+            workspace_id=workspace_id,
+            document_id=rel.source_ref.document_id,
+            chunk_id=rel.source_ref.chunk_id,
+            snippet=rel.source_ref.snippet,
+        )
 
         # ensure nodes exist
         if (rel.src_type, rel.src_name) not in name_to_node:
@@ -85,7 +114,11 @@ async def process_chunk(
                 node_id=src_id,
                 node_type=rel.src_type,
                 name=rel.src_name,
-                metadata={"confidence": rel.confidence, "source_refs": [rel.source_ref.model_dump()]},
+                metadata={
+                    "confidence": rel.confidence,
+                    "source_refs": [_source_ref_text(rel_link)],
+                    "source_links": [rel_link],
+                },
             )
         if (rel.dst_type, rel.dst_name) not in name_to_node:
             await gs.upsert_node(
@@ -93,14 +126,19 @@ async def process_chunk(
                 node_id=dst_id,
                 node_type=rel.dst_type,
                 name=rel.dst_name,
-                metadata={"confidence": rel.confidence, "source_refs": [rel.source_ref.model_dump()]},
+                metadata={
+                    "confidence": rel.confidence,
+                    "source_refs": [_source_ref_text(rel_link)],
+                    "source_links": [rel_link],
+                },
             )
 
         eid = make_edge_id(rel.rel_type, src_id, dst_id)
         meta = {
             "confidence": rel.confidence,
             "attributes": rel.attributes,
-            "source_refs": [rel.source_ref.model_dump()],
+            "source_refs": [_source_ref_text(rel_link)],
+            "source_links": [rel_link],
         }
         await gs.upsert_edge(
             workspace_id=workspace_id,
