@@ -43,7 +43,10 @@ async def _wire_singletons(app: FastAPI) -> None:
     # Pro: cache HybridRetriever only when Pro flags enabled
     try:
         s = get_settings()
-        if getattr(s, "feature_reasoning", False) and getattr(s, "feature_graphrag", False):
+        if (
+            (getattr(s, "feature_reasoning_api", False) or getattr(s, "feature_hybrid_search_api", False))
+            and getattr(s, "feature_graphrag", False)
+        ):
             from src.layers.pro.rag.retrieval.hybrid_retriever import HybridRetriever
 
             app.state.hybrid_retriever = HybridRetriever()

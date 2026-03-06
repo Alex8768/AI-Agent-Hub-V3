@@ -9,6 +9,7 @@ from typing import Any, Dict, List
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from loguru import logger
 
+from src.core.config import get_settings
 from src.api.schemas import SearchRequest, SearchResult
 from src.api.dependencies import get_workspace
 from src.api.dependencies_impl import get_hybrid_retriever, get_rag_engine
@@ -31,6 +32,10 @@ async def search_documents_hybrid(
     - graph augmentation (nodes/edges) if feature_graphrag enabled
     - evidence (source_refs) for UI
     """
+    s = get_settings()
+    if not getattr(s, "feature_hybrid_search_api", False) or not getattr(s, "feature_graphrag", False):
+        raise HTTPException(status_code=404, detail="Not Found")
+
     try:
         return await SearchService().search_hybrid(
             http,

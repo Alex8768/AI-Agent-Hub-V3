@@ -440,6 +440,16 @@ class Settings(BaseSettings):
         description="Enable real LLM calls in reasoning (Pro). When False, LLM is never resolved.",
     )
 
+    feature_hybrid_search_api: bool = Field(
+        default=False,
+        description="Enable /api/v1/search-hybrid endpoint (Pro risky surface)",
+    )
+
+    feature_reasoning_api: bool = Field(
+        default=False,
+        description="Enable /api/v1/answer endpoint (Pro risky surface)",
+    )
+
 
 
     

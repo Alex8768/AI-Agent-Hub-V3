@@ -82,7 +82,7 @@ Done when:
 ---
 
 ### A0.6 Feature flags for risky Pro capabilities
-Status: IN_PROGRESS
+Status: DONE
 
 Why this matters:
 Новые возможности нужно включать по рубильнику, а не выпускать сразу на весь поток. Это снижает риск случайно сломать стабильный путь.

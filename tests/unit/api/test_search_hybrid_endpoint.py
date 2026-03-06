@@ -6,8 +6,29 @@ from fastapi.testclient import TestClient
 import src.api.main as app_main
 
 
+def test_search_hybrid_endpoint_returns_404_when_disabled(monkeypatch):
+    app = app_main.app
+    from src.core.config import get_settings
+
+    s = get_settings()
+    monkeypatch.setattr(s, "feature_hybrid_search_api", False, raising=False)
+    monkeypatch.setattr(s, "feature_graphrag", True, raising=False)
+
+    client = TestClient(app)
+    r = client.post("/api/v1/search-hybrid", json={"query": "hello"})
+    assert r.status_code == 404
+
+
 def test_search_hybrid_endpoint_contract(monkeypatch):
     app = app_main.app
+
+    # Enable feature gate for risky Pro endpoint
+    from src.core.config import get_settings
+    s = get_settings()
+    prev_hybrid_api = getattr(s, "feature_hybrid_search_api", False)
+    prev_graphrag = getattr(s, "feature_graphrag", False)
+    monkeypatch.setattr(s, "feature_hybrid_search_api", True, raising=False)
+    monkeypatch.setattr(s, "feature_graphrag", True, raising=False)
 
     # Patch get_workspace dependency to avoid auth/workspace complexity
     import src.api.dependencies_impl as deps
@@ -63,3 +84,7 @@ def test_search_hybrid_endpoint_contract(monkeypatch):
     assert data["graph"]["nodes"]
     assert data["graph"]["edges"]
     assert data["evidence"]
+
+    # Restore best-effort
+    monkeypatch.setattr(s, "feature_hybrid_search_api", prev_hybrid_api, raising=False)
+    monkeypatch.setattr(s, "feature_graphrag", prev_graphrag, raising=False)

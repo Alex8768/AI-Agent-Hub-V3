@@ -9,6 +9,7 @@ from src.core.config import get_settings
 def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch):
     s = get_settings()
     monkeypatch.setattr(s, "debug", True, raising=False)
+    monkeypatch.setattr(s, "feature_reasoning_api", True, raising=False)
     monkeypatch.setattr(s, "feature_reasoning", True, raising=False)
     monkeypatch.setattr(s, "feature_graphrag", True, raising=False)
 

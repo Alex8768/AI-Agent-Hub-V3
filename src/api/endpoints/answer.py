@@ -23,7 +23,11 @@ async def answer(
     retriever=Depends(get_hybrid_retriever),
 ) -> AnswerResponse:
     s = get_settings()
-    if not getattr(s, "feature_reasoning", False) or not getattr(s, "feature_graphrag", False):
+    if (
+        not getattr(s, "feature_reasoning_api", False)
+        or not getattr(s, "feature_reasoning", False)
+        or not getattr(s, "feature_graphrag", False)
+    ):
         raise HTTPException(status_code=404, detail="Not Found")
 
     service = AnswerService()

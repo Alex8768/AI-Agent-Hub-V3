@@ -8,7 +8,19 @@ from src.core.config import get_settings
 
 def test_answer_endpoint_returns_404_when_disabled(monkeypatch):
     s = get_settings()
+    monkeypatch.setattr(s, "feature_reasoning_api", False, raising=False)
     monkeypatch.setattr(s, "feature_reasoning", False, raising=False)
+    monkeypatch.setattr(s, "feature_graphrag", True, raising=False)
+
+    c = TestClient(app)
+    r = c.post("/api/v1/answer", json={"query": "Q"})
+    assert r.status_code == 404
+
+
+def test_answer_endpoint_returns_404_when_reasoning_api_flag_off(monkeypatch):
+    s = get_settings()
+    monkeypatch.setattr(s, "feature_reasoning_api", False, raising=False)
+    monkeypatch.setattr(s, "feature_reasoning", True, raising=False)
     monkeypatch.setattr(s, "feature_graphrag", True, raising=False)
 
     c = TestClient(app)
@@ -19,6 +31,7 @@ def test_answer_endpoint_returns_404_when_disabled(monkeypatch):
 def test_answer_endpoint_returns_200_when_enabled_unit_stub(monkeypatch):
     # Enable feature gate
     s = get_settings()
+    monkeypatch.setattr(s, "feature_reasoning_api", True, raising=False)
     monkeypatch.setattr(s, "feature_reasoning", True, raising=False)
     monkeypatch.setattr(s, "feature_graphrag", True, raising=False)
 

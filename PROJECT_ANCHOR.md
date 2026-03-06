@@ -60,10 +60,10 @@ Phase 0 -> Base stabilization
 Phase 0 -> Base stabilization
 
 Current active anchor:
-A0.6 Feature flags for risky Pro capabilities
+A1.1 Graph schema and indexes
 
 Next anchor:
-A1.1 Graph schema and indexes
+A1.2 Chunk -> entity linkage contract
 
 ## What is explicitly postponed
 
