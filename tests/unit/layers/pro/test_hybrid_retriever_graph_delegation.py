@@ -30,6 +30,15 @@ class _FakeGraphRetriever:
                     }
                 ],
             },
+            evidence=[
+                {
+                    "type": "edge",
+                    "id": "e1",
+                    "source_refs": ["doc:d1#chunk:c1"],
+                    "confidence": 0.8,
+                    "meta": {"rel_type": "works_at", "src_id": "n1", "dst_id": "n2"},
+                }
+            ],
             seed_ids=["n1"],
             stats={"enabled": True, "seed_count": 1, "node_count": 1, "edge_count": 1},
         )

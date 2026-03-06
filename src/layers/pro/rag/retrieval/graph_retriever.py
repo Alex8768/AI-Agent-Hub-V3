@@ -25,6 +25,7 @@ def _dedup_by(items: list[dict[str, Any]], key: str) -> list[dict[str, Any]]:
 @dataclass
 class GraphRetrievalResult:
     graph: dict[str, Any]
+    evidence: list[dict[str, Any]]
     seed_ids: list[str]
     stats: dict[str, Any]
 
@@ -45,6 +46,7 @@ class GraphRetriever:
         if not bool(getattr(s, "feature_graphrag", False)):
             return GraphRetrievalResult(
                 graph={"nodes": [], "edges": []},
+                evidence=[],
                 seed_ids=[],
                 stats={"enabled": False, "reason": "feature_graphrag_off"},
             )
@@ -53,6 +55,7 @@ class GraphRetriever:
         if gs is None:
             return GraphRetrievalResult(
                 graph={"nodes": [], "edges": []},
+                evidence=[],
                 seed_ids=[],
                 stats={"enabled": False, "reason": "graph_store_unavailable"},
             )
@@ -85,9 +88,33 @@ class GraphRetriever:
             for e in edges_raw
             if e.get("edge_id")
         ]
+        evidence: list[dict[str, Any]] = []
+        for edge in edges:
+            edge_meta = edge.get("metadata") or {}
+            source_refs = edge_meta.get("source_refs") or []
+            if isinstance(source_refs, str):
+                source_refs = [source_refs]
+            if not isinstance(source_refs, list):
+                source_refs = []
+            if not source_refs:
+                continue
+            evidence.append(
+                {
+                    "type": "edge",
+                    "id": str(edge.get("id") or ""),
+                    "source_refs": [str(x) for x in source_refs if x],
+                    "confidence": edge_meta.get("confidence"),
+                    "meta": {
+                        "rel_type": edge.get("rel_type"),
+                        "src_id": edge.get("src_id"),
+                        "dst_id": edge.get("dst_id"),
+                    },
+                }
+            )
 
         return GraphRetrievalResult(
             graph={"nodes": nodes, "edges": edges},
+            evidence=evidence,
             seed_ids=seed_ids,
             stats={
                 "enabled": True,

@@ -190,6 +190,7 @@ class HybridRetriever:
             graph_limit=graph_limit,
         )
         graph = graph_out.graph or {"nodes": [], "edges": []}
+        graph_evidence = list(graph_out.evidence or [])
         graph_edges = list(graph.get("edges") or [])
         stats.update(
             {
@@ -200,28 +201,8 @@ class HybridRetriever:
             }
         )
 
-        # Evidence from graph edges (source_refs)
-        for e in graph_edges:
-            meta3 = (e.get("metadata") or {})
-            src_refs3 = meta3.get("source_refs") or []
-            if isinstance(src_refs3, str):
-                src_refs3 = [src_refs3]
-            if not isinstance(src_refs3, list):
-                src_refs3 = []
-            if src_refs3:
-                evidence.append(
-                    {
-                        "type": "edge",
-                        "id": str(e.get("id") or e.get("edge_id")),
-                        "source_refs": [str(s) for s in src_refs3 if s],
-                        "confidence": meta3.get("confidence"),
-                        "meta": {
-                            "rel_type": e.get("rel_type"),
-                            "src_id": e.get("src_id"),
-                            "dst_id": e.get("dst_id"),
-                        },
-                    }
-                )
+        # Graph evidence is now produced by GraphRetriever boundary.
+        evidence.extend(graph_evidence)
 
         return HybridRetrievalResult(
             vector_results=vector_results,

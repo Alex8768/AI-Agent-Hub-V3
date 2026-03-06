@@ -18,7 +18,13 @@ class _FakeGraphStore:
                     {"node_id": "n2", "name": "ACME"},
                 ],
                 "edges": [
-                    {"edge_id": "e1", "src_id": "n1", "dst_id": "n2", "rel_type": "works_at"},
+                    {
+                        "edge_id": "e1",
+                        "src_id": "n1",
+                        "dst_id": "n2",
+                        "rel_type": "works_at",
+                        "metadata": {"source_refs": ["doc:d1#chunk:c1"], "confidence": 0.7},
+                    },
                 ],
             }
         return {
@@ -27,7 +33,13 @@ class _FakeGraphStore:
                 {"node_id": "n3", "name": "London"},
             ],
             "edges": [
-                {"edge_id": "e1", "src_id": "n1", "dst_id": "n2", "rel_type": "works_at"},
+                {
+                    "edge_id": "e1",
+                    "src_id": "n1",
+                    "dst_id": "n2",
+                    "rel_type": "works_at",
+                    "metadata": {"source_refs": ["doc:d1#chunk:c1"], "confidence": 0.7},
+                },
                 {"edge_id": "e2", "src_id": "n2", "dst_id": "n3", "rel_type": "located_in"},
             ],
         }
@@ -88,3 +100,7 @@ async def test_graph_retriever_collects_and_deduplicates_graph(monkeypatch) -> N
     assert res.stats.get("seed_count") == 2
     assert res.stats.get("node_count") == 3
     assert res.stats.get("edge_count") == 2
+    edge_evidence = [e for e in res.evidence if e.get("type") == "edge"]
+    assert len(edge_evidence) == 1
+    assert edge_evidence[0]["id"] == "e1"
+    assert edge_evidence[0]["source_refs"] == ["doc:d1#chunk:c1"]
