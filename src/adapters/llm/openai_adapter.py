@@ -48,6 +48,8 @@ class OpenAIAdapter(LLMProvider):
             "gpt-4-32k": 32768,
             "gpt-4-turbo": 128000,
             "gpt-4-turbo-preview": 128000,
+            "gpt-4o": 128000,
+            "gpt-4.1": 128000,
             "gpt-3.5-turbo": 16385,
             "gpt-3.5-turbo-16k": 16385,
             "gpt-3.5-turbo-instruct": 4096,
@@ -55,8 +57,8 @@ class OpenAIAdapter(LLMProvider):
         
         self._logger = get_logger()
         
-        # Default model if not specified
-        self._model = config.model or "gpt-4-turbo-preview"
+        # Default model if not specified (stable default, no preview alias)
+        self._model = config.model or "gpt-4o-mini"
     
     @property
     def name(self) -> str:
@@ -66,12 +68,40 @@ class OpenAIAdapter(LLMProvider):
     @property
     def context_length(self) -> int:
         """Maximum context length for the current model."""
-        # Find the best matching model
-        for model_pattern, length in self._context_lengths.items():
-            if model_pattern in self._model:
+        model_name = (self._model or "").lower()
+
+        # Prefer specific modern families before generic "gpt-4".
+        if model_name.startswith("gpt-4o") or model_name.startswith("gpt-4.1"):
+            return 128000
+        if model_name.startswith("gpt-4-turbo"):
+            return 128000
+        if model_name.startswith("gpt-4-32k"):
+            return 32768
+        if model_name.startswith("gpt-3.5-turbo-16k"):
+            return 16385
+        if model_name.startswith("gpt-3.5-turbo"):
+            return 16385
+        if model_name.startswith("gpt-3.5-turbo-instruct"):
+            return 4096
+        if model_name.startswith("gpt-4"):
+            return 8192
+
+        # Fallback: keep backward compatibility for custom aliases.
+        for model_pattern, length in sorted(
+            self._context_lengths.items(),
+            key=lambda kv: len(kv[0]),
+            reverse=True,
+        ):
+            if model_pattern in model_name:
                 return length
-        
-        # Default for unknown models
+
+        # Reasonable default for modern OpenAI models
+        if model_name.startswith("gpt-4"):
+            return 128000
+        if model_name.startswith("gpt-3.5"):
+            return 16385
+
+        # Conservative fallback for unknown model families
         return 8192
     
     async def configure(self, config: Dict[str, Any]) -> None:
@@ -230,6 +260,21 @@ class OpenAIAdapter(LLMProvider):
             pass
 
         return ""
+
+    def _build_responses_input(self, messages: List[Dict[str, str]]) -> str:
+        """Build Responses API prompt while preserving role context.
+
+        We intentionally keep role labels so fallback requests preserve the
+        original system/user/assistant/tool intent instead of only user content.
+        """
+        lines: List[str] = []
+        for m in messages:
+            role = str(m.get("role") or "user").upper()
+            content = str(m.get("content") or "").strip()
+            if not content:
+                continue
+            lines.append(f"{role}: {content}")
+        return "\n".join(lines).strip() or "USER: Hello"
     
     async def complete(
         self,
@@ -293,11 +338,20 @@ class OpenAIAdapter(LLMProvider):
             except APIError as e:
                 # Some environments/proxies may not support Chat Completions; fallback to Responses API when 404.
                 if getattr(e, "status_code", None) == 404:
-                    # Responses API input: use a single user message string
-                    prompt_text = "\n".join([m.get("content","") for m in openai_messages if m.get("role") == "user"])
+                    prompt_text = self._build_responses_input(openai_messages)
+                    self._logger.warning(
+                        "Chat Completions unavailable (404), using Responses API fallback",
+                        context={
+                            "request_id": request_id,
+                            "model": request_params.get("model", self._model),
+                        },
+                    )
                     r2 = await self._client.responses.create(
                         model=request_params.get("model", self._model),
-                        input=prompt_text or "Hello",
+                        input=prompt_text,
+                        temperature=request_params.get("temperature", 0.7),
+                        top_p=request_params.get("top_p", 1.0),
+                        max_output_tokens=request_params.get("max_tokens"),
                     )
                     latency = (datetime.utcnow() - start_time).total_seconds()
                     content = self._extract_text_from_responses(r2) or ""
@@ -312,6 +366,7 @@ class OpenAIAdapter(LLMProvider):
                             "latency_seconds": latency,
                             "request_id": request_id,
                             "fallback_api": "responses",
+                            "fallback_reason": "chat_completions_404",
                         },
                     )
                     self._logger.info(
@@ -659,7 +714,7 @@ class OpenAIProviderFactory:
         except Exception as e:
             # Log but continue - adapter might still work
             logger = get_logger()
-            await logger.warning(
+            logger.warning(
                 "OpenAI health check failed on creation",
                 context={
                     "model": config.model,

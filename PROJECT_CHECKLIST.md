@@ -55,7 +55,7 @@ Done when:
 ---
 
 ### A0.4 OpenAIAdapter cleanup
-Status: TODO
+Status: DONE
 
 Why this matters:
 Нельзя строить reasoning поверх адаптера, в котором зашит устаревающий хардкод и неочевидные fallback-пути.

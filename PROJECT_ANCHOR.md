@@ -60,10 +60,10 @@ Phase 0 -> Base stabilization
 Phase 0 -> Base stabilization
 
 Current active anchor:
-A0.4 OpenAIAdapter cleanup
+A0.5 Unified logging and request context
 
 Next anchor:
-A0.5 Unified logging and request context
+A0.6 Feature flags for risky Pro capabilities
 
 ## What is explicitly postponed
 

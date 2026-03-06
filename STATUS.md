@@ -4,13 +4,13 @@
 Phase 0 -> Base stabilization
 
 ## Last Completed Anchor
-A0.3 JSON metadata instead of pickle
-
-## Current Active Anchor
 A0.4 OpenAIAdapter cleanup
 
-## Next Anchor
+## Current Active Anchor
 A0.5 Unified logging and request context
+
+## Next Anchor
+A0.6 Feature flags for risky Pro capabilities
 
 ## Current Goal
 Подготовить устойчивую и понятную базу для развития Pro слоя без архитектурного хаоса.
