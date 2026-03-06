@@ -12,7 +12,7 @@ Legend:
 ## Phase 0 — Base stabilization
 
 ### A0.1 Lifespan + API dependencies
-Status: IN_PROGRESS
+Status: DONE
 
 Why this matters:
 Нужно один раз правильно создавать ключевые объекты приложения при старте FastAPI и отдавать их через API-зависимости. Это убирает костыли, уменьшает путаницу и создаёт чистую точку сборки для Pro.
@@ -26,7 +26,7 @@ Done when:
 ---
 
 ### A0.2 FAISS thread safety
-Status: TODO
+Status: DONE
 
 Why this matters:
 Индекс не должен зависать, конфликтовать сам с собой или блокировать приложение. Сначала делаем retrieval-ядро безопасным, потом строим умные надстройки.
@@ -40,7 +40,7 @@ Done when:
 ---
 
 ### A0.3 JSON metadata instead of pickle
-Status: TODO
+Status: DONE
 
 Why this matters:
 Метаданные должны храниться в понятном и безопасном формате, который проще читать, проверять и переносить между версиями.

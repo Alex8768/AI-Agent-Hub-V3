@@ -48,14 +48,19 @@ async def health_check():
         dimension = getattr(cfg, "dimension", None) or settings.faiss_dimension
 
         index_file = Path(index_path)
-        meta_file = index_file.with_suffix(".meta.pkl")
+        meta_json_file = index_file.with_suffix(".meta.json")
+        meta_pickle_file = index_file.with_suffix(".meta.pkl")
+        meta_format = "json" if meta_json_file.exists() else ("pickle" if meta_pickle_file.exists() else "none")
 
         services["vector_store"] = {
             "status": "healthy" if index_file.exists() else "uninitialized",
             "provider": "faiss",
             "index_path": str(index_file),
             "index_exists": index_file.exists(),
-            "meta_exists": meta_file.exists(),
+            "meta_exists": bool(meta_json_file.exists() or meta_pickle_file.exists()),
+            "meta_format": meta_format,
+            "meta_json_exists": meta_json_file.exists(),
+            "meta_pickle_exists": meta_pickle_file.exists(),
             "dimension": int(dimension),
         }
     except Exception as e:

@@ -60,10 +60,10 @@ Phase 0 -> Base stabilization
 Phase 0 -> Base stabilization
 
 Current active anchor:
-A0.1 Lifespan + API dependencies
+A0.4 OpenAIAdapter cleanup
 
 Next anchor:
-A0.2 FAISS thread safety
+A0.5 Unified logging and request context
 
 ## What is explicitly postponed
 
