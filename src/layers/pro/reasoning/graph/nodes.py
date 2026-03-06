@@ -79,7 +79,8 @@ async def think_node(state: AgentState, llm: Any) -> AgentState:
                     state.plan = parsed_plan
 
             action = str(data.get("action") or "").strip().upper()
-            if not action and parsed_plan:
+            if parsed_plan:
+                # Planner is the source of truth for routing when structured plan exists.
                 action = parsed_plan[0]
             if not action:
                 action = "REASON"
