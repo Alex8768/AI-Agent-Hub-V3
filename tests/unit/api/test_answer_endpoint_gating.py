@@ -42,7 +42,10 @@ def test_answer_endpoint_returns_200_when_enabled_unit_stub(monkeypatch):
     import types
     import src.layers.pro.rag.retrieval.hybrid_retriever as hr
 
+    captured_kwargs: dict = {}
+
     async def _fake_retrieve(self, **kwargs):
+        captured_kwargs.update(kwargs)
         # mimic object with .graph and .evidence attributes used by endpoint adapter
         return types.SimpleNamespace(graph={"nodes": [], "edges": []}, evidence=[])
 
@@ -53,13 +56,30 @@ def test_answer_endpoint_returns_200_when_enabled_unit_stub(monkeypatch):
     app.state.hybrid_retriever = hr.HybridRetriever()
 
     c = TestClient(app)
-    r = c.post("/api/v1/answer", json={"query": "Q"})
+    r = c.post(
+        "/api/v1/answer",
+        json={
+            "query": "Q",
+            "evidence_max_total": 17,
+            "evidence_max_chunks": 5,
+            "evidence_max_memory": 3,
+            "evidence_max_edges": 2,
+            "evidence_dedupe": False,
+            "evidence_rerank": False,
+        },
+    )
     assert r.status_code == 200
 
     body = r.json()
     assert body["answer"]  # stub answer
     assert "confidence" in body
     assert "context_preview" in body
+    assert captured_kwargs["evidence_max_total"] == 17
+    assert captured_kwargs["evidence_max_chunks"] == 5
+    assert captured_kwargs["evidence_max_memory"] == 3
+    assert captured_kwargs["evidence_max_edges"] == 2
+    assert captured_kwargs["evidence_dedupe"] is False
+    assert captured_kwargs["evidence_rerank"] is False
 
     # Best-effort cleanup to reduce state leakage across tests
     try:
