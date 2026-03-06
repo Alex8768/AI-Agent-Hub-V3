@@ -225,6 +225,7 @@ class AnswerService:
             diag.setdefault("query_len", int(len(req.query or "")))
             diag.setdefault("k", int(req.k or 0))
             diag.setdefault("graph_depth", int(req.graph_depth or 0))
+            diag.setdefault("session_id", str(getattr(req, "session_id", "") or ""))
             diag.setdefault("evidence_type_counts", {})
                         # top_evidence: prefer retriever snapshot; fallback to response used_chunks
             try:

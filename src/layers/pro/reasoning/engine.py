@@ -36,6 +36,7 @@ class ReasoningEngine:
         initial_state = AgentState(
             query=request.query,
             workspace_id=getattr(request, "workspace_id", "default"),
+            session_id=getattr(request, "session_id", "default"),
             k=request.k,
             graph_depth=request.graph_depth,
             max_context_chars=request.max_context_chars,
@@ -80,6 +81,7 @@ class ReasoningEngine:
             diag = dict(getattr(resp, "diagnostics", None) or {})
             diag["agent_iterations"] = final_state.iteration_count
             diag["agent_actions"] = final_state.plan
+            diag["session_id"] = str(getattr(final_state, "session_id", "") or "")
             if final_state.error:
                 diag["agent_error"] = final_state.error
             resp.diagnostics = diag

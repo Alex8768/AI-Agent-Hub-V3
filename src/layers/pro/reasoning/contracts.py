@@ -49,6 +49,8 @@ class AnswerRequest(BaseModel):
 
     # Optional filters (workspace, doc_ids, tags, etc.), kept generic.
     filters: dict[str, Any] = Field(default_factory=dict)
+    # Session-scoped correlation for incremental memory (A2.1).
+    session_id: str = Field(default="default", min_length=1, max_length=128)
 
     # Hybrid evidence policy controls (A1.5)
     evidence_max_total: int = Field(default=50, ge=1, le=500)

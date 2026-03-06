@@ -10,6 +10,7 @@ class AgentState(BaseModel):
     # Входные данные
     query: str
     workspace_id: str
+    session_id: str = "default"
     k: int = 8
     graph_depth: int = 1
     max_context_chars: int = 12000
