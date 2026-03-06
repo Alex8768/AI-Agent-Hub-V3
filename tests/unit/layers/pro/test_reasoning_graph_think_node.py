@@ -35,6 +35,11 @@ class _LLMPlainTextAction:
         return "Next best step is REASON based on available evidence."
 
 
+class _LLMPlainTextMultipleActions:
+    async def generate(self, prompt: str) -> str:
+        return "We should ANSWER now; SEARCH is optional later."
+
+
 @pytest.mark.asyncio
 async def test_think_node_uses_structured_plan_when_action_missing():
     state = AgentState(query="Q?", workspace_id="default")
@@ -100,3 +105,11 @@ async def test_think_node_recovers_action_from_plain_text_response():
 
     assert out.current_action == "REASON"
     assert out.iteration_count == 1
+
+
+@pytest.mark.asyncio
+async def test_think_node_uses_first_plain_text_action_occurrence():
+    state = AgentState(query="Q?", workspace_id="default")
+    out = await think_node(state, _LLMPlainTextMultipleActions())
+
+    assert out.current_action == "ANSWER"

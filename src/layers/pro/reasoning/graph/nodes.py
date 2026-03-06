@@ -78,12 +78,14 @@ async def think_node(state: AgentState, llm: Any) -> AgentState:
                 data = json.loads(txt)
             except Exception:
                 up = txt.upper()
-                if "SEARCH" in up:
-                    data = {"action": "SEARCH", "reason": "parsed from plain text"}
-                elif "REASON" in up:
-                    data = {"action": "REASON", "reason": "parsed from plain text"}
-                elif "ANSWER" in up:
-                    data = {"action": "ANSWER", "reason": "parsed from plain text"}
+                pos: list[tuple[int, str]] = []
+                for action_name in ("SEARCH", "REASON", "ANSWER"):
+                    idx = up.find(action_name)
+                    if idx >= 0:
+                        pos.append((idx, action_name))
+                if pos:
+                    pos.sort(key=lambda x: x[0])
+                    data = {"action": pos[0][1], "reason": "parsed from plain text"}
                 else:
                     raise
             raw_plan = data.get("plan")
