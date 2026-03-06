@@ -144,7 +144,7 @@ class AnswerService:
         retriever: object | None = None,
     ):
         from src.core.config import get_settings
-        from src.core.providers import get_reasoning_engine
+        from src.core.providers import get_reasoning_engine, get_memory_store
 
         s = get_settings()
         if not getattr(s, "feature_reasoning", False) or not getattr(s, "feature_graphrag", False):
@@ -268,5 +268,27 @@ class AnswerService:
             resp.diagnostics = diag
         except Exception:
             pass
+
+        # A2.1 session memory (MVP): persist latest turn per session, best-effort.
+        try:
+            sid = str(getattr(req, "session_id", "") or "default")
+            mem = get_memory_store()
+            await mem.put(
+                workspace_id=workspace_id,
+                key=f"session:{sid}:last_answer",
+                value=str(getattr(resp, "answer", "") or ""),
+                metadata={
+                    "session_id": sid,
+                    "query": str(getattr(req, "query", "") or ""),
+                },
+            )
+            resp.diagnostics = dict(getattr(resp, "diagnostics", None) or {})
+            resp.diagnostics.setdefault("session_memory_saved", True)
+        except Exception:
+            try:
+                resp.diagnostics = dict(getattr(resp, "diagnostics", None) or {})
+                resp.diagnostics.setdefault("session_memory_saved", False)
+            except Exception:
+                pass
 
         return resp

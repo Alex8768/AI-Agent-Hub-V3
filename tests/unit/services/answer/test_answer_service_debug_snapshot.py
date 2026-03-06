@@ -67,6 +67,7 @@ class _CaptureHybrid:
 
 class _FakeResp:
     def __init__(self):
+        self.answer = "ok"
         self.diagnostics = {}
         self.timings = {}
         self.provenance = []
@@ -168,3 +169,44 @@ async def test_answer_service_forwards_evidence_policy_controls(monkeypatch):
     assert cap.kwargs.get("evidence_max_edges") == 2
     assert cap.kwargs.get("evidence_dedupe") is False
     assert cap.kwargs.get("evidence_rerank") is False
+
+
+@pytest.mark.asyncio
+async def test_answer_service_saves_session_memory_best_effort(monkeypatch):
+    class _S:
+        feature_reasoning = True
+        feature_graphrag = True
+        feature_reasoning_llm_enabled = False
+        llm_provider = "ollama"
+        openai_model = ""
+        ollama_model = "llama3.2:latest"
+
+    monkeypatch.setattr("src.core.config.get_settings", lambda: _S())
+    monkeypatch.setattr("src.observability.trace.make_trace_id", lambda **kwargs: "trace-123", raising=False)
+
+    def _fake_get_reasoning_engine(*, retriever=None, llm=None, llm_timeout_s=None):
+        return _FakeReasoningEngine(retriever)
+
+    monkeypatch.setattr("src.core.providers.get_reasoning_engine", _fake_get_reasoning_engine)
+
+    calls = {}
+
+    class _Mem:
+        async def put(self, *, workspace_id, key, value, metadata=None):
+            calls["workspace_id"] = workspace_id
+            calls["key"] = key
+            calls["value"] = value
+            calls["metadata"] = dict(metadata or {})
+
+    monkeypatch.setattr("src.core.providers.get_memory_store", lambda: _Mem())
+
+    http = _DummyHTTP(request_id="rid-3", rag_engine=object(), hybrid_retriever=_FakeHybrid())
+    req = AnswerRequest(query="what?", session_id="s-1")
+    resp = await AnswerService().handle(http, req, workspace_id="default")
+
+    assert calls.get("workspace_id") == "default"
+    assert calls.get("key") == "session:s-1:last_answer"
+    assert calls.get("value") == "ok"
+    assert (calls.get("metadata") or {}).get("session_id") == "s-1"
+    assert (calls.get("metadata") or {}).get("query") == "what?"
+    assert (getattr(resp, "diagnostics", {}) or {}).get("session_memory_saved") is True
