@@ -60,10 +60,10 @@ Phase 0 -> Base stabilization
 Phase 0 -> Base stabilization
 
 Current active anchor:
-A1.1 Graph schema and indexes
+A1.2 Chunk -> entity linkage contract
 
 Next anchor:
-A1.2 Chunk -> entity linkage contract
+A1.3 Entity extraction jobs
 
 ## What is explicitly postponed
 

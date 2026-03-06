@@ -4,13 +4,13 @@
 Phase 0 -> Base stabilization
 
 ## Last Completed Anchor
-A0.6 Feature flags for risky Pro capabilities
-
-## Current Active Anchor
 A1.1 Graph schema and indexes
 
-## Next Anchor
+## Current Active Anchor
 A1.2 Chunk -> entity linkage contract
+
+## Next Anchor
+A1.3 Entity extraction jobs
 
 ## Current Goal
 Подготовить устойчивую и понятную базу для развития Pro слоя без архитектурного хаоса.

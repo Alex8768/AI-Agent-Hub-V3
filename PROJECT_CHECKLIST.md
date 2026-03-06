@@ -97,7 +97,7 @@ Done when:
 ## Phase 1 — Graph RAG MVP
 
 ### A1.1 Graph schema and indexes
-Status: IN_PROGRESS
+Status: DONE
 
 Why this matters:
 Чтобы граф не был медленным и бесполезным, нужна нормальная схема хранения и индексы для быстрых переходов по связям.
@@ -105,7 +105,7 @@ Why this matters:
 ---
 
 ### A1.2 Chunk -> entity linkage contract
-Status: TODO
+Status: IN_PROGRESS
 
 Why this matters:
 Нужно жёстко понимать, какой кусок текста породил какие сущности и связи. Иначе graph retrieval будет магией без объяснимости.
