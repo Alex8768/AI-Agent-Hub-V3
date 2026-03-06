@@ -94,6 +94,23 @@ Architecture principles:
 - modular components
 - test-driven workflow
 
+
+
+## System Architecture
+
+    Client / UI
+        |
+    FastAPI API Layer
+        |
+    Service Layer
+    /     |      \
+ RAG   Memory   Agent Orchestration
+  |       |            |
+FAISS/   Context      Tool
+Qdrant   State        Integrations
+   \      |            /
+      LLM Layer (OpenAI / Ollama)
+
 Detailed architecture documentation:
 
 docs/architecture/ARCHITECTURE_V3.md
