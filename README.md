@@ -34,6 +34,31 @@ Real AI systems require more complex infrastructure:
 
 AI Agent Hub explores how these components can be combined into a coherent AI system architecture.
 
+## Why this project matters
+
+Modern organizations accumulate large volumes of internal knowledge:
+
+- documentation
+- research materials
+- operational procedures
+- technical knowledge
+
+Traditional search systems are often insufficient for navigating this information.
+
+AI systems that combine **retrieval, reasoning and orchestration** can transform how organizations interact with knowledge.
+
+Potential applications include:
+
+- internal knowledge copilots
+- research assistants
+- AI automation workflows
+- document intelligence systems
+- enterprise AI agents
+
+AI Agent Hub explores architectural patterns for building such systems in a structured and modular way.
+
+
+
 ---
 
 ## Key capabilities
