@@ -60,10 +60,10 @@ Phase 0 -> Base stabilization
 Phase 0 -> Base stabilization
 
 Current active anchor:
-A1.5 Hybrid retrieval
+A2.1 Session memory
 
 Next anchor:
-A2.1 Session memory
+A2.2 Planner
 
 ## What is explicitly postponed
 

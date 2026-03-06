@@ -4,13 +4,13 @@
 Phase 0 -> Base stabilization
 
 ## Last Completed Anchor
-A1.4 Graph retriever
-
-## Current Active Anchor
 A1.5 Hybrid retrieval
 
-## Next Anchor
+## Current Active Anchor
 A2.1 Session memory
+
+## Next Anchor
+A2.2 Planner
 
 ## Current Goal
 Подготовить устойчивую и понятную базу для развития Pro слоя без архитектурного хаоса.

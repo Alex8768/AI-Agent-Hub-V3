@@ -129,7 +129,7 @@ Why this matters:
 ---
 
 ### A1.5 Hybrid retrieval
-Status: IN_PROGRESS
+Status: DONE
 
 Why this matters:
 Нужен гибридный путь: векторный поиск даёт стартовые точки, граф расширяет и углубляет контекст.
@@ -139,7 +139,7 @@ Why this matters:
 ## Phase 2 — Reasoning MVP
 
 ### A2.1 Session memory
-Status: TODO
+Status: IN_PROGRESS
 
 Why this matters:
 Reasoning должен помнить полезные промежуточные выводы внутри сессии, а не каждый раз начинать почти заново.
