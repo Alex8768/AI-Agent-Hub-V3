@@ -83,6 +83,8 @@ class ReasoningEngine:
             diag = dict(getattr(resp, "diagnostics", None) or {})
             diag["agent_iterations"] = final_state.iteration_count
             diag["agent_actions"] = final_state.plan
+            diag["agent_current_action"] = str(getattr(final_state, "current_action", "") or "")
+            diag["agent_current_step"] = int(getattr(final_state, "current_step", 0) or 0)
             diag["session_id"] = str(getattr(final_state, "session_id", "") or "")
             if final_state.error:
                 diag["agent_error"] = final_state.error
@@ -166,6 +168,8 @@ class ReasoningEngine:
         try:
             diag = dict(getattr(resp, "diagnostics", None) or {})
             diag["fallback_reason"] = fallback_reason
+            diag.setdefault("agent_current_action", "")
+            diag.setdefault("agent_current_step", 0)
             resp.diagnostics = diag
         except Exception:
             pass

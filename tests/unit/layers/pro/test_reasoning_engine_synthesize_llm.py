@@ -40,3 +40,6 @@ async def test_synthesize_uses_llm_when_injected():
     assert "Question: Q?" in llm.prompts[0]
     assert "Context:" in llm.prompts[0]
     assert "doc:X#1" in llm.prompts[0]  # provenance/preview makes it into prompt
+    diag = dict(getattr(resp, "diagnostics", {}) or {})
+    assert "agent_current_action" in diag
+    assert "agent_current_step" in diag
