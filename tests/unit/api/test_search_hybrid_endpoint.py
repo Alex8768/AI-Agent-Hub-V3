@@ -50,7 +50,10 @@ def test_search_hybrid_endpoint_contract(monkeypatch):
             self.document = DummyDoc()
             self.score = 0.9
 
+    captured_kwargs: dict = {}
+
     async def _fake_retrieve(self, **kwargs):
+        captured_kwargs.update(kwargs)
         return HybridRetrievalResult(
             vector_results=[DummyResult()],
             graph={"nodes": [{"node_id": "n1"}], "edges": [{"edge_id": "e1", "metadata": {"source_refs": [{"document_id":"doc1","chunk_id":"chunk1","snippet":"x"}]}}]},
@@ -71,6 +74,12 @@ def test_search_hybrid_endpoint_contract(monkeypatch):
         "include_content": False,
         "include_metadata": False,
         "snippet_len": 80,
+        "evidence_max_total": 17,
+        "evidence_max_chunks": 5,
+        "evidence_max_memory": 3,
+        "evidence_max_edges": 2,
+        "evidence_dedupe": False,
+        "evidence_rerank": False,
     }
 
     r = client.post("/api/v1/search-hybrid", json=payload)
@@ -88,6 +97,12 @@ def test_search_hybrid_endpoint_contract(monkeypatch):
     assert data["evidence"]
     assert data["stats"]["graph_enabled"] is True
     assert data["stats"]["graph_seed_count"] == 1
+    assert captured_kwargs["evidence_max_total"] == 17
+    assert captured_kwargs["evidence_max_chunks"] == 5
+    assert captured_kwargs["evidence_max_memory"] == 3
+    assert captured_kwargs["evidence_max_edges"] == 2
+    assert captured_kwargs["evidence_dedupe"] is False
+    assert captured_kwargs["evidence_rerank"] is False
 
     # Restore best-effort
     monkeypatch.setattr(s, "feature_hybrid_search_api", prev_hybrid_api, raising=False)
