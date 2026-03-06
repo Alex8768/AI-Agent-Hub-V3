@@ -27,6 +27,12 @@ class SearchRequest(BaseModel):
     include_content: bool = Field(False, description="Return full chunk content")
     snippet_len: int = Field(240, ge=50, le=2000, description="Snippet length when include_content=false")
     include_metadata: bool = Field(True, description="Return metadata in results")
+    evidence_max_total: int = Field(50, ge=1, le=500, description="Max evidence items after hybrid policy")
+    evidence_max_chunks: Optional[int] = Field(None, ge=0, le=200, description="Optional chunk evidence budget")
+    evidence_max_memory: Optional[int] = Field(None, ge=0, le=200, description="Optional memory evidence budget")
+    evidence_max_edges: Optional[int] = Field(None, ge=0, le=200, description="Optional edge evidence budget")
+    evidence_dedupe: bool = Field(True, description="Enable evidence deduplication by type/id")
+    evidence_rerank: bool = Field(True, description="Enable deterministic evidence reranking")
 
 class SearchResult(BaseModel):
     chunk_id: str

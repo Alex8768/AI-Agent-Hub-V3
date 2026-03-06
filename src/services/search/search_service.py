@@ -102,6 +102,12 @@ class SearchService:
             filters=request.filters,
             similarity_threshold=request.similarity_threshold,
             graph_depth=int(graph_depth or 1),
+            evidence_max_total=int(getattr(request, "evidence_max_total", 50) or 50),
+            evidence_max_chunks=getattr(request, "evidence_max_chunks", None),
+            evidence_max_memory=getattr(request, "evidence_max_memory", None),
+            evidence_max_edges=getattr(request, "evidence_max_edges", None),
+            evidence_dedupe=bool(getattr(request, "evidence_dedupe", True)),
+            evidence_rerank=bool(getattr(request, "evidence_rerank", True)),
         )
 
         # out may be object-like or dict-like depending on retriever evolution
