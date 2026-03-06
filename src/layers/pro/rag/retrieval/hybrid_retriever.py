@@ -3,20 +3,9 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
-from src.core.providers import get_graph_store, get_memory_store
+from src.core.providers import get_memory_store
 from src.core.config import get_settings
-
-
-def _dedup_by(items: List[dict], key: str) -> List[dict]:
-    seen = set()
-    out = []
-    for it in items:
-        k = it.get(key)
-        if not k or k in seen:
-            continue
-        seen.add(k)
-        out.append(it)
-    return out
+from src.layers.pro.rag.retrieval.graph_retriever import GraphRetriever
 
 
 @dataclass
@@ -43,6 +32,9 @@ class HybridRetriever:
         "evidence": [{"type": "...", "id": "...", "source_refs": [...], ...}, ...]
       }
     """
+
+    def __init__(self, *, graph_retriever: GraphRetriever | None = None) -> None:
+        self._graph_retriever = graph_retriever or GraphRetriever()
 
     async def retrieve(
         self,
@@ -189,50 +181,27 @@ class HybridRetriever:
             "memory_added_evidence_count": mem_added,
         }
 
-        # 3) Graph augmentation (Pro, feature-flagged in providers)
-        gs = get_graph_store()
-        if gs is None:
-            return HybridRetrievalResult(
-                vector_results=vector_results,
-                graph={"nodes": [], "edges": []},
-                evidence=evidence,
-                results=results_norm,
-                stats=stats,
-            )
-
-        seeds = await gs.search_nodes(workspace_id=workspace_id, text=query, limit=int(graph_seed_limit))
-        seed_ids = [n.get("node_id") for n in (seeds or []) if isinstance(n, dict) and n.get("node_id")]
-
-        nodes_raw: list[dict[str, Any]] = []
-        edges_raw: list[dict[str, Any]] = []
-
-        for nid in seed_ids:
-            sub = await gs.neighbors(
-                workspace_id=workspace_id,
-                node_id=str(nid),
-                depth=int(graph_depth),
-                limit=int(graph_limit),
-            )
-            nodes_raw.extend(sub.get("nodes") or [])
-            edges_raw.extend(sub.get("edges") or [])
-
-        nodes_raw = _dedup_by(nodes_raw, "node_id")
-        edges_raw = _dedup_by(edges_raw, "edge_id")
-
-        # Normalize ids to match evidence_normalizer expectations (id)
-        nodes = [
-            {"id": n.get("node_id"), **{k: v for k, v in n.items() if k != "node_id"}}
-            for n in nodes_raw
-            if n.get("node_id")
-        ]
-        edges = [
-            {"id": e.get("edge_id"), **{k: v for k, v in e.items() if k != "edge_id"}}
-            for e in edges_raw
-            if e.get("edge_id")
-        ]
+        # 3) Graph augmentation (Pro, delegated to GraphRetriever)
+        graph_out = await self._graph_retriever.retrieve(
+            workspace_id=workspace_id,
+            query=query,
+            graph_depth=graph_depth,
+            graph_seed_limit=graph_seed_limit,
+            graph_limit=graph_limit,
+        )
+        graph = graph_out.graph or {"nodes": [], "edges": []}
+        graph_edges = list(graph.get("edges") or [])
+        stats.update(
+            {
+                "graph_enabled": bool(graph_out.stats.get("enabled", False)),
+                "graph_seed_count": int(graph_out.stats.get("seed_count", 0)),
+                "graph_node_count": int(graph_out.stats.get("node_count", len(graph.get("nodes") or []))),
+                "graph_edge_count": int(graph_out.stats.get("edge_count", len(graph_edges))),
+            }
+        )
 
         # Evidence from graph edges (source_refs)
-        for e in edges_raw:
+        for e in graph_edges:
             meta3 = (e.get("metadata") or {})
             src_refs3 = meta3.get("source_refs") or []
             if isinstance(src_refs3, str):
@@ -243,7 +212,7 @@ class HybridRetriever:
                 evidence.append(
                     {
                         "type": "edge",
-                        "id": str(e.get("edge_id")),
+                        "id": str(e.get("id") or e.get("edge_id")),
                         "source_refs": [str(s) for s in src_refs3 if s],
                         "confidence": meta3.get("confidence"),
                         "meta": {
@@ -256,7 +225,7 @@ class HybridRetriever:
 
         return HybridRetrievalResult(
             vector_results=vector_results,
-            graph={"nodes": nodes, "edges": edges},
+            graph=graph,
             evidence=evidence,
             results=results_norm,
             stats=stats,

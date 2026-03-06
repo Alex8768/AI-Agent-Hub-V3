@@ -30,7 +30,6 @@ async def test_hybrid_retriever_includes_memory_evidence_when_enabled(monkeypatc
     import src.layers.pro.rag.retrieval.hybrid_retriever as hr
 
     monkeypatch.setattr(hr, "get_memory_store", lambda: FakeMemoryStore(), raising=True)
-    monkeypatch.setattr(hr, "get_graph_store", lambda: None, raising=True)
 
     out = await HybridRetriever().retrieve(engine=FakeEngine(), workspace_id="default", query="Q", k=5)
 
