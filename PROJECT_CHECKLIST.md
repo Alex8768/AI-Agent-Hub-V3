@@ -105,7 +105,7 @@ Why this matters:
 ---
 
 ### A1.2 Chunk -> entity linkage contract
-Status: IN_PROGRESS
+Status: DONE
 
 Why this matters:
 Нужно жёстко понимать, какой кусок текста породил какие сущности и связи. Иначе graph retrieval будет магией без объяснимости.
@@ -113,7 +113,7 @@ Why this matters:
 ---
 
 ### A1.3 Entity extraction jobs
-Status: TODO
+Status: IN_PROGRESS
 
 Why this matters:
 Извлечение сущностей должно быть управляемой фоновой задачей со статусом, а не потерянным create_task.
