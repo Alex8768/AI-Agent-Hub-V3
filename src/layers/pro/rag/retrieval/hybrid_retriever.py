@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional
 from src.core.providers import get_memory_store
 from src.core.config import get_settings
 from src.layers.pro.rag.retrieval.graph_retriever import GraphRetriever
+from src.layers.pro.rag.retrieval.policy import RetrievalPolicy, apply_policy
 
 
 @dataclass
@@ -49,6 +50,12 @@ class HybridRetriever:
         graph_seed_limit: int = 5,
         graph_limit: int = 80,
         memory_limit: int = 5,
+        evidence_max_total: int = 50,
+        evidence_max_chunks: int | None = None,
+        evidence_max_memory: int | None = None,
+        evidence_max_edges: int | None = None,
+        evidence_dedupe: bool = True,
+        evidence_rerank: bool = True,
     ) -> HybridRetrievalResult:
         s = get_settings()
 
@@ -203,6 +210,19 @@ class HybridRetriever:
 
         # Graph evidence is now produced by GraphRetriever boundary.
         evidence.extend(graph_evidence)
+
+        # 4) Evidence policy (hybrid-level quality controls)
+        policy = RetrievalPolicy(
+            similarity_threshold=float(similarity_threshold) if similarity_threshold is not None else 0.0,
+            max_evidence=int(evidence_max_total),
+            dedupe=bool(evidence_dedupe),
+            rerank=bool(evidence_rerank),
+            max_chunks=(None if evidence_max_chunks is None else int(evidence_max_chunks)),
+            max_memory=(None if evidence_max_memory is None else int(evidence_max_memory)),
+            max_edges=(None if evidence_max_edges is None else int(evidence_max_edges)),
+        )
+        evidence, policy_stats = apply_policy(evidence, policy=policy)
+        stats.update({f"evidence_policy_{k}": v for k, v in policy_stats.items()})
 
         return HybridRetrievalResult(
             vector_results=vector_results,
