@@ -85,6 +85,7 @@ async def think_node(state: AgentState, llm: Any) -> AgentState:
                 if parsed_plan:
                     state.plan = parsed_plan
 
+            allowed_actions = {"SEARCH", "REASON", "ANSWER"}
             action = str(data.get("action") or "").strip().upper()
             if parsed_plan:
                 # Planner is the source of truth for routing when structured plan exists.
@@ -98,7 +99,7 @@ async def think_node(state: AgentState, llm: Any) -> AgentState:
                     state.current_step = step_idx + 1
                 else:
                     state.current_step = step_idx
-            if not action:
+            if not action or action not in allowed_actions:
                 action = "REASON"
             reason = data.get("reason", "")
             

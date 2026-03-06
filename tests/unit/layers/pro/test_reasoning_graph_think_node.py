@@ -25,6 +25,11 @@ class _LLMShouldNotBeCalled:
         return '{"action":"REASON","reason":"unexpected call"}'
 
 
+class _LLMInvalidAction:
+    async def generate(self, prompt: str) -> str:
+        return '{"action":"TOOL","reason":"unsupported action"}'
+
+
 @pytest.mark.asyncio
 async def test_think_node_uses_structured_plan_when_action_missing():
     state = AgentState(query="Q?", workspace_id="default")
@@ -72,3 +77,12 @@ async def test_think_node_forces_answer_when_max_iterations_reached():
     assert out.current_action == "ANSWER"
     assert out.iteration_count == 11
     assert any("max_iterations" in str(m.get("content", "")) for m in out.messages)
+
+
+@pytest.mark.asyncio
+async def test_think_node_falls_back_to_reason_on_invalid_action():
+    state = AgentState(query="Q?", workspace_id="default")
+    out = await think_node(state, _LLMInvalidAction())
+
+    assert out.current_action == "REASON"
+    assert out.iteration_count == 1
