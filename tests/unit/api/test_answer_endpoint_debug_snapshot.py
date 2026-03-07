@@ -47,6 +47,11 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
     assert isinstance(diag["top_evidence"], list)
     assert any(x.startswith("chunk:") for x in diag["top_evidence"])
     assert diag.get("evidence_contract_version") == "v1"
+    assert isinstance(diag.get("evidence_contract_valid_minimal"), bool)
+    assert isinstance(diag.get("evidence_contract_missing_minimal_fields"), list)
+    assert isinstance(diag.get("evidence_contract_missing_minimal_count"), int)
+    assert isinstance(diag.get("evidence_contract_minimal_coverage_score"), float)
+    assert isinstance(diag.get("evidence_contract_gate_reason"), str)
 
     # cleanup
     try:

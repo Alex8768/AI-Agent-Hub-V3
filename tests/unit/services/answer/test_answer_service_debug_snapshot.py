@@ -135,6 +135,11 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
     assert any(str(x).startswith("chunk:") for x in diag["top_evidence"])
     assert diag.get("session_id") == "default"
     assert diag.get("evidence_contract_version") == "v1"
+    assert isinstance(diag.get("evidence_contract_valid_minimal"), bool)
+    assert isinstance(diag.get("evidence_contract_missing_minimal_fields"), list)
+    assert isinstance(diag.get("evidence_contract_missing_minimal_count"), int)
+    assert isinstance(diag.get("evidence_contract_minimal_coverage_score"), float)
+    assert isinstance(diag.get("evidence_contract_gate_reason"), str)
     rs = (diag.get("retriever_stats") or {})
     assert rs.get("evidence_policy_evidence_after_policy_count") == 1
 

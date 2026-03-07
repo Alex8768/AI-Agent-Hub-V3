@@ -251,6 +251,31 @@ class AnswerService:
             diag.setdefault("graph_depth", int(req.graph_depth or 0))
             diag.setdefault("session_id", str(getattr(req, "session_id", "") or ""))
             diag.setdefault("evidence_contract_version", "v1")
+            contract = dict(diag.get("evidence_contract") or {})
+            diag.setdefault(
+                "evidence_contract_valid_minimal",
+                bool(contract.get("valid_minimal", False)),
+            )
+            diag.setdefault(
+                "evidence_contract_missing_minimal_fields",
+                list(contract.get("missing_minimal_fields") or []),
+            )
+            diag.setdefault(
+                "evidence_contract_missing_minimal_count",
+                int(contract.get("missing_minimal_count") or len(contract.get("missing_minimal_fields") or [])),
+            )
+            diag.setdefault(
+                "evidence_contract_minimal_coverage_score",
+                float(contract.get("minimal_coverage_score") or 0.0),
+            )
+            if bool(diag.get("evidence_contract_valid_minimal", False)):
+                diag.setdefault("evidence_contract_gate_reason", "ok")
+            else:
+                missing = list(diag.get("evidence_contract_missing_minimal_fields") or [])
+                if missing:
+                    diag.setdefault("evidence_contract_gate_reason", "missing:" + ",".join(str(x) for x in missing))
+                else:
+                    diag.setdefault("evidence_contract_gate_reason", "invalid")
             diag.setdefault("session_memory_loaded", bool(session_memory_loaded))
             diag.setdefault("session_memory_hit", bool(session_memory_hit))
             diag.setdefault("evidence_type_counts", {})
