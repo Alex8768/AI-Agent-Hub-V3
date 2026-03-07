@@ -147,6 +147,68 @@ async def test_document_format_detection(ingest_service):
         assert result.format == expected_format, f"Failed for {filename}"
 
 
+@pytest.mark.asyncio
+async def test_ingest_result_success_contract_shape(ingest_service):
+    result = await ingest_service.ingest_text(
+        text="contract check content",
+        filename="contract.txt",
+        metadata={"source": "contract"},
+    )
+
+    assert set(result.__dict__.keys()) == {
+        "document_id",
+        "filename",
+        "format",
+        "total_chunks",
+        "success",
+        "errors",
+        "chunk_ids",
+        "processing_time_ms",
+        "vector_store_stats",
+        "metadata",
+    }
+    assert result.success is True
+    assert isinstance(result.errors, list)
+    assert isinstance(result.chunk_ids, list)
+    assert isinstance(result.vector_store_stats, dict)
+    assert isinstance(result.metadata, dict)
+
+
+@pytest.mark.asyncio
+async def test_ingest_result_failure_contract_shape(ingest_service, monkeypatch):
+    async def mock_embed(*args, **kwargs):
+        raise Exception("Embedding failed")
+
+    monkeypatch.setattr(
+        'src.adapters.embedding.sentence_transformer_adapter.SentenceTransformerAdapter.embed_documents',
+        mock_embed
+    )
+
+    result = await ingest_service.ingest_text(
+        text="contract check failure",
+        filename="contract.txt",
+        metadata={"source": "contract"},
+    )
+
+    assert set(result.__dict__.keys()) == {
+        "document_id",
+        "filename",
+        "format",
+        "total_chunks",
+        "success",
+        "errors",
+        "chunk_ids",
+        "processing_time_ms",
+        "vector_store_stats",
+        "metadata",
+    }
+    assert result.success is False
+    assert isinstance(result.errors, list) and len(result.errors) >= 1
+    assert isinstance(result.chunk_ids, list)
+    assert isinstance(result.vector_store_stats, dict)
+    assert isinstance(result.metadata, dict)
+
+
 def test_prepare_ingest_metadata_boundary_preserves_defaults(ingest_service):
     fmt, meta = ingest_service._prepare_ingest_metadata_boundary(
         metadata={"source": "unit"},
