@@ -276,6 +276,26 @@ class AnswerService:
                     diag.setdefault("evidence_contract_gate_reason", "missing:" + ",".join(str(x) for x in missing))
                 else:
                     diag.setdefault("evidence_contract_gate_reason", "invalid")
+            diag.setdefault(
+                "self_check",
+                {
+                    "version": "v1",
+                    "status": "not_evaluated",
+                    "reasons": [],
+                    "policy_mode": "diagnostics_only",
+                    "inputs": {
+                        "evidence_contract_valid_minimal": bool(
+                            diag.get("evidence_contract_valid_minimal", False)
+                        ),
+                        "evidence_contract_missing_minimal_count": int(
+                            diag.get("evidence_contract_missing_minimal_count", 0) or 0
+                        ),
+                        "evidence_contract_minimal_coverage_score": float(
+                            diag.get("evidence_contract_minimal_coverage_score", 0.0) or 0.0
+                        ),
+                    },
+                },
+            )
             diag.setdefault("session_memory_loaded", bool(session_memory_loaded))
             diag.setdefault("session_memory_hit", bool(session_memory_hit))
             diag.setdefault("evidence_type_counts", {})

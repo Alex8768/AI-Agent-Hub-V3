@@ -140,6 +140,12 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
     assert isinstance(diag.get("evidence_contract_missing_minimal_count"), int)
     assert isinstance(diag.get("evidence_contract_minimal_coverage_score"), float)
     assert isinstance(diag.get("evidence_contract_gate_reason"), str)
+    sc = dict(diag.get("self_check") or {})
+    assert sc.get("version") == "v1"
+    assert sc.get("status") == "not_evaluated"
+    assert isinstance(sc.get("reasons"), list)
+    assert sc.get("policy_mode") == "diagnostics_only"
+    assert isinstance(sc.get("inputs"), dict)
     rs = (diag.get("retriever_stats") or {})
     assert rs.get("evidence_policy_evidence_after_policy_count") == 1
 

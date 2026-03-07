@@ -98,6 +98,25 @@ class ReasoningEngine:
             return "missing:" + ",".join(str(x) for x in missing)
         return "invalid"
 
+    @staticmethod
+    def _self_check_diagnostics(contract: dict[str, object]) -> dict[str, object]:
+        """A2.4 Patch 1: diagnostics-only self_check contract (no answer impact)."""
+        return {
+            "version": "v1",
+            "status": "not_evaluated",
+            "reasons": [],
+            "policy_mode": "diagnostics_only",
+            "inputs": {
+                "evidence_contract_valid_minimal": bool(contract.get("valid_minimal", False)),
+                "evidence_contract_missing_minimal_count": int(
+                    len(contract.get("missing_minimal_fields") or [])
+                ),
+                "evidence_contract_minimal_coverage_score": float(
+                    contract.get("minimal_coverage_score") or 0.0
+                ),
+            },
+        }
+
     async def synthesize(self, request: AnswerRequest) -> AnswerResponse:
         """Synthesize an answer using agentic graph."""
         from time import perf_counter
@@ -201,6 +220,7 @@ class ReasoningEngine:
                 contract.get("minimal_coverage_score") or 0.0
             )
             diag["evidence_contract_gate_reason"] = self._evidence_contract_gate_reason(contract)
+            diag["self_check"] = self._self_check_diagnostics(contract)
             if not bool(contract.get("valid_minimal", False)):
                 resp.warnings = list(getattr(resp, "warnings", []) or [])
                 if "evidence_contract_minimal_invalid" not in resp.warnings:
@@ -314,6 +334,7 @@ class ReasoningEngine:
                 "evidence_contract_gate_reason",
                 self._evidence_contract_gate_reason(contract),
             )
+            diag.setdefault("self_check", self._self_check_diagnostics(contract))
             if not bool(contract.get("valid_minimal", False)):
                 resp.warnings = list(getattr(resp, "warnings", []) or [])
                 if "evidence_contract_minimal_invalid" not in resp.warnings:
