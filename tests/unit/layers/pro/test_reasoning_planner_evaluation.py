@@ -62,3 +62,34 @@ async def test_planner_evaluation_state_propagation_across_steps():
     second = results[1]["reasoning_output"]
     assert first.startswith("seed -> ")
     assert second.startswith(first + " -> ")
+
+
+@pytest.mark.asyncio
+async def test_planner_evaluation_verify_runs_per_step_with_stable_fields():
+    query = "Gather evidence and then produce answer"
+    plan = create_reasoning_plan(query=query)
+    assert len(plan.get("steps") or []) == 2
+
+    verify_calls: list[str] = []
+
+    async def _run_reasoning_step(step):
+        description = str(step.get("description", "") or "")
+        return f"payload:{description}"
+
+    async def _run_verify_step(reasoning_output: str):
+        verify_calls.append(reasoning_output)
+        if len(verify_calls) == 1:
+            return {"status": "warn", "reasons": ["needs_more_support"]}
+        return {"status": "pass", "reasons": []}
+
+    results = await execute_plan_steps(
+        plan=plan,
+        run_reasoning_step=_run_reasoning_step,
+        run_verify_step=_run_verify_step,
+        max_steps=3,
+    )
+
+    assert len(verify_calls) == 2
+    assert verify_calls == [r["reasoning_output"] for r in results]
+    assert [r["verify_status"] for r in results] == ["warn", "pass"]
+    assert [r["verify_reasons"] for r in results] == [["needs_more_support"], []]
