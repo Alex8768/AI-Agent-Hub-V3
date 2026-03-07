@@ -17,6 +17,7 @@ A2.6 — AnswerService Decomposition
 Current work is focused on reducing AnswerService orchestration complexity without contract drift.
 Patch 0 is completed: diagnostics builder is extracted with behavior parity validated by tests.
 Patch 1 is completed: session memory load/save I/O boundary is extracted with best-effort behavior parity.
+Patch 2 is completed: LLM wiring boundary is extracted with provider/model/fallback parity.
 
 ## Next Anchor
 

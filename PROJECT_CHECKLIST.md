@@ -14,7 +14,7 @@
 
 - [x] Patch 0 — extract diagnostics builder with parity
 - [x] Patch 1 — extract session memory I/O boundary
-- [ ] Patch 2 — extract LLM wiring boundary
+- [x] Patch 2 — extract LLM wiring boundary
 - [ ] Patch 3 — external contract parity snapshots
 
 ## Next
