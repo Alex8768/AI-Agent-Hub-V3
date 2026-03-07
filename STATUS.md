@@ -18,6 +18,7 @@ Current work is focused on reducing OpenAIAdapter branching complexity without b
 Patch 0 is completed: completion builders are extracted with behavior parity validated by tests.
 Patch 1 is completed: request parameter builders are extracted with defaults/None-pruning parity.
 Patch 2 is completed: streaming boundaries are extracted with chunk ordering/finalization parity.
+Patch 3 is completed: adapter-level completion/streaming contracts are frozen and validated.
 
 ## Next Anchor
 

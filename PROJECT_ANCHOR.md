@@ -34,7 +34,7 @@ A2.7 must split completion/streaming responsibilities into smaller testable unit
 - [x] Patch 0 — completion builders extracted with behavior parity
 - [x] Patch 1 — request parameter builders extracted with parity
 - [x] Patch 2 — streaming boundaries extracted with parity
-- [ ] Patch 3 — external contract parity tests
+- [x] Patch 3 — external contract parity tests frozen
 
 ### Out of Scope
 

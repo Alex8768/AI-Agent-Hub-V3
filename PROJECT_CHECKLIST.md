@@ -16,7 +16,7 @@
 - [x] Patch 0 — extract completion builders with parity
 - [x] Patch 1 — extract request parameter builders
 - [x] Patch 2 — extract streaming boundaries
-- [ ] Patch 3 — external contract parity snapshots
+- [x] Patch 3 — external contract parity snapshots
 
 ## Next
 
