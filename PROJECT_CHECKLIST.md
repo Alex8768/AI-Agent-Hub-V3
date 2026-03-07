@@ -14,17 +14,21 @@
 - [x] A2.8 Config Architecture Cleanup
 - [x] A2.9 IngestService Slimming
 
-## Current Work — A2.10 (to be defined)
+## Current Work — A2.10 Reasoning Quality Loop
 
-- [ ] Patch plan pending definition
+- [ ] Patch 0 — claim extraction
+- [ ] Patch 1 — evidence coverage scoring
+- [ ] Patch 2 — reasoning confidence model
+- [ ] Patch 3 — retry policy (single bounded retry)
+- [ ] Patch 4 — diagnostics.reasoning_quality exposure + parity tests
 
 ## Next
 
-- [ ] TBD
+- [ ] A2.11 (to be defined)
 
 ## Later
 
-- [ ] TBD
+- [ ] A2.11 (to be defined)
 
 ## Working Rules
 

@@ -12,13 +12,18 @@ IngestService orchestration was decomposed into metadata/chunking/persistence bo
 
 ## Current Active Anchor
 
-A2.10 — (to be defined)
+A2.10 — Reasoning Quality Loop
 
-Current work definition is pending for A2.10.
+Current work is focused on deterministic reasoning quality evaluation after verify.
+Planned focus:
+- claim extraction
+- evidence coverage scoring
+- reasoning confidence model
+- optional single-retry policy
 
 ## Next Anchor
 
-A2.10 — (to be defined)
+A2.11 — (to be defined)
 
 Planned focus:
 - TBD
