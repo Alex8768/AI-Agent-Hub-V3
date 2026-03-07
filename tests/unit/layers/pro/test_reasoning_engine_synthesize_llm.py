@@ -49,6 +49,7 @@ async def test_synthesize_uses_llm_when_injected():
     assert "agent_current_action" in diag
     assert "agent_current_step" in diag
     assert diag.get("planner_path_used") is True
+    assert diag.get("evidence_contract_version") == "v1"
     es = dict(diag.get("evidence_summary") or {})
     assert es.get("count") == 1
     assert (es.get("origin_counts") or {}).get("vector") == 1

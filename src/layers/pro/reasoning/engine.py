@@ -148,6 +148,7 @@ class ReasoningEngine:
             diag["planner_path_used"] = True
             diag["session_id"] = str(getattr(final_state, "session_id", "") or "")
             diag["evidence_summary"] = self._evidence_summary(final_state.provenance)
+            diag["evidence_contract_version"] = "v1"
             contract = self._evidence_contract_status(final_state.provenance)
             diag["evidence_contract"] = contract
             if not bool(contract.get("valid_minimal", False)):
@@ -240,6 +241,7 @@ class ReasoningEngine:
             diag.setdefault("agent_current_step", 0)
             diag.setdefault("planner_path_used", False)
             diag.setdefault("evidence_summary", self._evidence_summary(provenance))
+            diag.setdefault("evidence_contract_version", "v1")
             contract = self._evidence_contract_status(provenance)
             diag.setdefault("evidence_contract", contract)
             if not bool(contract.get("valid_minimal", False)):
