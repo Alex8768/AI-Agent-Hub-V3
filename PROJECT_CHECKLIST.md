@@ -21,7 +21,7 @@
 
 - [x] Trace model
 - [x] Trace collector
-- [ ] diagnostics.reasoning_trace exposure
+- [x] diagnostics.reasoning_trace exposure
 - [ ] Trace serialization
 - [ ] Replay utility
 
@@ -37,7 +37,7 @@
 
 - [x] Trace model
 - [x] Trace collector
-- [ ] diagnostics.reasoning_trace exposure
+- [x] diagnostics.reasoning_trace exposure
 - [ ] Trace serialization
 - [ ] Replay utility
 
