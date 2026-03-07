@@ -20,6 +20,23 @@ class ReasoningEngine:
     llm: object | None = None
     llm_timeout_s: float = 15.0
 
+    @staticmethod
+    def _evidence_summary(provenance: list) -> dict[str, object]:
+        origins: dict[str, int] = {}
+        rel_vals: list[float] = []
+        for p in provenance or []:
+            origin = str(getattr(p, "origin", "unknown") or "unknown")
+            origins[origin] = int(origins.get(origin, 0)) + 1
+            rel = getattr(p, "reliability", None)
+            if isinstance(rel, (int, float)):
+                rel_vals.append(float(rel))
+        avg = (sum(rel_vals) / len(rel_vals)) if rel_vals else None
+        return {
+            "origin_counts": origins,
+            "reliability_avg": avg,
+            "count": int(len(provenance or [])),
+        }
+
     async def synthesize(self, request: AnswerRequest) -> AnswerResponse:
         """Synthesize an answer using agentic graph."""
         from time import perf_counter
@@ -108,6 +125,7 @@ class ReasoningEngine:
             diag["agent_current_step"] = int(getattr(final_state, "current_step", 0) or 0)
             diag["planner_path_used"] = True
             diag["session_id"] = str(getattr(final_state, "session_id", "") or "")
+            diag["evidence_summary"] = self._evidence_summary(final_state.provenance)
             if final_state.error:
                 diag["agent_error"] = final_state.error
             resp.diagnostics = diag
@@ -193,6 +211,7 @@ class ReasoningEngine:
             diag.setdefault("agent_current_action", "")
             diag.setdefault("agent_current_step", 0)
             diag.setdefault("planner_path_used", False)
+            diag.setdefault("evidence_summary", self._evidence_summary(provenance))
             resp.diagnostics = diag
         except Exception:
             pass
