@@ -20,7 +20,7 @@
 ## Current Work — A2.12 Reasoning Trace + Replay
 
 - [x] Trace model
-- [ ] Trace collector
+- [x] Trace collector
 - [ ] diagnostics.reasoning_trace exposure
 - [ ] Trace serialization
 - [ ] Replay utility
@@ -36,7 +36,7 @@
 ## A2.12 Reasoning Trace + Replay (active anchor)
 
 - [x] Trace model
-- [ ] Trace collector
+- [x] Trace collector
 - [ ] diagnostics.reasoning_trace exposure
 - [ ] Trace serialization
 - [ ] Replay utility

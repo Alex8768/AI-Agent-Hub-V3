@@ -17,6 +17,7 @@ A2.12 — Reasoning Trace + Replay
 
 Current progress:
 - Patch 1 complete: trace model contract and normalization helper added with passing tests.
+- Patch 2 complete: trace collector added to assemble plan/steps/verify/quality into trace payload.
 
 Focus:
 - trace model
