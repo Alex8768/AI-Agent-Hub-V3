@@ -16,6 +16,7 @@ A2.7 — OpenAIAdapter Decomposition
 
 Current work is focused on reducing OpenAIAdapter branching complexity without behavior drift.
 Patch 0 is completed: completion builders are extracted with behavior parity validated by tests.
+Patch 1 is completed: request parameter builders are extracted with defaults/None-pruning parity.
 
 ## Next Anchor
 

@@ -32,7 +32,7 @@ A2.7 must split completion/streaming responsibilities into smaller testable unit
 ### Progress
 
 - [x] Patch 0 — completion builders extracted with behavior parity
-- [ ] Patch 1 — extract request parameter builders
+- [x] Patch 1 — request parameter builders extracted with parity
 - [ ] Patch 2 — extract streaming boundaries
 - [ ] Patch 3 — external contract parity tests
 

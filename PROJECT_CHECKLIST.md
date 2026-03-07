@@ -14,7 +14,7 @@
 ## Current Work — A2.7 OpenAIAdapter Decomposition
 
 - [x] Patch 0 — extract completion builders with parity
-- [ ] Patch 1 — extract request parameter builders
+- [x] Patch 1 — extract request parameter builders
 - [ ] Patch 2 — extract streaming boundaries
 - [ ] Patch 3 — external contract parity snapshots
 
