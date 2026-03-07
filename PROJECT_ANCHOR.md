@@ -40,7 +40,7 @@ Planned files:
 
 ### Progress
 
-- [ ] Patch 1 — timeline model
+- [x] Patch 1 — timeline model
 - [ ] Patch 2 — timeline collector
 - [ ] Patch 3 — trace enrichment
 - [ ] Patch 4 — diagnostics.reasoning_timeline exposure

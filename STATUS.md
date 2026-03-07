@@ -15,6 +15,9 @@ serialization, and replay utility.
 
 A2.13 — Reasoning Observability
 
+Current progress:
+- Patch 1 complete: timeline model contract added with deterministic duration normalization.
+
 Focus:
 - reasoning execution timeline
 - step latency metrics
