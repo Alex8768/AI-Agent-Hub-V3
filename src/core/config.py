@@ -664,11 +664,8 @@ class Settings(BaseSettings):
     def workspace_root_path(self) -> Path:
         """Get absolute workspace root path."""
         return self.workspace_root.resolve()
-    
-    def get_llm_config(self, provider: Optional[LLMProvider] = None) -> LLMConfig:
-        """Get LLM configuration for a provider."""
-        provider = provider or self.llm_provider
 
+    def _validate_llm_provider_requirements(self, provider: LLMProvider) -> None:
         # Base: fail-fast on missing API keys for remote providers
         if provider == LLMProvider.OPENAI and not self.openai_api_key:
             raise ConfigurationError(
@@ -680,8 +677,9 @@ class Settings(BaseSettings):
                 message="ANTHROPIC provider selected but ANTHROPIC_API_KEY is not set",
                 config_key="ANTHROPIC_API_KEY",
             )
-        
-        config_map = {
+
+    def _build_llm_provider_config_map(self) -> Dict[LLMProvider, Dict[str, Any]]:
+        return {
             LLMProvider.OPENAI: {
                 "provider": "openai",
                 "model": self.openai_model,
@@ -711,7 +709,12 @@ class Settings(BaseSettings):
                 "timeout": 30,
             }
         }
-        
+    
+    def get_llm_config(self, provider: Optional[LLMProvider] = None) -> LLMConfig:
+        """Get LLM configuration for a provider."""
+        provider = provider or self.llm_provider
+        self._validate_llm_provider_requirements(provider)
+        config_map = self._build_llm_provider_config_map()
         config = config_map.get(provider, config_map[LLMProvider.HYBRID])
         return LLMConfig(**config)
     

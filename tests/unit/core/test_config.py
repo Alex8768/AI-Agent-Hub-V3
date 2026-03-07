@@ -41,6 +41,13 @@ class TestSettings:
         with pytest.raises(ConfigurationError):
             settings.get_llm_config(provider="anthropic")
 
+    def test_get_llm_config_unknown_provider_falls_back_hybrid(self):
+        """Unknown provider should safely fallback to hybrid config."""
+        settings = Settings(_env_file=None)
+        cfg = settings.get_llm_config(provider="custom-provider")
+        assert cfg.provider == "hybrid"
+        assert cfg.model == "hybrid"
+
     def test_cors_origins_parsing(self):
         """Test CORS origins parsing."""
         test_cases = [
