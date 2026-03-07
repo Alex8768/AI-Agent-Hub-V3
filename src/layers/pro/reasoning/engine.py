@@ -75,6 +75,7 @@ class ReasoningEngine:
             "known_origin_coverage": float(with_known_origin / denom) if total > 0 else 0.0,
             "reliability_coverage": float(with_reliability / denom) if total > 0 else 0.0,
             "missing_minimal_fields": missing_minimal_fields,
+            "missing_minimal_count": int(len(missing_minimal_fields)),
             "valid_minimal": bool(total > 0 and with_source_refs > 0 and with_known_origin > 0),
         }
 
@@ -173,6 +174,9 @@ class ReasoningEngine:
             diag["evidence_contract_valid_minimal"] = bool(contract.get("valid_minimal", False))
             diag["evidence_contract_missing_minimal_fields"] = list(
                 contract.get("missing_minimal_fields") or []
+            )
+            diag["evidence_contract_missing_minimal_count"] = int(
+                len(contract.get("missing_minimal_fields") or [])
             )
             if not bool(contract.get("valid_minimal", False)):
                 resp.warnings = list(getattr(resp, "warnings", []) or [])
@@ -274,6 +278,10 @@ class ReasoningEngine:
             diag.setdefault(
                 "evidence_contract_missing_minimal_fields",
                 list(contract.get("missing_minimal_fields") or []),
+            )
+            diag.setdefault(
+                "evidence_contract_missing_minimal_count",
+                int(len(contract.get("missing_minimal_fields") or [])),
             )
             if not bool(contract.get("valid_minimal", False)):
                 resp.warnings = list(getattr(resp, "warnings", []) or [])

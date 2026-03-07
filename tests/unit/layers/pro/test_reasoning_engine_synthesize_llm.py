@@ -52,6 +52,7 @@ async def test_synthesize_uses_llm_when_injected():
     assert diag.get("evidence_contract_version") == "v1"
     assert diag.get("evidence_contract_valid_minimal") is True
     assert diag.get("evidence_contract_missing_minimal_fields") == []
+    assert diag.get("evidence_contract_missing_minimal_count") == 0
     es = dict(diag.get("evidence_summary") or {})
     assert es.get("count") == 1
     assert (es.get("origin_counts") or {}).get("vector") == 1
@@ -68,4 +69,5 @@ async def test_synthesize_uses_llm_when_injected():
     assert ec.get("known_origin_coverage") == 1.0
     assert ec.get("reliability_coverage") == 1.0
     assert ec.get("missing_minimal_fields") == []
+    assert ec.get("missing_minimal_count") == 0
     assert ec.get("valid_minimal") is True
