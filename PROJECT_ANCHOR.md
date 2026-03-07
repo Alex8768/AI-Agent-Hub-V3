@@ -53,7 +53,7 @@ Final Answer
 - [x] Patch 0 — claim extraction
 - [x] Patch 1 — evidence coverage scoring
 - [x] Patch 2 — reasoning confidence model
-- [ ] Patch 3 — retry policy
+- [x] Patch 3 — retry policy
 - [ ] Patch 4 — diagnostics exposure and parity tests
 
 ### Out of Scope

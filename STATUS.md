@@ -19,9 +19,10 @@ Current progress:
 - Patch 0 complete: deterministic claim extraction boundary added with unit tests
 - Patch 1 complete: deterministic evidence coverage scoring boundary added with unit tests
 - Patch 2 complete: deterministic reasoning confidence model boundary added with unit tests
+- Patch 3 complete: deterministic single-retry policy boundary added with loop guard
 
 Next focus:
-- optional single-retry policy
+- diagnostics.reasoning_quality exposure
 
 ## Next Anchor
 
