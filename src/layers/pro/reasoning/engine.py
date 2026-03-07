@@ -79,6 +79,15 @@ class ReasoningEngine:
             "valid_minimal": bool(total > 0 and with_source_refs > 0 and with_known_origin > 0),
         }
 
+    @staticmethod
+    def _evidence_contract_gate_reason(contract: dict[str, object]) -> str:
+        if bool(contract.get("valid_minimal", False)):
+            return "ok"
+        missing = list(contract.get("missing_minimal_fields") or [])
+        if missing:
+            return "missing:" + ",".join(str(x) for x in missing)
+        return "invalid"
+
     async def synthesize(self, request: AnswerRequest) -> AnswerResponse:
         """Synthesize an answer using agentic graph."""
         from time import perf_counter
@@ -178,6 +187,7 @@ class ReasoningEngine:
             diag["evidence_contract_missing_minimal_count"] = int(
                 len(contract.get("missing_minimal_fields") or [])
             )
+            diag["evidence_contract_gate_reason"] = self._evidence_contract_gate_reason(contract)
             if not bool(contract.get("valid_minimal", False)):
                 resp.warnings = list(getattr(resp, "warnings", []) or [])
                 if "evidence_contract_minimal_invalid" not in resp.warnings:
@@ -282,6 +292,10 @@ class ReasoningEngine:
             diag.setdefault(
                 "evidence_contract_missing_minimal_count",
                 int(len(contract.get("missing_minimal_fields") or [])),
+            )
+            diag.setdefault(
+                "evidence_contract_gate_reason",
+                self._evidence_contract_gate_reason(contract),
             )
             if not bool(contract.get("valid_minimal", False)):
                 resp.warnings = list(getattr(resp, "warnings", []) or [])
