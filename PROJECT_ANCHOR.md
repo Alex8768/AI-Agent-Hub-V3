@@ -2,52 +2,51 @@
 
 ## Active Anchor
 
-A2.8 — Config Architecture Cleanup
+A2.9 — IngestService Slimming
 
 ### Goal
 
-Simplify config structure and ownership boundaries while preserving runtime defaults and compatibility.
+Reduce `IngestService` orchestration complexity while preserving ingest behavior and external contracts.
 
-A2.8 must split config responsibilities into smaller units without behaviour drift.
+A2.9 must split ingest responsibilities into smaller units without behaviour drift.
 
 ### Patch Plan
 
-#### Patch 0 — Extract LLM config builders
-- Isolate LLM provider requirements validation from `get_llm_config()`
-- Isolate LLM provider config map assembly
-- Preserve fail-fast and fallback behavior
+#### Patch 0 — Extract metadata preparation boundary
+- Isolate metadata shaping/defaulting from ingest orchestration
+- Preserve existing metadata fields and defaults
 
-#### Patch 1 — Extract vector store config builders
-- Isolate vector provider config assembly from `get_vector_store_config()`
-- Keep defaults and fallback behavior unchanged
+#### Patch 1 — Extract chunking boundary
+- Isolate text chunking setup/invocation from ingest orchestration
+- Preserve chunk count/content behavior
 
-#### Patch 2 — Extract feature-flag normalization boundary
-- Isolate deprecated alias normalization/consistency logic
-- Preserve validation semantics
+#### Patch 2 — Extract vector persistence boundary
+- Isolate vector upsert/persist boundary from ingest orchestration
+- Preserve best-effort/error semantics
 
 #### Patch 3 — External contract parity tests
-- Freeze config-level behavior contracts for core getters
+- Freeze ingest service behavior contracts and snapshots
 - Prove no regressions from decomposition
 
 ### Progress
 
-- [x] Patch 0 — LLM config builders extracted with parity
-- [x] Patch 1 — vector store config builders extracted with parity
-- [x] Patch 2 — feature-flag normalization boundary extracted with parity
+- [ ] Patch 0 — extract metadata preparation boundary
+- [ ] Patch 1 — extract chunking boundary
+- [ ] Patch 2 — extract vector persistence boundary
 - [ ] Patch 3 — external contract parity tests
 
 ### Out of Scope
 
-Do NOT modify during A2.8:
-- IngestService slimming
+Do NOT modify during A2.9:
 - retrieval pipeline redesign
 - reasoning graph redesign beyond active-patch need
 - AnswerService decomposition beyond closed A2.6
 - OpenAIAdapter decomposition beyond closed A2.7
+- config architecture cleanup beyond closed A2.8
 
 ### Definition of Done
 
-A2.8 is complete when:
-- config responsibilities are split into focused units
-- runtime defaults and compatibility remain unchanged
+A2.9 is complete when:
+- ingest responsibilities are split into focused units
+- ingest behavior and contracts remain unchanged
 - behavior parity is validated by tests

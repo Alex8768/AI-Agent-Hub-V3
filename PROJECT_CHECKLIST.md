@@ -11,21 +11,22 @@
 - [x] CI tracing compatibility fix
 - [x] A2.6 AnswerService Decomposition
 - [x] A2.7 OpenAIAdapter Decomposition
+- [x] A2.8 Config Architecture Cleanup
 
-## Current Work — A2.8 Config Architecture Cleanup
+## Current Work — A2.9 IngestService Slimming
 
-- [x] Patch 0 — extract LLM config builders with parity
-- [x] Patch 1 — extract vector store config builders
-- [x] Patch 2 — extract feature-flag normalization boundary
+- [ ] Patch 0 — extract metadata preparation boundary
+- [ ] Patch 1 — extract chunking boundary
+- [ ] Patch 2 — extract vector persistence boundary
 - [ ] Patch 3 — external contract parity snapshots
 
 ## Next
 
-- [ ] A2.9 IngestService Slimming
+- [ ] A2.10 (to be defined)
 
 ## Later
 
-- [ ] A2.9 IngestService Slimming
+- [ ] A2.10 (to be defined)
 
 ## Working Rules
 

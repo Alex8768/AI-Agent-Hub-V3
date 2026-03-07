@@ -6,26 +6,22 @@ Pro Layer Development — Reasoning Stabilization
 
 ## Last Completed Anchor
 
-A2.7 — OpenAIAdapter Decomposition
+A2.8 — Config Architecture Cleanup
 
-OpenAIAdapter branching was decomposed into completion, request-parameter, and streaming boundaries with contract parity preserved.
+Config architecture was decomposed into LLM/vector builder and feature-flag normalization boundaries with contract parity preserved.
 
 ## Current Active Anchor
 
-A2.8 — Config Architecture Cleanup
+A2.9 — IngestService Slimming
 
-Current work is focused on simplifying config architecture without runtime compatibility drift.
-Patch 0 is completed: LLM config builders are extracted with fail-fast/fallback parity.
-Patch 1 is completed: vector store config builders are extracted with defaults/fallback parity.
-Patch 2 is completed: feature-flag normalization boundary is extracted with validation parity.
+Current work is focused on reducing IngestService orchestration complexity without ingest contract drift.
 
 ## Next Anchor
 
-A2.9 — IngestService Slimming
+A2.10 — (to be defined)
 
 Planned focus:
-- reduce orchestration complexity in ingest layer
-- preserve ingest behavior and contracts
+- TBD after A2.9 completion
 
 ## Upcoming Anchors
 
