@@ -17,6 +17,7 @@ A2.14 — Reasoning Control Layer
 
 Current progress:
 - Patch 1 complete: execution policy model added with deterministic bounds and caps.
+- Patch 2 complete: step controller added for policy-bounded planner step selection.
 
 Focus:
 - execution policy boundaries

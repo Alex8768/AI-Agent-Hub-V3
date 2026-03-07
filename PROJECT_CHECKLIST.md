@@ -22,7 +22,7 @@
 ## Current Work — A2.14 Reasoning Control Layer
 
 - [x] Execution policy model
-- [ ] Step controller
+- [x] Step controller
 - [ ] Loop guard
 - [ ] Policy integration with planner
 - [ ] Control behaviour tests

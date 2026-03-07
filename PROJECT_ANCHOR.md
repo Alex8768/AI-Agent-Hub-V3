@@ -42,7 +42,7 @@ Planned files:
 ### Progress
 
 - [x] Patch 1 — execution policy
-- [ ] Patch 2 — step controller
+- [x] Patch 2 — step controller
 - [ ] Patch 3 — loop guard
 - [ ] Patch 4 — policy integration
 - [ ] Patch 5 — control tests
