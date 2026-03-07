@@ -44,6 +44,248 @@ def log_observability(http: Request, *, workspace_id: str, req: AnswerRequest) -
         pass
 
 
+def _apply_diagnostics(
+    *,
+    resp: Any,
+    req: AnswerRequest,
+    http: Request,
+    workspace_id: str,
+    retriever: object,
+    llm: object | None,
+    llm_enabled: bool,
+    llm_provider_name: str,
+    llm_model: str,
+    llm_error: str,
+    session_memory_loaded: bool,
+    session_memory_hit: bool,
+) -> None:
+    try:
+        diag = dict(getattr(resp, "diagnostics", None) or {})
+        diag.setdefault("retrieved_provenance_count", int(len(getattr(resp, "provenance", []) or [])))
+        diag.setdefault("used_chunks_count", int(len(getattr(resp, "used_chunks", []) or [])))
+        diag.setdefault("used_nodes_count", int(len(getattr(resp, "used_nodes", []) or [])))
+        diag.setdefault("used_edges_count", int(len(getattr(resp, "used_edges", []) or [])))
+        diag.setdefault("has_llm", bool(llm is not None))
+        diag.setdefault("query_len", int(len(req.query or "")))
+        diag.setdefault("k", int(req.k or 0))
+        diag.setdefault("graph_depth", int(req.graph_depth or 0))
+        diag.setdefault("session_id", str(getattr(req, "session_id", "") or ""))
+        diag.setdefault("evidence_contract_version", EVIDENCE_CONTRACT_VERSION)
+        contract = dict(diag.get("evidence_contract") or {})
+        diag.setdefault(
+            "evidence_contract_valid_minimal",
+            bool(contract.get("valid_minimal", False)),
+        )
+        diag.setdefault(
+            "evidence_contract_missing_minimal_fields",
+            list(contract.get("missing_minimal_fields") or []),
+        )
+        diag.setdefault(
+            "evidence_contract_missing_minimal_count",
+            int(contract.get("missing_minimal_count") or len(contract.get("missing_minimal_fields") or [])),
+        )
+        diag.setdefault(
+            "evidence_contract_minimal_coverage_score",
+            float(contract.get("minimal_coverage_score") or 0.0),
+        )
+        if bool(diag.get("evidence_contract_valid_minimal", False)):
+            diag.setdefault("evidence_contract_gate_reason", "ok")
+        else:
+            missing = list(diag.get("evidence_contract_missing_minimal_fields") or [])
+            if missing:
+                diag.setdefault("evidence_contract_gate_reason", "missing:" + ",".join(str(x) for x in missing))
+            else:
+                diag.setdefault("evidence_contract_gate_reason", "invalid")
+        diag.setdefault(
+            "self_check",
+            {
+                "version": "v1",
+                "status": (
+                    "pass"
+                    if (
+                        float(diag.get("evidence_contract_minimal_coverage_score", 0.0) or 0.0)
+                        >= float(SELF_CHECK_MINIMAL_COVERAGE_SCORE_MIN)
+                        and int(diag.get("evidence_contract_missing_minimal_count", 0) or 0)
+                        <= int(SELF_CHECK_MISSING_MINIMAL_COUNT_MAX)
+                    )
+                    else "warn"
+                ),
+                "reasons": (
+                    []
+                    if (
+                        float(diag.get("evidence_contract_minimal_coverage_score", 0.0) or 0.0)
+                        >= float(SELF_CHECK_MINIMAL_COVERAGE_SCORE_MIN)
+                        and int(diag.get("evidence_contract_missing_minimal_count", 0) or 0)
+                        <= int(SELF_CHECK_MISSING_MINIMAL_COUNT_MAX)
+                    )
+                    else [
+                        *(
+                            [
+                                f"threshold:minimal_coverage_score<{float(SELF_CHECK_MINIMAL_COVERAGE_SCORE_MIN):.1f}"
+                            ]
+                            if float(diag.get("evidence_contract_minimal_coverage_score", 0.0) or 0.0)
+                            < float(SELF_CHECK_MINIMAL_COVERAGE_SCORE_MIN)
+                            else []
+                        ),
+                        *(
+                            [
+                                f"threshold:missing_minimal_count>{int(SELF_CHECK_MISSING_MINIMAL_COUNT_MAX)}"
+                            ]
+                            if int(diag.get("evidence_contract_missing_minimal_count", 0) or 0)
+                            > int(SELF_CHECK_MISSING_MINIMAL_COUNT_MAX)
+                            else []
+                        ),
+                    ]
+                ),
+                "policy_mode": "warning_only",
+                "inputs": {
+                    "evidence_contract_valid_minimal": bool(
+                        diag.get("evidence_contract_valid_minimal", False)
+                    ),
+                    "evidence_contract_missing_minimal_count": int(
+                        diag.get("evidence_contract_missing_minimal_count", 0) or 0
+                    ),
+                    "evidence_contract_minimal_coverage_score": float(
+                        diag.get("evidence_contract_minimal_coverage_score", 0.0) or 0.0
+                    ),
+                },
+                "thresholds": {
+                    "minimal_coverage_score_min": float(SELF_CHECK_MINIMAL_COVERAGE_SCORE_MIN),
+                    "missing_minimal_count_max": int(SELF_CHECK_MISSING_MINIMAL_COUNT_MAX),
+                },
+            },
+        )
+        self_check = dict(diag.get("self_check") or {})
+        if str(self_check.get("status", "")) == "warn":
+            resp.warnings = list(getattr(resp, "warnings", []) or [])
+            if "self_check_warning" not in resp.warnings:
+                resp.warnings.append("self_check_warning")
+        diag.setdefault(
+            "verify",
+            {
+                "version": VERIFY_DIAGNOSTICS_VERSION,
+                "status": (
+                    "pass"
+                    if (
+                        str(self_check.get("status", "") or "")
+                        == str(VERIFY_SELF_CHECK_STATUS_REQUIRED)
+                        and str(self_check.get("policy_mode", "") or "")
+                        == str(VERIFY_SELF_CHECK_POLICY_MODE_REQUIRED)
+                        and int(len(self_check.get("reasons") or []))
+                        <= int(VERIFY_SELF_CHECK_REASONS_COUNT_MAX)
+                    )
+                    else "warn"
+                ),
+                "reasons": (
+                    []
+                    if (
+                        str(self_check.get("status", "") or "")
+                        == str(VERIFY_SELF_CHECK_STATUS_REQUIRED)
+                        and str(self_check.get("policy_mode", "") or "")
+                        == str(VERIFY_SELF_CHECK_POLICY_MODE_REQUIRED)
+                        and int(len(self_check.get("reasons") or []))
+                        <= int(VERIFY_SELF_CHECK_REASONS_COUNT_MAX)
+                    )
+                    else [
+                        *(
+                            [f"self_check_status!={VERIFY_SELF_CHECK_STATUS_REQUIRED}"]
+                            if str(self_check.get("status", "") or "")
+                            != str(VERIFY_SELF_CHECK_STATUS_REQUIRED)
+                            else []
+                        ),
+                        *(
+                            [f"self_check_policy_mode!={VERIFY_SELF_CHECK_POLICY_MODE_REQUIRED}"]
+                            if str(self_check.get("policy_mode", "") or "")
+                            != str(VERIFY_SELF_CHECK_POLICY_MODE_REQUIRED)
+                            else []
+                        ),
+                        *(
+                            [f"self_check_reasons_count>{int(VERIFY_SELF_CHECK_REASONS_COUNT_MAX)}"]
+                            if int(len(self_check.get("reasons") or []))
+                            > int(VERIFY_SELF_CHECK_REASONS_COUNT_MAX)
+                            else []
+                        ),
+                    ]
+                ),
+                "policy_mode": "warning_only",
+                "inputs": {
+                    "planner_path_used": bool(diag.get("planner_path_used", False)),
+                    "self_check_status": str(self_check.get("status", "") or ""),
+                    "self_check_policy_mode": str(self_check.get("policy_mode", "") or ""),
+                    "self_check_reasons_count": int(len(self_check.get("reasons") or [])),
+                },
+                "thresholds": {
+                    "required_self_check_status": str(VERIFY_SELF_CHECK_STATUS_REQUIRED),
+                    "required_self_check_policy_mode": str(VERIFY_SELF_CHECK_POLICY_MODE_REQUIRED),
+                    "self_check_reasons_count_max": int(VERIFY_SELF_CHECK_REASONS_COUNT_MAX),
+                },
+            },
+        )
+        verify = dict(diag.get("verify") or {})
+        if str(verify.get("status", "")) == "warn":
+            resp.warnings = list(getattr(resp, "warnings", []) or [])
+            if "verify_warning" not in resp.warnings:
+                resp.warnings.append("verify_warning")
+        diag.setdefault("session_memory_loaded", bool(session_memory_loaded))
+        diag.setdefault("session_memory_hit", bool(session_memory_hit))
+        diag.setdefault("evidence_type_counts", {})
+        # top_evidence: prefer retriever snapshot; fallback to response used_chunks
+        try:
+            tops = list(getattr(retriever, "last_top_evidence", []) or [])
+        except Exception:
+            tops = []
+        if not tops:
+            try:
+                tops = [f"chunk:{x}" for x in (getattr(resp, "used_chunks", []) or [])[:10]]
+            except Exception:
+                tops = []
+        if session_memory_hit:
+            sid = str(getattr(req, "session_id", "") or "default")
+            tops = [f"memory:session:{sid}:last_answer", *list(tops or [])]
+            tops = tops[:10]
+        diag.setdefault("top_evidence", tops)
+        # trace_id must be present in diagnostics (debug snapshot expects it)
+        rid = str(get_request_id(http) or "")
+        try:
+            from src.observability.trace import make_trace_id
+
+            diag.setdefault(
+                "trace_id",
+                make_trace_id(
+                    workspace_id=str(workspace_id or ""),
+                    request_id=rid,
+                ),
+            )
+        except Exception:
+            # Fallback: stable correlation id even without tracing deps
+            diag.setdefault("trace_id", rid or "")
+
+        # LLM diagnostics
+        diag.setdefault("llm_enabled", bool(llm_enabled))
+        diag.setdefault("llm_provider", llm_provider_name)
+        diag.setdefault("llm_model", llm_model)
+        diag.setdefault("llm_error", llm_error)
+
+        # Memory evidence observability (A2.1)
+        try:
+            etc = dict(diag.get("evidence_type_counts") or {})
+            if session_memory_hit:
+                etc["memory"] = int(etc.get("memory", 0)) + 1
+            diag["evidence_type_counts"] = etc
+        except Exception:
+            pass
+
+        # Retriever stats (best-effort)
+        try:
+            diag.setdefault("retriever_stats", dict(getattr(retriever, "last_stats", {}) or {}))
+        except Exception:
+            pass
+
+        resp.diagnostics = diag
+    except Exception:
+        pass
+
+
 class RetrieverAdapter:
     def __init__(self, *, engine: object, hybrid: object, workspace_id: str):
         self._engine = engine
@@ -248,230 +490,20 @@ class AnswerService:
             pass
 
         # base diagnostics + trace
-        try:
-            diag = dict(getattr(resp, "diagnostics", None) or {})
-            diag.setdefault("retrieved_provenance_count", int(len(getattr(resp, "provenance", []) or [])))
-            diag.setdefault("used_chunks_count", int(len(getattr(resp, "used_chunks", []) or [])))
-            diag.setdefault("used_nodes_count", int(len(getattr(resp, "used_nodes", []) or [])))
-            diag.setdefault("used_edges_count", int(len(getattr(resp, "used_edges", []) or [])))
-            diag.setdefault("has_llm", bool(llm is not None))
-            diag.setdefault("query_len", int(len(req.query or "")))
-            diag.setdefault("k", int(req.k or 0))
-            diag.setdefault("graph_depth", int(req.graph_depth or 0))
-            diag.setdefault("session_id", str(getattr(req, "session_id", "") or ""))
-            diag.setdefault("evidence_contract_version", EVIDENCE_CONTRACT_VERSION)
-            contract = dict(diag.get("evidence_contract") or {})
-            diag.setdefault(
-                "evidence_contract_valid_minimal",
-                bool(contract.get("valid_minimal", False)),
-            )
-            diag.setdefault(
-                "evidence_contract_missing_minimal_fields",
-                list(contract.get("missing_minimal_fields") or []),
-            )
-            diag.setdefault(
-                "evidence_contract_missing_minimal_count",
-                int(contract.get("missing_minimal_count") or len(contract.get("missing_minimal_fields") or [])),
-            )
-            diag.setdefault(
-                "evidence_contract_minimal_coverage_score",
-                float(contract.get("minimal_coverage_score") or 0.0),
-            )
-            if bool(diag.get("evidence_contract_valid_minimal", False)):
-                diag.setdefault("evidence_contract_gate_reason", "ok")
-            else:
-                missing = list(diag.get("evidence_contract_missing_minimal_fields") or [])
-                if missing:
-                    diag.setdefault("evidence_contract_gate_reason", "missing:" + ",".join(str(x) for x in missing))
-                else:
-                    diag.setdefault("evidence_contract_gate_reason", "invalid")
-            diag.setdefault(
-                "self_check",
-                {
-                    "version": "v1",
-                    "status": (
-                        "pass"
-                        if (
-                            float(diag.get("evidence_contract_minimal_coverage_score", 0.0) or 0.0)
-                            >= float(SELF_CHECK_MINIMAL_COVERAGE_SCORE_MIN)
-                            and int(diag.get("evidence_contract_missing_minimal_count", 0) or 0)
-                            <= int(SELF_CHECK_MISSING_MINIMAL_COUNT_MAX)
-                        )
-                        else "warn"
-                    ),
-                    "reasons": (
-                        []
-                        if (
-                            float(diag.get("evidence_contract_minimal_coverage_score", 0.0) or 0.0)
-                            >= float(SELF_CHECK_MINIMAL_COVERAGE_SCORE_MIN)
-                            and int(diag.get("evidence_contract_missing_minimal_count", 0) or 0)
-                            <= int(SELF_CHECK_MISSING_MINIMAL_COUNT_MAX)
-                        )
-                        else [
-                            *(
-                                [
-                                    f"threshold:minimal_coverage_score<{float(SELF_CHECK_MINIMAL_COVERAGE_SCORE_MIN):.1f}"
-                                ]
-                                if float(diag.get("evidence_contract_minimal_coverage_score", 0.0) or 0.0)
-                                < float(SELF_CHECK_MINIMAL_COVERAGE_SCORE_MIN)
-                                else []
-                            ),
-                            *(
-                                [
-                                    f"threshold:missing_minimal_count>{int(SELF_CHECK_MISSING_MINIMAL_COUNT_MAX)}"
-                                ]
-                                if int(diag.get("evidence_contract_missing_minimal_count", 0) or 0)
-                                > int(SELF_CHECK_MISSING_MINIMAL_COUNT_MAX)
-                                else []
-                            ),
-                        ]
-                    ),
-                    "policy_mode": "warning_only",
-                    "inputs": {
-                        "evidence_contract_valid_minimal": bool(
-                            diag.get("evidence_contract_valid_minimal", False)
-                        ),
-                        "evidence_contract_missing_minimal_count": int(
-                            diag.get("evidence_contract_missing_minimal_count", 0) or 0
-                        ),
-                        "evidence_contract_minimal_coverage_score": float(
-                            diag.get("evidence_contract_minimal_coverage_score", 0.0) or 0.0
-                        ),
-                    },
-                    "thresholds": {
-                        "minimal_coverage_score_min": float(SELF_CHECK_MINIMAL_COVERAGE_SCORE_MIN),
-                        "missing_minimal_count_max": int(SELF_CHECK_MISSING_MINIMAL_COUNT_MAX),
-                    },
-                },
-            )
-            self_check = dict(diag.get("self_check") or {})
-            if str(self_check.get("status", "")) == "warn":
-                resp.warnings = list(getattr(resp, "warnings", []) or [])
-                if "self_check_warning" not in resp.warnings:
-                    resp.warnings.append("self_check_warning")
-            diag.setdefault(
-                "verify",
-                {
-                    "version": VERIFY_DIAGNOSTICS_VERSION,
-                    "status": (
-                        "pass"
-                        if (
-                            str(self_check.get("status", "") or "")
-                            == str(VERIFY_SELF_CHECK_STATUS_REQUIRED)
-                            and str(self_check.get("policy_mode", "") or "")
-                            == str(VERIFY_SELF_CHECK_POLICY_MODE_REQUIRED)
-                            and int(len(self_check.get("reasons") or []))
-                            <= int(VERIFY_SELF_CHECK_REASONS_COUNT_MAX)
-                        )
-                        else "warn"
-                    ),
-                    "reasons": (
-                        []
-                        if (
-                            str(self_check.get("status", "") or "")
-                            == str(VERIFY_SELF_CHECK_STATUS_REQUIRED)
-                            and str(self_check.get("policy_mode", "") or "")
-                            == str(VERIFY_SELF_CHECK_POLICY_MODE_REQUIRED)
-                            and int(len(self_check.get("reasons") or []))
-                            <= int(VERIFY_SELF_CHECK_REASONS_COUNT_MAX)
-                        )
-                        else [
-                            *(
-                                [f"self_check_status!={VERIFY_SELF_CHECK_STATUS_REQUIRED}"]
-                                if str(self_check.get("status", "") or "")
-                                != str(VERIFY_SELF_CHECK_STATUS_REQUIRED)
-                                else []
-                            ),
-                            *(
-                                [f"self_check_policy_mode!={VERIFY_SELF_CHECK_POLICY_MODE_REQUIRED}"]
-                                if str(self_check.get("policy_mode", "") or "")
-                                != str(VERIFY_SELF_CHECK_POLICY_MODE_REQUIRED)
-                                else []
-                            ),
-                            *(
-                                [f"self_check_reasons_count>{int(VERIFY_SELF_CHECK_REASONS_COUNT_MAX)}"]
-                                if int(len(self_check.get("reasons") or []))
-                                > int(VERIFY_SELF_CHECK_REASONS_COUNT_MAX)
-                                else []
-                            ),
-                        ]
-                    ),
-                    "policy_mode": "warning_only",
-                    "inputs": {
-                        "planner_path_used": bool(diag.get("planner_path_used", False)),
-                        "self_check_status": str(self_check.get("status", "") or ""),
-                        "self_check_policy_mode": str(self_check.get("policy_mode", "") or ""),
-                        "self_check_reasons_count": int(len(self_check.get("reasons") or [])),
-                    },
-                    "thresholds": {
-                        "required_self_check_status": str(VERIFY_SELF_CHECK_STATUS_REQUIRED),
-                        "required_self_check_policy_mode": str(VERIFY_SELF_CHECK_POLICY_MODE_REQUIRED),
-                        "self_check_reasons_count_max": int(VERIFY_SELF_CHECK_REASONS_COUNT_MAX),
-                    },
-                },
-            )
-            verify = dict(diag.get("verify") or {})
-            if str(verify.get("status", "")) == "warn":
-                resp.warnings = list(getattr(resp, "warnings", []) or [])
-                if "verify_warning" not in resp.warnings:
-                    resp.warnings.append("verify_warning")
-            diag.setdefault("session_memory_loaded", bool(session_memory_loaded))
-            diag.setdefault("session_memory_hit", bool(session_memory_hit))
-            diag.setdefault("evidence_type_counts", {})
-                        # top_evidence: prefer retriever snapshot; fallback to response used_chunks
-            try:
-                tops = list(getattr(retriever, "last_top_evidence", []) or [])
-            except Exception:
-                tops = []
-            if not tops:
-                try:
-                    tops = [f"chunk:{x}" for x in (getattr(resp, "used_chunks", []) or [])[:10]]
-                except Exception:
-                    tops = []
-            if session_memory_hit:
-                sid = str(getattr(req, "session_id", "") or "default")
-                tops = [f"memory:session:{sid}:last_answer", *list(tops or [])]
-                tops = tops[:10]
-            diag.setdefault("top_evidence", tops)            # trace_id must be present in diagnostics (debug snapshot expects it)
-            rid = str(get_request_id(http) or "")
-            try:
-                from src.observability.trace import make_trace_id
-
-                diag.setdefault(
-                    "trace_id",
-                    make_trace_id(
-                        workspace_id=str(workspace_id or ""),
-                        request_id=rid,
-                    ),
-                )
-            except Exception:
-                # Fallback: stable correlation id even without tracing deps
-                diag.setdefault("trace_id", rid or "")
-
-            # LLM diagnostics
-            diag.setdefault("llm_enabled", bool(llm_enabled))
-            diag.setdefault("llm_provider", llm_provider_name)
-            diag.setdefault("llm_model", llm_model)
-            diag.setdefault("llm_error", llm_error)
-
-            # Memory evidence observability (A2.1)
-            try:
-                etc = dict(diag.get("evidence_type_counts") or {})
-                if session_memory_hit:
-                    etc["memory"] = int(etc.get("memory", 0)) + 1
-                diag["evidence_type_counts"] = etc
-            except Exception:
-                pass
-
-            # Retriever stats (best-effort)
-            try:
-                diag.setdefault("retriever_stats", dict(getattr(retriever, "last_stats", {}) or {}))
-            except Exception:
-                pass
-
-            resp.diagnostics = diag
-        except Exception:
-            pass
+        _apply_diagnostics(
+            resp=resp,
+            req=req,
+            http=http,
+            workspace_id=workspace_id,
+            retriever=retriever,
+            llm=llm,
+            llm_enabled=llm_enabled,
+            llm_provider_name=llm_provider_name,
+            llm_model=llm_model,
+            llm_error=llm_error,
+            session_memory_loaded=session_memory_loaded,
+            session_memory_hit=session_memory_hit,
+        )
 
         # A2.1 session memory (MVP): persist latest turn per session, best-effort.
         try:
