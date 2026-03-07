@@ -15,17 +15,29 @@
 - [x] A2.9 IngestService Slimming
 - [x] A2.10 Reasoning Quality Loop
 
-## Current Work — A2.11 (to be defined)
+## Current Work — A2.11 Multi-step Reasoning Planner
 
-- [ ] Patch plan pending definition
+- [ ] Plan model
+- [ ] Planner implementation
+- [ ] Step executor
+- [ ] Engine integration
+- [ ] max_steps safety guard
 
 ## Next
 
-- [ ] A2.12 (to be defined)
+- [ ] A2.12 Reasoning Trace + Replay
 
 ## Later
 
-- [ ] A2.12 (to be defined)
+- [ ] A2.13 (to be defined)
+
+## A2.12 Reasoning Trace + Replay (predefined, not active)
+
+- [ ] Trace model
+- [ ] Trace collector
+- [ ] diagnostics.reasoning_trace exposure
+- [ ] Trace serialization
+- [ ] Replay utility
 
 ## Working Rules
 
