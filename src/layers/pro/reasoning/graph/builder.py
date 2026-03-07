@@ -1,4 +1,5 @@
 from typing import Any
+from functools import partial
 
 from langgraph.graph import StateGraph, END
 
@@ -26,10 +27,10 @@ def build_reasoning_graph(llm: Any, retriever: Any) -> StateGraph:
     builder = StateGraph(AgentState)
     
     # Добавляем узлы
-    builder.add_node("think", lambda state: think_node(state, llm))
-    builder.add_node("search", lambda state: search_node(state, retriever))
-    builder.add_node("reason", lambda state: reason_node(state, llm))
-    builder.add_node("answer", answer_node)
+    builder.add_node("think", partial(think_node, llm=llm))
+    builder.add_node("search", partial(search_node, retriever=retriever))
+    builder.add_node("reason", partial(reason_node, llm=llm))
+    builder.add_node("answer", partial(answer_node, llm=llm))
     
     # Устанавливаем входную точку
     builder.set_entry_point("think")

@@ -173,20 +173,52 @@ async def search_node(state: AgentState, retriever: Any) -> AgentState:
         
         try:
             # Вызываем гибридный ретривер
-            result = await retriever.retrieve(
-                query=state.query,
-                k=state.k,
-                graph_depth=state.graph_depth,
-            )
+            try:
+                result = await retriever.retrieve(
+                    query=state.query,
+                    k=state.k,
+                    graph_depth=state.graph_depth,
+                )
+            except TypeError:
+                # Compatibility path: some retrievers expect single request object.
+                from types import SimpleNamespace
+
+                req = SimpleNamespace(
+                    query=state.query,
+                    k=state.k,
+                    graph_depth=state.graph_depth,
+                    filters={},
+                )
+                result = await retriever.retrieve(req)
             
             # Обновляем состояние из результатов поиска
             from src.layers.pro.reasoning.evidence_normalizer import normalize_retrieval_result
-            
-            prov, chunks, nodes, edges, preview_items = normalize_retrieval_result({
-                "results": [{"chunk_id": c} for c in getattr(result, "results", [])],
-                "graph": getattr(result, "graph", {}),
-                "evidence": getattr(result, "evidence", [])
-            })
+
+            if isinstance(result, dict):
+                raw_results = list(result.get("results", []) or [])
+                raw_graph = result.get("graph", {}) or {}
+                raw_evidence = list(result.get("evidence", []) or [])
+            else:
+                raw_results = list(getattr(result, "results", []) or [])
+                raw_graph = getattr(result, "graph", {}) or {}
+                raw_evidence = list(getattr(result, "evidence", []) or [])
+
+            mapped_results: list[dict[str, str]] = []
+            for item in raw_results:
+                if isinstance(item, dict):
+                    cid = item.get("chunk_id") or item.get("id") or item.get("doc_id")
+                else:
+                    cid = str(item or "")
+                if cid:
+                    mapped_results.append({"chunk_id": str(cid)})
+
+            prov, chunks, nodes, edges, preview_items = normalize_retrieval_result(
+                {
+                    "results": mapped_results,
+                    "graph": raw_graph,
+                    "evidence": raw_evidence,
+                }
+            )
             
             # Добавляем метрики в спан
             span.set_attribute("evidence.provenance_count", len(prov))

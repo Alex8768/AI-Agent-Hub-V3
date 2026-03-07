@@ -46,10 +46,31 @@ class ReasoningEngine:
 
         # Запускаем граф
         try:
-            final_state = await graph.ainvoke(initial_state)
+            runtime_graph = graph.compile() if hasattr(graph, "compile") else graph
+            if hasattr(runtime_graph, "ainvoke"):
+                raw_state = await runtime_graph.ainvoke(initial_state)
+            elif hasattr(runtime_graph, "invoke"):
+                import asyncio
+
+                raw_state = await asyncio.to_thread(runtime_graph.invoke, initial_state)
+            else:
+                raise RuntimeError("Reasoning graph runtime does not support invoke/ainvoke")
+
+            # LangGraph runtime may return dict-like state snapshots.
+            if isinstance(raw_state, AgentState):
+                final_state = raw_state
+            elif isinstance(raw_state, dict):
+                final_state = AgentState.model_validate(raw_state)
+            else:
+                raise RuntimeError(f"Unsupported final state type: {type(raw_state).__name__}")
         except Exception as e:
             # В случае ошибки графа - падаем на старый путь
             return await self._synthesize_fallback(request, error=str(e))
+
+        # Safety net: if planner graph produced an internal error marker,
+        # fallback to the one-pass path with established timeout/error behavior.
+        if getattr(final_state, "error", None):
+            return await self._synthesize_fallback(request, error=str(final_state.error))
 
         # Собираем ответ из финального состояния
         from src.core.config import get_settings

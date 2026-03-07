@@ -23,6 +23,9 @@ class _FakeLLM:
 
     async def generate(self, prompt: str) -> str:
         self.prompts.append(prompt)
+        # think_node expects JSON action output
+        if "Output format:" in prompt:
+            return '{"plan":["SEARCH","ANSWER"],"reason":"Need evidence then answer"}'
         return "LLM_ANSWER"
 
 
@@ -39,7 +42,9 @@ async def test_synthesize_uses_llm_when_injected():
     assert llm.prompts, "LLM should have been called"
     assert "Question: Q?" in llm.prompts[0]
     assert "Context:" in llm.prompts[0]
-    assert "doc:X#1" in llm.prompts[0]  # provenance/preview makes it into prompt
+    assert any("doc:X#1" in p for p in llm.prompts)  # retrieval context reaches answer prompt
     diag = dict(getattr(resp, "diagnostics", {}) or {})
+    assert "fallback_reason" not in diag
+    assert "agent_iterations" in diag
     assert "agent_current_action" in diag
     assert "agent_current_step" in diag
