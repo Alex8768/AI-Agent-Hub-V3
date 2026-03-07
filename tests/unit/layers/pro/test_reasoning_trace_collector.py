@@ -24,6 +24,11 @@ def test_collect_reasoning_trace_builds_expected_contract():
             },
         ],
         quality={"coverage": 1.0, "confidence": 0.9},
+        timeline={
+            "events": [
+                {"event_type": "planner", "step_index": 0, "started_at_ms": 1, "ended_at_ms": 4},
+            ]
+        },
         answer="Paris is the capital of France.",
     )
     assert trace == {
@@ -35,6 +40,20 @@ def test_collect_reasoning_trace_builds_expected_contract():
             {"status": "pass", "reasons": ["supported"]},
         ],
         "quality": {"coverage": 1.0, "confidence": 0.9},
+        "timeline": {
+            "events": [
+                {
+                    "event_type": "planner",
+                    "step_index": 0,
+                    "started_at_ms": 1,
+                    "ended_at_ms": 4,
+                    "duration_ms": 3,
+                    "status": "",
+                    "metadata": {},
+                }
+            ],
+            "total_duration_ms": 3,
+        },
         "answer": "Paris is the capital of France.",
     }
 
@@ -48,6 +67,7 @@ def test_collect_reasoning_trace_normalizes_missing_fields():
             {"reasoning_output": "", "verify_status": "", "verify_reasons": []},
         ],
         quality={},
+        timeline={},
         answer="  answer  ",
     )
     assert trace["query"] == "query"
@@ -58,6 +78,7 @@ def test_collect_reasoning_trace_normalizes_missing_fields():
         {"status": "", "reasons": []},
     ]
     assert trace["quality"] == {}
+    assert trace["timeline"] == {"events": [], "total_duration_ms": 0}
     assert trace["answer"] == "answer"
 
 
@@ -67,6 +88,7 @@ def test_collect_reasoning_trace_handles_empty_structures():
         plan={},
         step_results=[],
         quality={},
+        timeline={},
         answer="",
     )
     assert trace == {
@@ -75,5 +97,6 @@ def test_collect_reasoning_trace_handles_empty_structures():
         "steps": [],
         "verify_results": [],
         "quality": {},
+        "timeline": {"events": [], "total_duration_ms": 0},
         "answer": "",
     }

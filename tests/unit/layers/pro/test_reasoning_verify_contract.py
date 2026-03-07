@@ -82,9 +82,10 @@ async def test_verify_contract_is_stable_on_planner_path():
     assert isinstance((rq.get("confidence") or {}).get("confidence_score"), float)
     assert isinstance((rq.get("retry") or {}).get("should_retry"), bool)
     rt = dict(diag.get("reasoning_trace") or {})
-    assert set(rt.keys()) == {"query", "plan", "steps", "verify_results", "quality", "answer"}
+    assert set(rt.keys()) == {"query", "plan", "steps", "verify_results", "quality", "timeline", "answer"}
     assert isinstance(rt.get("plan"), list)
     assert isinstance(rt.get("verify_results"), list)
+    assert isinstance(rt.get("timeline"), dict)
 
 
 @pytest.mark.asyncio
@@ -114,6 +115,7 @@ async def test_verify_contract_warns_on_fallback_with_self_check_issues():
     assert isinstance((rq.get("confidence") or {}).get("confidence_score"), float)
     assert isinstance((rq.get("retry") or {}).get("loop_guard_triggered"), bool)
     rt = dict(diag.get("reasoning_trace") or {})
-    assert set(rt.keys()) == {"query", "plan", "steps", "verify_results", "quality", "answer"}
+    assert set(rt.keys()) == {"query", "plan", "steps", "verify_results", "quality", "timeline", "answer"}
     assert isinstance(rt.get("steps"), list)
     assert isinstance(rt.get("quality"), dict)
+    assert isinstance(rt.get("timeline"), dict)

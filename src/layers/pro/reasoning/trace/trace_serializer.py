@@ -14,6 +14,7 @@ def _normalize_trace_payload(trace: dict[str, Any]) -> ReasoningTrace:
         steps=list(payload.get("steps") or []),
         verify_results=list(payload.get("verify_results") or []),
         quality=dict(payload.get("quality") or {}),
+        timeline=dict(payload.get("timeline") or {}),
         answer=str(payload.get("answer", "") or ""),
     )
 

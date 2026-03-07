@@ -41,6 +41,7 @@ def collect_reasoning_trace(
     plan: dict[str, Any],
     step_results: list[dict[str, Any]],
     quality: dict[str, Any],
+    timeline: dict[str, Any] | None = None,
     answer: str,
 ) -> ReasoningTrace:
     """Collect trace payload from planner outputs and quality diagnostics."""
@@ -50,5 +51,6 @@ def collect_reasoning_trace(
         steps=_extract_reasoning_outputs(step_results),
         verify_results=_extract_verify_results(step_results),
         quality=dict(quality or {}),
+        timeline=dict(timeline or {}),
         answer=answer,
     )

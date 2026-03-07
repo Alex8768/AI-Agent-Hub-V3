@@ -190,6 +190,7 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
         "steps",
         "verify_results",
         "quality",
+        "timeline",
         "answer",
     }
     assert isinstance(rt.get("query"), str)
@@ -197,6 +198,7 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
     assert isinstance(rt.get("steps"), list)
     assert isinstance(rt.get("verify_results"), list)
     assert isinstance(rt.get("quality"), dict)
+    assert isinstance(rt.get("timeline"), dict)
     assert isinstance(rt.get("answer"), str)
 
     # cleanup

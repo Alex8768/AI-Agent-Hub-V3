@@ -17,6 +17,7 @@ def test_replay_reasoning_trace_roundtrip_reproduces_normalized_trace():
             {"status": "warn", "reasons": ["needs_support"]},
         ],
         "quality": {"coverage": 0.9},
+        "timeline": {"events": [{"event_type": "planner", "step_index": 0, "started_at_ms": 5, "ended_at_ms": 9}]},
         "answer": "  A  ",
     }
     replayed = replay_reasoning_trace(trace=trace)
@@ -29,6 +30,20 @@ def test_replay_reasoning_trace_roundtrip_reproduces_normalized_trace():
             {"status": "warn", "reasons": ["needs_support"]},
         ],
         "quality": {"coverage": 0.9},
+        "timeline": {
+            "events": [
+                {
+                    "event_type": "planner",
+                    "step_index": 0,
+                    "started_at_ms": 5,
+                    "ended_at_ms": 9,
+                    "duration_ms": 4,
+                    "status": "",
+                    "metadata": {},
+                }
+            ],
+            "total_duration_ms": 4,
+        },
         "answer": "A",
     }
 
@@ -40,6 +55,7 @@ def test_replay_reasoning_trace_is_deterministic_across_runs():
         "steps": ["o1", "o2"],
         "verify_results": [{"status": "pass", "reasons": []}, {"status": "pass", "reasons": []}],
         "quality": {"confidence": 0.8},
+        "timeline": {},
         "answer": "A",
     }
     replay_a = replay_reasoning_trace(trace=trace)
@@ -54,6 +70,7 @@ def test_replay_reasoning_trace_payload_reproduces_same_result():
         "steps": ["output"],
         "verify_results": [{"status": "pass", "reasons": []}],
         "quality": {},
+        "timeline": {},
         "answer": "A",
     }
     payload = serialize_reasoning_trace(trace=trace)

@@ -18,6 +18,11 @@ def test_serialize_reasoning_trace_is_deterministic():
             {"status": "warn", "reasons": ["needs_support"]},
         ],
         "quality": {"confidence": 0.9, "coverage": 1.0},
+        "timeline": {
+            "events": [
+                {"event_type": "planner", "step_index": 0, "started_at_ms": 1, "ended_at_ms": 3}
+            ]
+        },
         "answer": "A",
     }
     payload_a = serialize_reasoning_trace(trace=trace)
@@ -27,6 +32,8 @@ def test_serialize_reasoning_trace_is_deterministic():
         '{"answer":"A","plan":["step one","step two"],'
         '"quality":{"confidence":0.9,"coverage":1.0},"query":"Q",'
         '"steps":["out one","out two"],'
+        '"timeline":{"events":[{"duration_ms":2,"ended_at_ms":3,"event_type":"planner","metadata":{},'
+        '"started_at_ms":1,"status":"","step_index":0}],"total_duration_ms":2},'
         '"verify_results":[{"reasons":[],"status":"pass"},'
         '{"reasons":["needs_support"],"status":"warn"}]}'
     )
@@ -36,7 +43,8 @@ def test_deserialize_reasoning_trace_normalizes_shape():
     payload = (
         '{"query":"  Q  ","plan":["  s1  "," "],"steps":["  out  "],'
         '"verify_results":[{"status":" pass ","reasons":["  r1  "," "]}],'
-        '"quality":{"x":1},"answer":"  A  "}'
+        '"quality":{"x":1},"timeline":{"events":[{"event_type":" verify ","step_index":2,'
+        '"started_at_ms":10,"ended_at_ms":15}]},"answer":"  A  "}'
     )
     trace = deserialize_reasoning_trace(payload=payload)
     assert trace == {
@@ -45,6 +53,20 @@ def test_deserialize_reasoning_trace_normalizes_shape():
         "steps": ["out"],
         "verify_results": [{"status": "pass", "reasons": ["r1"]}],
         "quality": {"x": 1},
+        "timeline": {
+            "events": [
+                {
+                    "event_type": "verify",
+                    "step_index": 2,
+                    "started_at_ms": 10,
+                    "ended_at_ms": 15,
+                    "duration_ms": 5,
+                    "status": "",
+                    "metadata": {},
+                }
+            ],
+            "total_duration_ms": 5,
+        },
         "answer": "A",
     }
 

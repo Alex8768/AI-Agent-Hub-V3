@@ -13,6 +13,7 @@ def test_build_reasoning_trace_keeps_expected_contract_shape():
             {"status": "pass", "reasons": ["supported by evidence"]},
         ],
         quality={"coverage": 1.0, "confidence": 0.95},
+        timeline={"events": [{"event_type": "planner", "step_index": 0, "started_at_ms": 1, "ended_at_ms": 3}]},
         answer="Paris is the capital of France.",
     )
     assert trace == {
@@ -24,6 +25,20 @@ def test_build_reasoning_trace_keeps_expected_contract_shape():
             {"status": "pass", "reasons": ["supported by evidence"]},
         ],
         "quality": {"coverage": 1.0, "confidence": 0.95},
+        "timeline": {
+            "events": [
+                {
+                    "event_type": "planner",
+                    "step_index": 0,
+                    "started_at_ms": 1,
+                    "ended_at_ms": 3,
+                    "duration_ms": 2,
+                    "status": "",
+                    "metadata": {},
+                }
+            ],
+            "total_duration_ms": 2,
+        },
         "answer": "Paris is the capital of France.",
     }
 
@@ -38,6 +53,7 @@ def test_build_reasoning_trace_normalizes_whitespace_and_empty_values():
             {"status": None, "reasons": "  only-reason  "},
         ],
         quality={"score": 0.7},
+        timeline={"events": [{"event_type": " verify ", "step_index": 1, "started_at_ms": 10, "ended_at_ms": 12}]},
         answer="  final  ",
     )
     assert trace["query"] == "query"
@@ -48,6 +64,20 @@ def test_build_reasoning_trace_normalizes_whitespace_and_empty_values():
         {"status": "", "reasons": ["only-reason"]},
     ]
     assert trace["quality"] == {"score": 0.7}
+    assert trace["timeline"] == {
+        "events": [
+            {
+                "event_type": "verify",
+                "step_index": 1,
+                "started_at_ms": 10,
+                "ended_at_ms": 12,
+                "duration_ms": 2,
+                "status": "",
+                "metadata": {},
+            }
+        ],
+        "total_duration_ms": 2,
+    }
     assert trace["answer"] == "final"
 
 
@@ -58,6 +88,7 @@ def test_build_reasoning_trace_handles_empty_inputs_with_stable_defaults():
         steps=[],
         verify_results=[],
         quality={},
+        timeline={},
         answer="",
     )
     assert trace == {
@@ -66,5 +97,6 @@ def test_build_reasoning_trace_handles_empty_inputs_with_stable_defaults():
         "steps": [],
         "verify_results": [],
         "quality": {},
+        "timeline": {"events": [], "total_duration_ms": 0},
         "answer": "",
     }
