@@ -19,6 +19,7 @@ Current progress:
 - Patch 1 complete: execution policy model added with deterministic bounds and caps.
 - Patch 2 complete: step controller added for policy-bounded planner step selection.
 - Patch 3 complete: deterministic loop guard model added to block runaway repeated steps.
+- Patch 4 complete: policy wiring integrated into planner execution and quality retry diagnostics.
 
 Focus:
 - execution policy boundaries

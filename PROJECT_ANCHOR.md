@@ -44,7 +44,7 @@ Planned files:
 - [x] Patch 1 — execution policy
 - [x] Patch 2 — step controller
 - [x] Patch 3 — loop guard
-- [ ] Patch 4 — policy integration
+- [x] Patch 4 — policy integration
 - [ ] Patch 5 — control tests
 
 ### Out of Scope
