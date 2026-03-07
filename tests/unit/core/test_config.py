@@ -128,3 +128,80 @@ class TestFeatureFlags:
                 feature_graphrag=True,
                 feature_graph_rag=False,
             )
+
+
+class TestConfigContracts:
+    """Freeze external config getter contracts."""
+
+    def test_get_llm_config_openai_contract_shape(self):
+        settings = Settings(
+            _env_file=None,
+            openai_api_key="test-openai-key",
+            openai_base_url="https://api.openai.com/v1",
+            openai_model="gpt-4o-mini",
+            openai_timeout=45,
+            openai_max_retries=5,
+            openai_max_tokens=2048,
+        )
+        cfg = settings.get_llm_config(provider="openai")
+        data = cfg.model_dump()
+
+        assert set(data.keys()) == {
+            "provider",
+            "model",
+            "api_key",
+            "base_url",
+            "temperature",
+            "max_tokens",
+            "timeout",
+            "max_retries",
+        }
+        assert data["provider"] == "openai"
+        assert data["model"] == "gpt-4o-mini"
+        assert data["timeout"] == 45
+        assert data["max_retries"] == 5
+        assert data["max_tokens"] == 2048
+
+    def test_get_vector_store_config_qdrant_contract_shape(self):
+        settings = Settings(
+            _env_file=None,
+            qdrant_host="localhost",
+            qdrant_port=6333,
+            qdrant_collection="ai_agent_hub",
+        )
+        cfg = settings.get_vector_store_config(provider="qdrant")
+        data = cfg.model_dump()
+
+        assert set(data.keys()) == {
+            "provider",
+            "path",
+            "index_name",
+            "dimension",
+            "similarity_metric",
+        }
+        assert data["provider"] == "qdrant"
+        assert data["path"] == settings.qdrant_url
+        assert data["index_name"] == "ai_agent_hub"
+        assert data["similarity_metric"] == "cosine"
+
+    def test_get_mcp_config_contract_shape(self):
+        settings = Settings(
+            _env_file=None,
+            mcp_enabled=True,
+            mcp_servers=["http://server-1", "http://server-2"],
+            mcp_max_tools=7,
+        )
+        cfg = settings.get_mcp_config()
+        data = cfg.model_dump()
+
+        assert set(data.keys()) == {
+            "enabled",
+            "servers",
+            "max_tools_per_server",
+        }
+        assert data["enabled"] is True
+        assert data["max_tools_per_server"] == 7
+        assert data["servers"] == [
+            {"name": "http://server-1", "url": "http://server-1"},
+            {"name": "http://server-2", "url": "http://server-2"},
+        ]
