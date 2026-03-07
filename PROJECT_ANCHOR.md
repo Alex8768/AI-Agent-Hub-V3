@@ -83,3 +83,42 @@ Completed via patches:
 - Patch 3 — diagnostics.reasoning_trace exposed and contract-tested
 - Patch 4 — deterministic trace serializer/deserializer added
 - Patch 5 — replay utility added for deterministic trace reproduction
+
+## A2.14 — Reasoning Control Layer
+
+### Goal
+
+Introduce a runtime control layer for reasoning execution.
+
+This layer governs planner execution, step retries,
+loop protection and execution limits.
+
+### Architecture Position
+
+New module:
+
+src/layers/pro/reasoning/control/
+
+Planned files:
+
+- execution_policy.py
+- step_controller.py
+- loop_guard.py
+
+### Patch Plan
+
+Patch 1 — Execution policy  
+Patch 2 — Step controller  
+Patch 3 — Loop guard  
+Patch 4 — Policy integration  
+Patch 5 — Control tests
+
+### Definition of Done
+
+A2.14 is complete when:
+
+- execution policy is enforced
+- planner obeys control layer
+- infinite loops are prevented
+- retry behaviour is bounded
+- tests validate reasoning control behaviour

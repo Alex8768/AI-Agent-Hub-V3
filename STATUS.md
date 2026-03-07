@@ -40,3 +40,7 @@ Planned focus:
 CI pipelines are green.
 
 The noop tracing span compatibility fix is completed and treated as closed work.
+
+## Next Anchor
+
+A2.14 — Reasoning Control Layer

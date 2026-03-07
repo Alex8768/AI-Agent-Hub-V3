@@ -41,3 +41,11 @@
 - No opportunistic refactors outside the current patch
 - Validate locally before commit
 - Commit only files relevant to the active task
+
+## A2.14 Reasoning Control Layer (predefined)
+
+- [ ] Execution policy model
+- [ ] Step controller
+- [ ] Loop guard
+- [ ] Policy integration with planner
+- [ ] Control behaviour tests
