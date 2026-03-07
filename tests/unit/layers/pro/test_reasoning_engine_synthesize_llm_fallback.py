@@ -36,3 +36,5 @@ async def test_synthesize_falls_back_when_llm_fails():
     assert resp.context_preview == "doc:Z#9"
     assert resp.confidence == 0.7
     assert len(resp.provenance) == 1
+    diag = dict(getattr(resp, "diagnostics", {}) or {})
+    assert diag.get("planner_path_used") is False

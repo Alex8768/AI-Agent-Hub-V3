@@ -48,3 +48,4 @@ async def test_synthesize_uses_llm_when_injected():
     assert "agent_iterations" in diag
     assert "agent_current_action" in diag
     assert "agent_current_step" in diag
+    assert diag.get("planner_path_used") is True

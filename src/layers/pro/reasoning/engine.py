@@ -106,6 +106,7 @@ class ReasoningEngine:
             diag["agent_actions"] = final_state.plan
             diag["agent_current_action"] = str(getattr(final_state, "current_action", "") or "")
             diag["agent_current_step"] = int(getattr(final_state, "current_step", 0) or 0)
+            diag["planner_path_used"] = True
             diag["session_id"] = str(getattr(final_state, "session_id", "") or "")
             if final_state.error:
                 diag["agent_error"] = final_state.error
@@ -191,6 +192,7 @@ class ReasoningEngine:
             diag["fallback_reason"] = fallback_reason
             diag.setdefault("agent_current_action", "")
             diag.setdefault("agent_current_step", 0)
+            diag.setdefault("planner_path_used", False)
             resp.diagnostics = diag
         except Exception:
             pass
