@@ -4,13 +4,13 @@
 Phase 2 -> Reasoning MVP
 
 ## Last Completed Anchor
-A2.2 Planner
-
-## Current Active Anchor
 A2.3 Evidence contract
 
-## Next Anchor
+## Current Active Anchor
 A2.4 Self-check
+
+## Next Anchor
+A2.5 Verify node in reasoning graph
 
 ## Current Goal
 Подготовить устойчивую и понятную базу для развития Pro слоя без архитектурного хаоса.

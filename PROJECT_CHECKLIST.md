@@ -155,7 +155,7 @@ Why this matters:
 ---
 
 ### A2.3 Evidence contract
-Status: IN_PROGRESS
+Status: DONE
 
 Why this matters:
 Перед self-check нужно договориться, как выглядит доказательство: откуда оно пришло, что подтверждает и насколько надёжно.
@@ -163,7 +163,7 @@ Why this matters:
 ---
 
 ### A2.4 Self-check
-Status: TODO
+Status: IN_PROGRESS
 
 Why this matters:
 Ответ должен перепроверяться перед выдачей, чтобы уменьшить галлюцинации и недоказанные утверждения.
