@@ -16,13 +16,13 @@ confidence model, single bounded retry policy, and diagnostics exposure.
 A2.11 — Multi-step Reasoning Planner
 
 Focus:
-- planner implementation
 - step executor
 - engine integration
 - max_steps safety guard
 
 Current progress:
 - Patch 1 complete: `plan_model` contract added with deterministic normalization helper and unit tests.
+- Patch 2 complete: MVP planner added for deterministic query -> one/two step plans.
 
 Execution discipline:
 - A2.12 is predefined but implementation starts only after A2.11 and A2.11.5 are fully closed.

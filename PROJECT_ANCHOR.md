@@ -50,7 +50,7 @@ Planned files:
 ### Progress
 
 - [x] Patch 1 — plan model
-- [ ] Patch 2 — planner
+- [x] Patch 2 — planner
 - [ ] Patch 3 — step executor
 - [ ] Patch 4 — engine integration
 - [ ] Patch 5 — safety limits (`max_steps`)

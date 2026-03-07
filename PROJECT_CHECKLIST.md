@@ -18,7 +18,7 @@
 ## Current Work — A2.11 Multi-step Reasoning Planner
 
 - [x] Plan model
-- [ ] Planner implementation
+- [x] Planner implementation
 - [ ] Step executor
 - [ ] Engine integration
 - [ ] max_steps safety guard
