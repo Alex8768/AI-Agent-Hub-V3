@@ -46,9 +46,9 @@ async def test_synthesize_falls_back_when_llm_fails():
     assert diag.get("evidence_contract_gate_reason") == "ok"
     sc = dict(diag.get("self_check") or {})
     assert sc.get("version") == "v1"
-    assert sc.get("status") == "not_evaluated"
+    assert sc.get("status") == "pass"
     assert sc.get("reasons") == []
-    assert sc.get("policy_mode") == "diagnostics_only"
+    assert sc.get("policy_mode") == "warning_only"
     sc_inputs = dict(sc.get("inputs") or {})
     assert sc_inputs.get("evidence_contract_valid_minimal") is True
     assert sc_inputs.get("evidence_contract_missing_minimal_count") == 0
@@ -104,7 +104,8 @@ async def test_synthesize_sets_warning_when_evidence_contract_invalid():
     assert diag.get("evidence_contract_minimal_coverage_score") == 0.0
     assert diag.get("evidence_contract_gate_reason") == "missing:source_refs,origin"
     sc = dict(diag.get("self_check") or {})
-    assert sc.get("status") == "not_evaluated"
+    assert sc.get("status") == "warn"
+    assert sc.get("reasons") == ["missing:source_refs,origin"]
     sc_inputs = dict(sc.get("inputs") or {})
     assert sc_inputs.get("evidence_contract_valid_minimal") is False
     assert sc_inputs.get("evidence_contract_missing_minimal_count") == 2
@@ -118,6 +119,7 @@ async def test_synthesize_sets_warning_when_evidence_contract_invalid():
 
     warnings = list(getattr(resp, "warnings", []) or [])
     assert "evidence_contract_minimal_invalid" in warnings
+    assert "self_check_warning" in warnings
 
 
 @pytest.mark.asyncio
@@ -134,7 +136,8 @@ async def test_synthesize_reports_partial_evidence_contract_gap():
     assert diag.get("evidence_contract_minimal_coverage_score") == 0.5
     assert diag.get("evidence_contract_gate_reason") == "missing:source_refs"
     sc = dict(diag.get("self_check") or {})
-    assert sc.get("status") == "not_evaluated"
+    assert sc.get("status") == "warn"
+    assert sc.get("reasons") == ["missing:source_refs"]
     sc_inputs = dict(sc.get("inputs") or {})
     assert sc_inputs.get("evidence_contract_valid_minimal") is False
     assert sc_inputs.get("evidence_contract_missing_minimal_count") == 1
@@ -149,3 +152,4 @@ async def test_synthesize_reports_partial_evidence_contract_gap():
 
     warnings = list(getattr(resp, "warnings", []) or [])
     assert "evidence_contract_minimal_invalid" in warnings
+    assert "self_check_warning" in warnings

@@ -54,9 +54,9 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
     assert isinstance(diag.get("evidence_contract_gate_reason"), str)
     sc = dict(diag.get("self_check") or {})
     assert sc.get("version") == "v1"
-    assert sc.get("status") == "not_evaluated"
+    assert isinstance(sc.get("status"), str)
     assert isinstance(sc.get("reasons"), list)
-    assert sc.get("policy_mode") == "diagnostics_only"
+    assert sc.get("policy_mode") == "warning_only"
     assert isinstance(sc.get("inputs"), dict)
 
     # cleanup

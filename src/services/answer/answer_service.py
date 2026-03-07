@@ -280,9 +280,25 @@ class AnswerService:
                 "self_check",
                 {
                     "version": "v1",
-                    "status": "not_evaluated",
-                    "reasons": [],
-                    "policy_mode": "diagnostics_only",
+                    "status": (
+                        "pass"
+                        if bool(diag.get("evidence_contract_valid_minimal", False))
+                        else "warn"
+                    ),
+                    "reasons": (
+                        []
+                        if bool(diag.get("evidence_contract_valid_minimal", False))
+                        else (
+                            [
+                                "missing:" + ",".join(
+                                    str(x) for x in (diag.get("evidence_contract_missing_minimal_fields") or [])
+                                )
+                            ]
+                            if list(diag.get("evidence_contract_missing_minimal_fields") or [])
+                            else ["invalid"]
+                        )
+                    ),
+                    "policy_mode": "warning_only",
                     "inputs": {
                         "evidence_contract_valid_minimal": bool(
                             diag.get("evidence_contract_valid_minimal", False)
@@ -296,6 +312,11 @@ class AnswerService:
                     },
                 },
             )
+            self_check = dict(diag.get("self_check") or {})
+            if str(self_check.get("status", "")) == "warn":
+                resp.warnings = list(getattr(resp, "warnings", []) or [])
+                if "self_check_warning" not in resp.warnings:
+                    resp.warnings.append("self_check_warning")
             diag.setdefault("session_memory_loaded", bool(session_memory_loaded))
             diag.setdefault("session_memory_hit", bool(session_memory_hit))
             diag.setdefault("evidence_type_counts", {})

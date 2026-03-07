@@ -100,17 +100,26 @@ class ReasoningEngine:
 
     @staticmethod
     def _self_check_diagnostics(contract: dict[str, object]) -> dict[str, object]:
-        """A2.4 Patch 1: diagnostics-only self_check contract (no answer impact)."""
+        """A2.4 Patch 2: warning-only self_check contract (no answer blocking)."""
+        valid = bool(contract.get("valid_minimal", False))
+        missing = list(contract.get("missing_minimal_fields") or [])
+        if valid:
+            status = "pass"
+            reasons: list[str] = []
+        elif missing:
+            status = "warn"
+            reasons = [f"missing:{','.join(str(x) for x in missing)}"]
+        else:
+            status = "warn"
+            reasons = ["invalid"]
         return {
             "version": "v1",
-            "status": "not_evaluated",
-            "reasons": [],
-            "policy_mode": "diagnostics_only",
+            "status": status,
+            "reasons": reasons,
+            "policy_mode": "warning_only",
             "inputs": {
-                "evidence_contract_valid_minimal": bool(contract.get("valid_minimal", False)),
-                "evidence_contract_missing_minimal_count": int(
-                    len(contract.get("missing_minimal_fields") or [])
-                ),
+                "evidence_contract_valid_minimal": valid,
+                "evidence_contract_missing_minimal_count": int(len(missing)),
                 "evidence_contract_minimal_coverage_score": float(
                     contract.get("minimal_coverage_score") or 0.0
                 ),
@@ -220,7 +229,12 @@ class ReasoningEngine:
                 contract.get("minimal_coverage_score") or 0.0
             )
             diag["evidence_contract_gate_reason"] = self._evidence_contract_gate_reason(contract)
-            diag["self_check"] = self._self_check_diagnostics(contract)
+            self_check = self._self_check_diagnostics(contract)
+            diag["self_check"] = self_check
+            if str(self_check.get("status", "")) == "warn":
+                resp.warnings = list(getattr(resp, "warnings", []) or [])
+                if "self_check_warning" not in resp.warnings:
+                    resp.warnings.append("self_check_warning")
             if not bool(contract.get("valid_minimal", False)):
                 resp.warnings = list(getattr(resp, "warnings", []) or [])
                 if "evidence_contract_minimal_invalid" not in resp.warnings:
@@ -335,6 +349,11 @@ class ReasoningEngine:
                 self._evidence_contract_gate_reason(contract),
             )
             diag.setdefault("self_check", self._self_check_diagnostics(contract))
+            self_check = dict(diag.get("self_check") or {})
+            if str(self_check.get("status", "")) == "warn":
+                resp.warnings = list(getattr(resp, "warnings", []) or [])
+                if "self_check_warning" not in resp.warnings:
+                    resp.warnings.append("self_check_warning")
             if not bool(contract.get("valid_minimal", False)):
                 resp.warnings = list(getattr(resp, "warnings", []) or [])
                 if "evidence_contract_minimal_invalid" not in resp.warnings:
