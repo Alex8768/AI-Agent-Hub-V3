@@ -147,7 +147,7 @@ Reasoning должен помнить полезные промежуточны�
 ---
 
 ### A2.2 Planner
-Status: IN_PROGRESS
+Status: DONE
 
 Why this matters:
 Сложные задачи нужно разбивать на шаги, а не пытаться решить одним прыжком.
@@ -155,7 +155,7 @@ Why this matters:
 ---
 
 ### A2.3 Evidence contract
-Status: TODO
+Status: IN_PROGRESS
 
 Why this matters:
 Перед self-check нужно договориться, как выглядит доказательство: откуда оно пришло, что подтверждает и насколько надёжно.

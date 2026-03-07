@@ -60,10 +60,10 @@ Phase 2 -> Reasoning MVP
 Phase 0 -> Base stabilization
 
 Current active anchor:
-A2.2 Planner
+A2.3 Evidence contract
 
 Next anchor:
-A2.3 Evidence contract
+A2.4 Self-check
 
 ## What is explicitly postponed
 
