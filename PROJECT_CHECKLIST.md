@@ -16,7 +16,7 @@
 
 - [x] Patch 0 — extract LLM config builders with parity
 - [x] Patch 1 — extract vector store config builders
-- [ ] Patch 2 — extract feature-flag normalization boundary
+- [x] Patch 2 — extract feature-flag normalization boundary
 - [ ] Patch 3 — external contract parity snapshots
 
 ## Next

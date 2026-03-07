@@ -33,7 +33,7 @@ A2.8 must split config responsibilities into smaller units without behaviour dri
 
 - [x] Patch 0 — LLM config builders extracted with parity
 - [x] Patch 1 — vector store config builders extracted with parity
-- [ ] Patch 2 — extract feature-flag normalization boundary
+- [x] Patch 2 — feature-flag normalization boundary extracted with parity
 - [ ] Patch 3 — external contract parity tests
 
 ### Out of Scope
