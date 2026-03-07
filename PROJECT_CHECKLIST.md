@@ -18,7 +18,7 @@
 
 - [x] Patch 0 — claim extraction
 - [x] Patch 1 — evidence coverage scoring
-- [ ] Patch 2 — reasoning confidence model
+- [x] Patch 2 — reasoning confidence model
 - [ ] Patch 3 — retry policy (single bounded retry)
 - [ ] Patch 4 — diagnostics.reasoning_quality exposure + parity tests
 
