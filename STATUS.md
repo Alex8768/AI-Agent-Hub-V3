@@ -6,31 +6,28 @@ Pro Layer Development — Reasoning Stabilization
 
 ## Last Completed Anchor
 
-A2.6 — AnswerService Decomposition
+A2.7 — OpenAIAdapter Decomposition
 
-AnswerService orchestration was decomposed into diagnostics, memory I/O, and LLM wiring boundaries with contract parity preserved.
+OpenAIAdapter branching was decomposed into completion, request-parameter, and streaming boundaries with contract parity preserved.
 
 ## Current Active Anchor
 
-A2.7 — OpenAIAdapter Decomposition
+A2.8 — Config Architecture Cleanup
 
-Current work is focused on reducing OpenAIAdapter branching complexity without behavior drift.
-Patch 0 is completed: completion builders are extracted with behavior parity validated by tests.
-Patch 1 is completed: request parameter builders are extracted with defaults/None-pruning parity.
-Patch 2 is completed: streaming boundaries are extracted with chunk ordering/finalization parity.
-Patch 3 is completed: adapter-level completion/streaming contracts are frozen and validated.
+Current work is focused on simplifying config architecture without runtime compatibility drift.
+Patch 0 is completed: LLM config builders are extracted with fail-fast/fallback parity.
 
 ## Next Anchor
 
-A2.8 — Config Architecture Cleanup
+A2.9 — IngestService Slimming
 
 Planned focus:
-- simplify config structure and ownership boundaries
-- preserve current runtime defaults and compatibility
+- reduce orchestration complexity in ingest layer
+- preserve ingest behavior and contracts
 
 ## Upcoming Anchors
 
-- A2.9 — IngestService Slimming
+- (to be defined)
 
 ## CI Status
 

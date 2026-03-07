@@ -10,17 +10,18 @@
 - [x] A2.5 Verify Node Hardening
 - [x] CI tracing compatibility fix
 - [x] A2.6 AnswerService Decomposition
+- [x] A2.7 OpenAIAdapter Decomposition
 
-## Current Work — A2.7 OpenAIAdapter Decomposition
+## Current Work — A2.8 Config Architecture Cleanup
 
-- [x] Patch 0 — extract completion builders with parity
-- [x] Patch 1 — extract request parameter builders
-- [x] Patch 2 — extract streaming boundaries
-- [x] Patch 3 — external contract parity snapshots
+- [x] Patch 0 — extract LLM config builders with parity
+- [ ] Patch 1 — extract vector store config builders
+- [ ] Patch 2 — extract feature-flag normalization boundary
+- [ ] Patch 3 — external contract parity snapshots
 
 ## Next
 
-- [ ] A2.8 Config Architecture Cleanup
+- [ ] A2.9 IngestService Slimming
 
 ## Later
 

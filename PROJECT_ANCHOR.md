@@ -2,52 +2,52 @@
 
 ## Active Anchor
 
-A2.7 — OpenAIAdapter Decomposition
+A2.8 — Config Architecture Cleanup
 
 ### Goal
 
-Reduce `OpenAIAdapter` branching complexity while preserving provider behavior and fallback compatibility.
+Simplify config structure and ownership boundaries while preserving runtime defaults and compatibility.
 
-A2.7 must split completion/streaming responsibilities into smaller testable units without behaviour drift.
+A2.8 must split config responsibilities into smaller units without behaviour drift.
 
 ### Patch Plan
 
-#### Patch 0 — Extract completion builders
-- Isolate completion object assembly from `complete()` branching
-- Keep chat path and responses-fallback metadata parity
-- Preserve existing request/response behavior
+#### Patch 0 — Extract LLM config builders
+- Isolate LLM provider requirements validation from `get_llm_config()`
+- Isolate LLM provider config map assembly
+- Preserve fail-fast and fallback behavior
 
-#### Patch 1 — Extract request parameter builders
-- Isolate config merge and request params construction
-- Keep defaults and None-pruning behavior unchanged
+#### Patch 1 — Extract vector store config builders
+- Isolate vector provider config assembly from `get_vector_store_config()`
+- Keep defaults and fallback behavior unchanged
 
-#### Patch 2 — Extract streaming boundaries
-- Isolate stream iteration and final chunk synthesis
-- Preserve chunk ordering and finish_reason behavior
+#### Patch 2 — Extract feature-flag normalization boundary
+- Isolate deprecated alias normalization/consistency logic
+- Preserve validation semantics
 
 #### Patch 3 — External contract parity tests
-- Freeze adapter-level completion/streaming behavior contracts
+- Freeze config-level behavior contracts for core getters
 - Prove no regressions from decomposition
 
 ### Progress
 
-- [x] Patch 0 — completion builders extracted with behavior parity
-- [x] Patch 1 — request parameter builders extracted with parity
-- [x] Patch 2 — streaming boundaries extracted with parity
-- [x] Patch 3 — external contract parity tests frozen
+- [x] Patch 0 — LLM config builders extracted with parity
+- [ ] Patch 1 — extract vector store config builders
+- [ ] Patch 2 — extract feature-flag normalization boundary
+- [ ] Patch 3 — external contract parity tests
 
 ### Out of Scope
 
-Do NOT modify during A2.7:
-- config.py architecture cleanup
+Do NOT modify during A2.8:
 - IngestService slimming
 - retrieval pipeline redesign
 - reasoning graph redesign beyond active-patch need
 - AnswerService decomposition beyond closed A2.6
+- OpenAIAdapter decomposition beyond closed A2.7
 
 ### Definition of Done
 
-A2.7 is complete when:
-- OpenAIAdapter responsibilities are split into focused units
-- provider behavior and fallback compatibility remain unchanged
+A2.8 is complete when:
+- config responsibilities are split into focused units
+- runtime defaults and compatibility remain unchanged
 - behavior parity is validated by tests
