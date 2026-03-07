@@ -23,7 +23,7 @@
 
 - [x] Execution policy model
 - [x] Step controller
-- [ ] Loop guard
+- [x] Loop guard
 - [ ] Policy integration with planner
 - [ ] Control behaviour tests
 
