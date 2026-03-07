@@ -75,11 +75,22 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
     assert verify.get("reasons") == []
     assert verify.get("policy_mode") == "warning_only"
     v_inputs = dict(verify.get("inputs") or {})
+    assert set(v_inputs.keys()) == {
+        "planner_path_used",
+        "self_check_status",
+        "self_check_policy_mode",
+        "self_check_reasons_count",
+    }
     assert v_inputs.get("planner_path_used") is False
     assert v_inputs.get("self_check_status") == "pass"
     assert v_inputs.get("self_check_policy_mode") == "warning_only"
     assert v_inputs.get("self_check_reasons_count") == 0
     v_thr = dict(verify.get("thresholds") or {})
+    assert set(v_thr.keys()) == {
+        "required_self_check_status",
+        "required_self_check_policy_mode",
+        "self_check_reasons_count_max",
+    }
     assert v_thr.get("required_self_check_status") == "pass"
     assert v_thr.get("required_self_check_policy_mode") == "warning_only"
     assert v_thr.get("self_check_reasons_count_max") == 0
