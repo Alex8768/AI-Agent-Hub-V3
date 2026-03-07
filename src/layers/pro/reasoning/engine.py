@@ -170,6 +170,10 @@ class ReasoningEngine:
             diag["evidence_contract_version"] = "v1"
             contract = self._evidence_contract_status(final_state.provenance)
             diag["evidence_contract"] = contract
+            diag["evidence_contract_valid_minimal"] = bool(contract.get("valid_minimal", False))
+            diag["evidence_contract_missing_minimal_fields"] = list(
+                contract.get("missing_minimal_fields") or []
+            )
             if not bool(contract.get("valid_minimal", False)):
                 resp.warnings = list(getattr(resp, "warnings", []) or [])
                 if "evidence_contract_minimal_invalid" not in resp.warnings:
@@ -263,6 +267,14 @@ class ReasoningEngine:
             diag.setdefault("evidence_contract_version", "v1")
             contract = self._evidence_contract_status(provenance)
             diag.setdefault("evidence_contract", contract)
+            diag.setdefault(
+                "evidence_contract_valid_minimal",
+                bool(contract.get("valid_minimal", False)),
+            )
+            diag.setdefault(
+                "evidence_contract_missing_minimal_fields",
+                list(contract.get("missing_minimal_fields") or []),
+            )
             if not bool(contract.get("valid_minimal", False)):
                 resp.warnings = list(getattr(resp, "warnings", []) or [])
                 if "evidence_contract_minimal_invalid" not in resp.warnings:
