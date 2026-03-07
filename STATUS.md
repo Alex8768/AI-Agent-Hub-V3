@@ -23,6 +23,7 @@ Focus:
 Current progress:
 - Patch 1 complete: multi-step reasoning correctness evaluation test added and passing.
 - Patch 2 complete: state propagation evaluation test added and passing.
+- Patch 3 complete: verify-per-step behavior evaluation test added and passing.
 
 Execution discipline:
 - A2.12 is predefined but implementation starts only after A2.11.5 is fully closed.
