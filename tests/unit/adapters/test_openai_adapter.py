@@ -134,3 +134,67 @@ def test_build_chat_stream_request_params_defaults_and_stream_flag():
     assert params["temperature"] == 0.7
     assert params["top_p"] == 1.0
     assert "messages" not in params
+
+
+def test_build_stream_final_chunk_parity():
+    adapter = _make_adapter("gpt-4o-mini")
+    final = adapter._build_stream_final_chunk(chunk_index=3, finish_reason="stop")
+
+    assert final.content == ""
+    assert final.chunk_index == 3
+    assert final.is_final is True
+    assert final.finish_reason == "stop"
+
+
+def test_iter_stream_output_chunks_preserves_order_and_finish_reason():
+    adapter = _make_adapter("gpt-4o-mini")
+
+    class _Delta:
+        def __init__(self, content):
+            self.content = content
+
+    class _Choice:
+        def __init__(self, content=None, finish_reason=None):
+            self.delta = _Delta(content)
+            self.finish_reason = finish_reason
+
+    class _Chunk:
+        def __init__(self, content=None, finish_reason=None):
+            self.choices = [_Choice(content=content, finish_reason=finish_reason)]
+
+    class _FakeStream:
+        def __init__(self, items):
+            self._items = list(items)
+
+        def __aiter__(self):
+            self._idx = 0
+            return self
+
+        async def __anext__(self):
+            if self._idx >= len(self._items):
+                raise StopAsyncIteration
+            item = self._items[self._idx]
+            self._idx += 1
+            return item
+
+    stream = _FakeStream(
+        [
+            _Chunk(content="Hel"),
+            _Chunk(content="lo"),
+            _Chunk(content=None, finish_reason="stop"),
+        ]
+    )
+
+    async def _collect():
+        out = []
+        async for c in adapter._iter_stream_output_chunks(stream=stream):  # type: ignore[arg-type]
+            out.append(c)
+        return out
+
+    import asyncio
+
+    chunks = asyncio.run(_collect())
+    assert [c.content for c in chunks] == ["Hel", "lo", ""]
+    assert [c.chunk_index for c in chunks] == [0, 1, 2]
+    assert [c.is_final for c in chunks] == [False, False, True]
+    assert chunks[-1].finish_reason == "stop"

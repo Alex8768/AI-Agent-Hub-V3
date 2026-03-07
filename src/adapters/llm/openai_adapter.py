@@ -366,6 +366,48 @@ class OpenAIAdapter(LLMProvider):
             "stream": True,
         }
         return self._prune_none_values(request_params)
+
+    def _build_stream_content_chunk(self, *, content: str, chunk_index: int) -> LLMChunk:
+        return LLMChunk(
+            content=content,
+            chunk_index=chunk_index,
+            is_final=False,
+        )
+
+    def _build_stream_final_chunk(self, *, chunk_index: int, finish_reason: str | None) -> LLMChunk:
+        return LLMChunk(
+            content="",
+            chunk_index=chunk_index,
+            is_final=True,
+            finish_reason=finish_reason,
+        )
+
+    async def _iter_stream_output_chunks(
+        self,
+        *,
+        stream: AsyncGenerator[ChatCompletionChunk, None],
+    ) -> AsyncGenerator[LLMChunk, None]:
+        chunk_index = 0
+        finish_reason = None
+
+        async for chunk in stream:
+            chunk: ChatCompletionChunk
+
+            if chunk.choices and chunk.choices[0].delta.content is not None:
+                content = chunk.choices[0].delta.content
+                yield self._build_stream_content_chunk(
+                    content=content,
+                    chunk_index=chunk_index,
+                )
+                chunk_index += 1
+
+            if chunk.choices and chunk.choices[0].finish_reason:
+                finish_reason = chunk.choices[0].finish_reason
+
+        yield self._build_stream_final_chunk(
+            chunk_index=chunk_index,
+            finish_reason=finish_reason,
+        )
     
     async def complete(
         self,
@@ -587,39 +629,18 @@ class OpenAIAdapter(LLMProvider):
             stream = await self._client.chat.completions.create(
                 **request_params
             )
-            
+
             chunk_index = 0
-            full_content = ""
             finish_reason = None
-            
-            async for chunk in stream:
-                chunk: ChatCompletionChunk
-                
-                if chunk.choices and chunk.choices[0].delta.content is not None:
-                    content = chunk.choices[0].delta.content
-                    full_content += content
-                    
-                    yield LLMChunk(
-                        content=content,
-                        chunk_index=chunk_index,
-                        is_final=False,
-                    )
-                    
+            async for out_chunk in self._iter_stream_output_chunks(stream=stream):
+                if bool(getattr(out_chunk, "is_final", False)):
+                    finish_reason = getattr(out_chunk, "finish_reason", None)
+                else:
                     chunk_index += 1
-                
-                if chunk.choices and chunk.choices[0].finish_reason:
-                    finish_reason = chunk.choices[0].finish_reason
-            
+                yield out_chunk
+
             latency = (datetime.utcnow() - start_time).total_seconds()
-            
-            # Final chunk
-            yield LLMChunk(
-                content="",
-                chunk_index=chunk_index,
-                is_final=True,
-                finish_reason=finish_reason,
-            )
-            
+
             self._logger.info(
                 "OpenAI streaming completed",
                 context={
