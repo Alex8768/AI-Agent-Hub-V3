@@ -709,20 +709,9 @@ class Settings(BaseSettings):
                 "timeout": 30,
             }
         }
-    
-    def get_llm_config(self, provider: Optional[LLMProvider] = None) -> LLMConfig:
-        """Get LLM configuration for a provider."""
-        provider = provider or self.llm_provider
-        self._validate_llm_provider_requirements(provider)
-        config_map = self._build_llm_provider_config_map()
-        config = config_map.get(provider, config_map[LLMProvider.HYBRID])
-        return LLMConfig(**config)
-    
-    def get_vector_store_config(self, provider: Optional[VectorStoreProvider] = None) -> VectorStoreConfig:
-        """Get vector store configuration."""
-        provider = provider or self.vector_store_provider
-        
-        config_map = {
+
+    def _build_vector_store_config_map(self) -> Dict[VectorStoreProvider, Dict[str, Any]]:
+        return {
             VectorStoreProvider.FAISS: {
                 "provider": "faiss",
                 "path": self.faiss_index_path,
@@ -736,7 +725,19 @@ class Settings(BaseSettings):
                 "similarity_metric": "cosine",
             },
         }
-        
+    
+    def get_llm_config(self, provider: Optional[LLMProvider] = None) -> LLMConfig:
+        """Get LLM configuration for a provider."""
+        provider = provider or self.llm_provider
+        self._validate_llm_provider_requirements(provider)
+        config_map = self._build_llm_provider_config_map()
+        config = config_map.get(provider, config_map[LLMProvider.HYBRID])
+        return LLMConfig(**config)
+    
+    def get_vector_store_config(self, provider: Optional[VectorStoreProvider] = None) -> VectorStoreConfig:
+        """Get vector store configuration."""
+        provider = provider or self.vector_store_provider
+        config_map = self._build_vector_store_config_map()
         config = config_map.get(provider, config_map[VectorStoreProvider.FAISS])
         return VectorStoreConfig(**config)
     

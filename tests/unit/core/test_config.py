@@ -48,6 +48,13 @@ class TestSettings:
         assert cfg.provider == "hybrid"
         assert cfg.model == "hybrid"
 
+    def test_get_vector_store_config_unknown_provider_falls_back_faiss(self):
+        """Unknown vector provider should safely fallback to FAISS config."""
+        settings = Settings(_env_file=None)
+        cfg = settings.get_vector_store_config(provider="custom-vector-provider")
+        assert cfg.provider == "faiss"
+        assert cfg.path == settings.faiss_index_path
+
     def test_cors_origins_parsing(self):
         """Test CORS origins parsing."""
         test_cases = [
