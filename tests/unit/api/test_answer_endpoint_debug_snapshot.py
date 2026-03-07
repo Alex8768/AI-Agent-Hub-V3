@@ -54,11 +54,21 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
     assert isinstance(diag.get("evidence_contract_gate_reason"), str)
     sc = dict(diag.get("self_check") or {})
     assert sc.get("version") == "v1"
-    assert isinstance(sc.get("status"), str)
-    assert isinstance(sc.get("reasons"), list)
+    assert sc.get("status") == "pass"
+    assert sc.get("reasons") == []
     assert sc.get("policy_mode") == "warning_only"
-    assert isinstance(sc.get("inputs"), dict)
-    assert isinstance(sc.get("thresholds"), dict)
+    sc_inputs = dict(sc.get("inputs") or {})
+    assert set(sc_inputs.keys()) == {
+        "evidence_contract_valid_minimal",
+        "evidence_contract_missing_minimal_count",
+        "evidence_contract_minimal_coverage_score",
+    }
+    assert sc_inputs.get("evidence_contract_valid_minimal") is True
+    assert sc_inputs.get("evidence_contract_missing_minimal_count") == 0
+    assert sc_inputs.get("evidence_contract_minimal_coverage_score") == 1.0
+    sc_thresholds = dict(sc.get("thresholds") or {})
+    assert sc_thresholds.get("minimal_coverage_score_min") == 1.0
+    assert sc_thresholds.get("missing_minimal_count_max") == 0
 
     # cleanup
     try:
