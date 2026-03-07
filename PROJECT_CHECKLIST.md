@@ -19,7 +19,7 @@
 
 - [x] Plan model
 - [x] Planner implementation
-- [ ] Step executor
+- [x] Step executor
 - [ ] Engine integration
 - [ ] max_steps safety guard
 
