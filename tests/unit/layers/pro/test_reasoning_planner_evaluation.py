@@ -125,3 +125,33 @@ async def test_planner_evaluation_respects_max_steps_safety_guard():
     assert executed == ["step-1", "step-2"]
     assert [r["step_index"] for r in results] == [0, 1]
     assert [r["step_description"] for r in results] == ["step-1", "step-2"]
+
+
+@pytest.mark.asyncio
+async def test_planner_evaluation_deterministic_behavior_across_runs():
+    query = "Find capital of France and confirm country relation"
+
+    async def _run_reasoning_step(step):
+        description = str(step.get("description", "") or "")
+        return f"det:{description}"
+
+    async def _run_verify_step(reasoning_output: str):
+        return {"status": "pass", "reasons": [reasoning_output]}
+
+    plan_a = create_reasoning_plan(query=query)
+    plan_b = create_reasoning_plan(query=query)
+    assert plan_a == plan_b
+
+    run_a = await execute_plan_steps(
+        plan=plan_a,
+        run_reasoning_step=_run_reasoning_step,
+        run_verify_step=_run_verify_step,
+        max_steps=3,
+    )
+    run_b = await execute_plan_steps(
+        plan=plan_b,
+        run_reasoning_step=_run_reasoning_step,
+        run_verify_step=_run_verify_step,
+        max_steps=3,
+    )
+    assert run_a == run_b
