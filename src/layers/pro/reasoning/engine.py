@@ -52,6 +52,7 @@ class ReasoningEngine:
             if isinstance(rel, (int, float)):
                 with_reliability += 1
         return {
+            "version": "v1",
             "total": total,
             "with_source_refs": with_source_refs,
             "with_known_origin": with_known_origin,
