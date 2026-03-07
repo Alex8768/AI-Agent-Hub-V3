@@ -5,6 +5,7 @@ from typing import Any
 
 from fastapi import Request
 
+from src.layers.pro.reasoning.control.execution_policy import build_reasoning_execution_policy
 from src.layers.pro.reasoning.contracts import (
     AnswerRequest,
     EVIDENCE_CONTRACT_VERSION,
@@ -229,7 +230,10 @@ def _apply_diagnostics(
         coverage_score = float(diag.get("evidence_contract_minimal_coverage_score", 0.0) or 0.0)
         missing_claims = int(diag.get("evidence_contract_missing_minimal_count", 0) or 0)
         raw_conf = max(0.0, min(1.0, coverage_score - float(missing_claims * 0.15)))
-        retry_budget_available = raw_conf < 0.6
+        policy = build_reasoning_execution_policy()
+        max_retries = int(policy.get("max_retries", 0) or 0)
+        retry_budget_available = bool(raw_conf < 0.6 and max_retries > 0)
+        diag.setdefault("reasoning_execution_policy", dict(policy))
         diag.setdefault(
             "reasoning_quality",
             {
@@ -256,7 +260,7 @@ def _apply_diagnostics(
                 },
                 "retry": {
                     "attempt": 0,
-                    "max_retries": 1,
+                    "max_retries": max_retries,
                     "confidence_score": raw_conf,
                     "threshold": 0.6,
                     "confidence_below_threshold": bool(raw_conf < 0.6),

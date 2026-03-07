@@ -139,6 +139,7 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
         "evidence_contract_minimal_coverage_score",
         "evidence_contract_gate_reason",
         "self_check",
+        "reasoning_execution_policy",
         "reasoning_quality",
         "reasoning_trace",
         "reasoning_timeline",
@@ -218,6 +219,11 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
     assert v_thr.get("required_self_check_status") == "pass"
     assert v_thr.get("required_self_check_policy_mode") == "warning_only"
     assert v_thr.get("self_check_reasons_count_max") == 0
+    rep = dict(diag.get("reasoning_execution_policy") or {})
+    assert set(rep.keys()) == {"max_steps", "max_latency_ms", "max_retries"}
+    assert isinstance(rep.get("max_steps"), int)
+    assert isinstance(rep.get("max_latency_ms"), int)
+    assert isinstance(rep.get("max_retries"), int)
     rq = dict(diag.get("reasoning_quality") or {})
     assert rq.get("version") == "v1"
     assert isinstance(rq.get("claims_total"), int)

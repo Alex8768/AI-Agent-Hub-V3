@@ -136,3 +136,95 @@ async def test_reasoning_engine_fallback_executes_planner_steps(monkeypatch):
     assert trace.get("query") == "multi step query"
     assert trace.get("plan") == ["step one", "step two"]
     assert trace.get("steps") == ["step one", "step two"]
+
+
+@pytest.mark.asyncio
+async def test_reasoning_engine_fallback_applies_loop_guard_to_repeated_steps(monkeypatch):
+    calls: dict[str, object] = {}
+
+    def _fake_create_reasoning_plan(*, query: str):
+        _ = query
+        return {
+            "steps": [
+                {"description": "repeat"},
+                {"description": " repeat "},
+                {"description": "REPEAT"},
+            ]
+        }
+
+    async def _fake_execute_plan_steps(*, plan, run_reasoning_step, run_verify_step, max_steps=None):
+        _ = run_reasoning_step
+        _ = run_verify_step
+        calls["plan_steps"] = list(plan.get("steps") or [])
+        calls["max_steps"] = max_steps
+        return []
+
+    monkeypatch.setattr(
+        "src.layers.pro.reasoning.engine.create_reasoning_plan",
+        _fake_create_reasoning_plan,
+    )
+    monkeypatch.setattr(
+        "src.layers.pro.reasoning.engine.execute_plan_steps",
+        _fake_execute_plan_steps,
+    )
+
+    eng = ReasoningEngine(retriever=_EmptyRetriever())
+    await eng.synthesize(AnswerRequest(query="loop"))
+
+    assert calls.get("max_steps") == 3
+    assert calls.get("plan_steps") == [
+        {"description": "repeat"},
+        {"description": "repeat"},
+    ]
+
+
+@pytest.mark.asyncio
+async def test_reasoning_engine_quality_retry_uses_execution_policy_max_retries(monkeypatch):
+    captured: dict[str, object] = {}
+
+    def _fake_build_reasoning_execution_policy(*, max_steps=None, max_latency_ms=None, max_retries=None):
+        _ = max_steps
+        _ = max_latency_ms
+        _ = max_retries
+        return {"max_steps": 3, "max_latency_ms": 15000, "max_retries": 2}
+
+    def _fake_decide_reasoning_quality_retry(*, confidence_score, attempt, threshold=0.6, max_retries=1):
+        _ = confidence_score
+        _ = attempt
+        _ = threshold
+        captured["max_retries"] = max_retries
+        return {
+            "attempt": 0,
+            "max_retries": int(max_retries),
+            "confidence_score": 0.0,
+            "threshold": 0.6,
+            "confidence_below_threshold": True,
+            "retry_budget_available": True,
+            "should_retry": True,
+            "next_attempt": 1,
+            "loop_guard_triggered": False,
+            "reason": "retry_allowed_low_confidence",
+        }
+
+    monkeypatch.setattr(
+        "src.layers.pro.reasoning.engine.build_reasoning_execution_policy",
+        _fake_build_reasoning_execution_policy,
+    )
+    monkeypatch.setattr(
+        "src.layers.pro.reasoning.engine.decide_reasoning_quality_retry",
+        _fake_decide_reasoning_quality_retry,
+    )
+
+    eng = ReasoningEngine(retriever=_EmptyRetriever())
+    resp = await eng.synthesize(AnswerRequest(query="q"))
+    diag = dict(getattr(resp, "diagnostics", {}) or {})
+    rq = dict(diag.get("reasoning_quality") or {})
+    retry = dict(rq.get("retry") or {})
+
+    assert captured.get("max_retries") == 2
+    assert retry.get("max_retries") == 2
+    assert diag.get("reasoning_execution_policy") == {
+        "max_steps": 3,
+        "max_latency_ms": 15000,
+        "max_retries": 2,
+    }

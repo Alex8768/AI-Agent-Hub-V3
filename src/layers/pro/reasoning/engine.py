@@ -23,6 +23,12 @@ from src.layers.pro.reasoning.quality_claims import extract_claims
 from src.layers.pro.reasoning.quality_confidence import compute_reasoning_quality_confidence
 from src.layers.pro.reasoning.quality_coverage import score_claim_coverage
 from src.layers.pro.reasoning.quality_retry import decide_reasoning_quality_retry
+from src.layers.pro.reasoning.control.execution_policy import build_reasoning_execution_policy
+from src.layers.pro.reasoning.control.loop_guard import (
+    apply_reasoning_loop_guard,
+    build_reasoning_loop_guard_state,
+)
+from src.layers.pro.reasoning.control.step_controller import build_controlled_plan_steps
 from src.layers.pro.reasoning.planner.planner import create_reasoning_plan
 from src.layers.pro.reasoning.planner.step_executor import execute_plan_steps
 from src.layers.pro.reasoning.trace.trace_collector import collect_reasoning_trace
@@ -188,6 +194,7 @@ class ReasoningEngine:
         answer_text: str,
         provenance: list,
         contract: dict[str, object],
+        max_retries: int,
     ) -> dict[str, object]:
         claims = extract_claims(reasoning_output=str(answer_text or ""))
         coverage = score_claim_coverage(
@@ -205,7 +212,7 @@ class ReasoningEngine:
             confidence_score=float(confidence.get("confidence_score") or 0.0),
             attempt=0,
             threshold=0.6,
-            max_retries=1,
+            max_retries=int(max_retries),
         )
         return {
             "version": "v1",
@@ -236,6 +243,23 @@ class ReasoningEngine:
     async def _execute_planner_steps_mvp(self, *, request: AnswerRequest) -> list[dict[str, object]]:
         """A2.11 Patch 4: execute deterministic planner steps inside engine fallback."""
         plan = create_reasoning_plan(query=str(getattr(request, "query", "") or ""))
+        policy = build_reasoning_execution_policy()
+        controlled_steps = build_controlled_plan_steps(plan=plan, policy=policy)
+
+        loop_guard_state = build_reasoning_loop_guard_state(
+            max_visits_per_signature=max(int(policy.get("max_retries", 0)) + 1, 1)
+        )
+        bounded_steps: list[dict[str, str]] = []
+        for row in controlled_steps:
+            guard_result = apply_reasoning_loop_guard(
+                state=loop_guard_state,
+                step_description=row.get("description", ""),
+            )
+            loop_guard_state = guard_result["state"]
+            if bool((guard_result.get("decision") or {}).get("should_stop")):
+                break
+            bounded_steps.append({"description": str(row.get("description", "") or "")})
+        bounded_plan = {"steps": bounded_steps}
 
         async def _run_reasoning_step(step: dict[str, str]) -> str:
             return str(step.get("description", "") or "")
@@ -245,10 +269,10 @@ class ReasoningEngine:
             return {"status": "pass", "reasons": []}
 
         return await execute_plan_steps(
-            plan=plan,
+            plan=bounded_plan,
             run_reasoning_step=_run_reasoning_step,
             run_verify_step=_run_verify_step,
-            max_steps=3,
+            max_steps=int(policy.get("max_steps", 0) or 0),
         )
 
     async def synthesize(self, request: AnswerRequest) -> AnswerResponse:
@@ -356,10 +380,13 @@ class ReasoningEngine:
             diag["evidence_contract_gate_reason"] = self._evidence_contract_gate_reason(contract)
             self_check = self._self_check_diagnostics(contract)
             diag["self_check"] = self_check
+            execution_policy = build_reasoning_execution_policy()
+            diag["reasoning_execution_policy"] = dict(execution_policy)
             diag["reasoning_quality"] = self._reasoning_quality_diagnostics(
                 answer_text=answer_text,
                 provenance=final_state.provenance,
                 contract=contract,
+                max_retries=int(execution_policy.get("max_retries", 0) or 0),
             )
             diag["verify"] = self._verify_diagnostics_preflight(
                 planner_path_used=True,
@@ -515,12 +542,15 @@ class ReasoningEngine:
                 self._evidence_contract_gate_reason(contract),
             )
             diag.setdefault("self_check", self._self_check_diagnostics(contract))
+            execution_policy = build_reasoning_execution_policy()
+            diag.setdefault("reasoning_execution_policy", dict(execution_policy))
             diag.setdefault(
                 "reasoning_quality",
                 self._reasoning_quality_diagnostics(
                     answer_text=answer_text,
                     provenance=provenance,
                     contract=contract,
+                    max_retries=int(execution_policy.get("max_retries", 0) or 0),
                 ),
             )
             self_check = dict(diag.get("self_check") or {})
