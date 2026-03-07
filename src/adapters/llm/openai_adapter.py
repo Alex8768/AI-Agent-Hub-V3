@@ -275,6 +275,55 @@ class OpenAIAdapter(LLMProvider):
                 continue
             lines.append(f"{role}: {content}")
         return "\n".join(lines).strip() or "USER: Hello"
+
+    def _build_completion_from_responses_fallback(
+        self,
+        *,
+        response: Any,
+        request_id: str,
+        latency: float,
+        model: str,
+        content: str,
+    ) -> LLMCompletion:
+        return LLMCompletion(
+            content=content,
+            model=getattr(response, "model", model),
+            provider=self.name,
+            tokens_used=int(getattr(getattr(response, "usage", None), "total_tokens", 0) or 0),
+            finish_reason=str(getattr(response, "status", "stop") or "stop"),
+            metadata={
+                "id": getattr(response, "id", None),
+                "latency_seconds": latency,
+                "request_id": request_id,
+                "fallback_api": "responses",
+                "fallback_reason": "chat_completions_404",
+            },
+        )
+
+    def _build_completion_from_chat(
+        self,
+        *,
+        response: ChatCompletion,
+        request_id: str,
+        latency: float,
+    ) -> LLMCompletion:
+        choice = response.choices[0]
+        content = choice.message.content or ""
+        return LLMCompletion(
+            content=content,
+            model=response.model,
+            provider=self.name,
+            tokens_used=response.usage.total_tokens if response.usage else 0,
+            finish_reason=choice.finish_reason,
+            metadata={
+                "id": response.id,
+                "created": response.created,
+                "latency_seconds": latency,
+                "request_id": request_id,
+                "prompt_tokens": response.usage.prompt_tokens if response.usage else 0,
+                "completion_tokens": response.usage.completion_tokens if response.usage else 0,
+            }
+        )
     
     async def complete(
         self,
@@ -355,19 +404,12 @@ class OpenAIAdapter(LLMProvider):
                     )
                     latency = (datetime.utcnow() - start_time).total_seconds()
                     content = self._extract_text_from_responses(r2) or ""
-                    completion = LLMCompletion(
+                    completion = self._build_completion_from_responses_fallback(
+                        response=r2,
+                        request_id=request_id,
+                        latency=latency,
+                        model=request_params.get("model", self._model),
                         content=content,
-                        model=getattr(r2, "model", request_params.get("model", self._model)),
-                        provider=self.name,
-                        tokens_used=int(getattr(getattr(r2, "usage", None), "total_tokens", 0) or 0),
-                        finish_reason=str(getattr(r2, "status", "stop") or "stop"),
-                        metadata={
-                            "id": getattr(r2, "id", None),
-                            "latency_seconds": latency,
-                            "request_id": request_id,
-                            "fallback_api": "responses",
-                            "fallback_reason": "chat_completions_404",
-                        },
                     )
                     self._logger.info(
                         "OpenAI completion completed (responses fallback)",
@@ -380,25 +422,10 @@ class OpenAIAdapter(LLMProvider):
                     )
                     return completion
                 raise
-            # Extract response
-            choice = response.choices[0]
-            content = choice.message.content or ""
-            
-            # Create completion result
-            completion = LLMCompletion(
-                content=content,
-                model=response.model,
-                provider=self.name,
-                tokens_used=response.usage.total_tokens if response.usage else 0,
-                finish_reason=choice.finish_reason,
-                metadata={
-                    "id": response.id,
-                    "created": response.created,
-                    "latency_seconds": latency,
-                    "request_id": request_id,
-                    "prompt_tokens": response.usage.prompt_tokens if response.usage else 0,
-                    "completion_tokens": response.usage.completion_tokens if response.usage else 0,
-                }
+            completion = self._build_completion_from_chat(
+                response=response,
+                request_id=request_id,
+                latency=latency,
             )
             
             self._logger.info(
