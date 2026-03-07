@@ -92,8 +92,9 @@ async def test_reasoning_engine_fallback_executes_planner_steps(monkeypatch):
             ]
         }
 
-    async def _fake_execute_plan_steps(*, plan, run_reasoning_step, run_verify_step):
+    async def _fake_execute_plan_steps(*, plan, run_reasoning_step, run_verify_step, max_steps=None):
         calls["plan_steps"] = int(len(plan.get("steps") or []))
+        calls["max_steps"] = max_steps
         _ = run_reasoning_step
         _ = run_verify_step
         return [
@@ -128,5 +129,6 @@ async def test_reasoning_engine_fallback_executes_planner_steps(monkeypatch):
 
     assert calls.get("query") == "multi step query"
     assert calls.get("plan_steps") == 2
+    assert calls.get("max_steps") == 3
     assert diag.get("agent_current_action") == "ANSWER"
     assert diag.get("agent_current_step") == 1

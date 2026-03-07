@@ -86,3 +86,39 @@ async def test_execute_plan_steps_empty_plan_returns_empty_results():
         )
         == []
     )
+
+
+@pytest.mark.asyncio
+async def test_execute_plan_steps_respects_max_steps_guard():
+    calls: list[str] = []
+
+    async def _run_reasoning(step):
+        desc = str(step.get("description", ""))
+        calls.append(f"reason:{desc}")
+        return desc
+
+    async def _run_verify(text: str):
+        calls.append(f"verify:{text}")
+        return {"status": "pass", "reasons": []}
+
+    plan = {
+        "steps": [
+            {"description": "s1"},
+            {"description": "s2"},
+            {"description": "s3"},
+            {"description": "s4"},
+        ]
+    }
+    results = await execute_plan_steps(
+        plan=plan,
+        run_reasoning_step=_run_reasoning,
+        run_verify_step=_run_verify,
+        max_steps=2,
+    )
+    assert [x["step_description"] for x in results] == ["s1", "s2"]
+    assert calls == [
+        "reason:s1",
+        "verify:s1",
+        "reason:s2",
+        "verify:s2",
+    ]

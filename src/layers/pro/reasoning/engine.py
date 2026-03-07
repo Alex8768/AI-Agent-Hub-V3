@@ -230,6 +230,7 @@ class ReasoningEngine:
             plan=plan,
             run_reasoning_step=_run_reasoning_step,
             run_verify_step=_run_verify_step,
+            max_steps=3,
         )
 
     async def synthesize(self, request: AnswerRequest) -> AnswerResponse:
