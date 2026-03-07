@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 
 
 ProvenanceType = Literal["chunk", "node", "edge", "memory"]
+ProvenanceOrigin = Literal["vector", "graph", "memory", "planner", "unknown"]
 
 
 class ProvenanceItem(BaseModel):
@@ -20,6 +21,8 @@ class ProvenanceItem(BaseModel):
     # Optional scoring metadata (not all retrievers provide this).
     score: float | None = None
     confidence: float | None = Field(default=None, ge=0.0, le=1.0)
+    origin: ProvenanceOrigin = Field(default="unknown")
+    reliability: float | None = Field(default=None, ge=0.0, le=1.0)
 
     # Optional extra metadata (kept generic to avoid coupling).
     meta: dict[str, Any] = Field(default_factory=dict)

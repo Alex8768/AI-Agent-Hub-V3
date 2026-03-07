@@ -34,6 +34,8 @@ def test_provenance_item_basic():
     assert p.id == "c1"
     assert p.source_refs == []
     assert p.meta == {}
+    assert p.origin == "unknown"
+    assert p.reliability is None
 
 
 def test_answer_response_confidence_bounds():
@@ -44,3 +46,12 @@ def test_answer_response_confidence_bounds():
     assert resp.answer == "a"
     assert resp.confidence == 0.8
     assert resp.provenance == []
+
+
+def test_provenance_item_origin_and_reliability_validation():
+    p = ProvenanceItem(type="memory", id="m1", origin="memory", reliability=0.9)
+    assert p.origin == "memory"
+    assert p.reliability == 0.9
+
+    with pytest.raises(Exception):
+        ProvenanceItem(type="chunk", id="c2", reliability=1.2)
