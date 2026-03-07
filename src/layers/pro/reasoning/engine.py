@@ -51,12 +51,16 @@ class ReasoningEngine:
             rel = getattr(p, "reliability", None)
             if isinstance(rel, (int, float)):
                 with_reliability += 1
+        denom = float(total) if total > 0 else 1.0
         return {
             "version": "v1",
             "total": total,
             "with_source_refs": with_source_refs,
             "with_known_origin": with_known_origin,
             "with_reliability": with_reliability,
+            "source_refs_coverage": float(with_source_refs / denom) if total > 0 else 0.0,
+            "known_origin_coverage": float(with_known_origin / denom) if total > 0 else 0.0,
+            "reliability_coverage": float(with_reliability / denom) if total > 0 else 0.0,
             "valid_minimal": bool(total > 0 and with_source_refs > 0 and with_known_origin > 0),
         }
 

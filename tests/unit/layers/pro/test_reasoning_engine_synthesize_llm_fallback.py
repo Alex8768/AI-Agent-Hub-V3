@@ -47,6 +47,9 @@ async def test_synthesize_falls_back_when_llm_fails():
     assert ec.get("total") == 1
     assert ec.get("with_source_refs") == 1
     assert ec.get("with_known_origin") == 1
+    assert ec.get("source_refs_coverage") == 1.0
+    assert ec.get("known_origin_coverage") == 1.0
+    assert ec.get("reliability_coverage") == 1.0
     assert ec.get("valid_minimal") is True
 
 
@@ -59,6 +62,12 @@ class _EmptyRetriever:
 async def test_synthesize_sets_warning_when_evidence_contract_invalid():
     eng = ReasoningEngine(retriever=_EmptyRetriever(), llm=_FailingLLM())
     resp = await eng.synthesize(AnswerRequest(query="Q?"))
+
+    diag = dict(getattr(resp, "diagnostics", {}) or {})
+    ec = dict(diag.get("evidence_contract") or {})
+    assert ec.get("source_refs_coverage") == 0.0
+    assert ec.get("known_origin_coverage") == 0.0
+    assert ec.get("reliability_coverage") == 0.0
 
     warnings = list(getattr(resp, "warnings", []) or [])
     assert "evidence_contract_minimal_invalid" in warnings
