@@ -41,7 +41,7 @@ Planned files:
 
 ### Progress
 
-- [ ] Patch 1 — execution policy
+- [x] Patch 1 — execution policy
 - [ ] Patch 2 — step controller
 - [ ] Patch 3 — loop guard
 - [ ] Patch 4 — policy integration

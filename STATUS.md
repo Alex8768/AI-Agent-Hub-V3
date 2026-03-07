@@ -15,6 +15,9 @@ trace enrichment, diagnostics exposure, and timeline quality-gate tests.
 
 A2.14 — Reasoning Control Layer
 
+Current progress:
+- Patch 1 complete: execution policy model added with deterministic bounds and caps.
+
 Focus:
 - execution policy boundaries
 - planner step controller

@@ -21,7 +21,7 @@
 
 ## Current Work — A2.14 Reasoning Control Layer
 
-- [ ] Execution policy model
+- [x] Execution policy model
 - [ ] Step controller
 - [ ] Loop guard
 - [ ] Policy integration with planner
