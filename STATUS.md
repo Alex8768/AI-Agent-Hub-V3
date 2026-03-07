@@ -20,6 +20,7 @@ Current progress:
 - Patch 2 complete: trace collector added to assemble plan/steps/verify/quality into trace payload.
 - Patch 3 complete: diagnostics.reasoning_trace exposed in engine/answer snapshots with contract checks.
 - Patch 4 complete: deterministic trace serializer/deserializer added with contract normalization tests.
+- Patch 5 complete: replay utility added for deterministic trace reproduction from object/payload.
 
 Focus:
 - trace model
@@ -30,6 +31,7 @@ Focus:
 
 Execution discipline:
 - keep work strictly inside the active anchor and move in micro-patches.
+- A2.12 is complete; next implementation anchor remains A2.13 (to be defined).
 
 ## Next Anchor
 

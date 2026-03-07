@@ -42,7 +42,7 @@ Planned files:
 - [x] Patch 2 — trace collector
 - [x] Patch 3 — diagnostics.reasoning_trace exposure
 - [x] Patch 4 — serialization
-- [ ] Patch 5 — replay utility
+- [x] Patch 5 — replay utility
 
 ### Out of Scope
 

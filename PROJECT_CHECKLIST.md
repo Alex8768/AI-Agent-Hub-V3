@@ -16,6 +16,7 @@
 - [x] A2.10 Reasoning Quality Loop
 - [x] A2.11 Multi-step Reasoning Planner
 - [x] A2.11.5 Planner evaluation tests (quality gate)
+- [x] A2.12 Reasoning Trace + Replay
 
 ## Current Work — A2.12 Reasoning Trace + Replay
 
@@ -23,7 +24,7 @@
 - [x] Trace collector
 - [x] diagnostics.reasoning_trace exposure
 - [x] Trace serialization
-- [ ] Replay utility
+- [x] Replay utility
 
 ## Next
 
@@ -39,7 +40,7 @@
 - [x] Trace collector
 - [x] diagnostics.reasoning_trace exposure
 - [x] Trace serialization
-- [ ] Replay utility
+- [x] Replay utility
 
 ## Working Rules
 
