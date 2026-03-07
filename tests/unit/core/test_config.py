@@ -113,7 +113,18 @@ class TestFeatureFlags:
         
         assert settings.feature_base_layer is True
         assert settings.feature_pro_layer is True
+        assert settings.feature_graphrag is True
         assert settings.feature_graph_rag is True
         assert settings.feature_canvas is False
         assert settings.feature_semantic_memory is False
         assert settings.feature_multi_agent is False
+
+    def test_feature_graphrag_alias_inconsistent_raises(self):
+        """Canonical true + alias false must fail fast."""
+        from src.core.exceptions import ConfigurationError
+
+        with pytest.raises(ConfigurationError):
+            Settings(
+                feature_graphrag=True,
+                feature_graph_rag=False,
+            )

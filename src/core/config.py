@@ -406,6 +406,20 @@ class Settings(BaseSettings):
         description="DEPRECATED alias for feature_graphrag (kept for backward compatibility)",
     )
 
+    def _apply_feature_graphrag_alias(self) -> None:
+        # Canonical: feature_graphrag
+        # Alias: feature_graph_rag
+        if bool(self.feature_graph_rag) and not bool(self.feature_graphrag):
+            object.__setattr__(self, "feature_graphrag", True)
+
+    def _validate_feature_graphrag_consistency(self) -> None:
+        # If canonical True but alias False -> misconfiguration (prevents silent surprises)
+        if bool(self.feature_graphrag) and not bool(self.feature_graph_rag):
+            raise ConfigurationError(
+                "Inconsistent feature flags: feature_graphrag=True but feature_graph_rag=False. "
+                "Use only feature_graphrag (canonical) or set both consistently."
+            )
+
     @model_validator(mode="after")
     def _normalize_feature_flag_aliases(self) -> "Settings":
         """Normalize deprecated aliases for feature flags.
@@ -413,17 +427,8 @@ class Settings(BaseSettings):
         - If only alias is enabled, enable canonical flag.
         - If both are set but disagree, raise ConfigurationError (fail-fast).
         """
-        # Canonical: feature_graphrag
-        # Alias: feature_graph_rag
-        if bool(self.feature_graph_rag) and not bool(self.feature_graphrag):
-            object.__setattr__(self, "feature_graphrag", True)
-
-        # If canonical True but alias False -> misconfiguration (prevents silent surprises)
-        if bool(self.feature_graphrag) and not bool(self.feature_graph_rag):
-            raise ConfigurationError(
-                "Inconsistent feature flags: feature_graphrag=True but feature_graph_rag=False. "
-                "Use only feature_graphrag (canonical) or set both consistently."
-            )
+        self._apply_feature_graphrag_alias()
+        self._validate_feature_graphrag_consistency()
         return self
     feature_reasoning: bool = Field(
         default=False,
