@@ -1,3 +1,5 @@
+import pytest
+
 from src.adapters.llm.openai_adapter import OpenAIAdapter
 from src.core.types import LLMConfig, Message, MessageRole
 
@@ -198,3 +200,113 @@ def test_iter_stream_output_chunks_preserves_order_and_finish_reason():
     assert [c.chunk_index for c in chunks] == [0, 1, 2]
     assert [c.is_final for c in chunks] == [False, False, True]
     assert chunks[-1].finish_reason == "stop"
+
+
+@pytest.mark.asyncio
+async def test_complete_contract_shape_chat_path():
+    adapter = _make_adapter("gpt-4o-mini")
+
+    class _Usage:
+        total_tokens = 11
+        prompt_tokens = 7
+        completion_tokens = 4
+
+    class _MessageObj:
+        content = "pong"
+
+    class _Choice:
+        message = _MessageObj()
+        finish_reason = "stop"
+
+    class _Resp:
+        model = "gpt-4o-mini"
+        usage = _Usage()
+        choices = [_Choice()]
+        id = "chatcmpl_contract_1"
+        created = 1111111111
+
+    class _Completions:
+        async def create(self, **kwargs):
+            return _Resp()
+
+    class _Chat:
+        completions = _Completions()
+
+    class _Client:
+        chat = _Chat()
+
+    adapter._client = _Client()
+    out = await adapter.complete([Message(role=MessageRole.USER, content="ping")])
+
+    assert out.content == "pong"
+    assert out.provider == "openai"
+    assert out.model == "gpt-4o-mini"
+    assert out.tokens_used == 11
+    assert out.finish_reason == "stop"
+    assert set(out.metadata.keys()) == {
+        "id",
+        "created",
+        "latency_seconds",
+        "request_id",
+        "prompt_tokens",
+        "completion_tokens",
+    }
+
+
+@pytest.mark.asyncio
+async def test_complete_stream_contract_shape():
+    adapter = _make_adapter("gpt-4o-mini")
+
+    class _Delta:
+        def __init__(self, content):
+            self.content = content
+
+    class _Choice:
+        def __init__(self, content=None, finish_reason=None):
+            self.delta = _Delta(content)
+            self.finish_reason = finish_reason
+
+    class _Chunk:
+        def __init__(self, content=None, finish_reason=None):
+            self.choices = [_Choice(content=content, finish_reason=finish_reason)]
+
+    class _FakeStream:
+        def __init__(self, items):
+            self._items = list(items)
+
+        def __aiter__(self):
+            self._idx = 0
+            return self
+
+        async def __anext__(self):
+            if self._idx >= len(self._items):
+                raise StopAsyncIteration
+            item = self._items[self._idx]
+            self._idx += 1
+            return item
+
+    class _Completions:
+        async def create(self, **kwargs):
+            return _FakeStream(
+                [
+                    _Chunk(content="A"),
+                    _Chunk(content="B"),
+                    _Chunk(content=None, finish_reason="stop"),
+                ]
+            )
+
+    class _Chat:
+        completions = _Completions()
+
+    class _Client:
+        chat = _Chat()
+
+    adapter._client = _Client()
+    out = []
+    async for chunk in adapter.complete_stream([Message(role=MessageRole.USER, content="go")]):
+        out.append(chunk)
+
+    assert [c.content for c in out] == ["A", "B", ""]
+    assert [c.chunk_index for c in out] == [0, 1, 2]
+    assert [c.is_final for c in out] == [False, False, True]
+    assert out[-1].finish_reason == "stop"
