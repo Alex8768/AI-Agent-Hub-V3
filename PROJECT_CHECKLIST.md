@@ -6,23 +6,22 @@
 - [x] Hybrid Retrieval pipeline
 - [x] Reasoning Engine initial implementation
 - [x] A2.3 Evidence Contract
+- [x] A2.4 Self-check Diagnostics Rollout
 - [x] CI tracing compatibility fix
 
-## Current Work — A2.4 Self-check Diagnostics Rollout
+## Current Work — A2.5 Verify Node Hardening
 
-- [ ] Patch 0 — runtime parity tests (compile+ainvoke, compile+invoke, no-invoke fallback)
-- [ ] Patch 1 — diagnostics.self_check schema with status "not_evaluated"
-- [ ] Patch 2 — warning-only policy
-- [ ] Patch 3 — threshold tuning
-- [ ] Patch 4 — external contract stabilization
+- [ ] Patch 0 — verify diagnostics schema preflight
+- [ ] Patch 1 — verify node warning-only policy
+- [ ] Patch 2 — verify threshold tuning and boundary tests
+- [ ] Patch 3 — external contract stabilization for diagnostics.verify
 
 ## Next
 
-- [ ] A2.5 Verify Node Hardening
+- [ ] A2.6 AnswerService Decomposition
 
 ## Later
 
-- [ ] A2.6 AnswerService Decomposition
 - [ ] A2.7 OpenAIAdapter Decomposition
 - [ ] A2.8 Config Architecture Cleanup
 - [ ] A2.9 IngestService Slimming

@@ -1,31 +1,37 @@
-# PROJECT STATUS
+# Project Status
 
 ## Current Phase
-Phase 2 -> Reasoning MVP
+
+Pro Layer Development — Reasoning Stabilization
 
 ## Last Completed Anchor
-A2.3 Evidence contract
+
+A2.4 — Self-check Diagnostics Rollout
+
+Self-check diagnostics rollout is completed with stable warning-only and external contract coverage.
 
 ## Current Active Anchor
-A2.4 Self-check
+
+A2.5 — Verify Node Hardening
+
+Current work is focused on deterministic verify-step diagnostics and policy hardening.
 
 ## Next Anchor
-A2.5 Verify node in reasoning graph
 
-## Current Goal
-Подготовить устойчивую и понятную базу для развития Pro слоя без архитектурного хаоса.
+A2.6 — AnswerService Decomposition
 
-## What is being protected right now
-- Чистая граница между API и core
-- Управляемая инициализация зависимостей
-- Предсказуемый маршрут развития Pro
+Planned focus:
+- split orchestration concerns to reduce service monolith risk
+- preserve current external contracts during decomposition
 
-## Notes
-Project architecture:
-Base -> Pro -> Reasoning
+## Upcoming Anchors
 
-Workflow:
-autopatch -> compile -> pytest -> commit
+- A2.7 — OpenAIAdapter Decomposition
+- A2.8 — Config Architecture Cleanup
+- A2.9 — IngestService Slimming
 
-Important:
-не смешивать несколько якорей в одном патче.
+## CI Status
+
+CI pipelines are green.
+
+The noop tracing span compatibility fix is completed and treated as closed work.
