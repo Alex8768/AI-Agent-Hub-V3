@@ -15,6 +15,7 @@ Config architecture was decomposed into LLM/vector builder and feature-flag norm
 A2.9 — IngestService Slimming
 
 Current work is focused on reducing IngestService orchestration complexity without ingest contract drift.
+Patch 0 is completed: metadata preparation boundary is extracted with behavior parity.
 
 ## Next Anchor
 
