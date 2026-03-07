@@ -9,8 +9,15 @@ except Exception:  # pragma: no cover
 class _NoopSpan:
     def __enter__(self):
         return self
+
     def __exit__(self, exc_type, exc, tb):
         return False
+
+    def set_attribute(self, key, value):
+        return None
+
+    def record_exception(self, exc):
+        return None
 
 class _NoopTracer:
     def start_as_current_span(self, *args, **kwargs):
