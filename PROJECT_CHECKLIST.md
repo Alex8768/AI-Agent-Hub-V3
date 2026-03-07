@@ -25,11 +25,20 @@
 
 ## Next
 
-- [ ] A2.12 Reasoning Trace + Replay
+- [ ] A2.11.5 Planner evaluation tests (quality gate)
 
 ## Later
 
+- [ ] A2.12 Reasoning Trace + Replay
 - [ ] A2.13 (to be defined)
+
+## A2.11.5 Planner evaluation tests (quality gate)
+
+- [ ] Multi-step reasoning correctness test
+- [ ] ReasoningState propagation test
+- [ ] Verify-per-step behavior test
+- [ ] max_steps safety guard test
+- [ ] Deterministic planner behavior test
 
 ## A2.12 Reasoning Trace + Replay (predefined, not active)
 

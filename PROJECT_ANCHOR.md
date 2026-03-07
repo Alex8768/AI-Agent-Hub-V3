@@ -73,6 +73,50 @@ A2.11 is complete when:
 - `max_steps` guard is implemented
 - tests cover multi-step reasoning scenarios
 
+## A2.11.5 — Planner evaluation tests (quality gate)
+
+### Goal
+
+Introduce deterministic evaluation tests for the multi-step planner before enabling
+A2.12 Reasoning Trace + Replay.
+
+These tests validate that planner behavior remains stable and predictable.
+
+### Scope
+
+Evaluation tests must verify:
+- multi-step reasoning correctness
+- state propagation across reasoning steps
+- verify execution per step
+- `max_steps` safety guard
+- deterministic planner behavior
+
+### Planned test module
+
+- `tests/unit/layers/pro/test_reasoning_planner_evaluation.py`
+
+### Example scenarios
+
+Scenario 1 — single-step reasoning
+- planner produces one step
+- reasoning executes correctly
+
+Scenario 2 — two-step reasoning
+- planner produces two steps
+- state propagates between steps
+
+Scenario 3 — `max_steps` guard
+- planner cannot exceed safety limit
+
+### Definition of Done
+
+A2.11.5 is complete when:
+- planner evaluation tests exist
+- tests validate multi-step execution
+- tests validate state propagation
+- tests validate `max_steps` guard
+- planner passes evaluation suite consistently
+
 ## Next Defined Anchor
 
 A2.12 — Reasoning Trace + Replay
@@ -120,7 +164,7 @@ A2.12 is complete when:
 ### Discipline
 
 Work order is strict:
-- A2.11 -> STOP -> A2.12
+- A2.11 -> A2.11.5 quality gate -> A2.12
 - Do not mix implementation across these anchors.
 
 ### Last Completed Anchor
