@@ -17,7 +17,7 @@
 
 - [x] Patch 0 — extract metadata preparation boundary
 - [x] Patch 1 — extract chunking boundary
-- [ ] Patch 2 — extract vector persistence boundary
+- [x] Patch 2 — extract vector persistence boundary
 - [ ] Patch 3 — external contract parity snapshots
 
 ## Next
