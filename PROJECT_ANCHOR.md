@@ -32,7 +32,7 @@ A2.6 must split responsibilities into smaller testable units without behaviour d
 ### Progress
 
 - [x] Patch 0 — diagnostics builder extracted with behavior parity
-- [ ] Patch 1 — extract memory I/O boundary
+- [x] Patch 1 — extract memory I/O boundary with best-effort parity
 - [ ] Patch 2 — extract LLM wiring boundary
 - [ ] Patch 3 — external contract parity tests
 

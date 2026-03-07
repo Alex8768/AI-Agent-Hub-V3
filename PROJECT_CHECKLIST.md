@@ -13,7 +13,7 @@
 ## Current Work — A2.6 AnswerService Decomposition
 
 - [x] Patch 0 — extract diagnostics builder with parity
-- [ ] Patch 1 — extract session memory I/O boundary
+- [x] Patch 1 — extract session memory I/O boundary
 - [ ] Patch 2 — extract LLM wiring boundary
 - [ ] Patch 3 — external contract parity snapshots
 
