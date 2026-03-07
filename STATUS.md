@@ -16,6 +16,7 @@ A2.8 — Config Architecture Cleanup
 
 Current work is focused on simplifying config architecture without runtime compatibility drift.
 Patch 0 is completed: LLM config builders are extracted with fail-fast/fallback parity.
+Patch 1 is completed: vector store config builders are extracted with defaults/fallback parity.
 
 ## Next Anchor
 
