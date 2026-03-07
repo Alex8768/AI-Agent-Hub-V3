@@ -61,4 +61,5 @@ async def test_synthesize_uses_llm_when_injected():
     assert ec.get("source_refs_coverage") == 1.0
     assert ec.get("known_origin_coverage") == 1.0
     assert ec.get("reliability_coverage") == 1.0
+    assert ec.get("missing_minimal_fields") == []
     assert ec.get("valid_minimal") is True

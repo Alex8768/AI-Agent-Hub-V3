@@ -52,6 +52,14 @@ class ReasoningEngine:
             if isinstance(rel, (int, float)):
                 with_reliability += 1
         denom = float(total) if total > 0 else 1.0
+        missing_minimal_fields: list[str] = []
+        if total <= 0:
+            missing_minimal_fields.extend(["source_refs", "origin"])
+        else:
+            if with_source_refs <= 0:
+                missing_minimal_fields.append("source_refs")
+            if with_known_origin <= 0:
+                missing_minimal_fields.append("origin")
         return {
             "version": "v1",
             "total": total,
@@ -61,6 +69,7 @@ class ReasoningEngine:
             "source_refs_coverage": float(with_source_refs / denom) if total > 0 else 0.0,
             "known_origin_coverage": float(with_known_origin / denom) if total > 0 else 0.0,
             "reliability_coverage": float(with_reliability / denom) if total > 0 else 0.0,
+            "missing_minimal_fields": missing_minimal_fields,
             "valid_minimal": bool(total > 0 and with_source_refs > 0 and with_known_origin > 0),
         }
 
