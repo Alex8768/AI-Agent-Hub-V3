@@ -15,8 +15,10 @@ IngestService orchestration was decomposed into metadata/chunking/persistence bo
 A2.10 — Reasoning Quality Loop
 
 Current work is focused on deterministic reasoning quality evaluation after verify.
-Planned focus:
-- claim extraction
+Current progress:
+- Patch 0 complete: deterministic claim extraction boundary added with unit tests
+
+Next focus:
 - evidence coverage scoring
 - reasoning confidence model
 - optional single-retry policy

@@ -50,7 +50,7 @@ Final Answer
 
 ### Progress
 
-- [ ] Patch 0 — claim extraction
+- [x] Patch 0 — claim extraction
 - [ ] Patch 1 — evidence coverage scoring
 - [ ] Patch 2 — reasoning confidence model
 - [ ] Patch 3 — retry policy
