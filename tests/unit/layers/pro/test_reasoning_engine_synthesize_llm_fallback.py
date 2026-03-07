@@ -58,9 +58,9 @@ async def test_synthesize_falls_back_when_llm_fails():
     assert sc_thr.get("missing_minimal_count_max") == 0
     verify = dict(diag.get("verify") or {})
     assert verify.get("version") == "v1"
-    assert verify.get("status") == "not_evaluated"
+    assert verify.get("status") == "pass"
     assert verify.get("reasons") == []
-    assert verify.get("policy_mode") == "diagnostics_only"
+    assert verify.get("policy_mode") == "warning_only"
     v_inputs = dict(verify.get("inputs") or {})
     assert v_inputs.get("planner_path_used") is False
     assert v_inputs.get("self_check_status") == "pass"
@@ -126,7 +126,8 @@ async def test_synthesize_sets_warning_when_evidence_contract_invalid():
     assert sc_inputs.get("evidence_contract_missing_minimal_count") == 2
     assert sc_inputs.get("evidence_contract_minimal_coverage_score") == 0.0
     verify = dict(diag.get("verify") or {})
-    assert verify.get("status") == "not_evaluated"
+    assert verify.get("status") == "warn"
+    assert verify.get("reasons") == ["self_check_status!=pass"]
     v_inputs = dict(verify.get("inputs") or {})
     assert v_inputs.get("planner_path_used") is False
     assert v_inputs.get("self_check_status") == "warn"
@@ -140,6 +141,7 @@ async def test_synthesize_sets_warning_when_evidence_contract_invalid():
     warnings = list(getattr(resp, "warnings", []) or [])
     assert "evidence_contract_minimal_invalid" in warnings
     assert "self_check_warning" in warnings
+    assert "verify_warning" in warnings
 
 
 @pytest.mark.asyncio
@@ -166,7 +168,8 @@ async def test_synthesize_reports_partial_evidence_contract_gap():
     assert sc_inputs.get("evidence_contract_missing_minimal_count") == 1
     assert sc_inputs.get("evidence_contract_minimal_coverage_score") == 0.5
     verify = dict(diag.get("verify") or {})
-    assert verify.get("status") == "not_evaluated"
+    assert verify.get("status") == "warn"
+    assert verify.get("reasons") == ["self_check_status!=pass"]
     v_inputs = dict(verify.get("inputs") or {})
     assert v_inputs.get("planner_path_used") is False
     assert v_inputs.get("self_check_status") == "warn"
@@ -181,3 +184,4 @@ async def test_synthesize_reports_partial_evidence_contract_gap():
     warnings = list(getattr(resp, "warnings", []) or [])
     assert "evidence_contract_minimal_invalid" in warnings
     assert "self_check_warning" in warnings
+    assert "verify_warning" in warnings

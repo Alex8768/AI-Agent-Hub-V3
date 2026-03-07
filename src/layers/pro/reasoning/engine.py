@@ -10,6 +10,7 @@ from src.layers.pro.reasoning.contracts import (
     SELF_CHECK_MINIMAL_COVERAGE_SCORE_MIN,
     SELF_CHECK_MISSING_MINIMAL_COUNT_MAX,
     VERIFY_DIAGNOSTICS_VERSION,
+    VERIFY_SELF_CHECK_STATUS_REQUIRED,
     AnswerRequest,
     AnswerResponse,
 )
@@ -142,16 +143,28 @@ class ReasoningEngine:
 
     @staticmethod
     def _verify_diagnostics_preflight(*, planner_path_used: bool, self_check: dict[str, object]) -> dict[str, object]:
-        """A2.5 Patch 0: deterministic verify diagnostics schema (preflight only)."""
+        """A2.5 Patch 1: warning-only verify diagnostics (no answer blocking)."""
+        self_check_status = str(self_check.get("status", "") or "")
+        self_check_policy_mode = str(self_check.get("policy_mode", "") or "")
+        reasons: list[str] = []
+        if self_check_status != str(VERIFY_SELF_CHECK_STATUS_REQUIRED):
+            reasons.append(f"self_check_status!={VERIFY_SELF_CHECK_STATUS_REQUIRED}")
+        if self_check_policy_mode != "warning_only":
+            reasons.append("self_check_policy_mode!=warning_only")
+        status = "pass" if not reasons else "warn"
         return {
             "version": VERIFY_DIAGNOSTICS_VERSION,
-            "status": "not_evaluated",
-            "reasons": [],
-            "policy_mode": "diagnostics_only",
+            "status": status,
+            "reasons": reasons,
+            "policy_mode": "warning_only",
             "inputs": {
                 "planner_path_used": bool(planner_path_used),
-                "self_check_status": str(self_check.get("status", "") or ""),
-                "self_check_policy_mode": str(self_check.get("policy_mode", "") or ""),
+                "self_check_status": self_check_status,
+                "self_check_policy_mode": self_check_policy_mode,
+            },
+            "thresholds": {
+                "required_self_check_status": str(VERIFY_SELF_CHECK_STATUS_REQUIRED),
+                "required_self_check_policy_mode": "warning_only",
             },
         }
 
@@ -264,6 +277,11 @@ class ReasoningEngine:
                 planner_path_used=True,
                 self_check=self_check,
             )
+            verify = dict(diag.get("verify") or {})
+            if str(verify.get("status", "")) == "warn":
+                resp.warnings = list(getattr(resp, "warnings", []) or [])
+                if "verify_warning" not in resp.warnings:
+                    resp.warnings.append("verify_warning")
             if str(self_check.get("status", "")) == "warn":
                 resp.warnings = list(getattr(resp, "warnings", []) or [])
                 if "self_check_warning" not in resp.warnings:
@@ -390,6 +408,11 @@ class ReasoningEngine:
                     self_check=self_check,
                 ),
             )
+            verify = dict(diag.get("verify") or {})
+            if str(verify.get("status", "")) == "warn":
+                resp.warnings = list(getattr(resp, "warnings", []) or [])
+                if "verify_warning" not in resp.warnings:
+                    resp.warnings.append("verify_warning")
             if str(self_check.get("status", "")) == "warn":
                 resp.warnings = list(getattr(resp, "warnings", []) or [])
                 if "self_check_warning" not in resp.warnings:

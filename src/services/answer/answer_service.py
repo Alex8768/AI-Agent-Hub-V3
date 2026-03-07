@@ -11,6 +11,7 @@ from src.layers.pro.reasoning.contracts import (
     SELF_CHECK_MINIMAL_COVERAGE_SCORE_MIN,
     SELF_CHECK_MISSING_MINIMAL_COUNT_MAX,
     VERIFY_DIAGNOSTICS_VERSION,
+    VERIFY_SELF_CHECK_STATUS_REQUIRED,
 )
 from src.observability.request_context import get_request_id
 
@@ -350,16 +351,53 @@ class AnswerService:
                 "verify",
                 {
                     "version": VERIFY_DIAGNOSTICS_VERSION,
-                    "status": "not_evaluated",
-                    "reasons": [],
-                    "policy_mode": "diagnostics_only",
+                    "status": (
+                        "pass"
+                        if (
+                            str(self_check.get("status", "") or "")
+                            == str(VERIFY_SELF_CHECK_STATUS_REQUIRED)
+                            and str(self_check.get("policy_mode", "") or "") == "warning_only"
+                        )
+                        else "warn"
+                    ),
+                    "reasons": (
+                        []
+                        if (
+                            str(self_check.get("status", "") or "")
+                            == str(VERIFY_SELF_CHECK_STATUS_REQUIRED)
+                            and str(self_check.get("policy_mode", "") or "") == "warning_only"
+                        )
+                        else [
+                            *(
+                                [f"self_check_status!={VERIFY_SELF_CHECK_STATUS_REQUIRED}"]
+                                if str(self_check.get("status", "") or "")
+                                != str(VERIFY_SELF_CHECK_STATUS_REQUIRED)
+                                else []
+                            ),
+                            *(
+                                ["self_check_policy_mode!=warning_only"]
+                                if str(self_check.get("policy_mode", "") or "") != "warning_only"
+                                else []
+                            ),
+                        ]
+                    ),
+                    "policy_mode": "warning_only",
                     "inputs": {
                         "planner_path_used": bool(diag.get("planner_path_used", False)),
                         "self_check_status": str(self_check.get("status", "") or ""),
                         "self_check_policy_mode": str(self_check.get("policy_mode", "") or ""),
                     },
+                    "thresholds": {
+                        "required_self_check_status": str(VERIFY_SELF_CHECK_STATUS_REQUIRED),
+                        "required_self_check_policy_mode": "warning_only",
+                    },
                 },
             )
+            verify = dict(diag.get("verify") or {})
+            if str(verify.get("status", "")) == "warn":
+                resp.warnings = list(getattr(resp, "warnings", []) or [])
+                if "verify_warning" not in resp.warnings:
+                    resp.warnings.append("verify_warning")
             diag.setdefault("session_memory_loaded", bool(session_memory_loaded))
             diag.setdefault("session_memory_hit", bool(session_memory_hit))
             diag.setdefault("evidence_type_counts", {})

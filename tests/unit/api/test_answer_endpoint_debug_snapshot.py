@@ -71,13 +71,16 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
     assert sc_thresholds.get("missing_minimal_count_max") == 0
     verify = dict(diag.get("verify") or {})
     assert verify.get("version") == "v1"
-    assert verify.get("status") == "not_evaluated"
+    assert verify.get("status") == "pass"
     assert verify.get("reasons") == []
-    assert verify.get("policy_mode") == "diagnostics_only"
+    assert verify.get("policy_mode") == "warning_only"
     v_inputs = dict(verify.get("inputs") or {})
     assert v_inputs.get("planner_path_used") is False
     assert v_inputs.get("self_check_status") == "pass"
     assert v_inputs.get("self_check_policy_mode") == "warning_only"
+    v_thr = dict(verify.get("thresholds") or {})
+    assert v_thr.get("required_self_check_status") == "pass"
+    assert v_thr.get("required_self_check_policy_mode") == "warning_only"
 
     # cleanup
     try:
