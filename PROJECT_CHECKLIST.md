@@ -22,7 +22,7 @@
 - [x] Trace model
 - [x] Trace collector
 - [x] diagnostics.reasoning_trace exposure
-- [ ] Trace serialization
+- [x] Trace serialization
 - [ ] Replay utility
 
 ## Next
@@ -38,7 +38,7 @@
 - [x] Trace model
 - [x] Trace collector
 - [x] diagnostics.reasoning_trace exposure
-- [ ] Trace serialization
+- [x] Trace serialization
 - [ ] Replay utility
 
 ## Working Rules

@@ -19,6 +19,7 @@ Current progress:
 - Patch 1 complete: trace model contract and normalization helper added with passing tests.
 - Patch 2 complete: trace collector added to assemble plan/steps/verify/quality into trace payload.
 - Patch 3 complete: diagnostics.reasoning_trace exposed in engine/answer snapshots with contract checks.
+- Patch 4 complete: deterministic trace serializer/deserializer added with contract normalization tests.
 
 Focus:
 - trace model
