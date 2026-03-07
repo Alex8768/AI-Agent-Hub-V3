@@ -25,7 +25,7 @@
 - [x] Step controller
 - [x] Loop guard
 - [x] Policy integration with planner
-- [ ] Control behaviour tests
+- [x] Control behaviour tests
 
 ## Next
 

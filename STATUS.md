@@ -20,6 +20,7 @@ Current progress:
 - Patch 2 complete: step controller added for policy-bounded planner step selection.
 - Patch 3 complete: deterministic loop guard model added to block runaway repeated steps.
 - Patch 4 complete: policy wiring integrated into planner execution and quality retry diagnostics.
+- Patch 5 complete: control behaviour quality-gate tests added for policy, loop and retry boundaries.
 
 Focus:
 - execution policy boundaries
