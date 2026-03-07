@@ -42,6 +42,7 @@ async def test_synthesize_falls_back_when_llm_fails():
     assert diag.get("evidence_contract_valid_minimal") is True
     assert diag.get("evidence_contract_missing_minimal_fields") == []
     assert diag.get("evidence_contract_missing_minimal_count") == 0
+    assert diag.get("evidence_contract_minimal_coverage_score") == 1.0
     assert diag.get("evidence_contract_gate_reason") == "ok"
     es = dict(diag.get("evidence_summary") or {})
     assert es.get("count") == 1
@@ -60,6 +61,7 @@ async def test_synthesize_falls_back_when_llm_fails():
     assert ec.get("reliability_coverage") == 1.0
     assert ec.get("missing_minimal_fields") == []
     assert ec.get("missing_minimal_count") == 0
+    assert ec.get("minimal_coverage_score") == 1.0
     assert ec.get("valid_minimal") is True
 
 
@@ -78,12 +80,14 @@ async def test_synthesize_sets_warning_when_evidence_contract_invalid():
     assert diag.get("evidence_contract_valid_minimal") is False
     assert diag.get("evidence_contract_missing_minimal_fields") == ["source_refs", "origin"]
     assert diag.get("evidence_contract_missing_minimal_count") == 2
+    assert diag.get("evidence_contract_minimal_coverage_score") == 0.0
     assert diag.get("evidence_contract_gate_reason") == "missing:source_refs,origin"
     assert ec.get("source_refs_coverage") == 0.0
     assert ec.get("known_origin_coverage") == 0.0
     assert ec.get("reliability_coverage") == 0.0
     assert ec.get("missing_minimal_fields") == ["source_refs", "origin"]
     assert ec.get("missing_minimal_count") == 2
+    assert ec.get("minimal_coverage_score") == 0.0
 
     warnings = list(getattr(resp, "warnings", []) or [])
     assert "evidence_contract_minimal_invalid" in warnings
