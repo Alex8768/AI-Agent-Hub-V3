@@ -23,7 +23,7 @@
 - [x] Timeline model
 - [x] Timeline collector
 - [x] Trace enrichment
-- [ ] diagnostics.reasoning_timeline exposure
+- [x] diagnostics.reasoning_timeline exposure
 - [ ] Timeline tests
 
 ## Next
