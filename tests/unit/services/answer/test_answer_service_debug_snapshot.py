@@ -140,6 +140,7 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
         "evidence_contract_gate_reason",
         "self_check",
         "reasoning_quality",
+        "reasoning_trace",
         "verify",
         "session_memory_loaded",
         "session_memory_hit",
@@ -253,6 +254,21 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
         "loop_guard_triggered",
         "reason",
     }
+    rt = dict(diag.get("reasoning_trace") or {})
+    assert set(rt.keys()) == {
+        "query",
+        "plan",
+        "steps",
+        "verify_results",
+        "quality",
+        "answer",
+    }
+    assert isinstance(rt.get("query"), str)
+    assert isinstance(rt.get("plan"), list)
+    assert isinstance(rt.get("steps"), list)
+    assert isinstance(rt.get("verify_results"), list)
+    assert isinstance(rt.get("quality"), dict)
+    assert isinstance(rt.get("answer"), str)
     rs = (diag.get("retriever_stats") or {})
     assert rs.get("evidence_policy_evidence_after_policy_count") == 1
 

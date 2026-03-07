@@ -79,6 +79,7 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
         "evidence_contract_gate_reason",
         "self_check",
         "reasoning_quality",
+        "reasoning_trace",
         "verify",
         "session_memory_loaded",
         "session_memory_hit",
@@ -182,6 +183,21 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
         "loop_guard_triggered",
         "reason",
     }
+    rt = dict(diag.get("reasoning_trace") or {})
+    assert set(rt.keys()) == {
+        "query",
+        "plan",
+        "steps",
+        "verify_results",
+        "quality",
+        "answer",
+    }
+    assert isinstance(rt.get("query"), str)
+    assert isinstance(rt.get("plan"), list)
+    assert isinstance(rt.get("steps"), list)
+    assert isinstance(rt.get("verify_results"), list)
+    assert isinstance(rt.get("quality"), dict)
+    assert isinstance(rt.get("answer"), str)
 
     # cleanup
     try:

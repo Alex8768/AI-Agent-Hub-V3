@@ -272,6 +272,18 @@ def _apply_diagnostics(
                 },
             },
         )
+        reasoning_quality = dict(diag.get("reasoning_quality") or {})
+        diag.setdefault(
+            "reasoning_trace",
+            {
+                "query": str(getattr(req, "query", "") or ""),
+                "plan": [],
+                "steps": [],
+                "verify_results": [],
+                "quality": reasoning_quality,
+                "answer": str(getattr(resp, "answer", "") or ""),
+            },
+        )
         diag.setdefault("session_memory_loaded", bool(session_memory_loaded))
         diag.setdefault("session_memory_hit", bool(session_memory_hit))
         diag.setdefault("evidence_type_counts", {})

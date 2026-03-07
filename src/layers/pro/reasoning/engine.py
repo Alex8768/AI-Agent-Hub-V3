@@ -25,6 +25,7 @@ from src.layers.pro.reasoning.quality_coverage import score_claim_coverage
 from src.layers.pro.reasoning.quality_retry import decide_reasoning_quality_retry
 from src.layers.pro.reasoning.planner.planner import create_reasoning_plan
 from src.layers.pro.reasoning.planner.step_executor import execute_plan_steps
+from src.layers.pro.reasoning.trace.trace_collector import collect_reasoning_trace
 from src.core.config import get_settings
 
 
@@ -215,6 +216,23 @@ class ReasoningEngine:
             "retry": retry,
         }
 
+    @staticmethod
+    def _build_reasoning_trace_diagnostics(
+        *,
+        query: str,
+        answer_text: str,
+        quality: dict[str, object],
+        plan_steps: list[str],
+        step_results: list[dict[str, object]],
+    ) -> dict[str, object]:
+        return collect_reasoning_trace(
+            query=query,
+            plan={"steps": [{"description": str(x or "")} for x in list(plan_steps or [])]},
+            step_results=list(step_results or []),
+            quality=dict(quality or {}),
+            answer=answer_text,
+        )
+
     async def _execute_planner_steps_mvp(self, *, request: AnswerRequest) -> list[dict[str, object]]:
         """A2.11 Patch 4: execute deterministic planner steps inside engine fallback."""
         plan = create_reasoning_plan(query=str(getattr(request, "query", "") or ""))
@@ -348,6 +366,26 @@ class ReasoningEngine:
                 self_check=self_check,
             )
             verify = dict(diag.get("verify") or {})
+            planner_actions = [str(x or "") for x in list(getattr(final_state, "plan", []) or [])]
+            per_step_results: list[dict[str, object]] = []
+            for idx, description in enumerate(planner_actions):
+                step_output = answer_text if idx == len(planner_actions) - 1 else description
+                per_step_results.append(
+                    {
+                        "step_index": int(idx),
+                        "step_description": str(description or ""),
+                        "reasoning_output": str(step_output or ""),
+                        "verify_status": str(verify.get("status", "") or ""),
+                        "verify_reasons": list(verify.get("reasons") or []),
+                    }
+                )
+            diag["reasoning_trace"] = self._build_reasoning_trace_diagnostics(
+                query=str(getattr(request, "query", "") or ""),
+                answer_text=answer_text,
+                quality=dict(diag.get("reasoning_quality") or {}),
+                plan_steps=planner_actions,
+                step_results=per_step_results,
+            )
             if str(verify.get("status", "")) == "warn":
                 resp.warnings = list(getattr(resp, "warnings", []) or [])
                 if "verify_warning" not in resp.warnings:
@@ -491,6 +529,20 @@ class ReasoningEngine:
                 ),
             )
             verify = dict(diag.get("verify") or {})
+            fallback_plan_steps = [
+                str((row or {}).get("step_description", "") or "")
+                for row in list(planner_step_results or [])
+            ]
+            diag.setdefault(
+                "reasoning_trace",
+                self._build_reasoning_trace_diagnostics(
+                    query=str(getattr(request, "query", "") or ""),
+                    answer_text=answer_text,
+                    quality=dict(diag.get("reasoning_quality") or {}),
+                    plan_steps=fallback_plan_steps,
+                    step_results=list(planner_step_results or []),
+                ),
+            )
             if str(verify.get("status", "")) == "warn":
                 resp.warnings = list(getattr(resp, "warnings", []) or [])
                 if "verify_warning" not in resp.warnings:
