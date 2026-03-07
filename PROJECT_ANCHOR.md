@@ -2,7 +2,7 @@
 
 ## Active Anchor
 
-A2.12 — Reasoning Trace + Replay
+A2.13 — (to be defined)
 
 ### Goal
 

@@ -18,7 +18,7 @@
 - [x] A2.11.5 Planner evaluation tests (quality gate)
 - [x] A2.12 Reasoning Trace + Replay
 
-## Current Work — A2.12 Reasoning Trace + Replay
+## Current Work — A2.13 (to be defined)
 
 - [x] Trace model
 - [x] Trace collector
@@ -34,7 +34,7 @@
 
 - [ ] A2.13 (to be defined)
 
-## A2.12 Reasoning Trace + Replay (active anchor)
+## A2.12 Reasoning Trace + Replay
 
 - [x] Trace model
 - [x] Trace collector

@@ -13,7 +13,7 @@ state propagation, verify-per-step behavior, max_steps safety, and deterministic
 
 ## Current Active Anchor
 
-A2.12 — Reasoning Trace + Replay
+A2.13 — (to be defined)
 
 Current progress:
 - Patch 1 complete: trace model contract and normalization helper added with passing tests.
