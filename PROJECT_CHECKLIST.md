@@ -14,31 +14,23 @@
 - [x] A2.8 Config Architecture Cleanup
 - [x] A2.9 IngestService Slimming
 - [x] A2.10 Reasoning Quality Loop
+- [x] A2.11 Multi-step Reasoning Planner
 
-## Current Work — A2.11 Multi-step Reasoning Planner
-
-- [x] Plan model
-- [x] Planner implementation
-- [x] Step executor
-- [x] Engine integration
-- [ ] max_steps safety guard
-
-## Next
-
-- [ ] A2.11.5 Planner evaluation tests (quality gate)
-
-## Later
-
-- [ ] A2.12 Reasoning Trace + Replay
-- [ ] A2.13 (to be defined)
-
-## A2.11.5 Planner evaluation tests (quality gate)
+## Current Work — A2.11.5 Planner evaluation tests (quality gate)
 
 - [ ] Multi-step reasoning correctness test
 - [ ] ReasoningState propagation test
 - [ ] Verify-per-step behavior test
 - [ ] max_steps safety guard test
 - [ ] Deterministic planner behavior test
+
+## Next
+
+- [ ] A2.12 Reasoning Trace + Replay
+
+## Later
+
+- [ ] A2.13 (to be defined)
 
 ## A2.12 Reasoning Trace + Replay (predefined, not active)
 

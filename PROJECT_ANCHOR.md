@@ -2,78 +2,7 @@
 
 ## Active Anchor
 
-A2.11 — Multi-step Reasoning Planner
-
-### Goal
-
-Enable the reasoning engine to execute multiple reasoning steps instead of a single step.
-
-Current pipeline:
-- query -> retrieval -> reasoning -> verify -> quality -> answer
-
-Target pipeline:
-- query -> planner -> step reasoning -> verify -> step reasoning -> verify -> quality -> answer
-
-Reasoning becomes a planned process, while keeping execution deterministic and bounded.
-
-### Architecture Position
-
-New module:
-- `src/layers/pro/reasoning/planner/`
-
-Planned files:
-- `plan_model.py`
-- `planner.py`
-- `step_executor.py`
-
-### Patch Plan
-
-#### Patch 1 — Plan model
-- Introduce structured plan representation.
-- Minimal contract:
-  - `PlanStep` with `description`.
-  - `ReasoningPlan` with `steps: list[PlanStep]`.
-
-#### Patch 2 — Planner
-- Convert query to reasoning plan.
-- MVP planner can produce one or two steps without heavy heuristics.
-
-#### Patch 3 — Step executor
-- Execute each reasoning step and run verify per step.
-
-#### Patch 4 — Engine integration
-- Execute plan steps sequentially inside `ReasoningEngine`.
-
-#### Patch 5 — Safety limits
-- Introduce `max_steps` guard to prevent infinite loops.
-
-### Progress
-
-- [x] Patch 1 — plan model
-- [x] Patch 2 — planner
-- [x] Patch 3 — step executor
-- [x] Patch 4 — engine integration
-- [ ] Patch 5 — safety limits (`max_steps`)
-
-### Out of Scope
-
-Do NOT modify during A2.11:
-- Retrieval redesign
-- Adapter refactors
-- Config architecture
-- Ingest pipeline
-- A2.12 implementation before A2.11 is closed
-
-### Definition of Done
-
-A2.11 is complete when:
-- planner generates a reasoning plan
-- step executor runs reasoning steps
-- verify works per step
-- `max_steps` guard is implemented
-- tests cover multi-step reasoning scenarios
-
-## A2.11.5 — Planner evaluation tests (quality gate)
+A2.11.5 — Planner evaluation tests (quality gate)
 
 ### Goal
 
@@ -82,31 +11,44 @@ A2.12 Reasoning Trace + Replay.
 
 These tests validate that planner behavior remains stable and predictable.
 
-### Scope
+### Architecture Position
 
-Evaluation tests must verify:
-- multi-step reasoning correctness
-- state propagation across reasoning steps
-- verify execution per step
-- `max_steps` safety guard
-- deterministic planner behavior
-
-### Planned test module
-
+Planned test module:
 - `tests/unit/layers/pro/test_reasoning_planner_evaluation.py`
 
-### Example scenarios
+### Patch Plan
 
-Scenario 1 — single-step reasoning
-- planner produces one step
-- reasoning executes correctly
+#### Patch 1 — Multi-step reasoning correctness
+- Verify planner-driven multi-step execution is correct.
 
-Scenario 2 — two-step reasoning
-- planner produces two steps
-- state propagates between steps
+#### Patch 2 — State propagation
+- Verify reasoning state is propagated across steps.
 
-Scenario 3 — `max_steps` guard
-- planner cannot exceed safety limit
+#### Patch 3 — Verify-per-step behavior
+- Verify each step runs verify with stable contract.
+
+#### Patch 4 — max_steps safety guard
+- Verify step limit is enforced deterministically.
+
+#### Patch 5 — Deterministic planner behavior
+- Verify planner output and execution are stable across runs.
+
+### Progress
+
+- [ ] Patch 1 — multi-step reasoning correctness
+- [ ] Patch 2 — state propagation
+- [ ] Patch 3 — verify-per-step behavior
+- [ ] Patch 4 — max_steps safety guard
+- [ ] Patch 5 — deterministic planner behavior
+
+### Out of Scope
+
+Do NOT modify during A2.11.5:
+- Retrieval redesign
+- Adapter refactors
+- Config architecture
+- Ingest pipeline
+- A2.12 implementation before A2.11.5 is closed
 
 ### Definition of Done
 
@@ -164,16 +106,16 @@ A2.12 is complete when:
 ### Discipline
 
 Work order is strict:
-- A2.11 -> A2.11.5 quality gate -> A2.12
+- A2.11 (complete) -> A2.11.5 quality gate -> A2.12
 - Do not mix implementation across these anchors.
 
 ### Last Completed Anchor
 
-A2.10 — Reasoning Quality Loop
+A2.11 — Multi-step Reasoning Planner
 
 Completed via patches:
-- Patch 0 — claim extraction boundary extracted with parity
-- Patch 1 — evidence coverage scoring boundary extracted with parity
-- Patch 2 — reasoning confidence model boundary extracted with parity
-- Patch 3 — single bounded retry policy boundary extracted with loop guard
-- Patch 4 — diagnostics.reasoning_quality exposure with contract parity tests frozen
+- Patch 1 — plan model contract extracted with deterministic normalization helper
+- Patch 2 — deterministic MVP planner added (query -> one/two steps)
+- Patch 3 — step executor boundary added with verify-per-step contract
+- Patch 4 — planner + step executor integrated into `ReasoningEngine` fallback flow
+- Patch 5 — max_steps safety guard enforced in step execution
