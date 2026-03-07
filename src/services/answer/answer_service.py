@@ -5,7 +5,7 @@ from typing import Any
 
 from fastapi import Request
 
-from src.layers.pro.reasoning.contracts import AnswerRequest
+from src.layers.pro.reasoning.contracts import AnswerRequest, EVIDENCE_CONTRACT_VERSION
 from src.observability.request_context import get_request_id
 
 SESSION_MEMORY_MAX_CHARS = 4000
@@ -250,7 +250,7 @@ class AnswerService:
             diag.setdefault("k", int(req.k or 0))
             diag.setdefault("graph_depth", int(req.graph_depth or 0))
             diag.setdefault("session_id", str(getattr(req, "session_id", "") or ""))
-            diag.setdefault("evidence_contract_version", "v1")
+            diag.setdefault("evidence_contract_version", EVIDENCE_CONTRACT_VERSION)
             contract = dict(diag.get("evidence_contract") or {})
             diag.setdefault(
                 "evidence_contract_valid_minimal",

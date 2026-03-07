@@ -5,7 +5,11 @@ from typing import Any, Optional
 
 from src.layers.pro.reasoning.graph.builder import build_reasoning_graph
 from src.layers.pro.reasoning.graph.state import AgentState
-from src.layers.pro.reasoning.contracts import AnswerRequest, AnswerResponse
+from src.layers.pro.reasoning.contracts import (
+    EVIDENCE_CONTRACT_VERSION,
+    AnswerRequest,
+    AnswerResponse,
+)
 from src.layers.pro.reasoning.confidence import compute_confidence
 from src.layers.pro.reasoning.evidence_normalizer import normalize_retrieval_result
 from src.layers.pro.reasoning.context_packer import pack_context
@@ -66,7 +70,7 @@ class ReasoningEngine:
             else 0.0
         )
         return {
-            "version": "v1",
+            "version": EVIDENCE_CONTRACT_VERSION,
             "minimal_requirements": {
                 "min_total": 1,
                 "requires_source_refs": True,
@@ -183,7 +187,7 @@ class ReasoningEngine:
             diag["planner_path_used"] = True
             diag["session_id"] = str(getattr(final_state, "session_id", "") or "")
             diag["evidence_summary"] = self._evidence_summary(final_state.provenance)
-            diag["evidence_contract_version"] = "v1"
+            diag["evidence_contract_version"] = EVIDENCE_CONTRACT_VERSION
             contract = self._evidence_contract_status(final_state.provenance)
             diag["evidence_contract"] = contract
             diag["evidence_contract_valid_minimal"] = bool(contract.get("valid_minimal", False))
@@ -287,7 +291,7 @@ class ReasoningEngine:
             diag.setdefault("agent_current_step", 0)
             diag.setdefault("planner_path_used", False)
             diag.setdefault("evidence_summary", self._evidence_summary(provenance))
-            diag.setdefault("evidence_contract_version", "v1")
+            diag.setdefault("evidence_contract_version", EVIDENCE_CONTRACT_VERSION)
             contract = self._evidence_contract_status(provenance)
             diag.setdefault("evidence_contract", contract)
             diag.setdefault(

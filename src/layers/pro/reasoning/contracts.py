@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 
 ProvenanceType = Literal["chunk", "node", "edge", "memory"]
 ProvenanceOrigin = Literal["vector", "graph", "memory", "planner", "unknown"]
+EVIDENCE_CONTRACT_VERSION = "v1"
 
 
 class ProvenanceItem(BaseModel):
