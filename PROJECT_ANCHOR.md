@@ -29,6 +29,13 @@ A2.6 must split responsibilities into smaller testable units without behaviour d
 - Freeze API/service snapshots for unchanged output shape
 - Prove no regressions from decomposition
 
+### Progress
+
+- [x] Patch 0 — diagnostics builder extracted with behavior parity
+- [ ] Patch 1 — extract memory I/O boundary
+- [ ] Patch 2 — extract LLM wiring boundary
+- [ ] Patch 3 — external contract parity tests
+
 ### Out of Scope
 
 Do NOT modify during A2.6:

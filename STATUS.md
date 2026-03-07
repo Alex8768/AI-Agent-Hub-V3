@@ -15,6 +15,7 @@ Verify diagnostics are now deterministic, warning-only, threshold-tuned, and ext
 A2.6 — AnswerService Decomposition
 
 Current work is focused on reducing AnswerService orchestration complexity without contract drift.
+Patch 0 is completed: diagnostics builder is extracted with behavior parity validated by tests.
 
 ## Next Anchor
 
