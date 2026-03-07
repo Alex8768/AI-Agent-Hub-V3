@@ -12,21 +12,19 @@
 - [x] A2.6 AnswerService Decomposition
 - [x] A2.7 OpenAIAdapter Decomposition
 - [x] A2.8 Config Architecture Cleanup
+- [x] A2.9 IngestService Slimming
 
-## Current Work — A2.9 IngestService Slimming
+## Current Work — A2.10 (to be defined)
 
-- [x] Patch 0 — extract metadata preparation boundary
-- [x] Patch 1 — extract chunking boundary
-- [x] Patch 2 — extract vector persistence boundary
-- [ ] Patch 3 — external contract parity snapshots
+- [ ] Patch plan pending definition
 
 ## Next
 
-- [ ] A2.10 (to be defined)
+- [ ] TBD
 
 ## Later
 
-- [ ] A2.10 (to be defined)
+- [ ] TBD
 
 ## Working Rules
 

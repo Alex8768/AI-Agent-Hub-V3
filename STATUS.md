@@ -6,25 +6,22 @@ Pro Layer Development — Reasoning Stabilization
 
 ## Last Completed Anchor
 
-A2.8 — Config Architecture Cleanup
+A2.9 — IngestService Slimming
 
-Config architecture was decomposed into LLM/vector builder and feature-flag normalization boundaries with contract parity preserved.
+IngestService orchestration was decomposed into metadata/chunking/persistence boundaries with contract parity preserved.
 
 ## Current Active Anchor
 
-A2.9 — IngestService Slimming
+A2.10 — (to be defined)
 
-Current work is focused on reducing IngestService orchestration complexity without ingest contract drift.
-Patch 0 is completed: metadata preparation boundary is extracted with behavior parity.
-Patch 1 is completed: chunking boundary is extracted with chunk count/content parity.
-Patch 2 is completed: vector persistence boundary is extracted with rollback/error parity.
+Current work definition is pending for A2.10.
 
 ## Next Anchor
 
 A2.10 — (to be defined)
 
 Planned focus:
-- TBD after A2.9 completion
+- TBD
 
 ## Upcoming Anchors
 
