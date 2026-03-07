@@ -10,6 +10,7 @@ from src.layers.pro.reasoning.contracts import (
     EVIDENCE_CONTRACT_VERSION,
     SELF_CHECK_MINIMAL_COVERAGE_SCORE_MIN,
     SELF_CHECK_MISSING_MINIMAL_COUNT_MAX,
+    VERIFY_DIAGNOSTICS_VERSION,
 )
 from src.observability.request_context import get_request_id
 
@@ -345,6 +346,20 @@ class AnswerService:
                 resp.warnings = list(getattr(resp, "warnings", []) or [])
                 if "self_check_warning" not in resp.warnings:
                     resp.warnings.append("self_check_warning")
+            diag.setdefault(
+                "verify",
+                {
+                    "version": VERIFY_DIAGNOSTICS_VERSION,
+                    "status": "not_evaluated",
+                    "reasons": [],
+                    "policy_mode": "diagnostics_only",
+                    "inputs": {
+                        "planner_path_used": bool(diag.get("planner_path_used", False)),
+                        "self_check_status": str(self_check.get("status", "") or ""),
+                        "self_check_policy_mode": str(self_check.get("policy_mode", "") or ""),
+                    },
+                },
+            )
             diag.setdefault("session_memory_loaded", bool(session_memory_loaded))
             diag.setdefault("session_memory_hit", bool(session_memory_hit))
             diag.setdefault("evidence_type_counts", {})

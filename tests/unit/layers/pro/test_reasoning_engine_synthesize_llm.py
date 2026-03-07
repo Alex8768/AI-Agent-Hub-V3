@@ -67,6 +67,15 @@ async def test_synthesize_uses_llm_when_injected():
     sc_thr = dict(sc.get("thresholds") or {})
     assert sc_thr.get("minimal_coverage_score_min") == 1.0
     assert sc_thr.get("missing_minimal_count_max") == 0
+    verify = dict(diag.get("verify") or {})
+    assert verify.get("version") == "v1"
+    assert verify.get("status") == "not_evaluated"
+    assert verify.get("reasons") == []
+    assert verify.get("policy_mode") == "diagnostics_only"
+    v_inputs = dict(verify.get("inputs") or {})
+    assert v_inputs.get("planner_path_used") is True
+    assert v_inputs.get("self_check_status") == "pass"
+    assert v_inputs.get("self_check_policy_mode") == "warning_only"
     es = dict(diag.get("evidence_summary") or {})
     assert es.get("count") == 1
     assert (es.get("origin_counts") or {}).get("vector") == 1

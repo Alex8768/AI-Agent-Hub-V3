@@ -56,6 +56,15 @@ async def test_synthesize_falls_back_when_llm_fails():
     sc_thr = dict(sc.get("thresholds") or {})
     assert sc_thr.get("minimal_coverage_score_min") == 1.0
     assert sc_thr.get("missing_minimal_count_max") == 0
+    verify = dict(diag.get("verify") or {})
+    assert verify.get("version") == "v1"
+    assert verify.get("status") == "not_evaluated"
+    assert verify.get("reasons") == []
+    assert verify.get("policy_mode") == "diagnostics_only"
+    v_inputs = dict(verify.get("inputs") or {})
+    assert v_inputs.get("planner_path_used") is False
+    assert v_inputs.get("self_check_status") == "pass"
+    assert v_inputs.get("self_check_policy_mode") == "warning_only"
     es = dict(diag.get("evidence_summary") or {})
     assert es.get("count") == 1
     assert (es.get("origin_counts") or {}).get("vector") == 1
@@ -116,6 +125,11 @@ async def test_synthesize_sets_warning_when_evidence_contract_invalid():
     assert sc_inputs.get("evidence_contract_valid_minimal") is False
     assert sc_inputs.get("evidence_contract_missing_minimal_count") == 2
     assert sc_inputs.get("evidence_contract_minimal_coverage_score") == 0.0
+    verify = dict(diag.get("verify") or {})
+    assert verify.get("status") == "not_evaluated"
+    v_inputs = dict(verify.get("inputs") or {})
+    assert v_inputs.get("planner_path_used") is False
+    assert v_inputs.get("self_check_status") == "warn"
     assert ec.get("source_refs_coverage") == 0.0
     assert ec.get("known_origin_coverage") == 0.0
     assert ec.get("reliability_coverage") == 0.0
@@ -151,6 +165,11 @@ async def test_synthesize_reports_partial_evidence_contract_gap():
     assert sc_inputs.get("evidence_contract_valid_minimal") is False
     assert sc_inputs.get("evidence_contract_missing_minimal_count") == 1
     assert sc_inputs.get("evidence_contract_minimal_coverage_score") == 0.5
+    verify = dict(diag.get("verify") or {})
+    assert verify.get("status") == "not_evaluated"
+    v_inputs = dict(verify.get("inputs") or {})
+    assert v_inputs.get("planner_path_used") is False
+    assert v_inputs.get("self_check_status") == "warn"
 
     assert ec.get("total") == 1
     assert ec.get("with_known_origin") == 1

@@ -9,6 +9,7 @@ from src.layers.pro.reasoning.contracts import (
     EVIDENCE_CONTRACT_VERSION,
     SELF_CHECK_MINIMAL_COVERAGE_SCORE_MIN,
     SELF_CHECK_MISSING_MINIMAL_COUNT_MAX,
+    VERIFY_DIAGNOSTICS_VERSION,
     AnswerRequest,
     AnswerResponse,
 )
@@ -139,6 +140,21 @@ class ReasoningEngine:
             },
         }
 
+    @staticmethod
+    def _verify_diagnostics_preflight(*, planner_path_used: bool, self_check: dict[str, object]) -> dict[str, object]:
+        """A2.5 Patch 0: deterministic verify diagnostics schema (preflight only)."""
+        return {
+            "version": VERIFY_DIAGNOSTICS_VERSION,
+            "status": "not_evaluated",
+            "reasons": [],
+            "policy_mode": "diagnostics_only",
+            "inputs": {
+                "planner_path_used": bool(planner_path_used),
+                "self_check_status": str(self_check.get("status", "") or ""),
+                "self_check_policy_mode": str(self_check.get("policy_mode", "") or ""),
+            },
+        }
+
     async def synthesize(self, request: AnswerRequest) -> AnswerResponse:
         """Synthesize an answer using agentic graph."""
         from time import perf_counter
@@ -244,6 +260,10 @@ class ReasoningEngine:
             diag["evidence_contract_gate_reason"] = self._evidence_contract_gate_reason(contract)
             self_check = self._self_check_diagnostics(contract)
             diag["self_check"] = self_check
+            diag["verify"] = self._verify_diagnostics_preflight(
+                planner_path_used=True,
+                self_check=self_check,
+            )
             if str(self_check.get("status", "")) == "warn":
                 resp.warnings = list(getattr(resp, "warnings", []) or [])
                 if "self_check_warning" not in resp.warnings:
@@ -363,6 +383,13 @@ class ReasoningEngine:
             )
             diag.setdefault("self_check", self._self_check_diagnostics(contract))
             self_check = dict(diag.get("self_check") or {})
+            diag.setdefault(
+                "verify",
+                self._verify_diagnostics_preflight(
+                    planner_path_used=False,
+                    self_check=self_check,
+                ),
+            )
             if str(self_check.get("status", "")) == "warn":
                 resp.warnings = list(getattr(resp, "warnings", []) or [])
                 if "self_check_warning" not in resp.warnings:

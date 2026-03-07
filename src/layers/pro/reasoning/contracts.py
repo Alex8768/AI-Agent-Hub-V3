@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 ProvenanceType = Literal["chunk", "node", "edge", "memory"]
 ProvenanceOrigin = Literal["vector", "graph", "memory", "planner", "unknown"]
 EVIDENCE_CONTRACT_VERSION = "v1"
+VERIFY_DIAGNOSTICS_VERSION = "v1"
 SELF_CHECK_MINIMAL_COVERAGE_SCORE_MIN = 1.0
 SELF_CHECK_MISSING_MINIMAL_COUNT_MAX = 0
 
