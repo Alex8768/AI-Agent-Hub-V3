@@ -37,6 +37,28 @@ class ReasoningEngine:
             "count": int(len(provenance or [])),
         }
 
+    @staticmethod
+    def _evidence_contract_status(provenance: list) -> dict[str, object]:
+        total = int(len(provenance or []))
+        with_source_refs = 0
+        with_known_origin = 0
+        with_reliability = 0
+        for p in provenance or []:
+            if list(getattr(p, "source_refs", []) or []):
+                with_source_refs += 1
+            if str(getattr(p, "origin", "unknown") or "unknown") != "unknown":
+                with_known_origin += 1
+            rel = getattr(p, "reliability", None)
+            if isinstance(rel, (int, float)):
+                with_reliability += 1
+        return {
+            "total": total,
+            "with_source_refs": with_source_refs,
+            "with_known_origin": with_known_origin,
+            "with_reliability": with_reliability,
+            "valid_minimal": bool(total > 0 and with_source_refs > 0 and with_known_origin > 0),
+        }
+
     async def synthesize(self, request: AnswerRequest) -> AnswerResponse:
         """Synthesize an answer using agentic graph."""
         from time import perf_counter
@@ -126,6 +148,7 @@ class ReasoningEngine:
             diag["planner_path_used"] = True
             diag["session_id"] = str(getattr(final_state, "session_id", "") or "")
             diag["evidence_summary"] = self._evidence_summary(final_state.provenance)
+            diag["evidence_contract"] = self._evidence_contract_status(final_state.provenance)
             if final_state.error:
                 diag["agent_error"] = final_state.error
             resp.diagnostics = diag
@@ -212,6 +235,7 @@ class ReasoningEngine:
             diag.setdefault("agent_current_step", 0)
             diag.setdefault("planner_path_used", False)
             diag.setdefault("evidence_summary", self._evidence_summary(provenance))
+            diag.setdefault("evidence_contract", self._evidence_contract_status(provenance))
             resp.diagnostics = diag
         except Exception:
             pass
