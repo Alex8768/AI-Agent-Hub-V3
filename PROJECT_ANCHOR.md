@@ -31,7 +31,7 @@ A2.9 must split ingest responsibilities into smaller units without behaviour dri
 ### Progress
 
 - [x] Patch 0 — metadata preparation boundary extracted with parity
-- [ ] Patch 1 — extract chunking boundary
+- [x] Patch 1 — chunking boundary extracted with parity
 - [ ] Patch 2 — extract vector persistence boundary
 - [ ] Patch 3 — external contract parity tests
 

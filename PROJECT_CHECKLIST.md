@@ -16,7 +16,7 @@
 ## Current Work — A2.9 IngestService Slimming
 
 - [x] Patch 0 — extract metadata preparation boundary
-- [ ] Patch 1 — extract chunking boundary
+- [x] Patch 1 — extract chunking boundary
 - [ ] Patch 2 — extract vector persistence boundary
 - [ ] Patch 3 — external contract parity snapshots
 

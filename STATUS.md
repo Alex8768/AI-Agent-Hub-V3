@@ -16,6 +16,7 @@ A2.9 — IngestService Slimming
 
 Current work is focused on reducing IngestService orchestration complexity without ingest contract drift.
 Patch 0 is completed: metadata preparation boundary is extracted with behavior parity.
+Patch 1 is completed: chunking boundary is extracted with chunk count/content parity.
 
 ## Next Anchor
 
