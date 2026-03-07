@@ -337,6 +337,37 @@ async def _save_session_memory(
             pass
 
 
+async def _build_llm_adapter(*, settings: object) -> tuple[object | None, bool, str, str, str]:
+    llm_enabled = bool(getattr(settings, "feature_reasoning_llm_enabled", False))
+    llm = None
+    llm_provider_name = ""
+    llm_model = ""
+    llm_error = ""
+
+    if llm_enabled:
+        try:
+            from src.api.dependencies_impl import get_llm_provider
+
+            prov = await get_llm_provider()
+            # Determine provider/model for diagnostics in a provider-aware way
+            try:
+                llm_provider_name = str(getattr(settings, "llm_provider").value)
+            except Exception:
+                llm_provider_name = str(getattr(settings, "llm_provider", "") or "")
+            if llm_provider_name == "openai":
+                llm_model = str(getattr(settings, "openai_model", "") or "")
+            elif llm_provider_name == "ollama":
+                llm_model = str(getattr(settings, "ollama_model", "") or "")
+            else:
+                llm_model = str(getattr(prov, "model", "") or "")
+            llm = LLMGenerateAdapter(prov, provider_name=llm_provider_name, model=llm_model)
+        except Exception as e:
+            llm = None
+            llm_error = str(e)
+
+    return llm, llm_enabled, llm_provider_name, llm_model, llm_error
+
+
 class RetrieverAdapter:
     def __init__(self, *, engine: object, hybrid: object, workspace_id: str):
         self._engine = engine
@@ -471,35 +502,11 @@ class AnswerService:
             from fastapi import HTTPException
             raise HTTPException(status_code=503, detail="Reasoning stack not initialized")
 
-        llm_enabled = bool(getattr(s, "feature_reasoning_llm_enabled", False))
-
-        llm = None
-        llm_provider_name = ""
-        llm_model = ""
-        llm_error = ""
+        llm, llm_enabled, llm_provider_name, llm_model, llm_error = await _build_llm_adapter(
+            settings=s
+        )
         session_memory_loaded = False
         session_memory_hit = False
-
-        if llm_enabled:
-            try:
-                from src.api.dependencies_impl import get_llm_provider
-
-                prov = await get_llm_provider()
-                # Determine provider/model for diagnostics in a provider-aware way
-                try:
-                    llm_provider_name = str(getattr(s, "llm_provider").value)
-                except Exception:
-                    llm_provider_name = str(getattr(s, "llm_provider", "") or "")
-                if llm_provider_name == "openai":
-                    llm_model = str(getattr(s, "openai_model", "") or "")
-                elif llm_provider_name == "ollama":
-                    llm_model = str(getattr(s, "ollama_model", "") or "")
-                else:
-                    llm_model = str(getattr(prov, "model", "") or "")
-                llm = LLMGenerateAdapter(prov, provider_name=llm_provider_name, model=llm_model)
-            except Exception as e:
-                llm = None
-                llm_error = str(e)
 
         session_memory_loaded, session_memory_hit = await _load_session_memory(
             req=req,
