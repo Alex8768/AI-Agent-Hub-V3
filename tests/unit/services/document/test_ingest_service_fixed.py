@@ -161,3 +161,18 @@ def test_prepare_ingest_metadata_boundary_preserves_defaults(ingest_service):
     assert meta.get("document_id") == "doc-1"
     assert meta.get("workspace_id") == "default"
     assert meta.get("source") == "unit"
+
+
+def test_chunk_text_boundary_preserves_chunk_count(ingest_service):
+    text = "First sentence. Second sentence. Third sentence."
+    final_metadata = {"workspace_id": "default"}
+
+    direct = ingest_service.chunker.chunk_text(text, final_metadata)
+    bounded = ingest_service._chunk_text_boundary(
+        text=text,
+        filename="doc.txt",
+        final_metadata=final_metadata,
+    )
+
+    assert len(bounded) == len(direct)
+    assert [c.content for c in bounded] == [c.content for c in direct]

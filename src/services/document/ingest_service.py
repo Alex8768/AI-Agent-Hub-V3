@@ -259,15 +259,11 @@ class IngestService:
             )
             
             # 4. Чанкинг
-            self._logger.info(f"Чанкинг документа: {filename}")
-            chunks = self.chunker.chunk_text(text, final_metadata)
-            
-            if not chunks:
-                raise ValidationError(
-                    message="Текст не содержит значимого контента",
-                    field="text",
-                    value=text[:100] + "..." if len(text) > 100 else text
-                )
+            chunks = self._chunk_text_boundary(
+                text=text,
+                filename=filename,
+                final_metadata=final_metadata,
+            )
             
             # 5. Генерация эмбеддингов (оптимизация для M4)
             self._logger.info(f"Генерация эмбеддингов для {len(chunks)} чанков")
@@ -365,6 +361,25 @@ class IngestService:
             document_id,
         )
         return format, final_metadata
+
+    def _chunk_text_boundary(
+        self,
+        *,
+        text: str,
+        filename: str,
+        final_metadata: Dict[str, Any],
+    ) -> List[Chunk]:
+        """Run chunking with validation in one boundary."""
+        self._logger.info(f"Чанкинг документа: {filename}")
+        chunks = self.chunker.chunk_text(text, final_metadata)
+
+        if not chunks:
+            raise ValidationError(
+                message="Текст не содержит значимого контента",
+                field="text",
+                value=text[:100] + "..." if len(text) > 100 else text
+            )
+        return chunks
 
 
     async def _rollback_vectors(self, chunk_ids: list[str], *, document_id: str | None = None) -> None:
