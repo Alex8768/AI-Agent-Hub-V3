@@ -19,7 +19,7 @@
 ## Current Work — A2.11.5 Planner evaluation tests (quality gate)
 
 - [x] Multi-step reasoning correctness test
-- [ ] ReasoningState propagation test
+- [x] ReasoningState propagation test
 - [ ] Verify-per-step behavior test
 - [ ] max_steps safety guard test
 - [ ] Deterministic planner behavior test
