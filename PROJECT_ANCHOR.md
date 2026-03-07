@@ -2,51 +2,53 @@
 
 ## Active Anchor
 
-A2.13 — (to be defined)
+A2.13 — Reasoning Observability
 
 ### Goal
 
-Make reasoning deterministic and reproducible through trace recording and replay.
+Introduce full observability for reasoning execution.
+
+This includes timeline events, step latency, planner decisions,
+verify outcomes and quality evaluation visibility.
 
 ### Architecture Position
 
 Planned module:
-- `src/layers/pro/reasoning/trace/`
+- `src/layers/pro/reasoning/observability/`
 
 Planned files:
-- `trace_model.py`
-- `trace_collector.py`
-- `trace_serializer.py`
-- `replay.py`
+- `timeline_model.py`
+- `timeline_collector.py`
+- `trace_enricher.py`
 
 ### Patch Plan
 
-#### Patch 1 — Trace model
-- Introduce `ReasoningTrace` structure.
+#### Patch 1 — Timeline model
+- Introduce `ReasoningTimelineEvent` and `ReasoningTimeline` structures.
 
-#### Patch 2 — Trace collector
-- Collect plan steps, verify results, quality data.
+#### Patch 2 — Timeline collector
+- Collect timeline events during reasoning execution.
 
-#### Patch 3 — Diagnostics exposure
-- Expose `diagnostics.reasoning_trace`.
+#### Patch 3 — Trace enrichment
+- Add timeline information to `ReasoningTrace`.
 
-#### Patch 4 — Serialization
-- Save trace for debugging and post-analysis.
+#### Patch 4 — Diagnostics exposure
+- Expose `diagnostics.reasoning_timeline`.
 
-#### Patch 5 — Replay utility
-- Replay reasoning pipeline from stored trace.
+#### Patch 5 — Timeline tests
+- Add tests validating timeline generation and structure.
 
 ### Progress
 
-- [x] Patch 1 — trace model
-- [x] Patch 2 — trace collector
-- [x] Patch 3 — diagnostics.reasoning_trace exposure
-- [x] Patch 4 — serialization
-- [x] Patch 5 — replay utility
+- [ ] Patch 1 — timeline model
+- [ ] Patch 2 — timeline collector
+- [ ] Patch 3 — trace enrichment
+- [ ] Patch 4 — diagnostics.reasoning_timeline exposure
+- [ ] Patch 5 — timeline tests
 
 ### Out of Scope
 
-Do NOT modify during A2.12:
+Do NOT modify during A2.13:
 - Retrieval redesign
 - Adapter refactors
 - Config architecture
@@ -55,29 +57,29 @@ Do NOT modify during A2.12:
 
 ### Definition of Done
 
-A2.12 is complete when:
-- reasoning trace is recorded
-- trace serialization is implemented
-- replay reproduces the reasoning pipeline
-- tests validate replay behavior
+A2.13 is complete when:
+- reasoning timeline events are recorded
+- timeline is attached to reasoning trace
+- diagnostics.reasoning_timeline is exposed
+- timeline behaviour is covered by tests
 
 ## Next Anchor
 
-A2.13 — (to be defined)
+A2.14 — (to be defined)
 
 ### Discipline
 
 Work order is strict:
-- A2.12 -> A2.13
+- A2.13 -> A2.14
 - Do not mix implementation across these anchors.
 
 ### Last Completed Anchor
 
-A2.11.5 — Planner evaluation tests (quality gate)
+A2.12 — Reasoning Trace + Replay
 
 Completed via patches:
-- Patch 1 — multi-step reasoning correctness evaluation test added
-- Patch 2 — state propagation evaluation test added
-- Patch 3 — verify-per-step behavior evaluation test added
-- Patch 4 — max_steps safety guard evaluation test added
-- Patch 5 — deterministic planner behavior evaluation test added
+- Patch 1 — trace model contract extracted with deterministic normalization
+- Patch 2 — trace collector added (plan/steps/verify/quality assembly)
+- Patch 3 — diagnostics.reasoning_trace exposed and contract-tested
+- Patch 4 — deterministic trace serializer/deserializer added
+- Patch 5 — replay utility added for deterministic trace reproduction

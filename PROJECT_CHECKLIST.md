@@ -18,29 +18,21 @@
 - [x] A2.11.5 Planner evaluation tests (quality gate)
 - [x] A2.12 Reasoning Trace + Replay
 
-## Current Work — A2.13 (to be defined)
+## Current Work — A2.13 Reasoning Observability
 
-- [x] Trace model
-- [x] Trace collector
-- [x] diagnostics.reasoning_trace exposure
-- [x] Trace serialization
-- [x] Replay utility
+- [ ] Timeline model
+- [ ] Timeline collector
+- [ ] Trace enrichment
+- [ ] diagnostics.reasoning_timeline exposure
+- [ ] Timeline tests
 
 ## Next
 
-- [ ] A2.13 (to be defined)
+- [ ] A2.14 (to be defined)
 
 ## Later
 
-- [ ] A2.13 (to be defined)
-
-## A2.12 Reasoning Trace + Replay
-
-- [x] Trace model
-- [x] Trace collector
-- [x] diagnostics.reasoning_trace exposure
-- [x] Trace serialization
-- [x] Replay utility
+- [ ] A2.15 (to be defined)
 
 ## Working Rules
 
