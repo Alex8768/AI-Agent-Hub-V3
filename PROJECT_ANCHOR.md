@@ -2,52 +2,52 @@
 
 ## Active Anchor
 
-A2.6 — AnswerService Decomposition
+A2.7 — OpenAIAdapter Decomposition
 
 ### Goal
 
-Reduce `AnswerService` orchestration complexity while preserving external contracts.
+Reduce `OpenAIAdapter` branching complexity while preserving provider behavior and fallback compatibility.
 
-A2.6 must split responsibilities into smaller testable units without behaviour drift.
+A2.7 must split completion/streaming responsibilities into smaller testable units without behaviour drift.
 
 ### Patch Plan
 
-#### Patch 0 — Extract diagnostics builder
-- Isolate diagnostics assembly from endpoint orchestration
-- Keep output schema identical
-- Preserve current warnings and metadata fields
+#### Patch 0 — Extract completion builders
+- Isolate completion object assembly from `complete()` branching
+- Keep chat path and responses-fallback metadata parity
+- Preserve existing request/response behavior
 
-#### Patch 1 — Extract memory I/O boundary
-- Isolate load/save session memory behavior
-- Keep best-effort semantics unchanged
+#### Patch 1 — Extract request parameter builders
+- Isolate config merge and request params construction
+- Keep defaults and None-pruning behavior unchanged
 
-#### Patch 2 — Extract LLM wiring boundary
-- Isolate provider/model resolution and adapter creation
-- Preserve current fallback behavior
+#### Patch 2 — Extract streaming boundaries
+- Isolate stream iteration and final chunk synthesis
+- Preserve chunk ordering and finish_reason behavior
 
 #### Patch 3 — External contract parity tests
-- Freeze API/service snapshots for unchanged output shape
+- Freeze adapter-level completion/streaming behavior contracts
 - Prove no regressions from decomposition
 
 ### Progress
 
-- [x] Patch 0 — diagnostics builder extracted with behavior parity
-- [x] Patch 1 — extract memory I/O boundary with best-effort parity
-- [x] Patch 2 — extract LLM wiring boundary with fallback parity
-- [x] Patch 3 — external contract parity snapshots/tests frozen
+- [x] Patch 0 — completion builders extracted with behavior parity
+- [ ] Patch 1 — extract request parameter builders
+- [ ] Patch 2 — extract streaming boundaries
+- [ ] Patch 3 — external contract parity tests
 
 ### Out of Scope
 
-Do NOT modify during A2.6:
-- OpenAIAdapter decomposition
+Do NOT modify during A2.7:
 - config.py architecture cleanup
 - IngestService slimming
 - retrieval pipeline redesign
 - reasoning graph redesign beyond active-patch need
+- AnswerService decomposition beyond closed A2.6
 
 ### Definition of Done
 
-A2.6 is complete when:
-- AnswerService responsibilities are split into focused units
-- API/service external contracts remain unchanged
+A2.7 is complete when:
+- OpenAIAdapter responsibilities are split into focused units
+- provider behavior and fallback compatibility remain unchanged
 - behavior parity is validated by tests

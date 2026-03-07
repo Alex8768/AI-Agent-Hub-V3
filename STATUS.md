@@ -6,31 +6,27 @@ Pro Layer Development — Reasoning Stabilization
 
 ## Last Completed Anchor
 
-A2.5 — Verify Node Hardening
+A2.6 — AnswerService Decomposition
 
-Verify diagnostics are now deterministic, warning-only, threshold-tuned, and externally stabilized.
+AnswerService orchestration was decomposed into diagnostics, memory I/O, and LLM wiring boundaries with contract parity preserved.
 
 ## Current Active Anchor
 
-A2.6 — AnswerService Decomposition
+A2.7 — OpenAIAdapter Decomposition
 
-Current work is focused on reducing AnswerService orchestration complexity without contract drift.
-Patch 0 is completed: diagnostics builder is extracted with behavior parity validated by tests.
-Patch 1 is completed: session memory load/save I/O boundary is extracted with best-effort behavior parity.
-Patch 2 is completed: LLM wiring boundary is extracted with provider/model/fallback parity.
-Patch 3 is completed: API/service external contract parity snapshots are frozen and validated.
+Current work is focused on reducing OpenAIAdapter branching complexity without behavior drift.
+Patch 0 is completed: completion builders are extracted with behavior parity validated by tests.
 
 ## Next Anchor
 
-A2.7 — OpenAIAdapter Decomposition
+A2.8 — Config Architecture Cleanup
 
 Planned focus:
-- reduce adapter branching complexity
-- preserve provider behavior and fallback compatibility
+- simplify config structure and ownership boundaries
+- preserve current runtime defaults and compatibility
 
 ## Upcoming Anchors
 
-- A2.8 — Config Architecture Cleanup
 - A2.9 — IngestService Slimming
 
 ## CI Status

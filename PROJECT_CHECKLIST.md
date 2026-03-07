@@ -9,21 +9,21 @@
 - [x] A2.4 Self-check Diagnostics Rollout
 - [x] A2.5 Verify Node Hardening
 - [x] CI tracing compatibility fix
+- [x] A2.6 AnswerService Decomposition
 
-## Current Work — A2.6 AnswerService Decomposition
+## Current Work — A2.7 OpenAIAdapter Decomposition
 
-- [x] Patch 0 — extract diagnostics builder with parity
-- [x] Patch 1 — extract session memory I/O boundary
-- [x] Patch 2 — extract LLM wiring boundary
-- [x] Patch 3 — external contract parity snapshots
+- [x] Patch 0 — extract completion builders with parity
+- [ ] Patch 1 — extract request parameter builders
+- [ ] Patch 2 — extract streaming boundaries
+- [ ] Patch 3 — external contract parity snapshots
 
 ## Next
 
-- [ ] A2.7 OpenAIAdapter Decomposition
+- [ ] A2.8 Config Architecture Cleanup
 
 ## Later
 
-- [ ] A2.8 Config Architecture Cleanup
 - [ ] A2.9 IngestService Slimming
 
 ## Working Rules
