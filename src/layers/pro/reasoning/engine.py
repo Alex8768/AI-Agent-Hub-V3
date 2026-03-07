@@ -19,6 +19,10 @@ from src.layers.pro.reasoning.contracts import (
 from src.layers.pro.reasoning.confidence import compute_confidence
 from src.layers.pro.reasoning.evidence_normalizer import normalize_retrieval_result
 from src.layers.pro.reasoning.context_packer import pack_context
+from src.layers.pro.reasoning.quality_claims import extract_claims
+from src.layers.pro.reasoning.quality_confidence import compute_reasoning_quality_confidence
+from src.layers.pro.reasoning.quality_coverage import score_claim_coverage
+from src.layers.pro.reasoning.quality_retry import decide_reasoning_quality_retry
 from src.core.config import get_settings
 
 
@@ -175,6 +179,40 @@ class ReasoningEngine:
             },
         }
 
+    @staticmethod
+    def _reasoning_quality_diagnostics(
+        *,
+        answer_text: str,
+        provenance: list,
+        contract: dict[str, object],
+    ) -> dict[str, object]:
+        claims = extract_claims(reasoning_output=str(answer_text or ""))
+        coverage = score_claim_coverage(
+            claims=claims,
+            provenance=list(provenance or []),
+        )
+        unsupported_claims = int(coverage.get("claims_uncovered") or 0)
+        missing_claims = int(contract.get("missing_minimal_count") or 0)
+        confidence = compute_reasoning_quality_confidence(
+            coverage_score=float(coverage.get("coverage_score") or 0.0),
+            unsupported_claims=unsupported_claims,
+            missing_claims=missing_claims,
+        )
+        retry = decide_reasoning_quality_retry(
+            confidence_score=float(confidence.get("confidence_score") or 0.0),
+            attempt=0,
+            threshold=0.6,
+            max_retries=1,
+        )
+        return {
+            "version": "v1",
+            "claims_total": int(len(claims)),
+            "claims_sample": list(claims[:5]),
+            "coverage": coverage,
+            "confidence": confidence,
+            "retry": retry,
+        }
+
     async def synthesize(self, request: AnswerRequest) -> AnswerResponse:
         """Synthesize an answer using agentic graph."""
         from time import perf_counter
@@ -280,6 +318,11 @@ class ReasoningEngine:
             diag["evidence_contract_gate_reason"] = self._evidence_contract_gate_reason(contract)
             self_check = self._self_check_diagnostics(contract)
             diag["self_check"] = self_check
+            diag["reasoning_quality"] = self._reasoning_quality_diagnostics(
+                answer_text=answer_text,
+                provenance=final_state.provenance,
+                contract=contract,
+            )
             diag["verify"] = self._verify_diagnostics_preflight(
                 planner_path_used=True,
                 self_check=self_check,
@@ -407,6 +450,14 @@ class ReasoningEngine:
                 self._evidence_contract_gate_reason(contract),
             )
             diag.setdefault("self_check", self._self_check_diagnostics(contract))
+            diag.setdefault(
+                "reasoning_quality",
+                self._reasoning_quality_diagnostics(
+                    answer_text=answer_text,
+                    provenance=provenance,
+                    contract=contract,
+                ),
+            )
             self_check = dict(diag.get("self_check") or {})
             diag.setdefault(
                 "verify",

@@ -74,6 +74,13 @@ async def test_verify_contract_is_stable_on_planner_path():
     assert thresholds.get("required_self_check_status") == "pass"
     assert thresholds.get("required_self_check_policy_mode") == "warning_only"
     assert thresholds.get("self_check_reasons_count_max") == 0
+    rq = dict(diag.get("reasoning_quality") or {})
+    assert rq.get("version") == "v1"
+    assert isinstance(rq.get("claims_total"), int)
+    assert isinstance(rq.get("claims_sample"), list)
+    assert isinstance((rq.get("coverage") or {}).get("coverage_score"), float)
+    assert isinstance((rq.get("confidence") or {}).get("confidence_score"), float)
+    assert isinstance((rq.get("retry") or {}).get("should_retry"), bool)
 
 
 @pytest.mark.asyncio
@@ -97,3 +104,8 @@ async def test_verify_contract_warns_on_fallback_with_self_check_issues():
 
     warnings = list(getattr(resp, "warnings", []) or [])
     assert "verify_warning" in warnings
+    rq = dict(diag.get("reasoning_quality") or {})
+    assert rq.get("version") == "v1"
+    assert isinstance((rq.get("coverage") or {}).get("coverage_score"), float)
+    assert isinstance((rq.get("confidence") or {}).get("confidence_score"), float)
+    assert isinstance((rq.get("retry") or {}).get("loop_guard_triggered"), bool)

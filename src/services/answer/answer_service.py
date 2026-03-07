@@ -226,6 +226,52 @@ def _apply_diagnostics(
             resp.warnings = list(getattr(resp, "warnings", []) or [])
             if "verify_warning" not in resp.warnings:
                 resp.warnings.append("verify_warning")
+        coverage_score = float(diag.get("evidence_contract_minimal_coverage_score", 0.0) or 0.0)
+        missing_claims = int(diag.get("evidence_contract_missing_minimal_count", 0) or 0)
+        raw_conf = max(0.0, min(1.0, coverage_score - float(missing_claims * 0.15)))
+        retry_budget_available = raw_conf < 0.6
+        diag.setdefault(
+            "reasoning_quality",
+            {
+                "version": "v1",
+                "claims_total": 0,
+                "claims_sample": [],
+                "coverage": {
+                    "claims_total": 0,
+                    "claims_covered": 0,
+                    "claims_uncovered": 0,
+                    "coverage_score": coverage_score,
+                    "covered_claim_indices": [],
+                    "uncovered_claim_indices": [],
+                },
+                "confidence": {
+                    "coverage_score": coverage_score,
+                    "unsupported_claims": 0,
+                    "missing_claims": missing_claims,
+                    "penalty_unsupported": 0.0,
+                    "penalty_missing": float(missing_claims * 0.15),
+                    "penalty_total": float(missing_claims * 0.15),
+                    "raw_confidence": raw_conf,
+                    "confidence_score": raw_conf,
+                },
+                "retry": {
+                    "attempt": 0,
+                    "max_retries": 1,
+                    "confidence_score": raw_conf,
+                    "threshold": 0.6,
+                    "confidence_below_threshold": bool(raw_conf < 0.6),
+                    "retry_budget_available": bool(retry_budget_available),
+                    "should_retry": bool(retry_budget_available),
+                    "next_attempt": 1 if retry_budget_available else 0,
+                    "loop_guard_triggered": False,
+                    "reason": (
+                        "retry_allowed_low_confidence"
+                        if retry_budget_available
+                        else "retry_not_needed_confidence_ok"
+                    ),
+                },
+            },
+        )
         diag.setdefault("session_memory_loaded", bool(session_memory_loaded))
         diag.setdefault("session_memory_hit", bool(session_memory_hit))
         diag.setdefault("evidence_type_counts", {})

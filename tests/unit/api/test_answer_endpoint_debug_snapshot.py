@@ -78,6 +78,7 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
         "evidence_contract_minimal_coverage_score",
         "evidence_contract_gate_reason",
         "self_check",
+        "reasoning_quality",
         "verify",
         "session_memory_loaded",
         "session_memory_hit",
@@ -144,6 +145,43 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
     assert v_thr.get("required_self_check_status") == "pass"
     assert v_thr.get("required_self_check_policy_mode") == "warning_only"
     assert v_thr.get("self_check_reasons_count_max") == 0
+    rq = dict(diag.get("reasoning_quality") or {})
+    assert rq.get("version") == "v1"
+    assert isinstance(rq.get("claims_total"), int)
+    assert isinstance(rq.get("claims_sample"), list)
+    rq_cov = dict(rq.get("coverage") or {})
+    assert set(rq_cov.keys()) == {
+        "claims_total",
+        "claims_covered",
+        "claims_uncovered",
+        "coverage_score",
+        "covered_claim_indices",
+        "uncovered_claim_indices",
+    }
+    rq_conf = dict(rq.get("confidence") or {})
+    assert set(rq_conf.keys()) == {
+        "coverage_score",
+        "unsupported_claims",
+        "missing_claims",
+        "penalty_unsupported",
+        "penalty_missing",
+        "penalty_total",
+        "raw_confidence",
+        "confidence_score",
+    }
+    rq_retry = dict(rq.get("retry") or {})
+    assert set(rq_retry.keys()) == {
+        "attempt",
+        "max_retries",
+        "confidence_score",
+        "threshold",
+        "confidence_below_threshold",
+        "retry_budget_available",
+        "should_retry",
+        "next_attempt",
+        "loop_guard_triggered",
+        "reason",
+    }
 
     # cleanup
     try:
