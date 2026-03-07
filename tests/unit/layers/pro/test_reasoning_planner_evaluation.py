@@ -93,3 +93,35 @@ async def test_planner_evaluation_verify_runs_per_step_with_stable_fields():
     assert verify_calls == [r["reasoning_output"] for r in results]
     assert [r["verify_status"] for r in results] == ["warn", "pass"]
     assert [r["verify_reasons"] for r in results] == [["needs_more_support"], []]
+
+
+@pytest.mark.asyncio
+async def test_planner_evaluation_respects_max_steps_safety_guard():
+    plan = {
+        "steps": [
+            {"description": "step-1"},
+            {"description": "step-2"},
+            {"description": "step-3"},
+            {"description": "step-4"},
+        ]
+    }
+    executed: list[str] = []
+
+    async def _run_reasoning_step(step):
+        description = str(step.get("description", "") or "")
+        executed.append(description)
+        return f"out:{description}"
+
+    async def _run_verify_step(reasoning_output: str):
+        return {"status": "pass", "reasons": [reasoning_output]}
+
+    results = await execute_plan_steps(
+        plan=plan,
+        run_reasoning_step=_run_reasoning_step,
+        run_verify_step=_run_verify_step,
+        max_steps=2,
+    )
+
+    assert executed == ["step-1", "step-2"]
+    assert [r["step_index"] for r in results] == [0, 1]
+    assert [r["step_description"] for r in results] == ["step-1", "step-2"]
