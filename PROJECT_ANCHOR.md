@@ -2,66 +2,6 @@
 
 ## Active Anchor
 
-A2.11.5 — Planner evaluation tests (quality gate)
-
-### Goal
-
-Introduce deterministic evaluation tests for the multi-step planner before enabling
-A2.12 Reasoning Trace + Replay.
-
-These tests validate that planner behavior remains stable and predictable.
-
-### Architecture Position
-
-Planned test module:
-- `tests/unit/layers/pro/test_reasoning_planner_evaluation.py`
-
-### Patch Plan
-
-#### Patch 1 — Multi-step reasoning correctness
-- Verify planner-driven multi-step execution is correct.
-
-#### Patch 2 — State propagation
-- Verify reasoning state is propagated across steps.
-
-#### Patch 3 — Verify-per-step behavior
-- Verify each step runs verify with stable contract.
-
-#### Patch 4 — max_steps safety guard
-- Verify step limit is enforced deterministically.
-
-#### Patch 5 — Deterministic planner behavior
-- Verify planner output and execution are stable across runs.
-
-### Progress
-
-- [ ] Patch 1 — multi-step reasoning correctness
-- [x] Patch 1 — multi-step reasoning correctness
-- [x] Patch 2 — state propagation
-- [x] Patch 3 — verify-per-step behavior
-- [x] Patch 4 — max_steps safety guard
-- [ ] Patch 5 — deterministic planner behavior
-
-### Out of Scope
-
-Do NOT modify during A2.11.5:
-- Retrieval redesign
-- Adapter refactors
-- Config architecture
-- Ingest pipeline
-- A2.12 implementation before A2.11.5 is closed
-
-### Definition of Done
-
-A2.11.5 is complete when:
-- planner evaluation tests exist
-- tests validate multi-step execution
-- tests validate state propagation
-- tests validate `max_steps` guard
-- planner passes evaluation suite consistently
-
-## Next Defined Anchor
-
 A2.12 — Reasoning Trace + Replay
 
 ### Goal
@@ -79,7 +19,7 @@ Planned files:
 - `trace_serializer.py`
 - `replay.py`
 
-### Patch Plan (predefined, not active)
+### Patch Plan
 
 #### Patch 1 — Trace model
 - Introduce `ReasoningTrace` structure.
@@ -96,6 +36,23 @@ Planned files:
 #### Patch 5 — Replay utility
 - Replay reasoning pipeline from stored trace.
 
+### Progress
+
+- [ ] Patch 1 — trace model
+- [ ] Patch 2 — trace collector
+- [ ] Patch 3 — diagnostics.reasoning_trace exposure
+- [ ] Patch 4 — serialization
+- [ ] Patch 5 — replay utility
+
+### Out of Scope
+
+Do NOT modify during A2.12:
+- Retrieval redesign
+- Adapter refactors
+- Config architecture
+- Ingest pipeline
+- major reasoning graph redesign
+
 ### Definition of Done
 
 A2.12 is complete when:
@@ -104,19 +61,23 @@ A2.12 is complete when:
 - replay reproduces the reasoning pipeline
 - tests validate replay behavior
 
+## Next Anchor
+
+A2.13 — (to be defined)
+
 ### Discipline
 
 Work order is strict:
-- A2.11 (complete) -> A2.11.5 quality gate -> A2.12
+- A2.12 -> A2.13
 - Do not mix implementation across these anchors.
 
 ### Last Completed Anchor
 
-A2.11 — Multi-step Reasoning Planner
+A2.11.5 — Planner evaluation tests (quality gate)
 
 Completed via patches:
-- Patch 1 — plan model contract extracted with deterministic normalization helper
-- Patch 2 — deterministic MVP planner added (query -> one/two steps)
-- Patch 3 — step executor boundary added with verify-per-step contract
-- Patch 4 — planner + step executor integrated into `ReasoningEngine` fallback flow
-- Patch 5 — max_steps safety guard enforced in step execution
+- Patch 1 — multi-step reasoning correctness evaluation test added
+- Patch 2 — state propagation evaluation test added
+- Patch 3 — verify-per-step behavior evaluation test added
+- Patch 4 — max_steps safety guard evaluation test added
+- Patch 5 — deterministic planner behavior evaluation test added

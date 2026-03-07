@@ -15,24 +15,25 @@
 - [x] A2.9 IngestService Slimming
 - [x] A2.10 Reasoning Quality Loop
 - [x] A2.11 Multi-step Reasoning Planner
+- [x] A2.11.5 Planner evaluation tests (quality gate)
 
-## Current Work — A2.11.5 Planner evaluation tests (quality gate)
+## Current Work — A2.12 Reasoning Trace + Replay
 
-- [x] Multi-step reasoning correctness test
-- [x] ReasoningState propagation test
-- [x] Verify-per-step behavior test
-- [x] max_steps safety guard test
-- [ ] Deterministic planner behavior test
+- [ ] Trace model
+- [ ] Trace collector
+- [ ] diagnostics.reasoning_trace exposure
+- [ ] Trace serialization
+- [ ] Replay utility
 
 ## Next
 
-- [ ] A2.12 Reasoning Trace + Replay
+- [ ] A2.13 (to be defined)
 
 ## Later
 
 - [ ] A2.13 (to be defined)
 
-## A2.12 Reasoning Trace + Replay (predefined, not active)
+## A2.12 Reasoning Trace + Replay (active anchor)
 
 - [ ] Trace model
 - [ ] Trace collector

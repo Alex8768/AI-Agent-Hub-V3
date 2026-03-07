@@ -6,42 +6,31 @@ Pro Layer Development — Reasoning Stabilization
 
 ## Last Completed Anchor
 
-A2.11 — Multi-step Reasoning Planner
+A2.11.5 — Planner evaluation tests (quality gate)
 
-Multi-step planner track completed with plan model, MVP planner, step executor,
-engine integration, and max_steps safety guard.
+Planner quality gate was completed with evaluation tests for multi-step correctness,
+state propagation, verify-per-step behavior, max_steps safety, and deterministic behavior.
 
 ## Current Active Anchor
 
-A2.11.5 — Planner evaluation tests (quality gate)
-
-Focus:
-- deterministic planner behavior
-
-Current progress:
-- Patch 1 complete: multi-step reasoning correctness evaluation test added and passing.
-- Patch 2 complete: state propagation evaluation test added and passing.
-- Patch 3 complete: verify-per-step behavior evaluation test added and passing.
-- Patch 4 complete: max_steps safety guard evaluation test added and passing.
-
-Execution discipline:
-- A2.12 is predefined but implementation starts only after A2.11.5 is fully closed.
-
-## Planner Quality Gate
-
-After A2.11 implementation, A2.11.5 planner evaluation tests act as a
-quality gate before A2.12 Reasoning Trace + Replay is started.
-
-## Next Anchor
-
 A2.12 — Reasoning Trace + Replay
 
-Planned focus:
+Focus:
 - trace model
 - trace collector
 - diagnostics.reasoning_trace exposure
 - trace serialization
 - replay utility
+
+Execution discipline:
+- keep work strictly inside the active anchor and move in micro-patches.
+
+## Next Anchor
+
+A2.13 — (to be defined)
+
+Planned focus:
+- TBD
 
 ## Upcoming Anchors
 
