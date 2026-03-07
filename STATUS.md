@@ -15,6 +15,9 @@ state propagation, verify-per-step behavior, max_steps safety, and deterministic
 
 A2.12 — Reasoning Trace + Replay
 
+Current progress:
+- Patch 1 complete: trace model contract and normalization helper added with passing tests.
+
 Focus:
 - trace model
 - trace collector

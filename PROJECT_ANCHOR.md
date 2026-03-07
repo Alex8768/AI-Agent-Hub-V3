@@ -38,7 +38,7 @@ Planned files:
 
 ### Progress
 
-- [ ] Patch 1 — trace model
+- [x] Patch 1 — trace model
 - [ ] Patch 2 — trace collector
 - [ ] Patch 3 — diagnostics.reasoning_trace exposure
 - [ ] Patch 4 — serialization
