@@ -5,6 +5,17 @@ from typing import Any
 from src.layers.pro.reasoning.contracts import ProvenanceItem
 
 
+def _default_origin_for_type(tp: str) -> str:
+    t = str(tp or "").lower()
+    if t == "chunk":
+        return "vector"
+    if t in {"node", "edge"}:
+        return "graph"
+    if t == "memory":
+        return "memory"
+    return "unknown"
+
+
 def normalize_retrieval_result(
     result: Any,
 ) -> tuple[list[ProvenanceItem], list[str], list[str], list[str], list[str]]:
@@ -45,7 +56,11 @@ def normalize_retrieval_result(
     provenance: list[ProvenanceItem] = []
     for p in provenance_raw:
         try:
-            provenance.append(ProvenanceItem.model_validate(p))
+            item = dict(p)
+            item.setdefault("origin", _default_origin_for_type(item.get("type", "")))
+            if item.get("reliability") is None and item.get("confidence") is not None:
+                item["reliability"] = item.get("confidence")
+            provenance.append(ProvenanceItem.model_validate(item))
         except Exception:
             continue
 

@@ -24,6 +24,8 @@ def test_normalize_retrieval_result_happy_path():
     assert prov[0].id == "chunk:1"
     assert prov[0].source_refs == ["doc:A#1"]
     assert prov[0].confidence == 0.9
+    assert prov[0].origin == "vector"
+    assert prov[0].reliability == 0.9
 
     assert preview_items == ["doc:A#1"]
 
@@ -35,3 +37,25 @@ def test_normalize_retrieval_result_non_dict_is_empty():
     assert used_nodes == []
     assert used_edges == []
     assert preview_items == []
+
+
+def test_normalize_retrieval_result_keeps_explicit_origin_and_reliability():
+    result = {
+        "results": [],
+        "graph": {"nodes": [], "edges": []},
+        "evidence": [
+            {
+                "type": "memory",
+                "id": "m1",
+                "source_refs": ["mem:1"],
+                "origin": "memory",
+                "reliability": 0.4,
+                "confidence": 0.9,
+            }
+        ],
+    }
+
+    prov, *_ = normalize_retrieval_result(result)
+    assert len(prov) == 1
+    assert prov[0].origin == "memory"
+    assert prov[0].reliability == 0.4
