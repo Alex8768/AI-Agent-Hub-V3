@@ -64,6 +64,9 @@ async def test_synthesize_uses_llm_when_injected():
     assert sc_inputs.get("evidence_contract_valid_minimal") is True
     assert sc_inputs.get("evidence_contract_missing_minimal_count") == 0
     assert sc_inputs.get("evidence_contract_minimal_coverage_score") == 1.0
+    sc_thr = dict(sc.get("thresholds") or {})
+    assert sc_thr.get("minimal_coverage_score_min") == 1.0
+    assert sc_thr.get("missing_minimal_count_max") == 0
     es = dict(diag.get("evidence_summary") or {})
     assert es.get("count") == 1
     assert (es.get("origin_counts") or {}).get("vector") == 1

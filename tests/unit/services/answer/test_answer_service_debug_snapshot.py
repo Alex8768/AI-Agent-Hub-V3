@@ -146,6 +146,7 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
     assert isinstance(sc.get("reasons"), list)
     assert sc.get("policy_mode") == "warning_only"
     assert isinstance(sc.get("inputs"), dict)
+    assert isinstance(sc.get("thresholds"), dict)
     rs = (diag.get("retriever_stats") or {})
     assert rs.get("evidence_policy_evidence_after_policy_count") == 1
 

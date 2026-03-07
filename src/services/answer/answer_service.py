@@ -5,7 +5,12 @@ from typing import Any
 
 from fastapi import Request
 
-from src.layers.pro.reasoning.contracts import AnswerRequest, EVIDENCE_CONTRACT_VERSION
+from src.layers.pro.reasoning.contracts import (
+    AnswerRequest,
+    EVIDENCE_CONTRACT_VERSION,
+    SELF_CHECK_MINIMAL_COVERAGE_SCORE_MIN,
+    SELF_CHECK_MISSING_MINIMAL_COUNT_MAX,
+)
 from src.observability.request_context import get_request_id
 
 SESSION_MEMORY_MAX_CHARS = 4000
@@ -282,21 +287,40 @@ class AnswerService:
                     "version": "v1",
                     "status": (
                         "pass"
-                        if bool(diag.get("evidence_contract_valid_minimal", False))
+                        if (
+                            float(diag.get("evidence_contract_minimal_coverage_score", 0.0) or 0.0)
+                            >= float(SELF_CHECK_MINIMAL_COVERAGE_SCORE_MIN)
+                            and int(diag.get("evidence_contract_missing_minimal_count", 0) or 0)
+                            <= int(SELF_CHECK_MISSING_MINIMAL_COUNT_MAX)
+                        )
                         else "warn"
                     ),
                     "reasons": (
                         []
-                        if bool(diag.get("evidence_contract_valid_minimal", False))
-                        else (
-                            [
-                                "missing:" + ",".join(
-                                    str(x) for x in (diag.get("evidence_contract_missing_minimal_fields") or [])
-                                )
-                            ]
-                            if list(diag.get("evidence_contract_missing_minimal_fields") or [])
-                            else ["invalid"]
+                        if (
+                            float(diag.get("evidence_contract_minimal_coverage_score", 0.0) or 0.0)
+                            >= float(SELF_CHECK_MINIMAL_COVERAGE_SCORE_MIN)
+                            and int(diag.get("evidence_contract_missing_minimal_count", 0) or 0)
+                            <= int(SELF_CHECK_MISSING_MINIMAL_COUNT_MAX)
                         )
+                        else [
+                            *(
+                                [
+                                    f"threshold:minimal_coverage_score<{float(SELF_CHECK_MINIMAL_COVERAGE_SCORE_MIN):.1f}"
+                                ]
+                                if float(diag.get("evidence_contract_minimal_coverage_score", 0.0) or 0.0)
+                                < float(SELF_CHECK_MINIMAL_COVERAGE_SCORE_MIN)
+                                else []
+                            ),
+                            *(
+                                [
+                                    f"threshold:missing_minimal_count>{int(SELF_CHECK_MISSING_MINIMAL_COUNT_MAX)}"
+                                ]
+                                if int(diag.get("evidence_contract_missing_minimal_count", 0) or 0)
+                                > int(SELF_CHECK_MISSING_MINIMAL_COUNT_MAX)
+                                else []
+                            ),
+                        ]
                     ),
                     "policy_mode": "warning_only",
                     "inputs": {
@@ -309,6 +333,10 @@ class AnswerService:
                         "evidence_contract_minimal_coverage_score": float(
                             diag.get("evidence_contract_minimal_coverage_score", 0.0) or 0.0
                         ),
+                    },
+                    "thresholds": {
+                        "minimal_coverage_score_min": float(SELF_CHECK_MINIMAL_COVERAGE_SCORE_MIN),
+                        "missing_minimal_count_max": int(SELF_CHECK_MISSING_MINIMAL_COUNT_MAX),
                     },
                 },
             )

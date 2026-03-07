@@ -7,6 +7,8 @@ from src.layers.pro.reasoning.graph.builder import build_reasoning_graph
 from src.layers.pro.reasoning.graph.state import AgentState
 from src.layers.pro.reasoning.contracts import (
     EVIDENCE_CONTRACT_VERSION,
+    SELF_CHECK_MINIMAL_COVERAGE_SCORE_MIN,
+    SELF_CHECK_MISSING_MINIMAL_COUNT_MAX,
     AnswerRequest,
     AnswerResponse,
 )
@@ -101,28 +103,39 @@ class ReasoningEngine:
     @staticmethod
     def _self_check_diagnostics(contract: dict[str, object]) -> dict[str, object]:
         """A2.4 Patch 2: warning-only self_check contract (no answer blocking)."""
-        valid = bool(contract.get("valid_minimal", False))
+        minimal_coverage_score = float(contract.get("minimal_coverage_score") or 0.0)
+        missing_minimal_count = int(len(contract.get("missing_minimal_fields") or []))
+        coverage_ok = minimal_coverage_score >= float(SELF_CHECK_MINIMAL_COVERAGE_SCORE_MIN)
+        missing_ok = missing_minimal_count <= int(SELF_CHECK_MISSING_MINIMAL_COUNT_MAX)
         missing = list(contract.get("missing_minimal_fields") or [])
-        if valid:
+        if coverage_ok and missing_ok:
             status = "pass"
             reasons: list[str] = []
-        elif missing:
-            status = "warn"
-            reasons = [f"missing:{','.join(str(x) for x in missing)}"]
         else:
+            reasons = []
+            if not coverage_ok:
+                reasons.append(
+                    f"threshold:minimal_coverage_score<{float(SELF_CHECK_MINIMAL_COVERAGE_SCORE_MIN):.1f}"
+                )
+            if not missing_ok:
+                reasons.append(
+                    f"threshold:missing_minimal_count>{int(SELF_CHECK_MISSING_MINIMAL_COUNT_MAX)}"
+                )
             status = "warn"
-            reasons = ["invalid"]
         return {
             "version": "v1",
             "status": status,
             "reasons": reasons,
             "policy_mode": "warning_only",
             "inputs": {
-                "evidence_contract_valid_minimal": valid,
-                "evidence_contract_missing_minimal_count": int(len(missing)),
-                "evidence_contract_minimal_coverage_score": float(
-                    contract.get("minimal_coverage_score") or 0.0
-                ),
+                "evidence_contract_valid_minimal": bool(contract.get("valid_minimal", False)),
+                "evidence_contract_missing_minimal_count": missing_minimal_count,
+                "evidence_contract_minimal_coverage_score": minimal_coverage_score,
+            },
+            "thresholds": {
+                "minimal_coverage_score_min": float(SELF_CHECK_MINIMAL_COVERAGE_SCORE_MIN),
+                "missing_minimal_count_max": int(SELF_CHECK_MISSING_MINIMAL_COUNT_MAX),
+                "missing_minimal_fields": missing,
             },
         }
 

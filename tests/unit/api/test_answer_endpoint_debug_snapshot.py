@@ -58,6 +58,7 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
     assert isinstance(sc.get("reasons"), list)
     assert sc.get("policy_mode") == "warning_only"
     assert isinstance(sc.get("inputs"), dict)
+    assert isinstance(sc.get("thresholds"), dict)
 
     # cleanup
     try:

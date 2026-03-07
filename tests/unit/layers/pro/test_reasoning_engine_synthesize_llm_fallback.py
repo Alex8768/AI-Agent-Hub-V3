@@ -53,6 +53,9 @@ async def test_synthesize_falls_back_when_llm_fails():
     assert sc_inputs.get("evidence_contract_valid_minimal") is True
     assert sc_inputs.get("evidence_contract_missing_minimal_count") == 0
     assert sc_inputs.get("evidence_contract_minimal_coverage_score") == 1.0
+    sc_thr = dict(sc.get("thresholds") or {})
+    assert sc_thr.get("minimal_coverage_score_min") == 1.0
+    assert sc_thr.get("missing_minimal_count_max") == 0
     es = dict(diag.get("evidence_summary") or {})
     assert es.get("count") == 1
     assert (es.get("origin_counts") or {}).get("vector") == 1
@@ -105,7 +108,10 @@ async def test_synthesize_sets_warning_when_evidence_contract_invalid():
     assert diag.get("evidence_contract_gate_reason") == "missing:source_refs,origin"
     sc = dict(diag.get("self_check") or {})
     assert sc.get("status") == "warn"
-    assert sc.get("reasons") == ["missing:source_refs,origin"]
+    assert sc.get("reasons") == [
+        "threshold:minimal_coverage_score<1.0",
+        "threshold:missing_minimal_count>0",
+    ]
     sc_inputs = dict(sc.get("inputs") or {})
     assert sc_inputs.get("evidence_contract_valid_minimal") is False
     assert sc_inputs.get("evidence_contract_missing_minimal_count") == 2
@@ -137,7 +143,10 @@ async def test_synthesize_reports_partial_evidence_contract_gap():
     assert diag.get("evidence_contract_gate_reason") == "missing:source_refs"
     sc = dict(diag.get("self_check") or {})
     assert sc.get("status") == "warn"
-    assert sc.get("reasons") == ["missing:source_refs"]
+    assert sc.get("reasons") == [
+        "threshold:minimal_coverage_score<1.0",
+        "threshold:missing_minimal_count>0",
+    ]
     sc_inputs = dict(sc.get("inputs") or {})
     assert sc_inputs.get("evidence_contract_valid_minimal") is False
     assert sc_inputs.get("evidence_contract_missing_minimal_count") == 1
