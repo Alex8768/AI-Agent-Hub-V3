@@ -141,6 +141,7 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
         "self_check",
         "reasoning_quality",
         "reasoning_trace",
+        "reasoning_timeline",
         "verify",
         "session_memory_loaded",
         "session_memory_hit",
@@ -261,6 +262,7 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
         "steps",
         "verify_results",
         "quality",
+        "timeline",
         "answer",
     }
     assert isinstance(rt.get("query"), str)
@@ -268,7 +270,12 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
     assert isinstance(rt.get("steps"), list)
     assert isinstance(rt.get("verify_results"), list)
     assert isinstance(rt.get("quality"), dict)
+    assert isinstance(rt.get("timeline"), dict)
     assert isinstance(rt.get("answer"), str)
+    tl = dict(diag.get("reasoning_timeline") or {})
+    assert set(tl.keys()) == {"events", "total_duration_ms"}
+    assert isinstance(tl.get("events"), list)
+    assert isinstance(tl.get("total_duration_ms"), int)
     rs = (diag.get("retriever_stats") or {})
     assert rs.get("evidence_policy_evidence_after_policy_count") == 1
 

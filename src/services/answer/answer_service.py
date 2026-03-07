@@ -281,8 +281,14 @@ def _apply_diagnostics(
                 "steps": [],
                 "verify_results": [],
                 "quality": reasoning_quality,
+                "timeline": {"events": [], "total_duration_ms": 0},
                 "answer": str(getattr(resp, "answer", "") or ""),
             },
+        )
+        trace = dict(diag.get("reasoning_trace") or {})
+        diag.setdefault(
+            "reasoning_timeline",
+            dict(trace.get("timeline") or {"events": [], "total_duration_ms": 0}),
         )
         diag.setdefault("session_memory_loaded", bool(session_memory_loaded))
         diag.setdefault("session_memory_hit", bool(session_memory_hit))

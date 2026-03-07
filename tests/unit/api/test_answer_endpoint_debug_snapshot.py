@@ -80,6 +80,7 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
         "self_check",
         "reasoning_quality",
         "reasoning_trace",
+        "reasoning_timeline",
         "verify",
         "session_memory_loaded",
         "session_memory_hit",
@@ -200,6 +201,10 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
     assert isinstance(rt.get("quality"), dict)
     assert isinstance(rt.get("timeline"), dict)
     assert isinstance(rt.get("answer"), str)
+    tl = dict(diag.get("reasoning_timeline") or {})
+    assert set(tl.keys()) == {"events", "total_duration_ms"}
+    assert isinstance(tl.get("events"), list)
+    assert isinstance(tl.get("total_duration_ms"), int)
 
     # cleanup
     try:

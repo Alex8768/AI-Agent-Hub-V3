@@ -386,6 +386,9 @@ class ReasoningEngine:
                 plan_steps=planner_actions,
                 step_results=per_step_results,
             )
+            diag["reasoning_timeline"] = dict(
+                (dict(diag.get("reasoning_trace") or {}).get("timeline") or {})
+            )
             if str(verify.get("status", "")) == "warn":
                 resp.warnings = list(getattr(resp, "warnings", []) or [])
                 if "verify_warning" not in resp.warnings:
@@ -542,6 +545,10 @@ class ReasoningEngine:
                     plan_steps=fallback_plan_steps,
                     step_results=list(planner_step_results or []),
                 ),
+            )
+            diag.setdefault(
+                "reasoning_timeline",
+                dict((dict(diag.get("reasoning_trace") or {}).get("timeline") or {})),
             )
             if str(verify.get("status", "")) == "warn":
                 resp.warnings = list(getattr(resp, "warnings", []) or [])

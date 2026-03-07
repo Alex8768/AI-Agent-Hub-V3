@@ -86,6 +86,10 @@ async def test_verify_contract_is_stable_on_planner_path():
     assert isinstance(rt.get("plan"), list)
     assert isinstance(rt.get("verify_results"), list)
     assert isinstance(rt.get("timeline"), dict)
+    tl = dict(diag.get("reasoning_timeline") or {})
+    assert set(tl.keys()) == {"events", "total_duration_ms"}
+    assert isinstance(tl.get("events"), list)
+    assert isinstance(tl.get("total_duration_ms"), int)
 
 
 @pytest.mark.asyncio
@@ -119,3 +123,7 @@ async def test_verify_contract_warns_on_fallback_with_self_check_issues():
     assert isinstance(rt.get("steps"), list)
     assert isinstance(rt.get("quality"), dict)
     assert isinstance(rt.get("timeline"), dict)
+    tl = dict(diag.get("reasoning_timeline") or {})
+    assert set(tl.keys()) == {"events", "total_duration_ms"}
+    assert isinstance(tl.get("events"), list)
+    assert isinstance(tl.get("total_duration_ms"), int)
