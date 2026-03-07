@@ -51,7 +51,7 @@ Final Answer
 ### Progress
 
 - [x] Patch 0 — claim extraction
-- [ ] Patch 1 — evidence coverage scoring
+- [x] Patch 1 — evidence coverage scoring
 - [ ] Patch 2 — reasoning confidence model
 - [ ] Patch 3 — retry policy
 - [ ] Patch 4 — diagnostics exposure and parity tests
