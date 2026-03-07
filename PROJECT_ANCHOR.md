@@ -49,7 +49,7 @@ Planned files:
 
 ### Progress
 
-- [ ] Patch 1 — plan model
+- [x] Patch 1 — plan model
 - [ ] Patch 2 — planner
 - [ ] Patch 3 — step executor
 - [ ] Patch 4 — engine integration

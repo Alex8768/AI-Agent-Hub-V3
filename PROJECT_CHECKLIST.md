@@ -17,7 +17,7 @@
 
 ## Current Work — A2.11 Multi-step Reasoning Planner
 
-- [ ] Plan model
+- [x] Plan model
 - [ ] Planner implementation
 - [ ] Step executor
 - [ ] Engine integration
