@@ -271,10 +271,11 @@ class IngestService:
             
             # 6. Подготовка VectorDocument
             vector_docs = self._prepare_vector_documents(chunks, document_id)
-            
+
             # 7. Сохранение в векторное хранилище
-            self._logger.info(f"Сохранение в векторное хранилище")
-            saved_ids = await self._save_to_vector_store(vector_docs)
+            saved_ids = await self._persist_vectors_boundary(
+                vector_docs=vector_docs,
+            )
             chunk_ids.extend(saved_ids)
             
             # 8. Статистика
@@ -594,6 +595,16 @@ class IngestService:
             vector_docs.append(vector_doc)
         
         return vector_docs
+
+    async def _persist_vectors_boundary(
+        self,
+        *,
+        vector_docs: List[VectorDocument],
+    ) -> List[str]:
+        """Persist prepared vector docs as one boundary."""
+        self._logger.info("Сохранение в векторное хранилище")
+        saved_ids = await self._save_to_vector_store(vector_docs)
+        return saved_ids
     
     async def _save_to_vector_store(
         self,

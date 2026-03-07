@@ -176,3 +176,20 @@ def test_chunk_text_boundary_preserves_chunk_count(ingest_service):
 
     assert len(bounded) == len(direct)
     assert [c.content for c in bounded] == [c.content for c in direct]
+
+
+@pytest.mark.asyncio
+async def test_persist_vectors_boundary_returns_docs_and_saved_ids(ingest_service):
+    chunk = Chunk(
+        id="chunk-1",
+        content="hello",
+        metadata={"workspace_id": "default"},
+        embedding=[0.1, 0.2, 0.3],
+    )
+    docs = ingest_service._prepare_vector_documents([chunk], "doc-1")
+    saved_ids = await ingest_service._persist_vectors_boundary(
+        vector_docs=docs,
+    )
+    assert len(docs) == 1
+    assert docs[0].id == "chunk-1"
+    assert saved_ids == ["chunk1"]
