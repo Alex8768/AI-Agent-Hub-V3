@@ -52,7 +52,7 @@ Planned files:
 - [x] Patch 1 — plan model
 - [x] Patch 2 — planner
 - [x] Patch 3 — step executor
-- [ ] Patch 4 — engine integration
+- [x] Patch 4 — engine integration
 - [ ] Patch 5 — safety limits (`max_steps`)
 
 ### Out of Scope
