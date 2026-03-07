@@ -103,3 +103,34 @@ def test_build_completion_from_chat_parity():
     assert completion.metadata["id"] == "chatcmpl_1"
     assert completion.metadata["prompt_tokens"] == 20
     assert completion.metadata["completion_tokens"] == 13
+
+
+def test_merge_runtime_config_overrides_values():
+    adapter = _make_adapter("gpt-4o-mini")
+    merged = adapter._merge_runtime_config({"temperature": 0.2, "model": "gpt-4.1"})
+
+    assert merged["temperature"] == 0.2
+    assert merged["model"] == "gpt-4.1"
+
+
+def test_build_chat_completion_request_params_prunes_nones():
+    adapter = _make_adapter("gpt-4o-mini")
+    merged = {"model": "gpt-4o-mini", "max_tokens": None, "stop_sequences": None}
+    params = adapter._build_chat_completion_request_params(merged_config=merged)
+
+    assert params["model"] == "gpt-4o-mini"
+    assert params["stream"] is False
+    assert "max_tokens" not in params
+    assert "stop" not in params
+    assert "messages" not in params
+
+
+def test_build_chat_stream_request_params_defaults_and_stream_flag():
+    adapter = _make_adapter("gpt-4o-mini")
+    params = adapter._build_chat_stream_request_params(merged_config={})
+
+    assert params["model"] == "gpt-4o-mini"
+    assert params["stream"] is True
+    assert params["temperature"] == 0.7
+    assert params["top_p"] == 1.0
+    assert "messages" not in params

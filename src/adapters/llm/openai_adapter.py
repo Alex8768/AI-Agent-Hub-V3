@@ -324,6 +324,48 @@ class OpenAIAdapter(LLMProvider):
                 "completion_tokens": response.usage.completion_tokens if response.usage else 0,
             }
         )
+
+    def _merge_runtime_config(self, config: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+        merged_config = self._config.dict() if hasattr(self._config, "dict") else {}
+        if config:
+            merged_config.update(config)
+        return merged_config
+
+    def _prune_none_values(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        return {k: v for k, v in params.items() if v is not None}
+
+    def _build_chat_completion_request_params(
+        self,
+        *,
+        merged_config: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        request_params = {
+            "model": merged_config.get("model", self._model),
+            "messages": None,  # injected by caller after message conversion
+            "temperature": merged_config.get("temperature", 0.7),
+            "max_tokens": merged_config.get("max_tokens"),
+            "top_p": merged_config.get("top_p", 1.0),
+            "frequency_penalty": merged_config.get("frequency_penalty", 0.0),
+            "presence_penalty": merged_config.get("presence_penalty", 0.0),
+            "stop": merged_config.get("stop_sequences"),
+            "stream": False,
+        }
+        return self._prune_none_values(request_params)
+
+    def _build_chat_stream_request_params(
+        self,
+        *,
+        merged_config: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        request_params = {
+            "model": merged_config.get("model", self._model),
+            "messages": None,  # injected by caller after message conversion
+            "temperature": merged_config.get("temperature", 0.7),
+            "max_tokens": merged_config.get("max_tokens"),
+            "top_p": merged_config.get("top_p", 1.0),
+            "stream": True,
+        }
+        return self._prune_none_values(request_params)
     
     async def complete(
         self,
@@ -344,9 +386,7 @@ class OpenAIAdapter(LLMProvider):
         
         try:
             # Merge configs
-            merged_config = self._config.dict() if hasattr(self._config, 'dict') else {}
-            if config:
-                merged_config.update(config)
+            merged_config = self._merge_runtime_config(config)
             
             # Convert messages
             openai_messages = self._convert_messages(messages)
@@ -362,20 +402,10 @@ class OpenAIAdapter(LLMProvider):
             )
             
             # Prepare request parameters
-            request_params = {
-                "model": merged_config.get("model", self._model),
-                "messages": openai_messages,
-                "temperature": merged_config.get("temperature", 0.7),
-                "max_tokens": merged_config.get("max_tokens"),
-                "top_p": merged_config.get("top_p", 1.0),
-                "frequency_penalty": merged_config.get("frequency_penalty", 0.0),
-                "presence_penalty": merged_config.get("presence_penalty", 0.0),
-                "stop": merged_config.get("stop_sequences"),
-                "stream": False,
-            }
-            
-            # Remove None values
-            request_params = {k: v for k, v in request_params.items() if v is not None}
+            request_params = self._build_chat_completion_request_params(
+                merged_config=merged_config,
+            )
+            request_params["messages"] = openai_messages
             
             # Make API call
             start_time = datetime.utcnow()
@@ -532,9 +562,7 @@ class OpenAIAdapter(LLMProvider):
         
         try:
             # Merge configs
-            merged_config = self._config.dict() if hasattr(self._config, 'dict') else {}
-            if config:
-                merged_config.update(config)
+            merged_config = self._merge_runtime_config(config)
             
             # Convert messages
             openai_messages = self._convert_messages(messages)
@@ -549,17 +577,10 @@ class OpenAIAdapter(LLMProvider):
             )
             
             # Prepare request parameters
-            request_params = {
-                "model": merged_config.get("model", self._model),
-                "messages": openai_messages,
-                "temperature": merged_config.get("temperature", 0.7),
-                "max_tokens": merged_config.get("max_tokens"),
-                "top_p": merged_config.get("top_p", 1.0),
-                "stream": True,
-            }
-            
-            # Remove None values
-            request_params = {k: v for k, v in request_params.items() if v is not None}
+            request_params = self._build_chat_stream_request_params(
+                merged_config=merged_config,
+            )
+            request_params["messages"] = openai_messages
             
             # Start streaming
             start_time = datetime.utcnow()
