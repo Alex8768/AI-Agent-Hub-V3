@@ -62,6 +62,11 @@ class ReasoningEngine:
                 missing_minimal_fields.append("origin")
         return {
             "version": "v1",
+            "minimal_requirements": {
+                "min_total": 1,
+                "requires_source_refs": True,
+                "requires_known_origin": True,
+            },
             "total": total,
             "with_source_refs": with_source_refs,
             "with_known_origin": with_known_origin,

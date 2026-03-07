@@ -44,6 +44,10 @@ async def test_synthesize_falls_back_when_llm_fails():
     assert (es.get("origin_counts") or {}).get("vector") == 1
     ec = dict(diag.get("evidence_contract") or {})
     assert ec.get("version") == "v1"
+    mr = dict(ec.get("minimal_requirements") or {})
+    assert mr.get("min_total") == 1
+    assert mr.get("requires_source_refs") is True
+    assert mr.get("requires_known_origin") is True
     assert ec.get("total") == 1
     assert ec.get("with_source_refs") == 1
     assert ec.get("with_known_origin") == 1
