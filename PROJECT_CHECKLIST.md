@@ -21,7 +21,7 @@
 ## Current Work — A2.13 Reasoning Observability
 
 - [x] Timeline model
-- [ ] Timeline collector
+- [x] Timeline collector
 - [ ] Trace enrichment
 - [ ] diagnostics.reasoning_timeline exposure
 - [ ] Timeline tests
