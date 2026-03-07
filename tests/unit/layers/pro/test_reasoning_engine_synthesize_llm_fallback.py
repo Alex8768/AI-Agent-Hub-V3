@@ -65,6 +65,7 @@ async def test_synthesize_falls_back_when_llm_fails():
     assert v_inputs.get("planner_path_used") is False
     assert v_inputs.get("self_check_status") == "pass"
     assert v_inputs.get("self_check_policy_mode") == "warning_only"
+    assert v_inputs.get("self_check_reasons_count") == 0
     es = dict(diag.get("evidence_summary") or {})
     assert es.get("count") == 1
     assert (es.get("origin_counts") or {}).get("vector") == 1
@@ -127,10 +128,14 @@ async def test_synthesize_sets_warning_when_evidence_contract_invalid():
     assert sc_inputs.get("evidence_contract_minimal_coverage_score") == 0.0
     verify = dict(diag.get("verify") or {})
     assert verify.get("status") == "warn"
-    assert verify.get("reasons") == ["self_check_status!=pass"]
+    assert verify.get("reasons") == [
+        "self_check_status!=pass",
+        "self_check_reasons_count>0",
+    ]
     v_inputs = dict(verify.get("inputs") or {})
     assert v_inputs.get("planner_path_used") is False
     assert v_inputs.get("self_check_status") == "warn"
+    assert v_inputs.get("self_check_reasons_count") == 2
     assert ec.get("source_refs_coverage") == 0.0
     assert ec.get("known_origin_coverage") == 0.0
     assert ec.get("reliability_coverage") == 0.0
@@ -169,10 +174,14 @@ async def test_synthesize_reports_partial_evidence_contract_gap():
     assert sc_inputs.get("evidence_contract_minimal_coverage_score") == 0.5
     verify = dict(diag.get("verify") or {})
     assert verify.get("status") == "warn"
-    assert verify.get("reasons") == ["self_check_status!=pass"]
+    assert verify.get("reasons") == [
+        "self_check_status!=pass",
+        "self_check_reasons_count>0",
+    ]
     v_inputs = dict(verify.get("inputs") or {})
     assert v_inputs.get("planner_path_used") is False
     assert v_inputs.get("self_check_status") == "warn"
+    assert v_inputs.get("self_check_reasons_count") == 2
 
     assert ec.get("total") == 1
     assert ec.get("with_known_origin") == 1

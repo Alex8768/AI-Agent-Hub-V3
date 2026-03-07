@@ -78,9 +78,11 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
     assert v_inputs.get("planner_path_used") is False
     assert v_inputs.get("self_check_status") == "pass"
     assert v_inputs.get("self_check_policy_mode") == "warning_only"
+    assert v_inputs.get("self_check_reasons_count") == 0
     v_thr = dict(verify.get("thresholds") or {})
     assert v_thr.get("required_self_check_status") == "pass"
     assert v_thr.get("required_self_check_policy_mode") == "warning_only"
+    assert v_thr.get("self_check_reasons_count_max") == 0
 
     # cleanup
     try:

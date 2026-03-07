@@ -76,9 +76,11 @@ async def test_synthesize_uses_llm_when_injected():
     assert v_inputs.get("planner_path_used") is True
     assert v_inputs.get("self_check_status") == "pass"
     assert v_inputs.get("self_check_policy_mode") == "warning_only"
+    assert v_inputs.get("self_check_reasons_count") == 0
     v_thr = dict(verify.get("thresholds") or {})
     assert v_thr.get("required_self_check_status") == "pass"
     assert v_thr.get("required_self_check_policy_mode") == "warning_only"
+    assert v_thr.get("self_check_reasons_count_max") == 0
     es = dict(diag.get("evidence_summary") or {})
     assert es.get("count") == 1
     assert (es.get("origin_counts") or {}).get("vector") == 1

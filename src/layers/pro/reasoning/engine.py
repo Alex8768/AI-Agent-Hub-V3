@@ -10,6 +10,8 @@ from src.layers.pro.reasoning.contracts import (
     SELF_CHECK_MINIMAL_COVERAGE_SCORE_MIN,
     SELF_CHECK_MISSING_MINIMAL_COUNT_MAX,
     VERIFY_DIAGNOSTICS_VERSION,
+    VERIFY_SELF_CHECK_POLICY_MODE_REQUIRED,
+    VERIFY_SELF_CHECK_REASONS_COUNT_MAX,
     VERIFY_SELF_CHECK_STATUS_REQUIRED,
     AnswerRequest,
     AnswerResponse,
@@ -146,11 +148,14 @@ class ReasoningEngine:
         """A2.5 Patch 1: warning-only verify diagnostics (no answer blocking)."""
         self_check_status = str(self_check.get("status", "") or "")
         self_check_policy_mode = str(self_check.get("policy_mode", "") or "")
+        self_check_reasons_count = int(len(self_check.get("reasons") or []))
         reasons: list[str] = []
         if self_check_status != str(VERIFY_SELF_CHECK_STATUS_REQUIRED):
             reasons.append(f"self_check_status!={VERIFY_SELF_CHECK_STATUS_REQUIRED}")
-        if self_check_policy_mode != "warning_only":
-            reasons.append("self_check_policy_mode!=warning_only")
+        if self_check_policy_mode != str(VERIFY_SELF_CHECK_POLICY_MODE_REQUIRED):
+            reasons.append(f"self_check_policy_mode!={VERIFY_SELF_CHECK_POLICY_MODE_REQUIRED}")
+        if self_check_reasons_count > int(VERIFY_SELF_CHECK_REASONS_COUNT_MAX):
+            reasons.append(f"self_check_reasons_count>{int(VERIFY_SELF_CHECK_REASONS_COUNT_MAX)}")
         status = "pass" if not reasons else "warn"
         return {
             "version": VERIFY_DIAGNOSTICS_VERSION,
@@ -161,10 +166,12 @@ class ReasoningEngine:
                 "planner_path_used": bool(planner_path_used),
                 "self_check_status": self_check_status,
                 "self_check_policy_mode": self_check_policy_mode,
+                "self_check_reasons_count": self_check_reasons_count,
             },
             "thresholds": {
                 "required_self_check_status": str(VERIFY_SELF_CHECK_STATUS_REQUIRED),
-                "required_self_check_policy_mode": "warning_only",
+                "required_self_check_policy_mode": str(VERIFY_SELF_CHECK_POLICY_MODE_REQUIRED),
+                "self_check_reasons_count_max": int(VERIFY_SELF_CHECK_REASONS_COUNT_MAX),
             },
         }
 

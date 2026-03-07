@@ -160,15 +160,20 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
     verify = dict(diag.get("verify") or {})
     assert verify.get("version") == "v1"
     assert verify.get("status") == "warn"
-    assert verify.get("reasons") == ["self_check_status!=pass"]
+    assert verify.get("reasons") == [
+        "self_check_status!=pass",
+        "self_check_reasons_count>0",
+    ]
     assert verify.get("policy_mode") == "warning_only"
     v_inputs = dict(verify.get("inputs") or {})
     assert v_inputs.get("planner_path_used") is False
     assert v_inputs.get("self_check_status") == "warn"
     assert v_inputs.get("self_check_policy_mode") == "warning_only"
+    assert v_inputs.get("self_check_reasons_count") == 1
     v_thr = dict(verify.get("thresholds") or {})
     assert v_thr.get("required_self_check_status") == "pass"
     assert v_thr.get("required_self_check_policy_mode") == "warning_only"
+    assert v_thr.get("self_check_reasons_count_max") == 0
     rs = (diag.get("retriever_stats") or {})
     assert rs.get("evidence_policy_evidence_after_policy_count") == 1
 
@@ -349,3 +354,57 @@ async def test_answer_service_clips_session_memory_payload(monkeypatch):
 
     assert len(getattr(eng.last_req, "session_memory_last_answer", "")) == 4000
     assert len(calls.get("value", "")) == 4000
+
+
+@pytest.mark.asyncio
+async def test_answer_service_verify_warns_when_self_check_reasons_not_empty(monkeypatch):
+    class _S:
+        feature_reasoning = True
+        feature_graphrag = True
+        feature_reasoning_llm_enabled = False
+        llm_provider = "ollama"
+        openai_model = ""
+        ollama_model = "llama3.2:latest"
+
+    monkeypatch.setattr("src.core.config.get_settings", lambda: _S())
+    monkeypatch.setattr("src.observability.trace.make_trace_id", lambda **kwargs: "trace-123", raising=False)
+
+    class _Resp(_FakeResp):
+        def __init__(self):
+            super().__init__()
+            self.diagnostics = {
+                "planner_path_used": True,
+                "self_check": {
+                    "version": "v1",
+                    "status": "pass",
+                    "reasons": ["manual_reason"],
+                    "policy_mode": "warning_only",
+                    "inputs": {},
+                    "thresholds": {},
+                },
+            }
+
+    class _Engine:
+        async def synthesize(self, req):
+            return _Resp()
+
+    monkeypatch.setattr(
+        "src.core.providers.get_reasoning_engine",
+        lambda *, retriever=None, llm=None, llm_timeout_s=None: _Engine(),
+    )
+
+    http = _DummyHTTP(request_id="rid-verify-1", rag_engine=object(), hybrid_retriever=_FakeHybrid())
+    resp = await AnswerService().handle(http, AnswerRequest(query="q"), workspace_id="default")
+    diag = dict(getattr(resp, "diagnostics", {}) or {})
+
+    verify = dict(diag.get("verify") or {})
+    assert verify.get("status") == "warn"
+    assert verify.get("reasons") == ["self_check_reasons_count>0"]
+    v_inputs = dict(verify.get("inputs") or {})
+    assert v_inputs.get("planner_path_used") is True
+    assert v_inputs.get("self_check_status") == "pass"
+    assert v_inputs.get("self_check_policy_mode") == "warning_only"
+    assert v_inputs.get("self_check_reasons_count") == 1
+
+    warnings = list(getattr(resp, "warnings", []) or [])
+    assert "verify_warning" in warnings
