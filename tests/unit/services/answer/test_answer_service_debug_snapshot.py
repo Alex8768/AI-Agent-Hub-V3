@@ -122,6 +122,36 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
 
     resp = await AnswerService().handle(http, req, workspace_id="default")
     diag = dict(getattr(resp, "diagnostics", {}) or {})
+    assert set(diag.keys()) == {
+        "retrieved_provenance_count",
+        "used_chunks_count",
+        "used_nodes_count",
+        "used_edges_count",
+        "has_llm",
+        "query_len",
+        "k",
+        "graph_depth",
+        "session_id",
+        "evidence_contract_version",
+        "evidence_contract_valid_minimal",
+        "evidence_contract_missing_minimal_fields",
+        "evidence_contract_missing_minimal_count",
+        "evidence_contract_minimal_coverage_score",
+        "evidence_contract_gate_reason",
+        "self_check",
+        "verify",
+        "session_memory_loaded",
+        "session_memory_hit",
+        "evidence_type_counts",
+        "top_evidence",
+        "trace_id",
+        "llm_enabled",
+        "llm_provider",
+        "llm_model",
+        "llm_error",
+        "retriever_stats",
+        "session_memory_saved",
+    }
 
     # Contract keys expected by debug snapshot behavior
     assert "trace_id" in diag

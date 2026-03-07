@@ -39,8 +39,58 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
     r = c.post("/api/v1/answer", json={"query": "Q"})
     assert r.status_code == 200
     body = r.json()
+    assert set(body.keys()) == {
+        "answer",
+        "confidence",
+        "context_preview",
+        "provenance",
+        "used_chunks",
+        "used_nodes",
+        "used_edges",
+        "request_id",
+        "workspace_id",
+        "timings",
+        "warnings",
+        "diagnostics",
+    }
 
     diag = body.get("diagnostics") or {}
+    assert set(diag.keys()) == {
+        "agent_current_action",
+        "agent_current_step",
+        "retrieved_provenance_count",
+        "used_chunks_count",
+        "used_nodes_count",
+        "used_edges_count",
+        "planner_path_used",
+        "fallback_reason",
+        "evidence_summary",
+        "has_llm",
+        "query_len",
+        "k",
+        "graph_depth",
+        "session_id",
+        "evidence_contract",
+        "evidence_contract_version",
+        "evidence_contract_valid_minimal",
+        "evidence_contract_missing_minimal_fields",
+        "evidence_contract_missing_minimal_count",
+        "evidence_contract_minimal_coverage_score",
+        "evidence_contract_gate_reason",
+        "self_check",
+        "verify",
+        "session_memory_loaded",
+        "session_memory_hit",
+        "evidence_type_counts",
+        "top_evidence",
+        "trace_id",
+        "llm_enabled",
+        "llm_provider",
+        "llm_model",
+        "llm_error",
+        "retriever_stats",
+        "session_memory_saved",
+    }
     assert "trace_id" in diag
     assert "evidence_type_counts" in diag
     assert "top_evidence" in diag
