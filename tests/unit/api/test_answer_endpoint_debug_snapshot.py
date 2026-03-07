@@ -46,6 +46,7 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
     assert "top_evidence" in diag
     assert isinstance(diag["top_evidence"], list)
     assert any(x.startswith("chunk:") for x in diag["top_evidence"])
+    assert diag.get("evidence_contract_version") == "v1"
 
     # cleanup
     try:

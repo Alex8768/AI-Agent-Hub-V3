@@ -250,6 +250,7 @@ class AnswerService:
             diag.setdefault("k", int(req.k or 0))
             diag.setdefault("graph_depth", int(req.graph_depth or 0))
             diag.setdefault("session_id", str(getattr(req, "session_id", "") or ""))
+            diag.setdefault("evidence_contract_version", "v1")
             diag.setdefault("session_memory_loaded", bool(session_memory_loaded))
             diag.setdefault("session_memory_hit", bool(session_memory_hit))
             diag.setdefault("evidence_type_counts", {})
