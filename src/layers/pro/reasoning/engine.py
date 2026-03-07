@@ -23,6 +23,8 @@ from src.layers.pro.reasoning.quality_claims import extract_claims
 from src.layers.pro.reasoning.quality_confidence import compute_reasoning_quality_confidence
 from src.layers.pro.reasoning.quality_coverage import score_claim_coverage
 from src.layers.pro.reasoning.quality_retry import decide_reasoning_quality_retry
+from src.layers.pro.reasoning.planner.planner import create_reasoning_plan
+from src.layers.pro.reasoning.planner.step_executor import execute_plan_steps
 from src.core.config import get_settings
 
 
@@ -213,6 +215,23 @@ class ReasoningEngine:
             "retry": retry,
         }
 
+    async def _execute_planner_steps_mvp(self, *, request: AnswerRequest) -> list[dict[str, object]]:
+        """A2.11 Patch 4: execute deterministic planner steps inside engine fallback."""
+        plan = create_reasoning_plan(query=str(getattr(request, "query", "") or ""))
+
+        async def _run_reasoning_step(step: dict[str, str]) -> str:
+            return str(step.get("description", "") or "")
+
+        async def _run_verify_step(reasoning_output: str) -> dict[str, object]:
+            _ = reasoning_output
+            return {"status": "pass", "reasons": []}
+
+        return await execute_plan_steps(
+            plan=plan,
+            run_reasoning_step=_run_reasoning_step,
+            run_verify_step=_run_verify_step,
+        )
+
     async def synthesize(self, request: AnswerRequest) -> AnswerResponse:
         """Synthesize an answer using agentic graph."""
         from time import perf_counter
@@ -382,6 +401,10 @@ class ReasoningEngine:
         dry_run = bool(getattr(s, "feature_reasoning_llm_dry_run", False))
 
         fallback_reason: str | None = error or "fallback"
+        planner_step_results = await self._execute_planner_steps_mvp(request=request)
+        planner_step_count = int(len(planner_step_results or []))
+        planner_current_step = int(max(planner_step_count - 1, 0)) if planner_step_count > 0 else 0
+        planner_current_action = "ANSWER" if planner_step_count > 0 else ""
 
         if self.llm is not None and not dry_run:
             # Пробуем вызвать LLM напрямую (один раз)
@@ -422,8 +445,8 @@ class ReasoningEngine:
         try:
             diag = dict(getattr(resp, "diagnostics", None) or {})
             diag["fallback_reason"] = fallback_reason
-            diag.setdefault("agent_current_action", "")
-            diag.setdefault("agent_current_step", 0)
+            diag.setdefault("agent_current_action", planner_current_action)
+            diag.setdefault("agent_current_step", planner_current_step)
             diag.setdefault("planner_path_used", False)
             diag.setdefault("evidence_summary", self._evidence_summary(provenance))
             diag.setdefault("evidence_contract_version", EVIDENCE_CONTRACT_VERSION)

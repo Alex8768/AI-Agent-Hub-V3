@@ -77,3 +77,56 @@ async def test_reasoning_engine_uses_session_memory_when_retrieval_context_empty
 
     assert resp.answer == "(reasoning layer stub)"
     assert resp.context_preview == "previous answer from session"
+
+
+@pytest.mark.asyncio
+async def test_reasoning_engine_fallback_executes_planner_steps(monkeypatch):
+    calls: dict[str, object] = {}
+
+    def _fake_create_reasoning_plan(*, query: str):
+        calls["query"] = query
+        return {
+            "steps": [
+                {"description": "step one"},
+                {"description": "step two"},
+            ]
+        }
+
+    async def _fake_execute_plan_steps(*, plan, run_reasoning_step, run_verify_step):
+        calls["plan_steps"] = int(len(plan.get("steps") or []))
+        _ = run_reasoning_step
+        _ = run_verify_step
+        return [
+            {
+                "step_index": 0,
+                "step_description": "step one",
+                "reasoning_output": "step one",
+                "verify_status": "pass",
+                "verify_reasons": [],
+            },
+            {
+                "step_index": 1,
+                "step_description": "step two",
+                "reasoning_output": "step two",
+                "verify_status": "pass",
+                "verify_reasons": [],
+            },
+        ]
+
+    monkeypatch.setattr(
+        "src.layers.pro.reasoning.engine.create_reasoning_plan",
+        _fake_create_reasoning_plan,
+    )
+    monkeypatch.setattr(
+        "src.layers.pro.reasoning.engine.execute_plan_steps",
+        _fake_execute_plan_steps,
+    )
+
+    eng = ReasoningEngine(retriever=_EmptyRetriever())
+    resp = await eng.synthesize(AnswerRequest(query="multi step query"))
+    diag = dict(getattr(resp, "diagnostics", {}) or {})
+
+    assert calls.get("query") == "multi step query"
+    assert calls.get("plan_steps") == 2
+    assert diag.get("agent_current_action") == "ANSWER"
+    assert diag.get("agent_current_step") == 1
