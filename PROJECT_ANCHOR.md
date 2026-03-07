@@ -42,7 +42,7 @@ Planned files:
 
 - [x] Patch 1 — timeline model
 - [x] Patch 2 — timeline collector
-- [ ] Patch 3 — trace enrichment
+- [x] Patch 3 — trace enrichment
 - [ ] Patch 4 — diagnostics.reasoning_timeline exposure
 - [ ] Patch 5 — timeline tests
 

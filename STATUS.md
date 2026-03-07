@@ -18,6 +18,7 @@ A2.13 — Reasoning Observability
 Current progress:
 - Patch 1 complete: timeline model contract added with deterministic duration normalization.
 - Patch 2 complete: timeline collector added with start/end event boundaries and latency aggregation.
+- Patch 3 complete: reasoning trace contract enriched with timeline payload and normalizers.
 
 Focus:
 - reasoning execution timeline
