@@ -21,7 +21,7 @@
 - [x] Multi-step reasoning correctness test
 - [x] ReasoningState propagation test
 - [x] Verify-per-step behavior test
-- [ ] max_steps safety guard test
+- [x] max_steps safety guard test
 - [ ] Deterministic planner behavior test
 
 ## Next

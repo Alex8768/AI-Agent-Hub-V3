@@ -39,7 +39,7 @@ Planned test module:
 - [x] Patch 1 — multi-step reasoning correctness
 - [x] Patch 2 — state propagation
 - [x] Patch 3 — verify-per-step behavior
-- [ ] Patch 4 — max_steps safety guard
+- [x] Patch 4 — max_steps safety guard
 - [ ] Patch 5 — deterministic planner behavior
 
 ### Out of Scope
