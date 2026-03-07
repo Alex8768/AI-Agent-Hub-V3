@@ -1,86 +1,71 @@
-# PROJECT ANCHOR
+# Project Anchor
 
-## Project
-AI Agent Hub v3.1-dev
+## Active Anchor
 
-## Mission
-Создать стабильную платформу AI Agent Hub с архитектурой Base -> Pro -> Reasoning.
+A2.4 — Self-check Diagnostics Rollout
 
-## Current Development Goal
-Стабилизировать Base слой перед развитием Pro, чтобы Pro MVP строился на прочном фундаменте, а не на скрытых проблемах.
+### Goal
 
-## Current Stage
-Phase 2 -> Reasoning MVP
+Introduce deterministic reasoning diagnostics without changing answer behaviour first.
 
-## Approved Roadmap
+A2.4 must be delivered in a controlled rollout:
+1. prove planner runtime path behaves correctly
+2. introduce diagnostics-only self_check
+3. add warning-only policy
+4. tune thresholds
+5. stabilize the external contract
 
-1. Phase 0 -> Stabilize Base
-2. Phase 1 -> Graph RAG MVP
-3. Phase 2 -> Reasoning MVP
-4. Phase 3 -> MCP Tools
-5. Phase 4 -> API expansion
-6. Phase 5 -> Multi-Agent (только после стабилизации single-agent ядра)
-7. Phase 6 -> Canvas / Visualization
-8. Phase 7 -> Personalization / Memory
+### Patch Plan
 
-## Critical Path
+#### Patch 0 — Preflight planner runtime parity
+- Prove planner/runtime path actually executes
+- Validate invoke / ainvoke compatibility
+- Ensure fallback does not silently mask planner runtime issues
+- Explicit test coverage for:
+  - compile + ainvoke path
+  - compile + invoke path
+  - runtime without ainvoke/invoke -> controlled fallback with diagnostics
 
-1. Lifespan + API dependencies
-2. FAISS thread safety
-3. JSON metadata instead of pickle
-4. OpenAIAdapter cleanup
-5. Graph schema and graph retrieval
-6. Hybrid retrieval
-7. Planner + reasoning flow
-8. Evidence contract + self-check verification
+#### Patch 1 — Diagnostics-only self_check
+- Introduce diagnostics.self_check
+- Deterministic and stable structure
+- Pre-freeze schema with status: "not_evaluated" to prevent API drift
+- No influence on final answer
+- No routing changes
+- No blocking behaviour
 
-## What is approved and should NOT be re-discussed from scratch
+#### Patch 2 — Warning-only policy
+- Convert failed self-check conditions into warning-level diagnostics
+- Final answer must still be returned
+- No hard blocking
+- No hidden behaviour changes
 
-- Pro нельзя развивать поверх нестабильного Base.
-- Сначала укрепляем фундамент, потом усложняем Pro.
-- Multi-agent, canvas и глубокую персонализацию не начинаем до стабилизации single-agent ядра.
-- Новый код Pro не должен напрямую тащить глобальный settings.
-- Новые рискованные Pro возможности включаются только через feature flags.
-- Один патч = одна причина.
-- Один завершённый якорь = отдельное понятное обновление статуса.
+#### Patch 3 — Threshold tuning
+- Introduce explicit thresholds
+- Example dimensions: minimal_coverage_score, missing_minimal_count
+- Add boundary tests
+- Preserve predictable planner/fallback behaviour
 
-## Non-negotiable rules
+#### Patch 4 — External contract stabilization
+- Update API/service snapshot tests
+- Ensure diagnostics.self_check is externally stable
+- Freeze outward-facing contract for this phase
 
-- Один патч = одна причина
-- Compile -> pytest -> commit
-- Не смешивать несколько архитектурных изменений в одном коммите
-- Не переписывать roadmap с нуля без серьёзной причины
-- Не тащить FastAPI app.state в core слой
-- Не превращать core/providers.py в скрытый service locator
-- Не делать create_task без управляемого жизненного цикла там, где нужна надёжность
-- Не лезть в сложные расширения раньше времени
+### Out of Scope
 
-## Current Focus
+Do NOT modify during A2.4:
+- AnswerService decomposition
+- OpenAIAdapter decomposition
+- config.py architecture cleanup
+- IngestService slimming
+- retrieval pipeline redesign
+- reasoning graph redesign beyond active-patch need
 
-Phase 0 -> Base stabilization
+### Definition of Done
 
-Current active anchor:
-A2.4 Self-check
-
-Next anchor:
-A2.5 Verify node in reasoning graph
-
-## What is explicitly postponed
-
-- Multi-agent orchestration
-- Canvas / visualization
-- Deep personalization
-- Full DI refactor of all legacy Base services
-- Big-bang rewrite of Base
-
-## How to resume work in a new chat
-
-1. Read PROJECT_ANCHOR.md
-2. Read STATUS.md
-3. Read PROJECT_CHECKLIST.md
-4. Read WORKFLOW.md
-5. Only then analyze code and propose changes.
-
-Do NOT redesign roadmap from scratch.
-Do NOT skip the current anchor.
-Do NOT mix multiple anchor goals in one patch.
+A2.4 is complete when:
+- planner runtime parity is explicitly validated
+- diagnostics.self_check is stable
+- warning-only policy is covered by tests
+- threshold behaviour is covered by boundary tests
+- external API/service contract is stabilized
