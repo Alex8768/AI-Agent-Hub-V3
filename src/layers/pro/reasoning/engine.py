@@ -148,7 +148,12 @@ class ReasoningEngine:
             diag["planner_path_used"] = True
             diag["session_id"] = str(getattr(final_state, "session_id", "") or "")
             diag["evidence_summary"] = self._evidence_summary(final_state.provenance)
-            diag["evidence_contract"] = self._evidence_contract_status(final_state.provenance)
+            contract = self._evidence_contract_status(final_state.provenance)
+            diag["evidence_contract"] = contract
+            if not bool(contract.get("valid_minimal", False)):
+                resp.warnings = list(getattr(resp, "warnings", []) or [])
+                if "evidence_contract_minimal_invalid" not in resp.warnings:
+                    resp.warnings.append("evidence_contract_minimal_invalid")
             if final_state.error:
                 diag["agent_error"] = final_state.error
             resp.diagnostics = diag
@@ -235,7 +240,12 @@ class ReasoningEngine:
             diag.setdefault("agent_current_step", 0)
             diag.setdefault("planner_path_used", False)
             diag.setdefault("evidence_summary", self._evidence_summary(provenance))
-            diag.setdefault("evidence_contract", self._evidence_contract_status(provenance))
+            contract = self._evidence_contract_status(provenance)
+            diag.setdefault("evidence_contract", contract)
+            if not bool(contract.get("valid_minimal", False)):
+                resp.warnings = list(getattr(resp, "warnings", []) or [])
+                if "evidence_contract_minimal_invalid" not in resp.warnings:
+                    resp.warnings.append("evidence_contract_minimal_invalid")
             resp.diagnostics = diag
         except Exception:
             pass
