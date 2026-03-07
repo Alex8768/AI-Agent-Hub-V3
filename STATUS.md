@@ -16,11 +16,13 @@ engine integration, and max_steps safety guard.
 A2.11.5 — Planner evaluation tests (quality gate)
 
 Focus:
-- multi-step reasoning correctness
 - state propagation across steps
 - verify execution per step
 - max_steps safety guard
 - deterministic planner behavior
+
+Current progress:
+- Patch 1 complete: multi-step reasoning correctness evaluation test added and passing.
 
 Execution discipline:
 - A2.12 is predefined but implementation starts only after A2.11.5 is fully closed.
