@@ -17,22 +17,23 @@
 - [x] A2.11 Multi-step Reasoning Planner
 - [x] A2.11.5 Planner evaluation tests (quality gate)
 - [x] A2.12 Reasoning Trace + Replay
+- [x] A2.13 Reasoning Observability
 
-## Current Work — A2.13 Reasoning Observability
+## Current Work — A2.14 Reasoning Control Layer
 
-- [x] Timeline model
-- [x] Timeline collector
-- [x] Trace enrichment
-- [x] diagnostics.reasoning_timeline exposure
-- [ ] Timeline tests
+- [ ] Execution policy model
+- [ ] Step controller
+- [ ] Loop guard
+- [ ] Policy integration with planner
+- [ ] Control behaviour tests
 
 ## Next
 
-- [ ] A2.14 (to be defined)
+- [ ] A2.15 (to be defined)
 
 ## Later
 
-- [ ] A2.15 (to be defined)
+- [ ] A2.16 (to be defined)
 
 ## Working Rules
 
@@ -42,10 +43,6 @@
 - Validate locally before commit
 - Commit only files relevant to the active task
 
-## A2.14 Reasoning Control Layer (predefined)
+## A2.15 (predefined, not active)
 
-- [ ] Execution policy model
-- [ ] Step controller
-- [ ] Loop guard
-- [ ] Policy integration with planner
-- [ ] Control behaviour tests
+- [ ] TBD
