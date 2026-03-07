@@ -2,25 +2,36 @@
 
 ## Active Anchor
 
-A2.5 — Verify Node Hardening
+A2.6 — AnswerService Decomposition
 
 ### Goal
 
-Add a deterministic verify step to reasoning flow without broad refactors.
+Reduce `AnswerService` orchestration complexity while preserving external contracts.
 
-A2.5 must strengthen claim/evidence validation and expose predictable verify diagnostics.
+A2.6 must split responsibilities into smaller testable units without behaviour drift.
 
 ### Patch Plan
 
-#### Patch 0 — Verify contract preflight
-- Define minimal verify diagnostics schema
-- Keep behaviour additive and warning-only at start
-- Validate planner/fallback parity for verify diagnostics
+#### Patch 0 — Extract diagnostics builder
+- Isolate diagnostics assembly from endpoint orchestration
+- Keep output schema identical
+- Preserve current warnings and metadata fields
+
+#### Patch 1 — Extract memory I/O boundary
+- Isolate load/save session memory behavior
+- Keep best-effort semantics unchanged
+
+#### Patch 2 — Extract LLM wiring boundary
+- Isolate provider/model resolution and adapter creation
+- Preserve current fallback behavior
+
+#### Patch 3 — External contract parity tests
+- Freeze API/service snapshots for unchanged output shape
+- Prove no regressions from decomposition
 
 ### Out of Scope
 
-Do NOT modify during A2.5:
-- AnswerService decomposition
+Do NOT modify during A2.6:
 - OpenAIAdapter decomposition
 - config.py architecture cleanup
 - IngestService slimming
@@ -29,7 +40,7 @@ Do NOT modify during A2.5:
 
 ### Definition of Done
 
-A2.5 is complete when:
-- verify diagnostics are deterministic and externally stable
-- verify policy behaviour is covered by tests
-- planner/fallback verify parity is validated
+A2.6 is complete when:
+- AnswerService responsibilities are split into focused units
+- API/service external contracts remain unchanged
+- behavior parity is validated by tests

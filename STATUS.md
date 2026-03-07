@@ -6,27 +6,26 @@ Pro Layer Development — Reasoning Stabilization
 
 ## Last Completed Anchor
 
-A2.4 — Self-check Diagnostics Rollout
+A2.5 — Verify Node Hardening
 
-Self-check diagnostics rollout is completed with stable warning-only and external contract coverage.
+Verify diagnostics are now deterministic, warning-only, threshold-tuned, and externally stabilized.
 
 ## Current Active Anchor
 
-A2.5 — Verify Node Hardening
+A2.6 — AnswerService Decomposition
 
-Current work is focused on deterministic verify-step diagnostics and policy hardening.
+Current work is focused on reducing AnswerService orchestration complexity without contract drift.
 
 ## Next Anchor
 
-A2.6 — AnswerService Decomposition
+A2.7 — OpenAIAdapter Decomposition
 
 Planned focus:
-- split orchestration concerns to reduce service monolith risk
-- preserve current external contracts during decomposition
+- reduce adapter branching complexity
+- preserve provider behavior and fallback compatibility
 
 ## Upcoming Anchors
 
-- A2.7 — OpenAIAdapter Decomposition
 - A2.8 — Config Architecture Cleanup
 - A2.9 — IngestService Slimming
 

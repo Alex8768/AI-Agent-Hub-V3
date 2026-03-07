@@ -7,22 +7,22 @@
 - [x] Reasoning Engine initial implementation
 - [x] A2.3 Evidence Contract
 - [x] A2.4 Self-check Diagnostics Rollout
+- [x] A2.5 Verify Node Hardening
 - [x] CI tracing compatibility fix
 
-## Current Work — A2.5 Verify Node Hardening
+## Current Work — A2.6 AnswerService Decomposition
 
-- [ ] Patch 0 — verify diagnostics schema preflight
-- [ ] Patch 1 — verify node warning-only policy
-- [ ] Patch 2 — verify threshold tuning and boundary tests
-- [ ] Patch 3 — external contract stabilization for diagnostics.verify
+- [ ] Patch 0 — extract diagnostics builder with parity
+- [ ] Patch 1 — extract session memory I/O boundary
+- [ ] Patch 2 — extract LLM wiring boundary
+- [ ] Patch 3 — external contract parity snapshots
 
 ## Next
 
-- [ ] A2.6 AnswerService Decomposition
+- [ ] A2.7 OpenAIAdapter Decomposition
 
 ## Later
 
-- [ ] A2.7 OpenAIAdapter Decomposition
 - [ ] A2.8 Config Architecture Cleanup
 - [ ] A2.9 IngestService Slimming
 
