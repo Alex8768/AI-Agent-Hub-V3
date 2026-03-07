@@ -250,16 +250,12 @@ class IngestService:
             # 1. Валидация
             await self._validate_text(text)
             
-            # 2. Определение формата
-            format = self._detect_format(filename)
-            
-            # 3. Подготовка метаданных
-            final_metadata = self._prepare_metadata(
-                metadata or {}, 
-                filename, 
-                format, 
-                len(text),
-                document_id
+            # 2-3. Определение формата + подготовка метаданных
+            format, final_metadata = self._prepare_ingest_metadata_boundary(
+                metadata=metadata or {},
+                filename=filename,
+                text_length=len(text),
+                document_id=document_id,
             )
             
             # 4. Чанкинг
@@ -351,8 +347,26 @@ class IngestService:
                 metadata=meta
             )
             
-    
-    
+    def _prepare_ingest_metadata_boundary(
+        self,
+        *,
+        metadata: Dict[str, Any],
+        filename: str,
+        text_length: int,
+        document_id: str,
+    ) -> tuple[DocumentFormat, Dict[str, Any]]:
+        """Build ingest format + metadata in one boundary."""
+        format = self._detect_format(filename)
+        final_metadata = self._prepare_metadata(
+            metadata,
+            filename,
+            format,
+            text_length,
+            document_id,
+        )
+        return format, final_metadata
+
+
     async def _rollback_vectors(self, chunk_ids: list[str], *, document_id: str | None = None) -> None:
         """Best-effort rollback for partially ingested vectors.
 

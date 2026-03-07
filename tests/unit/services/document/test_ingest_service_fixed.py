@@ -145,3 +145,19 @@ async def test_document_format_detection(ingest_service):
             filename=filename
         )
         assert result.format == expected_format, f"Failed for {filename}"
+
+
+def test_prepare_ingest_metadata_boundary_preserves_defaults(ingest_service):
+    fmt, meta = ingest_service._prepare_ingest_metadata_boundary(
+        metadata={"source": "unit"},
+        filename="doc.txt",
+        text_length=12,
+        document_id="doc-1",
+    )
+    assert fmt == DocumentFormat.TXT
+    assert meta.get("filename") == "doc.txt"
+    assert meta.get("format") == "txt"
+    assert meta.get("text_length") == 12
+    assert meta.get("document_id") == "doc-1"
+    assert meta.get("workspace_id") == "default"
+    assert meta.get("source") == "unit"
