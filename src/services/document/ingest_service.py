@@ -13,7 +13,7 @@ from pathlib import Path
 from dataclasses import dataclass
 from enum import Enum
 
-from src.core.contracts import VectorStore, VectorDocument
+from src.core.contracts import VectorStore, VectorDocument, EmbeddingModel
 from src.core.config import settings
 from src.core.accelerator import accelerator
 from src.adapters.embedding import get_embedding_factory
@@ -183,6 +183,7 @@ class IngestService:
     def __init__(
         self,
         vector_store: VectorStore,
+        embedding_model: Optional[EmbeddingModel] = None,
         chunk_size: int = 1000,
         chunk_overlap: int = 200
     ):
@@ -191,12 +192,13 @@ class IngestService:
         
         Args:
             vector_store: Векторное хранилище (FAISS)
+            embedding_model: Модель эмбеддингов (если не передана, создаётся через фабрику)
             chunk_size: Размер чанка в символах
             chunk_overlap: Перекрытие чанков
         """
         self._vector_store = vector_store
-        # Compatibility alias (some code paths use self.vector_store)
         self.vector_store = vector_store
+        self._embedding_model = embedding_model
         self.chunker = RecursiveCharacterChunker(chunk_size, chunk_overlap)
         self._logger = get_logger()
         
@@ -205,9 +207,19 @@ class IngestService:
             context={
                 "chunk_size": chunk_size,
                 "chunk_overlap": chunk_overlap,
-                "vector_store": vector_store.name if hasattr(vector_store, 'name') else "FAISS"
+                "vector_store": vector_store.name if hasattr(vector_store, 'name') else "FAISS",
+                "embedding_model_provided": embedding_model is not None
             }
         )
+    
+    async def _get_embedding_model(self) -> EmbeddingModel:
+        """Возвращает модель эмбеддингов (свою или создаёт через фабрику)."""
+        if self._embedding_model is not None:
+            return self._embedding_model
+        
+        # Fallback для обратной совместимости
+        factory = get_embedding_factory()
+        return await factory.create_embedding_model("sentence_transformer")
     
     async def ingest_text(
         self,
@@ -238,28 +250,20 @@ class IngestService:
             # 1. Валидация
             await self._validate_text(text)
             
-            # 2. Определение формата
-            format = self._detect_format(filename)
-            
-            # 3. Подготовка метаданных
-            final_metadata = self._prepare_metadata(
-                metadata or {}, 
-                filename, 
-                format, 
-                len(text),
-                document_id
+            # 2-3. Определение формата + подготовка метаданных
+            format, final_metadata = self._prepare_ingest_metadata_boundary(
+                metadata=metadata or {},
+                filename=filename,
+                text_length=len(text),
+                document_id=document_id,
             )
             
             # 4. Чанкинг
-            self._logger.info(f"Чанкинг документа: {filename}")
-            chunks = self.chunker.chunk_text(text, final_metadata)
-            
-            if not chunks:
-                raise ValidationError(
-                    message="Текст не содержит значимого контента",
-                    field="text",
-                    value=text[:100] + "..." if len(text) > 100 else text
-                )
+            chunks = self._chunk_text_boundary(
+                text=text,
+                filename=filename,
+                final_metadata=final_metadata,
+            )
             
             # 5. Генерация эмбеддингов (оптимизация для M4)
             self._logger.info(f"Генерация эмбеддингов для {len(chunks)} чанков")
@@ -267,10 +271,11 @@ class IngestService:
             
             # 6. Подготовка VectorDocument
             vector_docs = self._prepare_vector_documents(chunks, document_id)
-            
+
             # 7. Сохранение в векторное хранилище
-            self._logger.info(f"Сохранение в векторное хранилище")
-            saved_ids = await self._save_to_vector_store(vector_docs)
+            saved_ids = await self._persist_vectors_boundary(
+                vector_docs=vector_docs,
+            )
             chunk_ids.extend(saved_ids)
             
             # 8. Статистика
@@ -339,8 +344,45 @@ class IngestService:
                 metadata=meta
             )
             
-    
-    
+    def _prepare_ingest_metadata_boundary(
+        self,
+        *,
+        metadata: Dict[str, Any],
+        filename: str,
+        text_length: int,
+        document_id: str,
+    ) -> tuple[DocumentFormat, Dict[str, Any]]:
+        """Build ingest format + metadata in one boundary."""
+        format = self._detect_format(filename)
+        final_metadata = self._prepare_metadata(
+            metadata,
+            filename,
+            format,
+            text_length,
+            document_id,
+        )
+        return format, final_metadata
+
+    def _chunk_text_boundary(
+        self,
+        *,
+        text: str,
+        filename: str,
+        final_metadata: Dict[str, Any],
+    ) -> List[Chunk]:
+        """Run chunking with validation in one boundary."""
+        self._logger.info(f"Чанкинг документа: {filename}")
+        chunks = self.chunker.chunk_text(text, final_metadata)
+
+        if not chunks:
+            raise ValidationError(
+                message="Текст не содержит значимого контента",
+                field="text",
+                value=text[:100] + "..." if len(text) > 100 else text
+            )
+        return chunks
+
+
     async def _rollback_vectors(self, chunk_ids: list[str], *, document_id: str | None = None) -> None:
         """Best-effort rollback for partially ingested vectors.
 
@@ -454,10 +496,7 @@ class IngestService:
             EmbeddingError: если не удалось сгенерировать эмбеддинги
         """
         try:
-            embedding_factory = get_embedding_factory()
-            model = await embedding_factory.create_embedding_model(
-                provider_type="sentence_transformer"
-            )
+            model = await self._get_embedding_model()
 
             total = len(chunks)
             # Resolve batch size (auto by default, overridable via settings.EMBEDDING_BATCH_SIZE)
@@ -556,6 +595,16 @@ class IngestService:
             vector_docs.append(vector_doc)
         
         return vector_docs
+
+    async def _persist_vectors_boundary(
+        self,
+        *,
+        vector_docs: List[VectorDocument],
+    ) -> List[str]:
+        """Persist prepared vector docs as one boundary."""
+        self._logger.info("Сохранение в векторное хранилище")
+        saved_ids = await self._save_to_vector_store(vector_docs)
+        return saved_ids
     
     async def _save_to_vector_store(
         self,

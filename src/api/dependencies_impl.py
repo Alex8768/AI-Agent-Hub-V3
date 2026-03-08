@@ -3,11 +3,12 @@ Dependencies for AI Agent Hub V3 API.
 """
 
 from typing import Optional
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
+from fastapi import Header
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from src.core.config import settings
-from src.security.auth.jwt import verify_token, JWTError
+from src.security.auth.jwt_provider import verify_token, JWTError
 
 
 security = HTTPBearer(auto_error=False)
@@ -43,6 +44,7 @@ async def get_current_user(
                 secret,
                 issuer=getattr(settings, "jwt_issuer", None),
                 audience=getattr(settings, "jwt_audience", None),
+                backend=getattr(settings, "jwt_backend", "internal"),
             )
         except JWTError as e:
             raise HTTPException(
@@ -76,6 +78,7 @@ async def get_current_user(
                     secret,
                     issuer=getattr(settings, "jwt_issuer", None),
                     audience=getattr(settings, "jwt_audience", None),
+                    backend=getattr(settings, "jwt_backend", "internal"),
                 )
                 user_id = claims.get("sub") or claims.get("user_id") or claims.get("id") or "debug_user"
                 return {
@@ -91,34 +94,101 @@ async def get_current_user(
 
 
 async def get_workspace(
+    request: Request = None,  # type: ignore[assignment]
     workspace_id: Optional[str] = None,
     user: dict = Depends(get_current_user),
+    x_workspace_id: Optional[str] = Header(default=None, alias="X-Workspace-Id"),
 ):
     """Get or validate workspace."""
+    # Local imports keep this dependency robust during refactors
+    from fastapi import HTTPException, status
     from src.security.workspace_guard import WorkspaceGuard
+    from src.core.providers import get_authorizer
+
+    # Header fallback (clients/PS scripts may prefer header to avoid query plumbing)
+    if not workspace_id and x_workspace_id:
+        workspace_id = x_workspace_id
     
     guard = WorkspaceGuard()
     
     if workspace_id:
-        # Validate workspace access
+        # Validate workspace access (filesystem-level)
         if not await guard.validate_workspace_access(workspace_id, user["id"]):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Access to workspace denied",
             )
+
+        # Pro ACL enforcement (feature-flagged via providers)
+        try:
+            authorizer = get_authorizer()
+            # authorize_workspace is async in ACLAuthorizer
+            if hasattr(authorizer, "authorize_workspace"):
+                await authorizer.authorize_workspace(user, workspace_id)  # type: ignore[attr-defined]
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=str(e) or "Access denied by ACL",
+            )
+
+        # Save resolved workspace into request context for unified logs/middleware.
+        if request is not None:
+            try:
+                request.state.workspace_id = workspace_id
+            except Exception:
+                pass
         return workspace_id
     else:
-        # Get default workspace
-        return await guard.get_default_workspace(user["id"])
-
+        # Get default workspace (deterministic for Base/Smoke)
+        ws = "default"
+        if request is not None:
+            try:
+                request.state.workspace_id = ws
+            except Exception:
+                pass
+        return ws
 
 async def get_llm_provider(
     provider_type: Optional[str] = None
 ):
-    """Get LLM provider based on configuration."""
-    from src.layers.base.llm.providers import LLMProviderFactory
-    
+    """Get LLM provider based on configuration.
+
+    IMPORTANT: Do not instantiate abstract factories here.
+    Delegate to src.layers.base.llm.providers.get_llm_provider (concrete wiring).
+    """
+    # Normalize provider name (Enum -> str) for base provider router
     provider_name = provider_type or settings.llm_provider
-    factory = LLMProviderFactory()
-    
-    return await factory.get_provider(provider_name)
+    try:
+        provider_name = provider_name.value  # type: ignore[attr-defined]
+    except Exception:
+        provider_name = str(provider_name)
+
+    from src.layers.base.llm.providers import get_llm_provider as _get
+
+    return await _get(provider_type=provider_name)
+
+
+async def get_rag_engine(http: Request):
+    """Get or create RAGEngine instance for search endpoints.
+
+    Uses process-level singleton from app.state when available, otherwise creates
+    a per-process instance and caches it.
+    """
+    from src.layers.base.rag.engines.rag_engine import RAGEngine
+
+    engine = getattr(http.app.state, "rag_engine", None)
+    if engine is None:
+        engine = RAGEngine()
+        http.app.state.rag_engine = engine
+    return engine
+
+
+async def get_hybrid_retriever(http: Request):
+    """Get or create HybridRetriever instance for hybrid search endpoints."""
+    from src.layers.pro.rag.retrieval.hybrid_retriever import HybridRetriever
+
+    retriever = getattr(http.app.state, "hybrid_retriever", None)
+    if retriever is None:
+        retriever = HybridRetriever()
+        http.app.state.hybrid_retriever = retriever
+    return retriever

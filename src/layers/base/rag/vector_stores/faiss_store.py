@@ -8,10 +8,8 @@ from typing import List, Dict, Any, Optional
 from pathlib import Path
 import json
 import hashlib
-import pickle
 import os
 import time
-import tempfile
 from concurrent.futures import ThreadPoolExecutor
 
 from src.core.contracts import VectorStore, VectorDocument, SearchResult
@@ -22,6 +20,8 @@ from src.core.accelerator import accelerator
 
 class FAISSVectorStore(VectorStore):
     PREVIEW_MAX_CHARS: int = 512  # Store only a short preview, never full content
+    SEARCH_TIMEOUT_SECONDS: float = 10.0  # Prevent event-loop hangs on slow FAISS ops
+    META_VERSION: int = 1
     """
     Локальное векторное хранилище на FAISS.
     Оптимизировано для Apple Silicon (MPS).
@@ -79,8 +79,8 @@ class FAISSVectorStore(VectorStore):
             accelerator.empty_cache()
             try:
                 self._executor.shutdown(wait=True)
-            except Exception:
-                pass
+            except Exception as e:
+                self._logger.warning(f"Executor shutdown failed: {e}")
             self._logger.info("FAISS store очищен")
     
     async def health_check(self) -> Dict[str, Any]:
@@ -111,6 +111,51 @@ class FAISSVectorStore(VectorStore):
             embedding=getattr(doc, 'embedding', None),
         )
 
+    def _meta_json_path(self) -> Path:
+        return self._index_path.with_suffix(".meta.json")
+
+    def _meta_pickle_path(self) -> Path:
+        return self._index_path.with_suffix(".meta.pkl")
+
+    def _serialize_document(self, doc: VectorDocument) -> Dict[str, Any]:
+        return {
+            "id": str(getattr(doc, "id", "")),
+            "content": self._make_preview(getattr(doc, "content", "") or ""),
+            "metadata": dict(getattr(doc, "metadata", {}) or {}),
+            "embedding": list(getattr(doc, "embedding", []) or []),
+        }
+
+    def _deserialize_document(self, payload: Any, *, fallback_id: str) -> Optional[VectorDocument]:
+        """Decode document payload from json manifest or legacy pickle."""
+        try:
+            # legacy pickle already stores VectorDocument objects
+            if isinstance(payload, VectorDocument):
+                return self._lighten_document(payload)
+
+            if not isinstance(payload, dict):
+                return None
+
+            return self._lighten_document(
+                VectorDocument(
+                    id=str(payload.get("id") or fallback_id),
+                    content=str(payload.get("content") or ""),
+                    metadata=dict(payload.get("metadata") or {}),
+                    embedding=list(payload.get("embedding") or []),
+                )
+            )
+        except Exception:
+            return None
+
+    def _compute_file_sha256(self, path: Path) -> str:
+        try:
+            h = hashlib.sha256()
+            with open(path, "rb") as f:
+                for chunk in iter(lambda: f.read(1024 * 1024), b""):
+                    h.update(chunk)
+            return h.hexdigest()
+        except Exception:
+            return ""
+
     # ============ ОСНОВНЫЕ МЕТОДЫ ============
     
     async def _initialize_faiss(self):
@@ -123,20 +168,51 @@ class FAISSVectorStore(VectorStore):
             if self._index_path.exists():
                 # Загружаем существующий индекс
                 self._logger.info(f"Загружаем FAISS индекс из {self._index_path}")
-                meta_path = self._index_path.with_suffix('.meta.pkl')
+                meta_json_path = self._meta_json_path()
+                meta_pickle_path = self._meta_pickle_path()
 
                 def _load_blocking():
                     idx = faiss.read_index(str(self._index_path))
                     docs = {}
                     id_to = {}
-                    if meta_path.exists():
-                        with open(meta_path, 'rb') as f:
-                            data = pickle.load(f)
-                            docs = data.get('documents', {})
-                            id_to = data.get('id_to_index', {})
-                    return idx, docs, id_to
+                    meta_source = "none"
 
-                self._index, self._document_store, self._id_to_index = await loop.run_in_executor(self._executor, _load_blocking)
+                    if meta_json_path.exists():
+                        try:
+                            with open(meta_json_path, "r", encoding="utf-8") as f:
+                                data = json.load(f) or {}
+                            docs_raw = data.get("documents", {}) or {}
+                            id_to_raw = data.get("id_to_index", {}) or {}
+                            for doc_id, payload in docs_raw.items():
+                                doc = self._deserialize_document(payload, fallback_id=str(doc_id))
+                                if doc is not None:
+                                    docs[str(doc_id)] = doc
+                            id_to = {str(k): int(v) for k, v in id_to_raw.items()}
+                            meta_source = "json"
+                        except Exception as e:
+                            self._logger.warning(f"Failed to read .meta.json, trying legacy .meta.pkl: {e}")
+
+                    if meta_source == "none" and meta_pickle_path.exists():
+                        try:
+                            # Legacy fallback: keep compatibility with old .meta.pkl files
+                            import pickle
+                            with open(meta_pickle_path, "rb") as f:
+                                data = pickle.load(f) or {}
+                            docs_raw = data.get("documents", {}) or {}
+                            id_to_raw = data.get("id_to_index", {}) or {}
+                            for doc_id, payload in docs_raw.items():
+                                doc = self._deserialize_document(payload, fallback_id=str(doc_id))
+                                if doc is not None:
+                                    docs[str(doc_id)] = doc
+                            id_to = {str(k): int(v) for k, v in id_to_raw.items()}
+                            meta_source = "pickle"
+                        except Exception as e:
+                            self._logger.warning(f"Failed to read legacy .meta.pkl, continuing with empty metadata: {e}")
+                    return idx, docs, id_to, meta_source
+
+                self._index, self._document_store, self._id_to_index, meta_source = await loop.run_in_executor(
+                    self._executor, _load_blocking
+                )
                 
                 # Sanitize loaded documents: ensure only preview is kept
                 try:
@@ -153,6 +229,8 @@ class FAISSVectorStore(VectorStore):
 
                 # Build reverse map for O(1) lookup during search
                 self._index_to_id = {int(v): k for k, v in (self._id_to_index or {}).items()}
+                if meta_source == "pickle":
+                    self._logger.info("Legacy .meta.pkl loaded; next save will migrate metadata to .meta.json")
                 self._logger.info(f"Индекс загружен: {self._index.ntotal} векторов")
             else:
                 # Создаём новый индекс
@@ -238,11 +316,12 @@ class FAISSVectorStore(VectorStore):
             # Нормализуем векторы для косинусного сходства
             faiss.normalize_L2(vectors)
             
-            # Добавляем в индекс + обновляем маппинги атомарно относительно других writer-операций
+            loop = asyncio.get_running_loop()
+# Добавляем в индекс + обновляем маппинги атомарно относительно других writer-операций
             async with self._write_lock:
                 start_idx = self._index.ntotal
-                self._index.add(vectors)
-                
+                # Add to FAISS index in the single-thread executor (cross-platform safe)
+                await loop.run_in_executor(self._executor, lambda: self._index.add(vectors))
                 # Сохраняем документы
                 added_ids = []
                 for i, doc in enumerate(documents):
@@ -323,22 +402,24 @@ class FAISSVectorStore(VectorStore):
             # Ищем (в executor + timeout, чтобы не подвешивать event loop)
             loop = asyncio.get_running_loop()
             k_eff = min(k, self._index.ntotal)
-            try:
-                distances, indices = await asyncio.wait_for(
-                    loop.run_in_executor(None, lambda: self._index.search(query_vector, k_eff)),
-                    timeout=10.0,
-                )
-            except asyncio.TimeoutError:
-                raise VectorStoreError(
-                    message="Search timeout after 10 seconds",
-                    operation="search",
-                    details={"k": int(k_eff), "index_total": int(self._index.ntotal)},
-                )
+            # Serialize search with writer operations for safety (FAISS thread-safety)
+            async with self._write_lock:
+                try:
+                    distances, indices = await asyncio.wait_for(
+                        loop.run_in_executor(self._executor, lambda: self._index.search(query_vector, k_eff)),
+                        timeout=self.SEARCH_TIMEOUT_SECONDS,
+                    )
+                except asyncio.TimeoutError:
+                    raise VectorStoreError(
+                        message=f"Search timeout after {self.SEARCH_TIMEOUT_SECONDS} seconds",
+                        operation="search",
+                        details={"k": int(k_eff), "index_total": int(self._index.ntotal)},
+                    )
 
             
             # Формируем результаты
             results = []
-            for i, (distance, idx) in enumerate(zip(distances[0], indices[0])):
+            for i, (similarity, idx) in enumerate(zip(distances[0], indices[0])):
                 if idx == -1:  # FAISS возвращает -1 если недостаточно данных
                     continue
                 
@@ -354,8 +435,8 @@ class FAISSVectorStore(VectorStore):
                     
                     results.append(SearchResult(
                         document=doc,
-                        score=float(distance),
-                        distance=float(1.0 - distance)  # Преобразуем в расстояние
+                        score=float(similarity),
+                        distance=float(1.0 - similarity)  # Преобразуем в расстояние
                     ))
             
             self._logger.info(f"Поиск '{query[:30]}...' → {len(results)} результатов")
@@ -479,7 +560,7 @@ class FAISSVectorStore(VectorStore):
 
         # Ensure dir exists
         self._index_path.parent.mkdir(parents=True, exist_ok=True)
-        meta_path = self._index_path.with_suffix(".meta.pkl")
+        meta_json_path = self._meta_json_path()
 
         def _atomic_replace(src: Path, dst: Path):
             os.replace(str(src), str(dst))
@@ -510,13 +591,26 @@ class FAISSVectorStore(VectorStore):
 
         _retry(_write_index)
 
-        # 2) Write meta atomically
-        tmp_meta = _write_temp_path(meta_path)
+        # 2) Write meta json atomically
+        tmp_meta = _write_temp_path(meta_json_path)
 
         def _write_meta():
-            with open(tmp_meta, "wb") as f:
-                pickle.dump({"documents": self._document_store, "id_to_index": self._id_to_index}, f)
-            _atomic_replace(tmp_meta, meta_path)
+            payload = {
+                "version": self.META_VERSION,
+                "index_fingerprint_sha256": self._compute_file_sha256(self._index_path),
+                "updated_at_epoch_ms": int(time.time() * 1000),
+                "documents": {
+                    str(doc_id): self._serialize_document(doc)
+                    for doc_id, doc in (self._document_store or {}).items()
+                },
+                "id_to_index": {
+                    str(doc_id): int(idx)
+                    for doc_id, idx in (self._id_to_index or {}).items()
+                },
+            }
+            with open(tmp_meta, "w", encoding="utf-8") as f:
+                json.dump(payload, f, ensure_ascii=False, separators=(",", ":"))
+            _atomic_replace(tmp_meta, meta_json_path)
 
         _retry(_write_meta)
 

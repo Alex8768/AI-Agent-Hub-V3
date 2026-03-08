@@ -12,14 +12,16 @@ from src.core.config import settings
 from src.infrastructure.database.models import DocumentRecord
 from src.infrastructure.storage.local_storage import LocalStorage
 from src.layers.base.rag.vector_stores.factory import get_vector_store_singleton
+from src.layers.pro.graph_rag.jobs.service import get_entity_extraction_jobs_service
 from src.services.document.registry_repository import DocumentRegistryRepository
 from src.services.document.ingest_service import IngestService
 
 
 class DocumentService:
-    def __init__(self):
+    def __init__(self, *, extraction_jobs_service=None):
         self.repo = DocumentRegistryRepository()
         self.storage = LocalStorage()
+        self._extraction_jobs_service = extraction_jobs_service
 
     def _hash_bytes(self, data: bytes) -> str:
         return hashlib.sha256(data).hexdigest()
@@ -30,6 +32,9 @@ class DocumentService:
 
     async def _get_vector_store(self):
         return await get_vector_store_singleton()
+
+    def _get_extraction_jobs_service(self):
+        return self._extraction_jobs_service or get_entity_extraction_jobs_service()
 
     async def create_from_upload(
         self,
@@ -106,9 +111,10 @@ class DocumentService:
             vectors_before = stats_before.get('total_vectors') or stats_before.get('total_vectors', 0)
 
             ingest = IngestService(
+                vector_store=vector_store,
+                embedding_model=None,  # будет внедряться позже через DI
                 chunk_size=chunk_size or settings.ingest_chunk_size,
                 chunk_overlap=chunk_overlap or settings.ingest_chunk_overlap,
-                vector_store=vector_store,
             )
 
             result = await ingest.ingest_text(
@@ -139,6 +145,29 @@ class DocumentService:
                 record.chunks_count = result.total_chunks
                 record.indexed_at = datetime.utcnow()
                 record.error_message = None
+                # A1.3: managed best-effort background extraction job for graph entities.
+                try:
+                    jobs = self._get_extraction_jobs_service()
+                    job = await jobs.start_document_job(workspace_id=workspace_id, document_id=record.id)
+                    logger.info(
+                        "Entity extraction job started",
+                        extra={
+                            "document_id": record.id,
+                            "workspace_id": workspace_id,
+                            "job_id": job.job_id,
+                            "chunks_total": job.total_chunks,
+                        },
+                    )
+                except Exception as e:
+                    # Extraction is additive for GraphRAG; ingest success must not be rolled back.
+                    logger.warning(
+                        "Entity extraction job was not started",
+                        extra={
+                            "document_id": record.id,
+                            "workspace_id": workspace_id,
+                            "reason": str(e),
+                        },
+                    )
             else:
                 record.status = "error"
                 record.error_message = "; ".join(result.errors)[:1000]
@@ -150,6 +179,14 @@ class DocumentService:
         record.updated_at = datetime.utcnow()
         await self.repo.update(db, record)
         return record
+
+    def get_latest_extraction_job(self, *, workspace_id: str, document_id: str):
+        jobs = self._get_extraction_jobs_service()
+        return jobs.get_latest_document_job(workspace_id=workspace_id, document_id=document_id)
+
+    def get_extraction_job(self, *, job_id: str):
+        jobs = self._get_extraction_jobs_service()
+        return jobs.get_job(job_id)
 
 
 

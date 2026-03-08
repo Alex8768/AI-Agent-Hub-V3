@@ -1,0 +1,62 @@
+name: CI (Pro)
+
+on:
+  push:
+    branches: [ "pro-v3.1-dev" ]
+  pull_request:
+    branches: [ "pro-v3.1-dev" ]
+
+jobs:
+  qdrant-it:
+    name: ubuntu-latest / py3.12 / qdrant-it
+    runs-on: ubuntu-latest
+
+    services:
+      qdrant:
+        image: qdrant/qdrant:v1.17.0
+        ports:
+          - 6333:6333
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install package (Pro deps)
+        shell: bash
+        run: |
+          python -m pip install -U pip setuptools wheel
+          # Deterministic install: integration tests require qdrant + embeddings/faiss.
+          python -m pip install -e ".[test,qdrant,embeddings,faiss]"
+
+      - name: Compile
+        shell: bash
+        run: |
+          python -m compileall src
+
+      - name: Wait for Qdrant
+        shell: bash
+        run: |
+          for i in {1..60}; do
+            if curl -fsS "http://localhost:6333/healthz" >/dev/null 2>&1; then
+              echo "Qdrant is ready"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Qdrant did not become ready in time"
+          curl -v "http://localhost:6333/healthz" || true
+          exit 1
+
+      - name: Run Qdrant integration tests
+        shell: bash
+        env:
+          RUN_QDRANT_IT: "1"
+          QDRANT_HOST: "localhost"
+          QDRANT_PORT: "6333"
+        run: |
+          pytest -q tests/integration/test_qdrant_integration.py tests/integration/test_memory_semantic_integration.py

@@ -12,6 +12,7 @@ from pydantic import (
     Field, 
     validator, 
     field_validator,
+    model_validator,
     ConfigDict, 
     SecretStr, 
     EmailStr,
@@ -20,37 +21,13 @@ from pydantic import (
 from pydantic_settings import BaseSettings, SettingsConfigDict
 import json
 
+from src.core.config_parts.parsers import parse_json_or_csv_list
+
 from src.core.exceptions import ConfigurationError
 
 from src.core.paths import get_default_data_dir, ensure_dir
 
-try:
-    from src.core.types import LLMConfig, VectorStoreConfig, MCPConfig
-except ImportError:
-    # Fallback для случаев, когда импорт не работает
-    from pydantic import BaseModel
-    
-    class LLMConfig(BaseModel):
-        provider: str
-        model: str
-        api_key: str = None
-        base_url: str = None
-        temperature: float = 0.7
-        max_tokens: int = None
-        timeout: int = 30
-    
-        max_retries: int = None
-    class VectorStoreConfig(BaseModel):
-        provider: str
-        path: str
-        index_name: str = None
-        dimension: int = None
-        similarity_metric: str = "cosine"
-    
-    class MCPConfig(BaseModel):
-        enabled: bool = False
-        servers: list = []
-        max_tools_per_server: int = 10
+from src.core.types import LLMConfig, VectorStoreConfig, MCPConfig
 
 
 class LogLevel(str, Enum):
@@ -221,6 +198,21 @@ class Settings(BaseSettings):
         description="Allowed hosts for TrustedHost middleware"
     )
 
+
+    # ============ AUTH / SECURITY SETTINGS ============
+    jwt_backend: str = Field(
+        default="internal",
+        description="JWT backend: 'internal' (no deps) or 'jose' (python-jose)",
+    )
+
+    @field_validator("jwt_backend")
+    @classmethod
+    def validate_jwt_backend(cls, v: str) -> str:
+        v2 = (v or "").strip().lower()
+        if v2 not in ("internal", "jose"):
+            raise ValueError("jwt_backend must be one of: internal, jose")
+        return v2
+
     reload: bool = Field(
         default=False,
         description="Enable auto-reload for development server"
@@ -228,34 +220,15 @@ class Settings(BaseSettings):
     
     @field_validator("cors_origins", mode="before")
     @classmethod
-    def parse_cors_origins(cls, v: Union[str, List[str]]) -> List[str]:
+    def parse_cors_origins(cls, v):
         """Parse CORS origins from JSON string or comma-separated list."""
-        if isinstance(v, str):
-            v = v.strip()
-            # Try to parse as JSON array first
-            if v.startswith("[") and v.endswith("]"):
-                try:
-                    return json.loads(v)
-                except json.JSONDecodeError:
-                    # If JSON parsing fails, treat as comma-separated string
-                    pass
-            # Parse as comma-separated string
-            return [item.strip() for item in v.split(",") if item.strip()]
-        return v
+        return parse_json_or_csv_list(v)
 
     @field_validator("allowed_hosts", mode="before")
     @classmethod
-    def parse_allowed_hosts(cls, v: Union[str, List[str]]) -> List[str]:
+    def parse_allowed_hosts(cls, v):
         """Parse allowed hosts from JSON string or comma-separated list."""
-        if isinstance(v, str):
-            v = v.strip()
-            if v.startswith("[") and v.endswith("]"):
-                try:
-                    return json.loads(v)
-                except json.JSONDecodeError:
-                    pass
-            return [item.strip() for item in v.split(",") if item.strip()]
-        return v
+        return parse_json_or_csv_list(v)
     
     # ============ DATABASE SETTINGS ============
     database_url: str = Field(
@@ -392,6 +365,98 @@ class Settings(BaseSettings):
         default=VectorStoreProvider.FAISS,
         description="Default vector store provider"
     )
+
+    # ============ PRO FEATURE FLAGS (OFF BY DEFAULT) ============
+    # These flags gate Pro-only capabilities. Base must remain stable when all are False.
+    feature_qdrant: bool = Field(
+        default=False,
+        description="Enable Pro Qdrant vector store adapter (Pro)"
+    )
+
+    feature_acl: bool = Field(
+        default=False,
+        description="Enable Pro ACL/Authorizer layer (Pro)"
+    )
+
+    feature_memory: bool = Field(
+        default=False,
+        description="Enable Pro durable memory layer (Pro)"
+    )
+
+    feature_memory_embeddings: bool = Field(
+        default=False,
+        description="Enable semantic memory embeddings index (Pro)"
+    )
+
+    feature_graphrag: bool = Field(
+        default=False,
+        description="Enable Pro GraphRAG layer (Pro)"
+    )
+
+
+    # ---- Backward/compat alias ----
+    # NOTE:
+    # Historically we had both `feature_graphrag` and `feature_graph_rag`.
+    # Canonical flag: feature_graphrag
+    # Alias (deprecated): feature_graph_rag
+    #
+    # We keep the alias field for env/backward compatibility but normalize it.
+    feature_graph_rag: bool = Field(
+        default=False,
+        description="DEPRECATED alias for feature_graphrag (kept for backward compatibility)",
+    )
+
+    def _apply_feature_graphrag_alias(self) -> None:
+        # Canonical: feature_graphrag
+        # Alias: feature_graph_rag
+        if bool(self.feature_graph_rag) and not bool(self.feature_graphrag):
+            object.__setattr__(self, "feature_graphrag", True)
+
+    def _validate_feature_graphrag_consistency(self) -> None:
+        # If canonical True but alias False -> misconfiguration (prevents silent surprises)
+        if bool(self.feature_graphrag) and not bool(self.feature_graph_rag):
+            raise ConfigurationError(
+                "Inconsistent feature flags: feature_graphrag=True but feature_graph_rag=False. "
+                "Use only feature_graphrag (canonical) or set both consistently."
+            )
+
+    @model_validator(mode="after")
+    def _normalize_feature_flag_aliases(self) -> "Settings":
+        """Normalize deprecated aliases for feature flags.
+
+        - If only alias is enabled, enable canonical flag.
+        - If both are set but disagree, raise ConfigurationError (fail-fast).
+        """
+        self._apply_feature_graphrag_alias()
+        self._validate_feature_graphrag_consistency()
+        return self
+    feature_reasoning: bool = Field(
+        default=False,
+        description="Enable graph-aware reasoning answer synthesis layer (Pro)",
+    )
+
+    feature_reasoning_llm_dry_run: bool = Field(
+        default=False,
+        description="Enable deterministic dry-run LLM mode for reasoning (Pro)",
+    )
+
+    feature_reasoning_llm_enabled: bool = Field(
+        default=False,
+        description="Enable real LLM calls in reasoning (Pro). When False, LLM is never resolved.",
+    )
+
+    feature_hybrid_search_api: bool = Field(
+        default=False,
+        description="Enable /api/v1/search-hybrid endpoint (Pro risky surface)",
+    )
+
+    feature_reasoning_api: bool = Field(
+        default=False,
+        description="Enable /api/v1/answer endpoint (Pro risky surface)",
+    )
+
+
+
     
     # FAISS
     faiss_index_path: str = Field(
@@ -467,17 +532,9 @@ class Settings(BaseSettings):
     
     @field_validator("mcp_servers", mode="before")
     @classmethod
-    def parse_mcp_servers(cls, v: Union[str, List[str]]) -> List[str]:
+    def parse_mcp_servers(cls, v):
         """Parse MCP servers from JSON string or comma-separated list."""
-        if isinstance(v, str):
-            v = v.strip()
-            if v.startswith("[") and v.endswith("]"):
-                try:
-                    return json.loads(v)
-                except json.JSONDecodeError:
-                    pass
-            return [item.strip() for item in v.split(",") if item.strip()]
-        return v
+        return parse_json_or_csv_list(v)
     
     mcp_max_tools: int = Field(
         default=10,
@@ -557,12 +614,6 @@ class Settings(BaseSettings):
         default=False,
         description="Enable Pro Layer features"
     )
-    
-    feature_graph_rag: bool = Field(
-        default=False,
-        description="Enable Graph RAG feature"
-    )
-    
     feature_canvas: bool = Field(
         default=False,
         description="Enable Split View Canvas feature"
@@ -618,11 +669,8 @@ class Settings(BaseSettings):
     def workspace_root_path(self) -> Path:
         """Get absolute workspace root path."""
         return self.workspace_root.resolve()
-    
-    def get_llm_config(self, provider: Optional[LLMProvider] = None) -> LLMConfig:
-        """Get LLM configuration for a provider."""
-        provider = provider or self.llm_provider
 
+    def _validate_llm_provider_requirements(self, provider: LLMProvider) -> None:
         # Base: fail-fast on missing API keys for remote providers
         if provider == LLMProvider.OPENAI and not self.openai_api_key:
             raise ConfigurationError(
@@ -634,8 +682,9 @@ class Settings(BaseSettings):
                 message="ANTHROPIC provider selected but ANTHROPIC_API_KEY is not set",
                 config_key="ANTHROPIC_API_KEY",
             )
-        
-        config_map = {
+
+    def _build_llm_provider_config_map(self) -> Dict[LLMProvider, Dict[str, Any]]:
+        return {
             LLMProvider.OPENAI: {
                 "provider": "openai",
                 "model": self.openai_model,
@@ -665,15 +714,9 @@ class Settings(BaseSettings):
                 "timeout": 30,
             }
         }
-        
-        config = config_map.get(provider, config_map[LLMProvider.HYBRID])
-        return LLMConfig(**config)
-    
-    def get_vector_store_config(self, provider: Optional[VectorStoreProvider] = None) -> VectorStoreConfig:
-        """Get vector store configuration."""
-        provider = provider or self.vector_store_provider
-        
-        config_map = {
+
+    def _build_vector_store_config_map(self) -> Dict[VectorStoreProvider, Dict[str, Any]]:
+        return {
             VectorStoreProvider.FAISS: {
                 "provider": "faiss",
                 "path": self.faiss_index_path,
@@ -687,7 +730,19 @@ class Settings(BaseSettings):
                 "similarity_metric": "cosine",
             },
         }
-        
+    
+    def get_llm_config(self, provider: Optional[LLMProvider] = None) -> LLMConfig:
+        """Get LLM configuration for a provider."""
+        provider = provider or self.llm_provider
+        self._validate_llm_provider_requirements(provider)
+        config_map = self._build_llm_provider_config_map()
+        config = config_map.get(provider, config_map[LLMProvider.HYBRID])
+        return LLMConfig(**config)
+    
+    def get_vector_store_config(self, provider: Optional[VectorStoreProvider] = None) -> VectorStoreConfig:
+        """Get vector store configuration."""
+        provider = provider or self.vector_store_provider
+        config_map = self._build_vector_store_config_map()
         config = config_map.get(provider, config_map[VectorStoreProvider.FAISS])
         return VectorStoreConfig(**config)
     

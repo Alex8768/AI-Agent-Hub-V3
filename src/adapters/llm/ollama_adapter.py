@@ -22,26 +22,26 @@ class OllamaAdapter(LLMProvider):
     Ollama LLM Provider implementation for local models.
     Supports Llama, Mistral, CodeLlama, and other local models.
     """
-    
+
     def __init__(self, config: LLMConfig):
         """
         Initialize Ollama adapter.
-        
+
         Args:
             config: LLM configuration
         """
         self._name = "ollama"
         self._config = config
-        
+
         # Initialize Ollama client
         self._client = OllamaAsyncClient(
             host=config.base_url or "http://localhost:11434",
             timeout=config.timeout or 120,
         )
-        
+
         # Default model
         self._model = config.model or "llama3.2:latest"
-        
+
         # Model context lengths (approximate)
         self._context_lengths = {
             "llama3.2": 8192,
@@ -51,12 +51,12 @@ class OllamaAdapter(LLMProvider):
             "codellama": 16384,
             "neural-chat": 4096,
         }
-        
+
         self._logger = get_logger()
-        
+
         # Запланировать асинхронную инициализацию
         self._initialized = False
-    
+
     async def _initialize(self) -> None:
         """Async initialization."""
         if not self._initialized:
@@ -69,12 +69,12 @@ class OllamaAdapter(LLMProvider):
                 }
             )
             self._initialized = True
-    
+
     @property
     def name(self) -> str:
         """Provider name."""
         return self._name
-    
+
     @property
     def context_length(self) -> int:
         """Maximum context length for the current model."""
@@ -82,14 +82,14 @@ class OllamaAdapter(LLMProvider):
         for model_pattern, length in self._context_lengths.items():
             if model_pattern in self._model.lower():
                 return length
-        
+
         # Default for unknown models
         return 4096
-    
+
     async def configure(self, config: Dict[str, Any]) -> None:
         """
         Configure the provider.
-        
+
         Args:
             config: Configuration dictionary
         """
@@ -97,13 +97,13 @@ class OllamaAdapter(LLMProvider):
             # Update config
             if "model" in config:
                 self._model = config["model"]
-            
+
             if "base_url" in config:
                 self._client = OllamaAsyncClient(
                     host=config["base_url"],
                     timeout=config.get("timeout", self._config.timeout or 120),
                 )
-            
+
             self._logger.info(
                 "Ollama adapter reconfigured",
                 context={
@@ -111,7 +111,7 @@ class OllamaAdapter(LLMProvider):
                     "config_keys": list(config.keys())
                 }
             )
-            
+
         except Exception as e:
             wrapped = wrap_exception(
                 e,
@@ -123,23 +123,23 @@ class OllamaAdapter(LLMProvider):
     async def health_check(self) -> Dict[str, Any]:
         """
         Perform health check.
-        
+
         Returns:
             Health status dictionary
         """
         try:
             start_time = datetime.utcnow()
-            
+
             # List models to check connectivity
             response = await self._client.list()
             latency = (datetime.utcnow() - start_time).total_seconds()
-            
+
             # Check if our model is available
             model_available = any(
                 model_info["name"] == self._model 
                 for model_info in response.get("models", [])
             )
-            
+
             return {
                 "status": "healthy" if model_available else "degraded",
                 "model": self._model,
@@ -148,7 +148,7 @@ class OllamaAdapter(LLMProvider):
                 "latency_seconds": latency,
                 "provider": self.name,
             }
-            
+
         except Exception as e:
             return {
                 "status": "unhealthy",
@@ -156,19 +156,19 @@ class OllamaAdapter(LLMProvider):
                 "error": str(e),
                 "provider": self.name,
             }
-    
+
     def _convert_messages(self, messages: List[Message]) -> List[Dict[str, str]]:
         """
         Convert internal Message objects to Ollama format.
-        
+
         Args:
             messages: List of Message objects
-            
+
         Returns:
             List of Ollama message dictionaries
         """
         ollama_messages = []
-        
+
         for msg in messages:
             # Convert role
             if msg.role == MessageRole.SYSTEM:
@@ -181,17 +181,17 @@ class OllamaAdapter(LLMProvider):
                 role = "tool"
             else:
                 role = "user"  # Default
-            
+
             # Basic message structure
             message_dict = {
                 "role": role,
                 "content": msg.content,
             }
-            
+
             ollama_messages.append(message_dict)
-        
+
         return ollama_messages
-    
+
     async def complete(
         self,
         messages: List[Message],
@@ -199,28 +199,28 @@ class OllamaAdapter(LLMProvider):
     ) -> LLMCompletion:
         """
         Generate a completion from messages.
-        
+
         Args:
             messages: List of messages in conversation
             config: Optional configuration overrides
-            
+
         Returns:
             LLMCompletion object
         """
         # Ensure async initialization
         await self._initialize()
-        
+
         request_id = f"ollama_req_{datetime.utcnow().timestamp()}"
-        
+
         try:
             # Merge configs
             merged_config = self._config.dict() if hasattr(self._config, 'dict') else {}
             if config:
                 merged_config.update(config)
-            
+
             # Convert messages
             ollama_messages = self._convert_messages(messages)
-            
+
             self._logger.debug(
                 "Starting Ollama completion request",
                 context={
@@ -230,17 +230,17 @@ class OllamaAdapter(LLMProvider):
                     "temperature": merged_config.get("temperature", 0.7),
                 }
             )
-            
+
             # Prepare request parameters
             options = {
                 "temperature": merged_config.get("temperature", 0.7),
                 "top_p": merged_config.get("top_p", 1.0),
                 "num_predict": merged_config.get("max_tokens"),
             }
-            
+
             # Remove None values
             options = {k: v for k, v in options.items() if v is not None}
-            
+
             # Make API call
             start_time = datetime.utcnow()
             response = await self._client.chat(
@@ -250,10 +250,10 @@ class OllamaAdapter(LLMProvider):
                 stream=False
             )
             latency = (datetime.utcnow() - start_time).total_seconds()
-            
+
             # Extract response
             content = response["message"]["content"]
-            
+
             # Create completion result
             completion = LLMCompletion(
                 content=content,
@@ -273,7 +273,7 @@ class OllamaAdapter(LLMProvider):
                     "load_duration": response.get("load_duration"),
                 }
             )
-            
+
             self._logger.info(
                 "Ollama completion completed",
                 context={
@@ -284,9 +284,9 @@ class OllamaAdapter(LLMProvider):
                     "content_length": len(content),
                 }
             )
-            
+
             return completion
-            
+
         except ConnectionError as e:
             self._logger.error(
                 "Ollama connection failed",
@@ -307,7 +307,7 @@ class OllamaAdapter(LLMProvider):
                     "base_url": self._client.host,
                 }
             )
-            
+
         except Exception as e:
             self._logger.error(
                 "Unexpected error in Ollama completion",
@@ -324,7 +324,7 @@ class OllamaAdapter(LLMProvider):
                 model=self._model,
                 details={"request_id": request_id}
             )
-    
+
     async def complete_stream(
         self,
         messages: List[Message],
@@ -332,28 +332,28 @@ class OllamaAdapter(LLMProvider):
     ) -> AsyncGenerator[LLMChunk, None]:
         """
         Stream a completion from messages.
-        
+
         Args:
             messages: List of messages in conversation
             config: Optional configuration overrides
-            
+
         Yields:
             LLMChunk objects
         """
         # Ensure async initialization
         await self._initialize()
-        
+
         request_id = f"ollama_stream_{datetime.utcnow().timestamp()}"
-        
+
         try:
             # Merge configs
             merged_config = self._config.dict() if hasattr(self._config, 'dict') else {}
             if config:
                 merged_config.update(config)
-            
+
             # Convert messages
             ollama_messages = self._convert_messages(messages)
-            
+
             self._logger.debug(
                 "Starting Ollama streaming request",
                 context={
@@ -362,17 +362,17 @@ class OllamaAdapter(LLMProvider):
                     "message_count": len(messages),
                 }
             )
-            
+
             # Prepare request parameters
             options = {
                 "temperature": merged_config.get("temperature", 0.7),
                 "top_p": merged_config.get("top_p", 1.0),
                 "num_predict": merged_config.get("max_tokens"),
             }
-            
+
             # Remove None values
             options = {k: v for k, v in options.items() if v is not None}
-            
+
             # Start streaming
             start_time = datetime.utcnow()
             stream = await self._client.chat(
@@ -381,28 +381,28 @@ class OllamaAdapter(LLMProvider):
                 options=options,
                 stream=True
             )
-            
+
             chunk_index = 0
             full_content = ""
-            
+
             async for chunk in stream:
                 if "message" in chunk and "content" in chunk["message"]:
                     content = chunk["message"]["content"]
                     full_content += content
-                    
+
                     yield LLMChunk(
                         content=content,
                         chunk_index=chunk_index,
                         is_final=False,
                     )
-                    
+
                     chunk_index += 1
-                
+
                 if chunk.get("done", False):
                     break
-            
+
             latency = (datetime.utcnow() - start_time).total_seconds()
-            
+
             # Final chunk
             yield LLMChunk(
                 content="",
@@ -410,7 +410,7 @@ class OllamaAdapter(LLMProvider):
                 is_final=True,
                 finish_reason="stop",
             )
-            
+
             self._logger.info(
                 "Ollama streaming completed",
                 context={
@@ -421,7 +421,7 @@ class OllamaAdapter(LLMProvider):
                     "content_length": len(full_content),
                 }
             )
-            
+
         except ConnectionError as e:
             self._logger.error(
                 "Ollama connection failed in streaming",
@@ -442,7 +442,7 @@ class OllamaAdapter(LLMProvider):
                     "base_url": self._client.host,
                 }
             )
-            
+
         except Exception as e:
             self._logger.error(
                 "Unexpected error in Ollama streaming",
@@ -459,22 +459,33 @@ class OllamaAdapter(LLMProvider):
                 model=self._model,
                 details={"request_id": request_id}
             )
-    
+
     async def count_tokens(self, text: str) -> int:
         """
         Count tokens in text.
         Note: Ollama doesn't have a token counting API, so we use an approximation.
-        
+
         Args:
             text: Text to count tokens for
-            
+
         Returns:
             Approximate token count
         """
         # Ensure async initialization
         await self._initialize()
-        
+
         # Rough approximation for Llama models
         # Average English: 1 token ≈ 4 characters
         # This is not accurate but better than nothing
         return len(text) // 4
+
+    async def cleanup(self) -> None:
+        """
+        Clean up resources (close HTTP client).
+        """
+        try:
+            if hasattr(self._client, '_client') and hasattr(self._client._client, 'aclose'):
+                await self._client._client.aclose()
+            self._logger.info("Ollama client closed")
+        except Exception as e:
+            self._logger.warning(f"Ollama client close failed: {e}")

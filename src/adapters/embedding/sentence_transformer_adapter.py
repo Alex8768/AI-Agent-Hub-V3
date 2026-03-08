@@ -14,12 +14,13 @@ from src.core.contracts import EmbeddingModel
 from src.core.exceptions import EmbeddingError, ConfigurationError
 from src.adapters.logging_adapter import get_logger
 
+
 class SentenceTransformerAdapter(EmbeddingModel):
     """
     Local embedding model using Sentence Transformers.
     Optimized for Apple Silicon with MPS acceleration.
     """
-    
+
     def __init__(
         self,
         model_name: str = "paraphrase-multilingual-MiniLM-L12-v2",
@@ -31,15 +32,16 @@ class SentenceTransformerAdapter(EmbeddingModel):
         self._cache_folder = cache_folder
         self._executor = ThreadPoolExecutor(max_workers=max_workers)
         self._logger = get_logger()
-        
+
         # Auto device selection (single source of truth) with override via settings.DEVICE
         if device:
             self._device = device
         else:
             pref = getattr(settings, "device", "auto") or "auto"
             self._device = pref if pref != "auto" else accelerator.device
-            
+
         self._model = None
+        self._dimensions = None  # будет определено при загрузке модели
         self._logger.info(f"SentenceTransformerAdapter initialized on {self._device}")
 
     def _get_model(self):
@@ -92,9 +94,9 @@ class SentenceTransformerAdapter(EmbeddingModel):
                 cache_folder=self._cache_folder,
                 local_files_only=offline,
             )
+            # Определяем реальную размерность модели
+            self._dimensions = self._model.get_sentence_embedding_dimension()
         return self._model
-
-
 
     @property
     def name(self) -> str:
@@ -102,26 +104,29 @@ class SentenceTransformerAdapter(EmbeddingModel):
 
     @property
     def dimensions(self) -> int:
-        return 384 # Для MiniLM
+        if self._dimensions is None:
+            # Загружаем модель, чтобы узнать размерность
+            self._get_model()
+        return self._dimensions
 
     @property
     def max_tokens(self) -> int:
         return 512
 
     async def embed_query(self, text: str) -> List[float]:
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         model = self._get_model()
         embedding = await loop.run_in_executor(
-            self._executor, 
+            self._executor,
             lambda: model.encode(text, convert_to_numpy=True).tolist()
         )
         return embedding
 
     async def embed_documents(self, texts: List[str]) -> List[List[float]]:
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         model = self._get_model()
         embeddings = await loop.run_in_executor(
-            self._executor, 
+            self._executor,
             lambda: model.encode(texts, convert_to_numpy=True).tolist()
         )
         return embeddings
@@ -130,7 +135,8 @@ class SentenceTransformerAdapter(EmbeddingModel):
         return {
             "status": "healthy",
             "device": self._device,
-            "model": self._model_name
+            "model": self._model_name,
+            "dimensions": self.dimensions,
         }
 
     def configure(self, config: Dict[str, Any]) -> None:
@@ -139,5 +145,6 @@ class SentenceTransformerAdapter(EmbeddingModel):
     def clear_cache(self) -> None:
         if self._model:
             accelerator.empty_cache()
+
     async def cleanup(self) -> None:
-        self._executor.shutdown()
+        self._executor.shutdown(wait=True)

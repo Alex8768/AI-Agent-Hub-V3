@@ -48,6 +48,8 @@ class OpenAIAdapter(LLMProvider):
             "gpt-4-32k": 32768,
             "gpt-4-turbo": 128000,
             "gpt-4-turbo-preview": 128000,
+            "gpt-4o": 128000,
+            "gpt-4.1": 128000,
             "gpt-3.5-turbo": 16385,
             "gpt-3.5-turbo-16k": 16385,
             "gpt-3.5-turbo-instruct": 4096,
@@ -55,8 +57,8 @@ class OpenAIAdapter(LLMProvider):
         
         self._logger = get_logger()
         
-        # Default model if not specified
-        self._model = config.model or "gpt-4-turbo-preview"
+        # Default model if not specified (stable default, no preview alias)
+        self._model = config.model or "gpt-4o-mini"
     
     @property
     def name(self) -> str:
@@ -66,12 +68,40 @@ class OpenAIAdapter(LLMProvider):
     @property
     def context_length(self) -> int:
         """Maximum context length for the current model."""
-        # Find the best matching model
-        for model_pattern, length in self._context_lengths.items():
-            if model_pattern in self._model:
+        model_name = (self._model or "").lower()
+
+        # Prefer specific modern families before generic "gpt-4".
+        if model_name.startswith("gpt-4o") or model_name.startswith("gpt-4.1"):
+            return 128000
+        if model_name.startswith("gpt-4-turbo"):
+            return 128000
+        if model_name.startswith("gpt-4-32k"):
+            return 32768
+        if model_name.startswith("gpt-3.5-turbo-16k"):
+            return 16385
+        if model_name.startswith("gpt-3.5-turbo"):
+            return 16385
+        if model_name.startswith("gpt-3.5-turbo-instruct"):
+            return 4096
+        if model_name.startswith("gpt-4"):
+            return 8192
+
+        # Fallback: keep backward compatibility for custom aliases.
+        for model_pattern, length in sorted(
+            self._context_lengths.items(),
+            key=lambda kv: len(kv[0]),
+            reverse=True,
+        ):
+            if model_pattern in model_name:
                 return length
-        
-        # Default for unknown models
+
+        # Reasonable default for modern OpenAI models
+        if model_name.startswith("gpt-4"):
+            return 128000
+        if model_name.startswith("gpt-3.5"):
+            return 16385
+
+        # Conservative fallback for unknown model families
         return 8192
     
     async def configure(self, config: Dict[str, Any]) -> None:
@@ -203,6 +233,181 @@ class OpenAIAdapter(LLMProvider):
             openai_messages.append(message_dict)
         
         return openai_messages
+
+
+    def _extract_text_from_responses(self, resp: Any) -> str:
+        """Best-effort extraction of output text from Responses API result."""
+        try:
+            # New SDK typically provides output_text
+            ot = getattr(resp, "output_text", None)
+            if ot:
+                return str(ot)
+        except Exception:
+            pass
+
+        # Fallback: walk output items
+        try:
+            out = getattr(resp, "output", None) or []
+            parts: list[str] = []
+            for item in out:
+                content = getattr(item, "content", None) or []
+                for c in content:
+                    if getattr(c, "type", None) == "output_text":
+                        parts.append(str(getattr(c, "text", "") or ""))
+            if parts:
+                return "".join(parts)
+        except Exception:
+            pass
+
+        return ""
+
+    def _build_responses_input(self, messages: List[Dict[str, str]]) -> str:
+        """Build Responses API prompt while preserving role context.
+
+        We intentionally keep role labels so fallback requests preserve the
+        original system/user/assistant/tool intent instead of only user content.
+        """
+        lines: List[str] = []
+        for m in messages:
+            role = str(m.get("role") or "user").upper()
+            content = str(m.get("content") or "").strip()
+            if not content:
+                continue
+            lines.append(f"{role}: {content}")
+        return "\n".join(lines).strip() or "USER: Hello"
+
+    def _build_completion_from_responses_fallback(
+        self,
+        *,
+        response: Any,
+        request_id: str,
+        latency: float,
+        model: str,
+        content: str,
+    ) -> LLMCompletion:
+        return LLMCompletion(
+            content=content,
+            model=getattr(response, "model", model),
+            provider=self.name,
+            tokens_used=int(getattr(getattr(response, "usage", None), "total_tokens", 0) or 0),
+            finish_reason=str(getattr(response, "status", "stop") or "stop"),
+            metadata={
+                "id": getattr(response, "id", None),
+                "latency_seconds": latency,
+                "request_id": request_id,
+                "fallback_api": "responses",
+                "fallback_reason": "chat_completions_404",
+            },
+        )
+
+    def _build_completion_from_chat(
+        self,
+        *,
+        response: ChatCompletion,
+        request_id: str,
+        latency: float,
+    ) -> LLMCompletion:
+        choice = response.choices[0]
+        content = choice.message.content or ""
+        return LLMCompletion(
+            content=content,
+            model=response.model,
+            provider=self.name,
+            tokens_used=response.usage.total_tokens if response.usage else 0,
+            finish_reason=choice.finish_reason,
+            metadata={
+                "id": response.id,
+                "created": response.created,
+                "latency_seconds": latency,
+                "request_id": request_id,
+                "prompt_tokens": response.usage.prompt_tokens if response.usage else 0,
+                "completion_tokens": response.usage.completion_tokens if response.usage else 0,
+            }
+        )
+
+    def _merge_runtime_config(self, config: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+        merged_config = self._config.dict() if hasattr(self._config, "dict") else {}
+        if config:
+            merged_config.update(config)
+        return merged_config
+
+    def _prune_none_values(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        return {k: v for k, v in params.items() if v is not None}
+
+    def _build_chat_completion_request_params(
+        self,
+        *,
+        merged_config: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        request_params = {
+            "model": merged_config.get("model", self._model),
+            "messages": None,  # injected by caller after message conversion
+            "temperature": merged_config.get("temperature", 0.7),
+            "max_tokens": merged_config.get("max_tokens"),
+            "top_p": merged_config.get("top_p", 1.0),
+            "frequency_penalty": merged_config.get("frequency_penalty", 0.0),
+            "presence_penalty": merged_config.get("presence_penalty", 0.0),
+            "stop": merged_config.get("stop_sequences"),
+            "stream": False,
+        }
+        return self._prune_none_values(request_params)
+
+    def _build_chat_stream_request_params(
+        self,
+        *,
+        merged_config: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        request_params = {
+            "model": merged_config.get("model", self._model),
+            "messages": None,  # injected by caller after message conversion
+            "temperature": merged_config.get("temperature", 0.7),
+            "max_tokens": merged_config.get("max_tokens"),
+            "top_p": merged_config.get("top_p", 1.0),
+            "stream": True,
+        }
+        return self._prune_none_values(request_params)
+
+    def _build_stream_content_chunk(self, *, content: str, chunk_index: int) -> LLMChunk:
+        return LLMChunk(
+            content=content,
+            chunk_index=chunk_index,
+            is_final=False,
+        )
+
+    def _build_stream_final_chunk(self, *, chunk_index: int, finish_reason: str | None) -> LLMChunk:
+        return LLMChunk(
+            content="",
+            chunk_index=chunk_index,
+            is_final=True,
+            finish_reason=finish_reason,
+        )
+
+    async def _iter_stream_output_chunks(
+        self,
+        *,
+        stream: AsyncGenerator[ChatCompletionChunk, None],
+    ) -> AsyncGenerator[LLMChunk, None]:
+        chunk_index = 0
+        finish_reason = None
+
+        async for chunk in stream:
+            chunk: ChatCompletionChunk
+
+            if chunk.choices and chunk.choices[0].delta.content is not None:
+                content = chunk.choices[0].delta.content
+                yield self._build_stream_content_chunk(
+                    content=content,
+                    chunk_index=chunk_index,
+                )
+                chunk_index += 1
+
+            if chunk.choices and chunk.choices[0].finish_reason:
+                finish_reason = chunk.choices[0].finish_reason
+
+        yield self._build_stream_final_chunk(
+            chunk_index=chunk_index,
+            finish_reason=finish_reason,
+        )
     
     async def complete(
         self,
@@ -223,9 +428,7 @@ class OpenAIAdapter(LLMProvider):
         
         try:
             # Merge configs
-            merged_config = self._config.dict() if hasattr(self._config, 'dict') else {}
-            if config:
-                merged_config.update(config)
+            merged_config = self._merge_runtime_config(config)
             
             # Convert messages
             openai_messages = self._convert_messages(messages)
@@ -241,47 +444,60 @@ class OpenAIAdapter(LLMProvider):
             )
             
             # Prepare request parameters
-            request_params = {
-                "model": merged_config.get("model", self._model),
-                "messages": openai_messages,
-                "temperature": merged_config.get("temperature", 0.7),
-                "max_tokens": merged_config.get("max_tokens"),
-                "top_p": merged_config.get("top_p", 1.0),
-                "frequency_penalty": merged_config.get("frequency_penalty", 0.0),
-                "presence_penalty": merged_config.get("presence_penalty", 0.0),
-                "stop": merged_config.get("stop_sequences"),
-                "stream": False,
-            }
-            
-            # Remove None values
-            request_params = {k: v for k, v in request_params.items() if v is not None}
+            request_params = self._build_chat_completion_request_params(
+                merged_config=merged_config,
+            )
+            request_params["messages"] = openai_messages
             
             # Make API call
             start_time = datetime.utcnow()
-            response: ChatCompletion = await self._client.chat.completions.create(
-                **request_params
-            )
-            latency = (datetime.utcnow() - start_time).total_seconds()
-            
-            # Extract response
-            choice = response.choices[0]
-            content = choice.message.content or ""
-            
-            # Create completion result
-            completion = LLMCompletion(
-                content=content,
-                model=response.model,
-                provider=self.name,
-                tokens_used=response.usage.total_tokens if response.usage else 0,
-                finish_reason=choice.finish_reason,
-                metadata={
-                    "id": response.id,
-                    "created": response.created,
-                    "latency_seconds": latency,
-                    "request_id": request_id,
-                    "prompt_tokens": response.usage.prompt_tokens if response.usage else 0,
-                    "completion_tokens": response.usage.completion_tokens if response.usage else 0,
-                }
+            try:
+                response: ChatCompletion = await self._client.chat.completions.create(
+                    **request_params
+                )
+                latency = (datetime.utcnow() - start_time).total_seconds()
+            except APIError as e:
+                # Some environments/proxies may not support Chat Completions; fallback to Responses API when 404.
+                if getattr(e, "status_code", None) == 404:
+                    prompt_text = self._build_responses_input(openai_messages)
+                    self._logger.warning(
+                        "Chat Completions unavailable (404), using Responses API fallback",
+                        context={
+                            "request_id": request_id,
+                            "model": request_params.get("model", self._model),
+                        },
+                    )
+                    r2 = await self._client.responses.create(
+                        model=request_params.get("model", self._model),
+                        input=prompt_text,
+                        temperature=request_params.get("temperature", 0.7),
+                        top_p=request_params.get("top_p", 1.0),
+                        max_output_tokens=request_params.get("max_tokens"),
+                    )
+                    latency = (datetime.utcnow() - start_time).total_seconds()
+                    content = self._extract_text_from_responses(r2) or ""
+                    completion = self._build_completion_from_responses_fallback(
+                        response=r2,
+                        request_id=request_id,
+                        latency=latency,
+                        model=request_params.get("model", self._model),
+                        content=content,
+                    )
+                    self._logger.info(
+                        "OpenAI completion completed (responses fallback)",
+                        context={
+                            "request_id": request_id,
+                            "model": completion.model,
+                            "tokens_used": completion.tokens_used,
+                            "latency_seconds": latency,
+                        }
+                    )
+                    return completion
+                raise
+            completion = self._build_completion_from_chat(
+                response=response,
+                request_id=request_id,
+                latency=latency,
             )
             
             self._logger.info(
@@ -388,9 +604,7 @@ class OpenAIAdapter(LLMProvider):
         
         try:
             # Merge configs
-            merged_config = self._config.dict() if hasattr(self._config, 'dict') else {}
-            if config:
-                merged_config.update(config)
+            merged_config = self._merge_runtime_config(config)
             
             # Convert messages
             openai_messages = self._convert_messages(messages)
@@ -405,56 +619,28 @@ class OpenAIAdapter(LLMProvider):
             )
             
             # Prepare request parameters
-            request_params = {
-                "model": merged_config.get("model", self._model),
-                "messages": openai_messages,
-                "temperature": merged_config.get("temperature", 0.7),
-                "max_tokens": merged_config.get("max_tokens"),
-                "top_p": merged_config.get("top_p", 1.0),
-                "stream": True,
-            }
-            
-            # Remove None values
-            request_params = {k: v for k, v in request_params.items() if v is not None}
+            request_params = self._build_chat_stream_request_params(
+                merged_config=merged_config,
+            )
+            request_params["messages"] = openai_messages
             
             # Start streaming
             start_time = datetime.utcnow()
             stream = await self._client.chat.completions.create(
                 **request_params
             )
-            
+
             chunk_index = 0
-            full_content = ""
             finish_reason = None
-            
-            async for chunk in stream:
-                chunk: ChatCompletionChunk
-                
-                if chunk.choices and chunk.choices[0].delta.content is not None:
-                    content = chunk.choices[0].delta.content
-                    full_content += content
-                    
-                    yield LLMChunk(
-                        content=content,
-                        chunk_index=chunk_index,
-                        is_final=False,
-                    )
-                    
+            async for out_chunk in self._iter_stream_output_chunks(stream=stream):
+                if bool(getattr(out_chunk, "is_final", False)):
+                    finish_reason = getattr(out_chunk, "finish_reason", None)
+                else:
                     chunk_index += 1
-                
-                if chunk.choices and chunk.choices[0].finish_reason:
-                    finish_reason = chunk.choices[0].finish_reason
-            
+                yield out_chunk
+
             latency = (datetime.utcnow() - start_time).total_seconds()
-            
-            # Final chunk
-            yield LLMChunk(
-                content="",
-                chunk_index=chunk_index,
-                is_final=True,
-                finish_reason=finish_reason,
-            )
-            
+
             self._logger.info(
                 "OpenAI streaming completed",
                 context={
@@ -597,7 +783,7 @@ class OpenAIProviderFactory:
         except Exception as e:
             # Log but continue - adapter might still work
             logger = get_logger()
-            await logger.warning(
+            logger.warning(
                 "OpenAI health check failed on creation",
                 context={
                     "model": config.model,

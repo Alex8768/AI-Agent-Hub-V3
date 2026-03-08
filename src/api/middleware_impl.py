@@ -14,13 +14,20 @@ from starlette.types import ASGIApp
 from loguru import logger
 
 from src.core.config import settings
+from src.observability.request_context import get_workspace_id
 
 
 class RequestIDMiddleware(BaseHTTPMiddleware):
     """Add request ID to each request."""
     
     async def dispatch(self, request: Request, call_next):
-        request_id = str(uuid.uuid4())
+        # Respect incoming request id when provided by gateway/client.
+        request_id = (
+            request.headers.get("x-request-id")
+            or request.headers.get("X-Request-ID")
+            or request.headers.get("X-Request-Id")
+            or str(uuid.uuid4())
+        )
         request.state.request_id = request_id
         
         response = await call_next(request)
@@ -35,10 +42,16 @@ class LoggingMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         # Log request
         request_id = getattr(request.state, "request_id", "unknown")
+        workspace_id = get_workspace_id(request)
         logger.info(
-            f"Request: {request.method} {request.url.path}",
+            "http.request request_id={} workspace_id={} method={} path={}",
+            request_id,
+            workspace_id,
+            request.method,
+            request.url.path,
             extra={
                 "request_id": request_id,
+                "workspace_id": workspace_id,
                 "method": request.method,
                 "path": request.url.path,
                 "client": request.client.host if request.client else "unknown",
@@ -52,10 +65,16 @@ class LoggingMiddleware(BaseHTTPMiddleware):
         process_time = time.time() - start_time
         
         # Log response
+        workspace_id = get_workspace_id(request)
         logger.info(
-            f"Response: {response.status_code} ({process_time:.3f}s)",
+            "http.response request_id={} workspace_id={} status_code={} duration_s={}",
+            request_id,
+            workspace_id,
+            response.status_code,
+            f"{process_time:.3f}",
             extra={
                 "request_id": request_id,
+                "workspace_id": workspace_id,
                 "status_code": response.status_code,
                 "process_time": process_time,
                 "content_length": response.headers.get("content-length", 0),

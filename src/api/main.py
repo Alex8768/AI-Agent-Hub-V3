@@ -4,8 +4,6 @@ Bootstrap-only: app init, middleware, router wiring, error handlers.
 """
 
 import logging
-import asyncio
-from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -16,6 +14,8 @@ from loguru import logger
 import uvicorn
 
 from src.core.config import settings
+from src.api.bootstrap import lifespan
+
 from src.api.middleware import (
     RequestIDMiddleware,
     LoggingMiddleware,
@@ -27,49 +27,13 @@ from src.api.endpoints.health import router as health_router
 from src.api.endpoints.llm import router as llm_router
 from src.api.endpoints.documents import router as documents_router
 from src.api.endpoints.search import router as search_router
+from src.api.endpoints.search_hybrid import router as search_hybrid_router
+from src.api.endpoints.answer import router as answer_router
 from src.api.endpoints.export import router as export_router
 from src.api.endpoints.streaming import router as streaming_router
+from src.api.endpoints.trace_test import router as trace_test_router
 
 
-# Configure logging
-logging.basicConfig(
-    level=getattr(logging, settings.log_level.upper()),
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-)
-
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    """Lifespan context manager."""
-    logger.info(f"🚀 Starting {settings.app_name} v{settings.app_version}")
-    logger.info(f"📁 Environment: {settings.environment}")
-    logger.info(f"🔧 Debug mode: {settings.debug}")
-
-    from src.core.initializer import initialize_core_components
-    await initialize_core_components()
-
-    # Base polish: initialize and cache one RAGEngine for the whole app process
-    try:
-        from src.layers.base.rag.engines.rag_engine import RAGEngine
-        from src.layers.base.rag.vector_stores.factory import get_vector_store_singleton
-        app.state.rag_engine = RAGEngine()
-        # Warm up FAISS singleton once per process
-        await get_vector_store_singleton()
-        logger.info("✅ RAGEngine singleton ready (FAISS initialized)")
-    except Exception as e:
-        logger.warning(f"⚠️ RAGEngine singleton skipped (non-fatal): {e}")
-
-
-    yield
-
-    logger.info("👋 Shutting down AI Agent Hub V3...")
-    from src.core.initializer import cleanup_core_components
-    try:
-        await asyncio.wait_for(cleanup_core_components(), timeout=10.0)
-    except asyncio.TimeoutError:
-        logger.warning("⚠️ Core cleanup timed out after 10s (non-fatal)")
-    except Exception as e:
-        logger.warning(f"⚠️ Core cleanup failed (non-fatal): {e}")
 
 
 app = FastAPI(
@@ -109,8 +73,11 @@ app.include_router(health_router)
 app.include_router(llm_router)
 app.include_router(documents_router)
 app.include_router(search_router)
+app.include_router(search_hybrid_router)
+app.include_router(answer_router)
 app.include_router(export_router)
 app.include_router(streaming_router)
+app.include_router(trace_test_router)
 
 
 @app.get("/", include_in_schema=False)

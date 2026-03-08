@@ -1,0 +1,4 @@
+{"id":"smoke-001","workspace_id":"default","query":"What is AI Agent Hub?","k":8,"graph_depth":1,"expect_any_prefix":["chunk:","memory:"],"notes":"basic query, expects some evidence"}
+{"id":"smoke-002","workspace_id":"default","query":"Summarize key components: vector store, retriever, reasoning.","k":8,"graph_depth":1,"expect_any_prefix":["chunk:","memory:"],"notes":"architecture-ish query"}
+{"id":"smoke-003","workspace_id":"default","query":"List evidence types you can use (chunk, memory, edge).","k":6,"graph_depth":1,"expect_any_prefix":["chunk:","memory:","edge:"],"notes":"should produce provenance types"}
+{"id": "mem-001", "workspace_id": "default", "query": "composition root", "k": 8, "graph_depth": 1, "expect_any_prefix": ["memory:"], "notes": "requires EVAL_ENABLE_MEMORY=1 + seeded memory; should hit memory evidence", "requires_env": {"EVAL_ENABLE_MEMORY": "1"}}

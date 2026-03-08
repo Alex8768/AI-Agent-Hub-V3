@@ -1,0 +1,129 @@
+from __future__ import annotations
+
+import pytest
+
+from src.layers.pro.reasoning.contracts import AnswerRequest
+from src.layers.pro.reasoning.engine import ReasoningEngine
+
+
+class _PlannerRetriever:
+    async def retrieve(self, request):
+        return {
+            "results": [],
+            "graph": {"nodes": [], "edges": []},
+            "evidence": [
+                {"type": "chunk", "id": "c1", "source_refs": ["doc:V#1"], "confidence": 0.9},
+            ],
+        }
+
+
+class _PlannerLLM:
+    async def generate(self, prompt: str) -> str:
+        if "Output format:" in prompt:
+            return '{"plan":["SEARCH","ANSWER"],"reason":"need evidence then answer"}'
+        return "VERIFY_OK"
+
+
+class _FallbackRetriever:
+    async def retrieve(self, request):
+        return {
+            "results": [],
+            "graph": {"nodes": [], "edges": []},
+            "evidence": [
+                # Missing source_refs -> self_check warn -> verify warn.
+                {"type": "chunk", "id": "c-no-refs", "confidence": 0.4},
+            ],
+        }
+
+
+class _FailingLLM:
+    async def generate(self, prompt: str) -> str:
+        raise RuntimeError("boom")
+
+
+@pytest.mark.asyncio
+async def test_verify_contract_is_stable_on_planner_path():
+    eng = ReasoningEngine(retriever=_PlannerRetriever(), llm=_PlannerLLM())
+    resp = await eng.synthesize(AnswerRequest(query="Q?"))
+    diag = dict(getattr(resp, "diagnostics", {}) or {})
+
+    verify = dict(diag.get("verify") or {})
+    assert verify.get("version") == "v1"
+    assert verify.get("status") == "pass"
+    assert verify.get("reasons") == []
+    assert verify.get("policy_mode") == "warning_only"
+
+    inputs = dict(verify.get("inputs") or {})
+    assert set(inputs.keys()) == {
+        "planner_path_used",
+        "self_check_status",
+        "self_check_policy_mode",
+        "self_check_reasons_count",
+    }
+    assert inputs.get("planner_path_used") is True
+    assert inputs.get("self_check_status") == "pass"
+    assert inputs.get("self_check_policy_mode") == "warning_only"
+    assert inputs.get("self_check_reasons_count") == 0
+
+    thresholds = dict(verify.get("thresholds") or {})
+    assert set(thresholds.keys()) == {
+        "required_self_check_status",
+        "required_self_check_policy_mode",
+        "self_check_reasons_count_max",
+    }
+    assert thresholds.get("required_self_check_status") == "pass"
+    assert thresholds.get("required_self_check_policy_mode") == "warning_only"
+    assert thresholds.get("self_check_reasons_count_max") == 0
+    rq = dict(diag.get("reasoning_quality") or {})
+    assert rq.get("version") == "v1"
+    assert isinstance(rq.get("claims_total"), int)
+    assert isinstance(rq.get("claims_sample"), list)
+    assert isinstance((rq.get("coverage") or {}).get("coverage_score"), float)
+    assert isinstance((rq.get("confidence") or {}).get("confidence_score"), float)
+    assert isinstance((rq.get("retry") or {}).get("should_retry"), bool)
+    rt = dict(diag.get("reasoning_trace") or {})
+    assert set(rt.keys()) == {"query", "plan", "steps", "verify_results", "quality", "timeline", "answer"}
+    assert isinstance(rt.get("plan"), list)
+    assert isinstance(rt.get("verify_results"), list)
+    assert isinstance(rt.get("timeline"), dict)
+    tl = dict(diag.get("reasoning_timeline") or {})
+    assert set(tl.keys()) == {"events", "total_duration_ms"}
+    assert isinstance(tl.get("events"), list)
+    assert isinstance(tl.get("total_duration_ms"), int)
+
+
+@pytest.mark.asyncio
+async def test_verify_contract_warns_on_fallback_with_self_check_issues():
+    eng = ReasoningEngine(retriever=_FallbackRetriever(), llm=_FailingLLM())
+    resp = await eng.synthesize(AnswerRequest(query="Q?"))
+    diag = dict(getattr(resp, "diagnostics", {}) or {})
+
+    verify = dict(diag.get("verify") or {})
+    assert verify.get("status") == "warn"
+    assert verify.get("reasons") == [
+        "self_check_status!=pass",
+        "self_check_reasons_count>0",
+    ]
+
+    inputs = dict(verify.get("inputs") or {})
+    assert inputs.get("planner_path_used") is False
+    assert inputs.get("self_check_status") == "warn"
+    assert inputs.get("self_check_policy_mode") == "warning_only"
+    assert inputs.get("self_check_reasons_count") == 2
+
+    warnings = list(getattr(resp, "warnings", []) or [])
+    assert "verify_warning" in warnings
+    rq = dict(diag.get("reasoning_quality") or {})
+    assert rq.get("version") == "v1"
+    assert isinstance((rq.get("coverage") or {}).get("coverage_score"), float)
+    assert isinstance((rq.get("confidence") or {}).get("confidence_score"), float)
+    assert isinstance((rq.get("retry") or {}).get("loop_guard_triggered"), bool)
+    rt = dict(diag.get("reasoning_trace") or {})
+    assert set(rt.keys()) == {"query", "plan", "steps", "verify_results", "quality", "timeline", "answer"}
+    assert isinstance(rt.get("steps"), list)
+    assert isinstance(rt.get("quality"), dict)
+    assert isinstance(rt.get("timeline"), dict)
+    tl = dict(diag.get("reasoning_timeline") or {})
+    assert set(tl.keys()) == {"events", "total_duration_ms"}
+    assert isinstance(tl.get("events"), list)
+    assert isinstance(tl.get("total_duration_ms"), int)

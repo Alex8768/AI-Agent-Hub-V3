@@ -1,18 +1,17 @@
-venv/
-.venv/
+venv/\n.venv/\n__pycache__/\n.DS_Store\n*.pyc\n.env\n./models/\nsentence_transformers/\n\n# local artifacts\ndata/*.index\ndata/*.pkl\nrepomix-output.xml\n\n# local runtime data\ndata/\n# build artifacts\nsrc/*.egg-info/\neval/results.jsonl\n*.egg-info/
+# --- Python cache / build artifacts ---
 __pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+build/
+dist/
+.eggs/
+# --- Local/dev artifacts ---
 .DS_Store
-*.pyc
 .env
-./models/
-sentence_transformers/
-
-# local artifacts
-data/*.index
-data/*.pkl
-repomix-output.xml
-
-# local runtime data
+.env.*
 data/
-# build artifacts
-src/*.egg-info/
+repomix-output.xml
+eval/results.jsonl
+.pytest_cache/

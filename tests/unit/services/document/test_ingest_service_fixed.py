@@ -145,3 +145,113 @@ async def test_document_format_detection(ingest_service):
             filename=filename
         )
         assert result.format == expected_format, f"Failed for {filename}"
+
+
+@pytest.mark.asyncio
+async def test_ingest_result_success_contract_shape(ingest_service):
+    result = await ingest_service.ingest_text(
+        text="contract check content",
+        filename="contract.txt",
+        metadata={"source": "contract"},
+    )
+
+    assert set(result.__dict__.keys()) == {
+        "document_id",
+        "filename",
+        "format",
+        "total_chunks",
+        "success",
+        "errors",
+        "chunk_ids",
+        "processing_time_ms",
+        "vector_store_stats",
+        "metadata",
+    }
+    assert result.success is True
+    assert isinstance(result.errors, list)
+    assert isinstance(result.chunk_ids, list)
+    assert isinstance(result.vector_store_stats, dict)
+    assert isinstance(result.metadata, dict)
+
+
+@pytest.mark.asyncio
+async def test_ingest_result_failure_contract_shape(ingest_service, monkeypatch):
+    async def mock_embed(*args, **kwargs):
+        raise Exception("Embedding failed")
+
+    monkeypatch.setattr(
+        'src.adapters.embedding.sentence_transformer_adapter.SentenceTransformerAdapter.embed_documents',
+        mock_embed
+    )
+
+    result = await ingest_service.ingest_text(
+        text="contract check failure",
+        filename="contract.txt",
+        metadata={"source": "contract"},
+    )
+
+    assert set(result.__dict__.keys()) == {
+        "document_id",
+        "filename",
+        "format",
+        "total_chunks",
+        "success",
+        "errors",
+        "chunk_ids",
+        "processing_time_ms",
+        "vector_store_stats",
+        "metadata",
+    }
+    assert result.success is False
+    assert isinstance(result.errors, list) and len(result.errors) >= 1
+    assert isinstance(result.chunk_ids, list)
+    assert isinstance(result.vector_store_stats, dict)
+    assert isinstance(result.metadata, dict)
+
+
+def test_prepare_ingest_metadata_boundary_preserves_defaults(ingest_service):
+    fmt, meta = ingest_service._prepare_ingest_metadata_boundary(
+        metadata={"source": "unit"},
+        filename="doc.txt",
+        text_length=12,
+        document_id="doc-1",
+    )
+    assert fmt == DocumentFormat.TXT
+    assert meta.get("filename") == "doc.txt"
+    assert meta.get("format") == "txt"
+    assert meta.get("text_length") == 12
+    assert meta.get("document_id") == "doc-1"
+    assert meta.get("workspace_id") == "default"
+    assert meta.get("source") == "unit"
+
+
+def test_chunk_text_boundary_preserves_chunk_count(ingest_service):
+    text = "First sentence. Second sentence. Third sentence."
+    final_metadata = {"workspace_id": "default"}
+
+    direct = ingest_service.chunker.chunk_text(text, final_metadata)
+    bounded = ingest_service._chunk_text_boundary(
+        text=text,
+        filename="doc.txt",
+        final_metadata=final_metadata,
+    )
+
+    assert len(bounded) == len(direct)
+    assert [c.content for c in bounded] == [c.content for c in direct]
+
+
+@pytest.mark.asyncio
+async def test_persist_vectors_boundary_returns_docs_and_saved_ids(ingest_service):
+    chunk = Chunk(
+        id="chunk-1",
+        content="hello",
+        metadata={"workspace_id": "default"},
+        embedding=[0.1, 0.2, 0.3],
+    )
+    docs = ingest_service._prepare_vector_documents([chunk], "doc-1")
+    saved_ids = await ingest_service._persist_vectors_boundary(
+        vector_docs=docs,
+    )
+    assert len(docs) == 1
+    assert docs[0].id == "chunk-1"
+    assert saved_ids == ["chunk1"]

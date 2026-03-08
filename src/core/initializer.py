@@ -61,8 +61,8 @@ async def cleanup_core_components() -> None:
 
     # 2) Vector store singleton cleanup (flush + shutdown executor)
     try:
-        from src.layers.base.rag.vector_stores.factory import get_vector_store_singleton
-        store = await get_vector_store_singleton()
+        from src.core.providers import get_vector_store
+        store = await get_vector_store()
         try:
             await store.cleanup()
             logger.info("✅ Cleanup: vector store cleaned")

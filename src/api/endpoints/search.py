@@ -11,52 +11,22 @@ from loguru import logger
 
 from src.api.schemas import SearchRequest, SearchResult
 from src.api.dependencies import get_workspace
+from src.api.dependencies_impl import get_rag_engine
+from src.services.search.search_service import SearchService
 
 router = APIRouter(tags=["Search"])
 
 
 @router.post("/api/v1/search", response_model=List[SearchResult])
-async def search_documents(http: Request, request: SearchRequest, workspace_id: str = Depends(get_workspace)):
+async def search_documents(
+    http: Request,
+    request: SearchRequest,
+    workspace_id: str = Depends(get_workspace),
+    engine=Depends(get_rag_engine),
+):
     """Search documents using vector search."""
     try:
-        from src.layers.base.rag.engines.rag_engine import RAGEngine
-
-        engine = getattr(http.app.state, 'rag_engine', None) or RAGEngine()
-
-        results = await engine.search(
-            query=request.query,
-            k=request.k,
-            filters=request.filters,
-            similarity_threshold=request.similarity_threshold,
-            workspace_id=workspace_id,
-        )
-
-        response: List[SearchResult] = []
-
-        for r in results:
-            if not getattr(r, "document", None):
-                continue
-
-            doc = r.document
-            content = getattr(doc, "content", "") or ""
-            metadata = getattr(doc, "metadata", {}) or {}
-
-            snippet = content[: request.snippet_len]
-
-            response.append(
-                SearchResult(
-                    document_id=metadata.get("document_id", ""),
-                    chunk_id=getattr(doc, "id", ""),
-                    score=float(getattr(r, "score", 0.0) or 0.0),
-                    snippet=snippet,
-                    content=content if request.include_content else None,
-                    source_document=metadata.get("filename"),
-                    metadata=(metadata if request.include_metadata else {}),
-                )
-            )
-
-        return response
-
+        return await SearchService().search(http, request, workspace_id=workspace_id, engine=engine)
     except Exception as e:
         logger.error(f"Search error: {e}")
         raise HTTPException(

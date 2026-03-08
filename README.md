@@ -1,68 +1,315 @@
-# Aleksandr Ladygin
+# AI Agent Hub
 
-AI / LLM Engineer & Systems Architect
+AI Agent Hub is a layered AI platform for building retrieval, memory, graph-aware reasoning, and tool-orchestrated agent systems.
 
-I build applied AI systems focused on:
+The platform is designed around a **stable Base layer** and **feature-gated Pro extensions**, so advanced capabilities can evolve without breaking the core system.
 
-- Retrieval Augmented Generation (RAG)
-- AI agents
-- knowledge retrieval systems
+It focuses on building production-oriented AI workflows that combine:
+
+- retrieval pipelines
+- document ingestion
+- workspace and semantic memory
+- graph-aware reasoning
+- tool integrations
+- execution control
+- observability and traceability
+
+## Why this project exists
+
+Many AI projects stop at one of these levels:
+
+- simple chat interfaces
+- prompt wrappers
+- basic RAG demos
+- narrow automation scripts
+
+Real AI systems require more than a single model call.
+
+They need structured retrieval, memory, reasoning, tool access, execution boundaries, diagnostics, and architecture that remains maintainable as the system grows.
+
+AI Agent Hub exists to explore and implement those capabilities as a coherent platform rather than as a collection of disconnected experiments.
+
+## What this project is
+
+AI Agent Hub is an engineering-focused platform for developing modular AI systems that go beyond baseline chatbots and simple retrieval pipelines.
+
+The repository is organized to support incremental growth from a reliable core into more advanced capabilities:
+
+- **Base layer** for stable platform capabilities
+- **Pro layer** for advanced feature-gated capabilities
+- clean boundaries between contracts, services, adapters, and delivery
+- architecture intended for long-term evolution rather than short-lived demos
+
+This structure allows the project to evolve incrementally without collapsing into tightly coupled code.
+
+## Current implementation status
+
+The codebase already includes a substantial set of implemented components.
+
+### Base layer
+
+- FastAPI API layer
+- document upload and ingestion pipeline
+- vector search workflows
+- export pipeline
+- storage abstractions
+- provider facade and integration boundaries
+- health and deep-health endpoints
+- streaming support
+
+### Pro layer
+
+- hybrid retrieval
+- Qdrant vector store integration
+- DB-backed memory store
+- GraphRAG-oriented components
+- reasoning engine
+- multi-step reasoning planner
+- step execution flow
+- reasoning quality loop
+- confidence and evidence processing
+- trace collection and replay
+- reasoning observability timeline
+- reasoning control layer
+
+### Platform and operations
+
+- feature flags for advanced capabilities
+- clean separation of Base and Pro concerns
+- Alembic migrations
+- Prometheus / Grafana monitoring setup
+- CI pipelines
+- unit and integration test coverage
+
+## Key capabilities
+
+### Retrieval
+
+- vector search
+- hybrid retrieval
+- FAISS support
+- Qdrant support
+- document ingestion pipelines
+- retrieval policy evolution path
+
+### Memory
+
+- workspace-aware memory
+- DB-backed memory store
+- semantic memory wiring
+- memory integrated into retrieval and reasoning workflows
+
+### Graph and reasoning
+
+- GraphRAG-oriented building blocks
+- graph-aware reasoning flow
+- multi-step reasoning planner
+- reasoning execution chain
+- evidence normalization
+- confidence scoring
+- reasoning trace and replay
+- reasoning observability timeline
+- runtime execution control layer
+
+### Tool orchestration
+
+- service-layer orchestration
+- tool integration boundaries
+- MCP-oriented integration direction
+- safe extensibility through adapters
+
+### Platform engineering
+
+- FastAPI-based API surface
+- modular architecture
+- feature-gated advanced capabilities
+- monitoring and diagnostics
+- migration support
+- CI-backed development workflow
+
+## Architecture overview
+
+Repository structure:
+
+```text
+src/
+├── core/          # contracts, shared abstractions, configuration
+├── layers/        # Base and Pro capability layers
+│   ├── base/
+│   └── pro/
+├── api/           # FastAPI delivery layer
+├── adapters/      # external integrations
+└── services/      # orchestration and application services
+```
+
+Architecture principles:
+
+- contract-first development
+- dependency inversion
+- modular replaceable components
+- stable core with gated advanced extensions
+- incremental evolution through explicit anchors
+- test-backed engineering workflow
+
+System architecture:
+
+```mermaid
+flowchart TD
+    Client[Client / UI] --> API[FastAPI API Layer]
+    API --> Services[Service Layer]
+
+    Services --> Retrieval[Retrieval Workflows]
+    Services --> Memory[Memory Layer]
+    Services --> Reasoning[Reasoning Engine]
+    Services --> Tools[Tool Integrations]
+
+    Retrieval --> FAISS[(FAISS)]
+    Retrieval --> Qdrant[(Qdrant)]
+    Retrieval --> Docs[Document Ingestion]
+
+    Memory --> DB[(DB-backed Memory Store)]
+
+    Reasoning --> Planner[Planner]
+    Reasoning --> Executor[Step Executor]
+    Reasoning --> Control[Execution Control Layer]
+    Reasoning --> Trace[Trace / Replay / Observability]
+    Reasoning --> LLM[LLM Integration Layer]
+
+    Retrieval --> LLM
+    Tools --> External[External Systems / MCP Direction]
+```
+
+## Project status
+
+Current phase: Pro Layer Development - Reasoning Stabilization
+
+Recent focus areas include:
+
+- reasoning observability
+- reasoning trace collection
+- replay support
+- reasoning execution control
+- loop guard and retry boundaries
+
+Development follows a structured engineering workflow:
+
+- anchor-based milestones
+- snapshot discipline
+- CI validation
+- incremental micro-patch evolution
+
+## API surface
+
+Main endpoints currently include:
+
+- `/health`
+- `/api/v1/health`
+- `/api/v1/health/deep`
+- `/api/v1/search`
+- `/api/v1/search-hybrid`
+- `/api/v1/answer`
+- `/api/v1/documents/upload`
+- `/api/v1/documents`
+- `/api/v1/export`
+- `/api/v1/stream/{session_id}`
+
+Some advanced flows are feature-gated depending on Pro layer enablement.
+
+## Example use cases
+
+The architecture supports systems such as:
+
+- internal knowledge assistants
+- AI research copilots
+- enterprise knowledge copilots
+- document intelligence systems
+- graph-aware reasoning systems
 - AI automation pipelines
-- tool-integrated LLM systems
+- tool-using domain assistants
 
-My work explores architectures for **real-world AI systems** that combine retrieval, memory and orchestration.
+## Quick start
 
----
+Install base environment:
 
-## Main Project
+```bash
+python -m pip install -e ".[base,test]"
+```
 
-### AI Agent Hub
+Install extended environment:
 
-AI Agent Hub is an experimental platform for building AI agent systems with retrieval, memory and tool orchestration.
+```bash
+python -m pip install -e ".[base,security,embeddings,faiss,ingest,test]"
+```
 
-Key areas explored in the project:
+Run API:
 
-- RAG pipelines
-- agent orchestration
-- memory systems
-- reasoning workflows
-- AI automation
+```bash
+uvicorn src.api.main:app --reload
+```
 
-Repository:
+Run demo:
 
-https://github.com/Alex8768/AI-Agent-Hub-V3
+```bash
+python scripts/demo_golden_path.py
+```
 
----
+Run reasoning demo:
 
-## Tech Focus
+```bash
+DEMO_ENABLE_REASONING=1 python scripts/demo_golden_path.py
+```
+
+## Documentation
+
+Main project documentation:
+
+- `docs/architecture/ARCHITECTURE_V3.md`
+- `docs/api/README.md`
+- `docs/installation/`
+- `docs/roadmaps/pro-v3.1.md`
+- `docs/snapshots/`
+- `STATUS.md`
+- `PROJECT_ANCHOR.md`
+- `PROJECT_CHECKLIST.md`
+
+## Tech stack
+
+Core technologies used in the project:
 
 - Python
 - FastAPI
+- Pydantic
 - FAISS
 - Qdrant
-- LLM integration
-- AI orchestration architectures
+- SQLite / SQLAlchemy
+- Ollama / OpenAI-compatible integrations
+- Prometheus
+- Grafana
+- Docker
+- GitHub Actions
 
----
+## Engineering direction
 
-## Current Focus
+AI Agent Hub is evolving toward a modular AI engineering platform focused on:
 
-Building AI systems that combine:
+- retrieval systems
+- memory architectures
+- graph-aware reasoning
+- tool orchestration
+- execution control
+- observability
+- maintainable AI system design
 
-- retrieval
-- reasoning
-- memory
-- tool usage
+## Author
 
-into production-ready AI workflows.
+Aleksandr Ladygin  
+AI / LLM Engineer & Systems Architect
 
----
+Focus areas:
 
-## Connect
-
-LinkedIn  
-https://www.linkedin.com/in/aleksandr-ladygin
-
-GitHub  
-https://github.com/Alex8768
-
+- RAG and hybrid retrieval
+- reasoning systems
+- AI agents
+- memory architectures
+- GraphRAG
+- tool-integrated LLM systems

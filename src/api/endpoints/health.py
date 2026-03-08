@@ -48,14 +48,19 @@ async def health_check():
         dimension = getattr(cfg, "dimension", None) or settings.faiss_dimension
 
         index_file = Path(index_path)
-        meta_file = index_file.with_suffix(".meta.pkl")
+        meta_json_file = index_file.with_suffix(".meta.json")
+        meta_pickle_file = index_file.with_suffix(".meta.pkl")
+        meta_format = "json" if meta_json_file.exists() else ("pickle" if meta_pickle_file.exists() else "none")
 
         services["vector_store"] = {
             "status": "healthy" if index_file.exists() else "uninitialized",
             "provider": "faiss",
             "index_path": str(index_file),
             "index_exists": index_file.exists(),
-            "meta_exists": meta_file.exists(),
+            "meta_exists": bool(meta_json_file.exists() or meta_pickle_file.exists()),
+            "meta_format": meta_format,
+            "meta_json_exists": meta_json_file.exists(),
+            "meta_pickle_exists": meta_pickle_file.exists(),
             "dimension": int(dimension),
         }
     except Exception as e:
@@ -184,14 +189,14 @@ async def health_deep():
     # --- Vector store deep ---
     t0 = time.perf_counter()
     try:
-        from src.layers.base.rag.vector_stores.factory import get_vector_store_singleton
+        from src.core.providers import get_vector_store
         from src.core.config import settings
 
         cfg = settings.get_vector_store_config()
         index_path = getattr(cfg, "path", None) or settings.faiss_index_path
         dimension = getattr(cfg, "dimension", None) or settings.faiss_dimension
 
-        store = await get_vector_store_singleton()
+        store = await get_vector_store()
         raw_stats = await store.get_stats()
         # Normalize to stable fields for observability
         details["vector_store_stats"] = {
