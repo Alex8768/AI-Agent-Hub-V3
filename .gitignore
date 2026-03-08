@@ -15,3 +15,8 @@ data/
 repomix-output.xml
 eval/results.jsonl
 .pytest_cache/
+# internal development planning
+PROJECT_ANCHOR.md
+PROJECT_CHECKLIST.md
+STATUS.md
+docs/snapshots/
