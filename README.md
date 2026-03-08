@@ -1,5 +1,13 @@
 # AI Agent Hub
 
+![License](https://img.shields.io/badge/license-MIT-blue)
+![Python](https://img.shields.io/badge/python-3.10%2B-blue)
+![Architecture](https://img.shields.io/badge/architecture-layered-green)
+![Status](https://img.shields.io/badge/status-active%20development-orange)
+
+Layered AI platform for retrieval, memory, graph-aware reasoning, and tool-orchestrated AI systems.
+
+
 AI Agent Hub is a layered AI platform for building retrieval, memory, graph-aware reasoning, and tool-orchestrated agent systems.
 
 The platform is designed around a **stable Base layer** and **feature-gated Pro extensions**, so advanced capabilities can evolve without breaking the core system.
@@ -13,6 +21,18 @@ It focuses on building production-oriented AI workflows that combine:
 - tool integrations
 - execution control
 - observability and traceability
+
+## Core capabilities
+
+AI Agent Hub explores architectures for modern AI systems that combine:
+
+- **Retrieval pipelines** (vector search, hybrid retrieval)
+- **Memory systems** (workspace and semantic memory)
+- **Graph-aware reasoning**
+- **Tool orchestration**
+- **Execution control and observability**
+
+The project focuses on building modular AI infrastructure rather than single-purpose AI applications.
 
 ## Why this project exists
 
