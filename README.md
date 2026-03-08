@@ -1,6 +1,49 @@
 # AI Agent Hub
 
-AI Agent Hub is a layered AI platform for building retrieval, memory, graph-aware reasoning, and tool-orchestrated agent systems.
+![License](https://img.shields.io/badge/license-MIT-blue)
+![Python](https://img.shields.io/badge/python-3.10%2B-blue)
+![Architecture](https://img.shields.io/badge/architecture-layered-green)
+![Status](https://img.shields.io/badge/status-active%20development-orange)
+
+Layered AI platform for retrieval, memory, graph-aware reasoning, and tool-orchestrated AI systems.
+
+## Core capabilities
+
+AI Agent Hub explores architectures for modern AI systems that combine:
+
+- **Retrieval pipelines** (vector search, hybrid retrieval)
+- **Memory systems** (workspace and semantic memory)
+- **Graph-aware reasoning**
+- **Tool orchestration**
+- **Execution control and observability**
+
+The project focuses on building modular AI infrastructure rather than single-purpose AI applications.
+
+```mermaid
+flowchart TD
+    Client[Client / UI] --> API[FastAPI API Layer]
+    API --> Services[Service Layer]
+
+    Services --> Retrieval[Retrieval Workflows]
+    Services --> Memory[Memory Layer]
+    Services --> Reasoning[Reasoning Engine]
+    Services --> Tools[Tool Integrations]
+
+    Retrieval --> FAISS[(FAISS)]
+    Retrieval --> Qdrant[(Qdrant)]
+    Retrieval --> Docs[Document Ingestion]
+
+    Memory --> DB[(DB-backed Memory Store)]
+
+    Reasoning --> Planner[Planner]
+    Reasoning --> Executor[Step Executor]
+    Reasoning --> Control[Execution Control Layer]
+    Reasoning --> Trace[Trace / Replay / Observability]
+    Reasoning --> LLM[LLM Integration Layer]
+
+    Retrieval --> LLM
+    Tools --> External[External Systems / MCP Direction]
+```
 
 The platform is designed around a **stable Base layer** and **feature-gated Pro extensions**, so advanced capabilities can evolve without breaking the core system.
 
