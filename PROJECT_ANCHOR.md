@@ -2,67 +2,42 @@
 
 ## Active Anchor
 
-A2.29 — Service Contract Boundary Cleanup (Search)
+TBD — Post-A2.29 planning
 
 ### Goal
 
-Remove service-to-API schema coupling in search flow by introducing service-neutral
-contracts and explicit API/service mapping boundaries.
+Define and prioritize the next anchor after completion of A2.29.
 
 ### Architecture Position
 
 Planned modules:
 
-`src/services/search/`
-`src/api/endpoints/`
+TBD
 
 Planned files:
-- `src/services/search/contracts.py`
-- `src/services/search/search_service.py`
-- `src/api/endpoints/search.py`
-- `src/api/endpoints/search_hybrid.py`
+- TBD
 
 ### Patch Plan
 
-#### Patch 1 — Introduce service-neutral search contracts
-- Add service-level request/response DTOs and switch `SearchService` to those contracts.
-
-#### Patch 2 — API/service mapping hardening
-- Add explicit endpoint mapping and preserve stable API response models.
-
-#### Patch 3 — Search endpoint contract quality gate
-- Add deterministic tests for boundary and contract parity.
-
-#### Patch 4 — Cleanup and migration safety
-- Remove leftover boundary leaks and keep compatibility across retrieval paths.
-
-#### Patch 5 — Docs + CI policy alignment
-- Align architecture docs/checklists and ensure CI coverage for the boundary rules.
+#### Patch plan
+- TBD
 
 ### Progress
 
-- [x] Patch 1 — Introduce service-neutral search contracts
-- [x] Patch 2 — API/service mapping hardening
-- [x] Patch 3 — Search endpoint contract quality gate
-- [x] Patch 4 — Cleanup and migration safety
-- [ ] Patch 5 — Docs + CI policy alignment
+- [ ] TBD
 
 ### Out of Scope
 
-Do NOT modify during A2.29:
-- Retrieval algorithm behavior
-- OCR pipeline
-- Config architecture
-- major reasoning graph redesign
-- UI feature scope
+Do NOT modify during planning:
+- existing stable contracts without explicit patch scope
+- unrelated subsystems outside next selected anchor
 
 ### Definition of Done
 
-A2.29 is complete when:
-- `SearchService` no longer imports `src.api.schemas`
-- API schemas remain stable for `/api/v1/search` and `/api/v1/search-hybrid`
-- service-neutral contracts own search service boundary
-- boundary quality gates are present and green
+Planning is complete when:
+- next anchor is selected with explicit patch plan
+- scope and out-of-scope are documented
+- first patch is ready to execute
 
 ## Next Anchor
 
@@ -78,11 +53,11 @@ Work order is strict:
 
 ### Last Completed Anchor
 
-A2.28 — Interface Foundation (MVP)
+A2.29 — Service Contract Boundary Cleanup (Search)
 
 Completed via patches:
-- Patch 1 — UI shell + API contracts baseline
-- Patch 2 — Documents + search journey wiring
-- Patch 3 — Answer + diagnostics journey wiring
-- Patch 4 — Session/workspace UX hardening
-- Patch 5 — UI quality gate
+- Patch 1 — Introduce service-neutral search contracts
+- Patch 2 — API/service mapping hardening
+- Patch 3 — Search endpoint contract quality gate
+- Patch 4 — Cleanup and migration safety
+- Patch 5 — Docs + CI policy alignment

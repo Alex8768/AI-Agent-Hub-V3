@@ -36,6 +36,7 @@ AI-Agent-Hub-V3 is a modular AI platform for production-grade agent systems with
 - [x] Hybrid search API mapping hardening with response model sanitation (A2.29 patch 2)
 - [x] Search endpoint deterministic quality gate coverage (A2.29 patch 3)
 - [x] Search API mapping adapters with migration-safe normalization (A2.29 patch 4)
+- [x] Search docs + CI policy alignment (A2.29 patch 5)
 - [ ] Retrieval eval benchmark suite
 - [ ] Adaptive retrieval policy optimizer
 
@@ -82,6 +83,7 @@ AI-Agent-Hub-V3 is a modular AI platform for production-grade agent systems with
 - [x] Ruleset-protected main branch flow
 - [x] Stable required checks policy (A2.26 complete)
 - [x] Release quality gates and benchmark reports (A2.26 complete)
+- [x] Search boundary CI quality gate (A2.29 patch 5)
 
 ### 7) Interface Layer
 
@@ -108,10 +110,11 @@ AI-Agent-Hub-V3 is a modular AI platform for production-grade agent systems with
 - `A2.26` Release Gates & CI Policy Hardening
 - `A2.27` Architecture & Readiness Audit
 - `A2.28` Interface Foundation (MVP)
+- `A2.29` Service Contract Boundary Cleanup (Search)
 
 Roadmap order:
 
-- `A2.15 -> A2.16 -> A2.17 -> A2.18 -> A2.19 -> A2.20 -> A2.21 -> A2.22 -> A2.23 -> A2.24 -> A2.25 -> A2.26 -> A2.27 -> A2.28`
+- `A2.15 -> A2.16 -> A2.17 -> A2.18 -> A2.19 -> A2.20 -> A2.21 -> A2.22 -> A2.23 -> A2.24 -> A2.25 -> A2.26 -> A2.27 -> A2.28 -> A2.29`
 - OCR remains the current anchor and must close before composition work.
 - Composition should start as rule-based MVP before advanced autonomy.
 - Meta-cognition should consume existing diagnostics first (no graph redesign in first pass).

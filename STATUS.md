@@ -6,25 +6,22 @@ Pro Layer Development — Reasoning Stabilization
 
 ## Last Completed Anchor
 
-A2.28 — Interface Foundation (MVP)
+A2.29 — Service Contract Boundary Cleanup (Search)
 
-Interface foundation completed with first-party frontend shell, core document/search/answer
-journeys, workspace/session UX hardening, and deterministic UI quality gate wiring in CI.
+Search boundary cleanup completed with service-neutral contracts, endpoint mapping hardening,
+deterministic contract quality gates, migration-safe mapping adapters, and CI boundary gate wiring.
 
 ## Current Active Anchor
 
-A2.29 — Service Contract Boundary Cleanup (Search)
+TBD — Post-A2.29 planning
 
 Current progress:
-- Patch 1 complete: service-neutral search contracts introduced and SearchService decoupled from API schemas.
-- Patch 2 complete: `/api/v1/search-hybrid` mapping hardened with explicit response model and payload sanitation.
-- Patch 3 complete: deterministic search endpoint quality-gate tests added for contract parity and stability.
-- Patch 4 complete: shared search mapping adapters introduced and endpoint mapping logic deduplicated with migration-safe normalization.
-- Patch 5 pending.
+- A2.29 complete.
+- Next anchor selection pending.
 
 Focus:
-- boundary cleanup in search service and API mapping stability
-- strict layering between API schemas and service contracts
+- post-A2.29 roadmap cut and priority selection
+- first patch definition for next anchor
 
 Execution discipline:
 - keep work strictly inside the active anchor and move in micro-patches.
@@ -34,7 +31,7 @@ Execution discipline:
 TBD — Post-A2.29 planning
 
 Planned focus:
-- follow-up architecture hardening after boundary cleanup
+- select next highest-value anchor from readiness backlog
 
 ## CI Status
 
