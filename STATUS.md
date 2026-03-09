@@ -17,7 +17,7 @@ A2.30 — Coverage Enforcement in Release Gate
 
 Current progress:
 - Patch 1 complete: `minimum_coverage_ratio` policy field added and enforced in release-gate decision/readiness paths.
-- Patch 2 pending.
+- Patch 2 complete: coverage diagnostics extraction centralized via shared enterprise coverage contract.
 - Patch 3 pending.
 - Patch 4 pending.
 - Patch 5 pending.

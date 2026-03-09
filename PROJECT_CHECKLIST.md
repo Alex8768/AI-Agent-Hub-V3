@@ -38,7 +38,7 @@
 ## Current Work — A2.30 Coverage Enforcement in Release Gate
 
 - [x] Patch 1
-- [ ] Patch 2
+- [x] Patch 2
 - [ ] Patch 3
 - [ ] Patch 4
 - [ ] Patch 5

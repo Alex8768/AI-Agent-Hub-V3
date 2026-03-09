@@ -2,6 +2,9 @@ from __future__ import annotations
 
 from typing import TypedDict
 
+from src.layers.pro.reasoning.enterprise.coverage_contract import (
+    resolve_coverage_ratio_from_diagnostics,
+)
 from src.layers.pro.reasoning.enterprise.release_gate_model import (
     EnterpriseReleaseGatePolicy,
     build_enterprise_release_gate_policy,
@@ -57,22 +60,6 @@ def _normalize_optimization_action(value: object) -> str:
     return action
 
 
-def _normalize_optional_coverage_ratio(value: object) -> float | None:
-    if value is None:
-        return None
-    try:
-        parsed = float(value)  # type: ignore[arg-type]
-    except Exception:
-        return None
-    if parsed > 1.0:
-        parsed = parsed / 100.0
-    if parsed < 0.0:
-        return 0.0
-    if parsed > 1.0:
-        return 1.0
-    return float(parsed)
-
-
 def build_enterprise_readiness_contract(
     *,
     profile_name: object,
@@ -118,7 +105,6 @@ def build_enterprise_readiness_contract_from_diagnostics(
     )
     benchmark = dict(diag.get("reasoning_benchmark") or {})
     summary = dict(benchmark.get("summary") or {})
-    coverage = dict(diag.get("coverage") or {})
     optimization = dict(diag.get("reasoning_optimization") or {})
     optimization_decision = dict(optimization.get("decision") or {})
     checks_state = dict(diag.get("release_checks") or {})
@@ -129,12 +115,7 @@ def build_enterprise_readiness_contract_from_diagnostics(
     ]
     pass_rate = _normalize_float_01(summary.get("pass_rate", 0.0), default=0.0)
     average_score = _normalize_float_01(summary.get("average_score", 0.0), default=0.0)
-    coverage_ratio = _normalize_optional_coverage_ratio(
-        coverage.get(
-            "line_rate",
-            coverage.get("coverage_ratio", coverage.get("line_coverage_ratio", coverage.get("coverage_percent"))),
-        )
-    )
+    coverage_ratio = resolve_coverage_ratio_from_diagnostics(diag)
     minimum_coverage_ratio = float(gate_policy.get("minimum_coverage_ratio", 0.0) or 0.0)
     release_gate_passed = (
         len(failed_checks) == 0

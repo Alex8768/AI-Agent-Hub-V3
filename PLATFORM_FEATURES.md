@@ -85,6 +85,7 @@ AI-Agent-Hub-V3 is a modular AI platform for production-grade agent systems with
 - [x] Release quality gates and benchmark reports (A2.26 complete)
 - [x] Search boundary CI quality gate (A2.29 patch 5)
 - [x] Release-gate coverage threshold policy contract (A2.30 patch 1)
+- [x] Shared coverage diagnostics normalization contract (A2.30 patch 2)
 
 ### 7) Interface Layer
 
