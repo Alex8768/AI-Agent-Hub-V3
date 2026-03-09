@@ -33,7 +33,7 @@ Planned files:
 - [x] Patch 1 — Audit API docs vs runtime contracts
 - [x] Patch 2 — Update API docs for request/response parity
 - [x] Patch 3 — Align feature-flag docs with default behavior
-- [ ] Patch 4 — Add deterministic API docs quality gate
+- [x] Patch 4 — Add deterministic API docs quality gate
 - [ ] Patch 5 — Docs closure and roadmap sync
 
 ### Out of Scope

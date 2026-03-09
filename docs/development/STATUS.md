@@ -19,7 +19,8 @@ Current progress:
 - Patch 1 complete: API/runtime contract drift audit documented.
 - Patch 2 complete: API docs endpoint/request/response parity updated.
 - Patch 3 complete: feature-flag defaults and endpoint gating docs aligned with runtime.
-- Patch 4 next: add deterministic API docs quality gate.
+- Patch 4 complete: deterministic API docs quality gate added and wired to CI release-gate contracts.
+- Patch 5 next: docs closure and roadmap sync.
 
 Focus:
 - eliminate API docs drift from contract/runtime behavior
