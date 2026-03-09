@@ -50,6 +50,29 @@
   margin-bottom: 0.25rem;
 }
 
+.context-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.6rem;
+  align-items: end;
+}
+
+.context-grid label {
+  display: grid;
+}
+
+.context-grid input,
+.context-grid button {
+  border: 1px solid #d1d5db;
+  border-radius: 0.55rem;
+  padding: 0.45rem 0.65rem;
+  background: #fff;
+}
+
+.context-grid button {
+  cursor: pointer;
+}
+
 code {
   display: inline-block;
   border-radius: 0.4rem;

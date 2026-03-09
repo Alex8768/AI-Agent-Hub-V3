@@ -28,6 +28,7 @@ export interface AnswerRequestDto {
   query: string
   k?: number
   graph_depth?: number
+  session_id?: string
 }
 
 export interface AnswerResponseDto {

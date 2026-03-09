@@ -12,16 +12,30 @@ import {
 } from './lib/apiClient'
 import type { AnswerResponseDto, DocumentItem, SearchResultDto } from './contracts/api'
 
+const WORKSPACE_STORAGE_KEY = 'ai-agent-hub.workspace-id'
+const SESSION_STORAGE_KEY = 'ai-agent-hub.session-id'
+
+function normalizeContextId(raw: string, fallback: string): string {
+  const next = raw.trim()
+  return next.length > 0 ? next : fallback
+}
+
 function App() {
   const [healthStatus, setHealthStatus] = useState('checking')
   const [error, setError] = useState('')
+  const [workspaceId, setWorkspaceId] = useState(() => localStorage.getItem(WORKSPACE_STORAGE_KEY) ?? 'default')
+  const [sessionId, setSessionId] = useState(() => localStorage.getItem(SESSION_STORAGE_KEY) ?? 'default')
+  const [workspaceDraft, setWorkspaceDraft] = useState(workspaceId)
+  const [sessionDraft, setSessionDraft] = useState(sessionId)
   const [documents, setDocuments] = useState<DocumentItem[]>([])
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [query, setQuery] = useState('')
   const [searchResults, setSearchResults] = useState<SearchResultDto[]>([])
   const [question, setQuestion] = useState('')
   const [answer, setAnswer] = useState<AnswerResponseDto | null>(null)
-  const [busy, setBusy] = useState(false)
+  const [documentsLoading, setDocumentsLoading] = useState(false)
+  const [searchLoading, setSearchLoading] = useState(false)
+  const [answerLoading, setAnswerLoading] = useState(false)
 
   useEffect(() => {
     let alive = true
@@ -41,8 +55,17 @@ function App() {
   }, [])
 
   useEffect(() => {
+    localStorage.setItem(WORKSPACE_STORAGE_KEY, workspaceId)
+  }, [workspaceId])
+
+  useEffect(() => {
+    localStorage.setItem(SESSION_STORAGE_KEY, sessionId)
+  }, [sessionId])
+
+  useEffect(() => {
     let alive = true
-    listDocuments()
+    setDocumentsLoading(true)
+    listDocuments({ workspaceId })
       .then((items) => {
         if (!alive) return
         setDocuments(items)
@@ -51,10 +74,17 @@ function App() {
         if (!alive) return
         setError(String(err))
       })
+      .finally(() => {
+        if (!alive) return
+        setDocumentsLoading(false)
+      })
+
+    setSearchResults([])
+    setAnswer(null)
     return () => {
       alive = false
     }
-  }, [])
+  }, [workspaceId])
 
   const onFileSelected = (event: ChangeEvent<HTMLInputElement>) => {
     const next = event.target.files?.[0] ?? null
@@ -64,61 +94,75 @@ function App() {
   const onUpload = async (event: FormEvent) => {
     event.preventDefault()
     if (!selectedFile) return
-    setBusy(true)
+    setDocumentsLoading(true)
     setError('')
     try {
-      await uploadDocument(selectedFile)
+      await uploadDocument(selectedFile, { workspaceId })
       setSelectedFile(null)
-      const items = await listDocuments()
+      const items = await listDocuments({ workspaceId })
       setDocuments(items)
     } catch (err: unknown) {
       setError(String(err))
     } finally {
-      setBusy(false)
+      setDocumentsLoading(false)
     }
   }
 
   const onDelete = async (id: string) => {
-    setBusy(true)
+    setDocumentsLoading(true)
     setError('')
     try {
-      await deleteDocument(id)
+      await deleteDocument(id, { workspaceId })
       setDocuments((prev) => prev.filter((item) => item.id !== id))
     } catch (err: unknown) {
       setError(String(err))
     } finally {
-      setBusy(false)
+      setDocumentsLoading(false)
     }
   }
 
   const onSearch = async (event: FormEvent) => {
     event.preventDefault()
     if (!query.trim()) return
-    setBusy(true)
+    setSearchLoading(true)
     setError('')
     try {
-      const rows = await searchDocuments({ query: query.trim(), k: 5 })
+      const rows = await searchDocuments({ query: query.trim(), k: 5 }, { workspaceId })
       setSearchResults(rows)
     } catch (err: unknown) {
       setError(String(err))
     } finally {
-      setBusy(false)
+      setSearchLoading(false)
     }
   }
 
   const onAsk = async (event: FormEvent) => {
     event.preventDefault()
     if (!question.trim()) return
-    setBusy(true)
+    setAnswerLoading(true)
     setError('')
     try {
-      const payload = await askAnswer({ query: question.trim(), k: 8, graph_depth: 1 })
+      const payload = await askAnswer(
+        { query: question.trim(), k: 8, graph_depth: 1, session_id: sessionId },
+        { workspaceId },
+      )
       setAnswer(payload)
     } catch (err: unknown) {
       setError(String(err))
     } finally {
-      setBusy(false)
+      setAnswerLoading(false)
     }
+  }
+
+  const onApplyContext = (event: FormEvent) => {
+    event.preventDefault()
+    const nextWorkspace = normalizeContextId(workspaceDraft, 'default')
+    const nextSession = normalizeContextId(sessionDraft, 'default')
+    setWorkspaceDraft(nextWorkspace)
+    setSessionDraft(nextSession)
+    setWorkspaceId(nextWorkspace)
+    setSessionId(nextSession)
+    setError('')
   }
 
   return (
@@ -139,6 +183,17 @@ function App() {
           <span className="label">Backend URL</span>
           <code>{API_BASE}</code>
         </div>
+        <form className="context-grid" onSubmit={onApplyContext}>
+          <label>
+            <span className="label">Workspace ID</span>
+            <input value={workspaceDraft} onChange={(event) => setWorkspaceDraft(event.target.value)} />
+          </label>
+          <label>
+            <span className="label">Session ID</span>
+            <input value={sessionDraft} onChange={(event) => setSessionDraft(event.target.value)} />
+          </label>
+          <button type="submit">Apply context</button>
+        </form>
         {error ? (
           <div>
             <span className="label">Last error</span>
@@ -152,7 +207,7 @@ function App() {
           <h2>Documents</h2>
           <form className="inline-form" onSubmit={onUpload}>
             <input type="file" onChange={onFileSelected} />
-            <button type="submit" disabled={!selectedFile || busy}>
+            <button type="submit" disabled={!selectedFile || documentsLoading}>
               Upload
             </button>
           </form>
@@ -163,12 +218,13 @@ function App() {
                   <strong>{item.filename}</strong>
                   <p>{item.status}</p>
                 </div>
-                <button type="button" onClick={() => void onDelete(item.id)} disabled={busy}>
+                <button type="button" onClick={() => void onDelete(item.id)} disabled={documentsLoading}>
                   Delete
                 </button>
               </li>
             ))}
-            {documents.length === 0 ? <li className="muted">No documents yet.</li> : null}
+            {documentsLoading ? <li className="muted">Loading documents...</li> : null}
+            {!documentsLoading && documents.length === 0 ? <li className="muted">No documents yet.</li> : null}
           </ul>
         </article>
 
@@ -181,7 +237,7 @@ function App() {
               placeholder="Search query"
               onChange={(event) => setQuery(event.target.value)}
             />
-            <button type="submit" disabled={busy || !query.trim()}>
+            <button type="submit" disabled={searchLoading || !query.trim()}>
               Search
             </button>
           </form>
@@ -194,7 +250,8 @@ function App() {
                 </div>
               </li>
             ))}
-            {searchResults.length === 0 ? <li className="muted">No search results yet.</li> : null}
+            {searchLoading ? <li className="muted">Searching...</li> : null}
+            {!searchLoading && searchResults.length === 0 ? <li className="muted">No search results yet.</li> : null}
           </ul>
         </article>
       </section>
@@ -208,11 +265,12 @@ function App() {
             placeholder="Ask a question"
             onChange={(event) => setQuestion(event.target.value)}
           />
-          <button type="submit" disabled={busy || !question.trim()}>
+          <button type="submit" disabled={answerLoading || !question.trim()}>
             Ask
           </button>
         </form>
-        {answer ? (
+        {answerLoading ? <p className="muted">Generating answer...</p> : null}
+        {answer && !answerLoading ? (
           <div className="answer-block">
             <p className="answer-text">{answer.answer}</p>
             <div className="meta-inline">
@@ -225,7 +283,7 @@ function App() {
             </details>
           </div>
         ) : (
-          <p className="muted">No answer yet.</p>
+          !answerLoading ? <p className="muted">No answer yet.</p> : null
         )}
       </section>
     </div>
