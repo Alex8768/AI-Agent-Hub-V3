@@ -5,8 +5,10 @@
 Define a deterministic migration policy for moving root-level operational docs
 into structured documentation folders.
 
-This policy is intentionally compatibility-first: migration must not break
-existing workflows that still read root-level paths.
+This policy follows a phased migration:
+
+- compatibility-first during transition patches;
+- canonical-only topology after closure.
 
 ## Target Topology
 
@@ -20,9 +22,9 @@ existing workflows that still read root-level paths.
 - `PROJECT_CHECKLIST.md` -> `docs/development/PROJECT_CHECKLIST.md`
 - `PLATFORM_FEATURES.md` -> `docs/architecture/PLATFORM_FEATURES.md`
 
-## Compatibility Policy
+## Migration Policy
 
-During migration patches:
+During migration patches (Patch 1-4):
 
 1. Keep root files present as compatibility stubs.
 2. Root stubs must point to canonical target docs.
@@ -31,11 +33,11 @@ During migration patches:
 
 Compatibility stubs should stay minimal and deterministic to avoid drift.
 
-Current state (after Patch 2):
+Final state (after Patch 5):
 
-- canonical docs are already moved to target paths;
-- root files are temporary compatibility stubs;
-- stubs are removed only in Patch 5 after reference and quality-gate alignment.
+- canonical docs remain in target paths only;
+- root compatibility stubs are removed;
+- quality gate enforces canonical-only topology.
 
 ## Patch Discipline for A2.32
 

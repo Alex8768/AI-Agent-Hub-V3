@@ -2,12 +2,11 @@
 
 ## Active Anchor
 
-A2.32 — Docs Topology Cleanup (root -> docs/architecture + docs/development)
+A2.33 — API Docs & Feature-Flag Alignment
 
 ### Goal
 
-Move root-level operational docs into structured docs topology while preserving
-workflow-safe compatibility.
+Align API documentation with actual feature-flag behavior and contract defaults.
 
 ### Architecture Position
 
@@ -17,33 +16,25 @@ Planned modules:
 - `docs/development/*`
 
 Planned files:
-- `PROJECT_ANCHOR.md` (compatibility stub candidate)
-- `STATUS.md` (compatibility stub candidate)
-- `PROJECT_CHECKLIST.md` (compatibility stub candidate)
-- `PLATFORM_FEATURES.md` (compatibility stub candidate)
-- `docs/architecture/*` and `docs/development/*` target locations
-- `docs/development/DOCS_TOPOLOGY_POLICY.md`
-- `docs/development/PROJECT_ANCHOR.md`
-- `docs/development/STATUS.md`
-- `docs/development/PROJECT_CHECKLIST.md`
-- `docs/architecture/PLATFORM_FEATURES.md`
+- `docs/api/*`
+- feature-flag docs references in developer docs
 
 ### Patch Plan
 
 #### Patch plan
-- Patch 1 — Introduce docs topology map and compatibility policy
-- Patch 2 — Move roadmap docs with root stubs
-- Patch 3 — Update references and workflow docs to new paths
-- Patch 4 — Add docs topology quality gate
-- Patch 5 — Final docs policy alignment closure
+- Patch 1 — Audit API docs vs runtime contracts
+- Patch 2 — Update API docs for request/response parity
+- Patch 3 — Align feature-flag docs with default behavior
+- Patch 4 — Add deterministic API docs quality gate
+- Patch 5 — Docs closure and roadmap sync
 
 ### Progress
 
-- [x] Patch 1 — Introduce docs topology map and compatibility policy
-- [x] Patch 2 — Move roadmap docs with root stubs
-- [x] Patch 3 — Update references and workflow docs to new paths
-- [x] Patch 4 — Add docs topology quality gate
-- [ ] Patch 5 — Final docs policy alignment closure
+- [ ] Patch 1 — Audit API docs vs runtime contracts
+- [ ] Patch 2 — Update API docs for request/response parity
+- [ ] Patch 3 — Align feature-flag docs with default behavior
+- [ ] Patch 4 — Add deterministic API docs quality gate
+- [ ] Patch 5 — Docs closure and roadmap sync
 
 ### Out of Scope
 
@@ -53,14 +44,14 @@ Do NOT modify during planning:
 
 ### Definition of Done
 
-A2.32 is complete when:
-- root roadmap docs are moved under structured docs folders
-- root compatibility stubs keep existing workflows stable
-- references are aligned and protected by deterministic checks
+A2.33 is complete when:
+- API docs match delivery contracts
+- feature-flag docs match runtime defaults
+- docs quality gate protects against contract drift
 
 ## Next Anchor
 
-A2.33 — API Docs & Feature-Flag Alignment
+A2.34 — TBD
 
 ### Discipline
 
@@ -72,11 +63,11 @@ Work order is strict:
 
 ### Last Completed Anchor
 
-A2.31 — CI Workflow Consolidation & Required Checks Matrix
+A2.32 — Docs Topology Cleanup (root -> docs/architecture + docs/development)
 
 Completed via patches:
-- Patch 1 — Required checks matrix contract + deterministic assembly test
-- Patch 2 — Normalize required checks inputs from CI workflow sources
-- Patch 3 — Consolidation rules deterministic quality tests
-- Patch 4 — Wire consolidated matrix into CI workflow
-- Patch 5 — Docs and policy alignment closure
+- Patch 1 — Docs topology map and compatibility policy
+- Patch 2 — Roadmap docs moved to canonical topology with root stubs
+- Patch 3 — References/workflow aligned to canonical docs paths
+- Patch 4 — Deterministic docs topology quality gate and CI wiring
+- Patch 5 — Final docs policy sync and root compatibility stubs removal

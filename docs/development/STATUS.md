@@ -6,35 +6,32 @@ Pro Layer Development — Reasoning Stabilization
 
 ## Last Completed Anchor
 
-A2.31 — CI Workflow Consolidation & Required Checks Matrix
+A2.32 — Docs Topology Cleanup (root -> docs/architecture + docs/development)
 
-Required-check convergence completed with deterministic matrix contracts, workflow
-normalization, consolidation quality gates, CI wiring, and documentation alignment.
+Docs topology cleanup completed with canonical docs migration, reference alignment,
+deterministic topology quality gate, and root compatibility stubs removal.
 
 ## Current Active Anchor
 
-A2.32 — Docs Topology Cleanup (root -> docs/architecture + docs/development)
+A2.33 — API Docs & Feature-Flag Alignment
 
 Current progress:
-- Patch 1 complete: docs topology map and compatibility policy introduced.
-- Patch 2 complete: roadmap docs moved to target topology with root stubs.
-- Patch 3 complete: references/workflow docs aligned to canonical moved paths.
-- Patch 4 complete: deterministic docs topology quality gate added and wired in CI.
-- Patch 5 next: finalize docs policy closure and remove compatibility stubs.
+- Anchor started.
+- Patch 1 next: audit API docs vs runtime contracts and flag defaults.
 
 Focus:
-- move root docs without breaking current root-based workflow commands
-- keep references deterministic during migration
+- eliminate API docs drift from contract/runtime behavior
+- align feature-flag docs with actual defaults and rollout posture
 
 Execution discipline:
 - keep work strictly inside the active anchor and move in micro-patches.
 
 ## Next Anchor
 
-A2.33 — API Docs & Feature-Flag Alignment
+A2.34 — TBD
 
 Planned focus:
-- remove API docs and feature-flag behavior drift
+- TBD
 
 ## CI Status
 
@@ -44,5 +41,5 @@ The noop tracing span compatibility fix is completed and treated as closed work.
 
 ## Upcoming Anchors
 
-- A2.32 — Docs Topology Cleanup (root -> docs/architecture + docs/development)
 - A2.33 — API Docs & Feature-Flag Alignment
+- A2.34 — TBD
