@@ -17,11 +17,12 @@ A2.31 — CI Workflow Consolidation & Required Checks Matrix
 
 Current progress:
 - Patch 1 complete: required-checks matrix contract with deterministic assembly test.
-- Patch 2 next: normalize required checks inputs from workflow sources.
+- Patch 2 complete: normalization contract for mixed workflow check definitions.
+- Patch 3 next: deterministic consolidation quality tests for policy merge rules.
 
 Focus:
 - eliminate required-check drift across CI jobs and policy sources
-- keep matrix assembly deterministic and migration-safe
+- keep matrix assembly and input normalization deterministic and migration-safe
 
 Execution discipline:
 - keep work strictly inside the active anchor and move in micro-patches.

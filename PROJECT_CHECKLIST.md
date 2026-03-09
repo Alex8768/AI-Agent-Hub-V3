@@ -39,7 +39,7 @@
 ## Current Work — A2.31 CI Workflow Consolidation & Required Checks Matrix
 
 - [x] Patch 1 — Required checks matrix contract + deterministic assembly test
-- [ ] Patch 2 — Normalize required checks inputs from workflow sources
+- [x] Patch 2 — Normalize required checks inputs from workflow sources
 - [ ] Patch 3 — Consolidation rules deterministic quality tests
 - [ ] Patch 4 — Wire consolidated matrix into CI workflow
 - [ ] Patch 5 — Docs + CI policy alignment closure

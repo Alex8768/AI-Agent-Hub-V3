@@ -14,10 +14,13 @@ single source for CI policy convergence.
 Planned modules:
 
 - `src/layers/pro/reasoning/enterprise/required_checks_matrix.py`
+- `src/layers/pro/reasoning/enterprise/required_checks_normalizer.py`
 
 Planned files:
 - `src/layers/pro/reasoning/enterprise/required_checks_matrix.py`
 - `tests/unit/layers/pro/test_reasoning_enterprise_required_checks_matrix.py`
+- `src/layers/pro/reasoning/enterprise/required_checks_normalizer.py`
+- `tests/unit/layers/pro/test_reasoning_enterprise_required_checks_normalizer.py`
 
 ### Patch Plan
 
@@ -31,7 +34,7 @@ Planned files:
 ### Progress
 
 - [x] Patch 1 — Required checks matrix contract + deterministic assembly test
-- [ ] Patch 2 — Normalize required checks inputs from CI workflow sources
+- [x] Patch 2 — Normalize required checks inputs from CI workflow sources
 - [ ] Patch 3 — Consolidation rules deterministic quality tests
 - [ ] Patch 4 — Wire consolidated matrix into CI workflow
 - [ ] Patch 5 — Docs and policy alignment closure
