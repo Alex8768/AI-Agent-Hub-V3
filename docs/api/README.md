@@ -1,60 +1,100 @@
 # API Documentation
 
 ## Base URL
-```
-http://localhost:8000/api/v1
-```
 
-## Authentication
-```bash
-# For protected endpoints
-curl -H "Authorization: Bearer <token>" http://localhost:8000/api/v1/...
-```
-
-## Endpoints
-
-### Health
-```
-GET /health
-GET /api/v1/health
-```
-
-### LLM
-```
-POST /api/v1/llm/generate
-POST /api/v1/llm/generate-stream
-```
-
-### Documents
-```
-POST /api/v1/documents/upload
-GET  /api/v1/documents
-GET  /api/v1/documents/{id}
-```
-
-### Search
-```
-POST /api/v1/search
-```
-
-### Export
-```
-POST /api/v1/export
-```
-
-### Streaming
-```
-GET /api/v1/stream/{session_id}
-```
+`http://localhost:8000/api/v1`
 
 ## OpenAPI
-Access interactive documentation at:
-- http://localhost:8000/api/v1/docs (Swagger UI)
-- http://localhost:8000/api/v1/redoc (ReDoc)
 
-## Rate Limiting
-- 100 requests per minute per IP
-- Headers: X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset
+- `http://localhost:8000/api/v1/docs` (Swagger UI, debug mode)
+- `http://localhost:8000/api/v1/redoc` (ReDoc, debug mode)
+- `http://localhost:8000/api/v1/openapi.json` (debug mode)
+
+## Authentication Runtime Notes
+
+- In debug mode (`settings.debug=True`), API dependencies allow anonymous access.
+- In non-debug mode, JWT is required for dependencies that use `get_current_user`.
+- Workspace-aware endpoints resolve `workspace_id` from:
+  - query parameter `workspace_id`, or
+  - header `X-Workspace-Id`, or
+  - fallback `"default"`.
+
+## Endpoint Contracts (Runtime Parity)
+
+### Health
+
+- `GET /health` -> `HealthResponse`
+- `GET /api/v1/health` -> `HealthResponse` (alias)
+- `GET /api/v1/health/deep` -> deep diagnostics payload
+
+### LLM
+
+- `POST /api/v1/llm/generate`
+  - request: `LLMRequest`
+  - response: `LLMResponse`
+- `POST /api/v1/llm/generate-stream`
+  - request: `LLMRequest`
+  - response: SSE stream (`event: token`, `event: done`)
+
+### Documents
+
+- `POST /api/v1/documents/upload`
+  - multipart form (`file`) + optional query params:
+    - `chunk_size` (100..10000)
+    - `chunk_overlap` (0..1000)
+  - response: `DocumentOut`
+- `GET /api/v1/documents`
+  - query params: `skip`, `limit`, optional `status`
+  - response: `list[DocumentOut]`
+- `GET /api/v1/documents/{document_id}`
+  - response: `DocumentDetailOut`
+- `DELETE /api/v1/documents/{document_id}`
+  - response: deletion status payload
+
+### Search
+
+- `POST /api/v1/search`
+  - request: `SearchRequest`
+  - response: `list[SearchResult]`
+- `POST /api/v1/search-hybrid`
+  - request: `SearchRequest`
+  - response: `HybridSearchResponse`
+
+### Reasoning
+
+- `POST /api/v1/answer`
+  - request: `AnswerRequest`
+  - response: `AnswerResponse`
+
+### Tools
+
+- `GET /api/v1/tools` -> MCP discovery payload
+- `GET /api/v1/tools/{tool_name}` -> tool schema
+- `POST /api/v1/tools/{tool_name}/invoke` -> runtime execution payload
+
+### Export
+
+- `POST /api/v1/export`
+  - request: `ExportRequest`
+  - response: `ExportResult`
+- `GET /api/v1/export/{export_id}/download`
+  - response: file download
+
+### Streaming
+
+- `GET /api/v1/stream/{session_id}`
+  - query param: `once` (`0|1`)
+  - response: SSE stream
+
+### Diagnostics
+
+- `GET /api/v1/trace-test` -> tracing smoke payload
+
+## Schema Sources
+
+- API transport schemas: `src/api/schemas.py`
+- Reasoning request/response contracts: `src/layers/pro/reasoning/contracts.py`
 
 ## A2.33 Audit Reference
+
 - `docs/api/A2.33_PATCH1_API_RUNTIME_AUDIT.md`

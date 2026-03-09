@@ -16,9 +16,9 @@ deterministic topology quality gate, and root compatibility stubs removal.
 A2.33 — API Docs & Feature-Flag Alignment
 
 Current progress:
-- Anchor started.
 - Patch 1 complete: API/runtime contract drift audit documented.
-- Patch 2 next: update API docs endpoint and response parity.
+- Patch 2 complete: API docs endpoint/request/response parity updated.
+- Patch 3 next: align feature-flag docs with default behavior and gating semantics.
 
 Focus:
 - eliminate API docs drift from contract/runtime behavior
