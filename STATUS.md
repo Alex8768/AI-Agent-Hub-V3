@@ -18,7 +18,7 @@ A2.29 — Service Contract Boundary Cleanup (Search)
 Current progress:
 - Patch 1 complete: service-neutral search contracts introduced and SearchService decoupled from API schemas.
 - Patch 2 complete: `/api/v1/search-hybrid` mapping hardened with explicit response model and payload sanitation.
-- Patch 3 pending.
+- Patch 3 complete: deterministic search endpoint quality-gate tests added for contract parity and stability.
 - Patch 4 pending.
 - Patch 5 pending.
 

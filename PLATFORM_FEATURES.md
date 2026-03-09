@@ -34,6 +34,7 @@ AI-Agent-Hub-V3 is a modular AI platform for production-grade agent systems with
 - [x] Qdrant path
 - [x] Search service-neutral contracts boundary (A2.29 patch 1)
 - [x] Hybrid search API mapping hardening with response model sanitation (A2.29 patch 2)
+- [x] Search endpoint deterministic quality gate coverage (A2.29 patch 3)
 - [ ] Retrieval eval benchmark suite
 - [ ] Adaptive retrieval policy optimizer
 
