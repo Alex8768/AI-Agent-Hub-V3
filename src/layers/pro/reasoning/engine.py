@@ -52,6 +52,15 @@ from src.layers.pro.reasoning.optimization.optimization_proposal_model import (
 from src.layers.pro.reasoning.optimization.optimization_signal_model import (
     build_reasoning_optimization_signal_from_diagnostics,
 )
+from src.layers.pro.reasoning.enterprise.readiness_contract import (
+    build_enterprise_readiness_contract_from_diagnostics,
+)
+from src.layers.pro.reasoning.enterprise.release_gate_model import (
+    build_enterprise_release_gate_policy,
+)
+from src.layers.pro.reasoning.enterprise.rollout_decision_model import (
+    decide_enterprise_rollout_action,
+)
 from src.layers.pro.reasoning.planner.planner import create_reasoning_plan
 from src.layers.pro.reasoning.planner.step_executor import execute_plan_steps
 from src.layers.pro.reasoning.tool_safety.runtime_guard import apply_tool_safety_runtime_guard
@@ -391,6 +400,51 @@ class ReasoningEngine:
         }
 
     @staticmethod
+    def _build_enterprise_productization_diagnostics(
+        *,
+        diagnostics: dict[str, object],
+        warnings: list[str],
+    ) -> dict[str, object]:
+        verify = dict(diagnostics.get("verify") or {})
+        self_check = dict(diagnostics.get("self_check") or {})
+        benchmark = diagnostics.get("reasoning_benchmark")
+        optimization = diagnostics.get("reasoning_optimization")
+        release_checks = {
+            "verify": str(verify.get("status", "missing") or "missing"),
+            "self_check": str(self_check.get("status", "missing") or "missing"),
+            "reasoning_benchmark": "pass" if isinstance(benchmark, dict) else "missing",
+            "reasoning_optimization": "pass" if isinstance(optimization, dict) else "missing",
+        }
+        policy = build_enterprise_release_gate_policy(
+            profile_name="enterprise_default",
+            required_checks=["verify", "self_check", "reasoning_benchmark", "reasoning_optimization"],
+            blocking_checks=["verify", "self_check"],
+            minimum_pass_rate=0.8,
+            minimum_average_score=0.7,
+            allow_skipped=False,
+            require_benchmark_summary=True,
+            require_optimization_review=True,
+            allowed_warning_codes=[],
+        )
+        readiness = build_enterprise_readiness_contract_from_diagnostics(
+            diagnostics={**dict(diagnostics or {}), "release_checks": release_checks},
+            policy=policy,
+            warnings=list(warnings or []),
+        )
+        rollout = decide_enterprise_rollout_action(
+            readiness=readiness,
+            policy=policy,
+            decision_id=f"enterprise_rollout:{str(diagnostics.get('trace_id', '') or 'runtime')}",
+            target_environment="production",
+        )
+        return {
+            "release_gate_policy": dict(policy),
+            "release_checks": dict(release_checks),
+            "readiness": dict(readiness),
+            "rollout_decision": dict(rollout),
+        }
+
+    @staticmethod
     def _build_multi_agent_coordination_plan_for_runtime(
         *,
         step_descriptions: list[str],
@@ -662,6 +716,10 @@ class ReasoningEngine:
                 diagnostics=diag,
                 warnings=list(getattr(resp, "warnings", []) or []),
             )
+            diag["enterprise_productization"] = self._build_enterprise_productization_diagnostics(
+                diagnostics=diag,
+                warnings=list(getattr(resp, "warnings", []) or []),
+            )
             diag["reasoning_timeline"] = dict(
                 (dict(diag.get("reasoning_trace") or {}).get("timeline") or {})
             )
@@ -835,6 +893,13 @@ class ReasoningEngine:
             diag.setdefault(
                 "reasoning_optimization",
                 self._build_reasoning_optimization_diagnostics(
+                    diagnostics=diag,
+                    warnings=list(getattr(resp, "warnings", []) or []),
+                ),
+            )
+            diag.setdefault(
+                "enterprise_productization",
+                self._build_enterprise_productization_diagnostics(
                     diagnostics=diag,
                     warnings=list(getattr(resp, "warnings", []) or []),
                 ),

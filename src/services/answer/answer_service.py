@@ -319,6 +319,44 @@ def _apply_diagnostics(
             },
         )
         diag.setdefault(
+            "enterprise_productization",
+            {
+                "release_gate_policy": {
+                    "profile_name": "enterprise_default",
+                    "required_checks": [],
+                    "blocking_checks": [],
+                    "minimum_pass_rate": 0.8,
+                    "minimum_average_score": 0.7,
+                    "allow_skipped": False,
+                    "require_benchmark_summary": True,
+                    "require_optimization_review": True,
+                    "allowed_warning_codes": [],
+                },
+                "release_checks": {},
+                "readiness": {
+                    "profile_name": "enterprise_default",
+                    "release_gate_passed": False,
+                    "failed_checks": [],
+                    "benchmark_pass_rate": 0.0,
+                    "benchmark_average_score": 0.0,
+                    "optimization_action": "defer",
+                    "optimization_requires_review": False,
+                    "warnings_count": int(len(list(getattr(resp, "warnings", []) or []))),
+                    "readiness_score": 0.0,
+                    "reason_codes": [],
+                },
+                "rollout_decision": {
+                    "decision_id": "enterprise_rollout:runtime",
+                    "action": "defer",
+                    "target_environment": "production",
+                    "blocked_by": [],
+                    "reason_codes": ["no_runtime_enterprise_inputs"],
+                    "confidence": 0.0,
+                    "requires_human_approval": True,
+                },
+            },
+        )
+        diag.setdefault(
             "reasoning_trace",
             {
                 "query": str(getattr(req, "query", "") or ""),

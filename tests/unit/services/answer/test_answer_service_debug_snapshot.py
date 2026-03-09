@@ -143,6 +143,7 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
         "reasoning_quality",
         "reasoning_benchmark",
         "reasoning_optimization",
+        "enterprise_productization",
         "reasoning_trace",
         "reasoning_timeline",
         "verify",
@@ -302,6 +303,49 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
         "reason_codes",
         "confidence",
         "requires_human_review",
+    }
+    ep = dict(diag.get("enterprise_productization") or {})
+    assert set(ep.keys()) == {
+        "release_gate_policy",
+        "release_checks",
+        "readiness",
+        "rollout_decision",
+    }
+    ep_policy = dict(ep.get("release_gate_policy") or {})
+    assert set(ep_policy.keys()) == {
+        "profile_name",
+        "required_checks",
+        "blocking_checks",
+        "minimum_pass_rate",
+        "minimum_average_score",
+        "allow_skipped",
+        "require_benchmark_summary",
+        "require_optimization_review",
+        "allowed_warning_codes",
+    }
+    assert isinstance(ep.get("release_checks"), dict)
+    ep_readiness = dict(ep.get("readiness") or {})
+    assert set(ep_readiness.keys()) == {
+        "profile_name",
+        "release_gate_passed",
+        "failed_checks",
+        "benchmark_pass_rate",
+        "benchmark_average_score",
+        "optimization_action",
+        "optimization_requires_review",
+        "warnings_count",
+        "readiness_score",
+        "reason_codes",
+    }
+    ep_rollout = dict(ep.get("rollout_decision") or {})
+    assert set(ep_rollout.keys()) == {
+        "decision_id",
+        "action",
+        "target_environment",
+        "blocked_by",
+        "reason_codes",
+        "confidence",
+        "requires_human_approval",
     }
     rt = dict(diag.get("reasoning_trace") or {})
     assert set(rt.keys()) == {

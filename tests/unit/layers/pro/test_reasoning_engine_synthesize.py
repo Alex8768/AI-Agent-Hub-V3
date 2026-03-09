@@ -142,6 +142,17 @@ async def test_reasoning_engine_fallback_executes_planner_steps(monkeypatch):
     assert isinstance(optimization.get("signal"), dict)
     assert isinstance(optimization.get("proposals"), list)
     assert isinstance(optimization.get("decision"), dict)
+    enterprise = dict(diag.get("enterprise_productization") or {})
+    assert set(enterprise.keys()) == {
+        "release_gate_policy",
+        "release_checks",
+        "readiness",
+        "rollout_decision",
+    }
+    assert isinstance(enterprise.get("release_gate_policy"), dict)
+    assert isinstance(enterprise.get("release_checks"), dict)
+    assert isinstance(enterprise.get("readiness"), dict)
+    assert isinstance(enterprise.get("rollout_decision"), dict)
     trace = dict(diag.get("reasoning_trace") or {})
     assert trace.get("query") == "multi step query"
     assert trace.get("plan") == ["step one", "step two"]
