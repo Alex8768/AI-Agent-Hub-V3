@@ -17,7 +17,8 @@ A2.32 — Docs Topology Cleanup (root -> docs/architecture + docs/development)
 
 Current progress:
 - Anchor started.
-- Patch 1 next: topology map and compatibility policy.
+- Patch 1 complete: docs topology map and compatibility policy introduced.
+- Patch 2 next: move roadmap docs with root compatibility stubs.
 
 Focus:
 - move root docs without breaking current root-based workflow commands

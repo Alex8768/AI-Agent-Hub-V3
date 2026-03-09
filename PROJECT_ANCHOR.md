@@ -22,6 +22,7 @@ Planned files:
 - `PROJECT_CHECKLIST.md` (compatibility stub candidate)
 - `PLATFORM_FEATURES.md` (compatibility stub candidate)
 - `docs/architecture/*` and `docs/development/*` target locations
+- `docs/development/DOCS_TOPOLOGY_POLICY.md`
 
 ### Patch Plan
 
@@ -34,7 +35,7 @@ Planned files:
 
 ### Progress
 
-- [ ] Patch 1 — Introduce docs topology map and compatibility policy
+- [x] Patch 1 — Introduce docs topology map and compatibility policy
 - [ ] Patch 2 — Move roadmap docs with root stubs
 - [ ] Patch 3 — Update references and workflow docs to new paths
 - [ ] Patch 4 — Add docs topology quality gate

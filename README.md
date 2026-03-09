@@ -285,6 +285,7 @@ Main project documentation:
 
 - `docs/architecture/ARCHITECTURE_V3.md`
 - `docs/architecture/REQUIRED_CHECKS_MATRIX.md`
+- `docs/development/DOCS_TOPOLOGY_POLICY.md`
 - `docs/api/README.md`
 - `docs/installation/`
 - `docs/roadmaps/pro-v3.1.md`

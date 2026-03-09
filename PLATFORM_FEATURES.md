@@ -94,6 +94,11 @@ AI-Agent-Hub-V3 is a modular AI platform for production-grade agent systems with
 - [x] Required checks consolidation deterministic gates (A2.31 patch 3)
 - [x] CI wiring for consolidated required checks matrix (A2.31 patch 4)
 - [x] Required checks docs/policy closure (A2.31 patch 5)
+- [x] Docs topology map and compatibility policy (A2.32 patch 1)
+- [ ] Docs migration to target topology with root stubs (A2.32 patch 2)
+- [ ] Docs references/workflow path alignment (A2.32 patch 3)
+- [ ] Docs topology quality gate (A2.32 patch 4)
+- [ ] Docs topology closure and policy sync (A2.32 patch 5)
 
 ### 7) Interface Layer
 
