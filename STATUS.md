@@ -20,7 +20,7 @@ Current progress:
 - Patch 2 complete: documents and vector-search UI journeys wired with upload/list/delete and result rendering.
 - Patch 3 complete: answer flow wired to `/api/v1/answer` with diagnostics JSON panel and confidence/warnings view.
 - Patch 4 complete: workspace/session context controls, local persistence, and per-journey loading states added.
-- Patch 5 pending.
+- Patch 5 complete: deterministic UI quality gate script and CI interface-gate workflow wiring added.
 
 Focus:
 - interface baseline with stable shell and backend health visibility
@@ -34,7 +34,7 @@ Execution discipline:
 TBD — Post-A2.28 planning
 
 Planned focus:
-- interface quality gate and production-ready UX hardening
+- post-A2.28 anchor planning
 
 ## CI Status
 

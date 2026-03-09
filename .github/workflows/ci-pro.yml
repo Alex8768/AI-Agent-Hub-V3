@@ -102,6 +102,33 @@ jobs:
           path: release-gate-report.json
           if-no-files-found: error
 
+  interface-gate:
+    name: ubuntu-latest / node20 / interface-gate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install frontend deps
+        shell: bash
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build frontend
+        shell: bash
+        working-directory: frontend
+        run: npm run build
+
+      - name: Run interface quality gate
+        shell: bash
+        working-directory: frontend
+        run: npm run quality-gate
+
   qdrant-it:
     name: ubuntu-latest / py3.12 / qdrant-it
     runs-on: ubuntu-latest

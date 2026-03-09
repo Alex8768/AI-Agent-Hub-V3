@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "quality-gate": "node ./scripts/ui_quality_gate.mjs",
     "lint": "eslint .",
     "preview": "vite preview"
   },

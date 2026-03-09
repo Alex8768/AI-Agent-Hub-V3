@@ -45,7 +45,7 @@ Planned files:
 - [x] Patch 2 — Documents + search journey wiring
 - [x] Patch 3 — Answer + diagnostics journey wiring
 - [x] Patch 4 — Session/workspace UX hardening
-- [ ] Patch 5 — UI quality gate
+- [x] Patch 5 — UI quality gate
 
 ### Out of Scope
 

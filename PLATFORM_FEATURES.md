@@ -83,7 +83,8 @@ AI-Agent-Hub-V3 is a modular AI platform for production-grade agent systems with
 
 - [x] First-party web interface (workspace/session UX) (A2.28 patch 4: context controls + local persistence + loading hardening)
 - [x] Answer/debug diagnostics panel (A2.28 patch 3)
-- [ ] Document/search/answer end-user flows
+- [x] Document/search/answer end-user flows (A2.28 patches 2-4)
+- [x] UI deterministic quality gate + CI interface smoke wiring (A2.28 patch 5)
 
 ---
 
