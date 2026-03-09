@@ -43,6 +43,12 @@ class SearchResult(BaseModel):
     source_document: Optional[str] = None
     metadata: Dict[str, Any] = Field(default_factory=dict)
 
+class HybridSearchResponse(BaseModel):
+    results: List[SearchResult] = Field(default_factory=list)
+    graph: Dict[str, Any] = Field(default_factory=dict)
+    evidence: List[Dict[str, Any]] = Field(default_factory=list)
+    stats: Dict[str, Any] = Field(default_factory=dict)
+
 class ExportRequest(BaseModel):
     document_id: Optional[str] = None
     content: Optional[str] = None

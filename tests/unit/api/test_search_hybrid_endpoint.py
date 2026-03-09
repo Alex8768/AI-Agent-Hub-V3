@@ -107,3 +107,40 @@ def test_search_hybrid_endpoint_contract(monkeypatch):
     # Restore best-effort
     monkeypatch.setattr(s, "feature_hybrid_search_api", prev_hybrid_api, raising=False)
     monkeypatch.setattr(s, "feature_graphrag", prev_graphrag, raising=False)
+
+
+def test_search_hybrid_endpoint_sanitizes_non_contract_payload(monkeypatch):
+    app = app_main.app
+    from src.core.config import get_settings
+
+    s = get_settings()
+    monkeypatch.setattr(s, "feature_hybrid_search_api", True, raising=False)
+    monkeypatch.setattr(s, "feature_graphrag", True, raising=False)
+
+    import src.api.dependencies_impl as deps
+
+    async def _ws(workspace_id=None, user=None):
+        return "default"
+
+    monkeypatch.setattr(deps, "get_workspace", _ws, raising=True)
+
+    async def _fake_retrieve(self, **kwargs):
+        return {
+            "vector_results": [],
+            "graph": "unexpected",
+            "evidence": {"unexpected": True},
+            "stats": "unexpected",
+        }
+
+    import src.layers.pro.rag.retrieval.hybrid_retriever as hr
+
+    monkeypatch.setattr(hr.HybridRetriever, "retrieve", _fake_retrieve, raising=True)
+
+    client = TestClient(app)
+    r = client.post("/api/v1/search-hybrid", json={"query": "hello"})
+    assert r.status_code == 200
+    data = r.json()
+    assert data["results"] == []
+    assert data["graph"] == {}
+    assert data["evidence"] == []
+    assert data["stats"] == {}
