@@ -290,9 +290,10 @@ Main project documentation:
 - `docs/installation/`
 - `docs/roadmaps/pro-v3.1.md`
 - `docs/snapshots/`
-- `STATUS.md`
-- `PROJECT_ANCHOR.md`
-- `PROJECT_CHECKLIST.md`
+- `docs/development/STATUS.md`
+- `docs/development/PROJECT_ANCHOR.md`
+- `docs/development/PROJECT_CHECKLIST.md`
+- `docs/architecture/PLATFORM_FEATURES.md`
 
 ## Tech stack
 

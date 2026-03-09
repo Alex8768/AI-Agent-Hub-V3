@@ -18,7 +18,8 @@ A2.32 — Docs Topology Cleanup (root -> docs/architecture + docs/development)
 Current progress:
 - Patch 1 complete: docs topology map and compatibility policy introduced.
 - Patch 2 complete: roadmap docs moved to target topology with root stubs.
-- Patch 3 next: update references/workflow docs to canonical moved paths.
+- Patch 3 complete: references/workflow docs aligned to canonical moved paths.
+- Patch 4 next: add deterministic docs topology quality gate.
 
 Focus:
 - move root docs without breaking current root-based workflow commands

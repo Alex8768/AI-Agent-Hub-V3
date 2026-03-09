@@ -41,7 +41,7 @@
 
 - [x] Patch 1 — Introduce docs topology map and compatibility policy
 - [x] Patch 2 — Move roadmap docs with root compatibility stubs
-- [ ] Patch 3 — Update references/workflow docs to new paths
+- [x] Patch 3 — Update references/workflow docs to new paths
 - [ ] Patch 4 — Add docs topology quality gate
 - [ ] Patch 5 — Final docs policy alignment closure
 

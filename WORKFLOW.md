@@ -6,7 +6,7 @@ One patch = one reason.
 ## Work style
 Assistant analyzes, prepares autopatch and gives terminal commands.
 User executes commands in terminal.
-After each successful step, project anchor files must be updated.
+After each successful step, canonical project anchor docs must be updated.
 
 ## Standard loop
 
@@ -17,7 +17,7 @@ After each successful step, project anchor files must be updated.
 5. Run checks:
    python -m compileall -q src
    pytest -q
-6. If green -> update STATUS.md and PROJECT_CHECKLIST.md
+6. If green -> update `docs/development/STATUS.md` and `docs/development/PROJECT_CHECKLIST.md`
 7. Commit
 8. Move to next anchor
 
@@ -32,9 +32,9 @@ After each successful step, project anchor files must be updated.
 ## Anchor update rule
 
 After each completed anchor:
-- mark the anchor as DONE in PROJECT_CHECKLIST.md
+- mark the anchor as DONE in `docs/development/PROJECT_CHECKLIST.md`
 - move the next anchor to IN_PROGRESS if work starts immediately
-- update STATUS.md with:
+- update `docs/development/STATUS.md` with:
   - last completed anchor
   - current active anchor
   - next anchor

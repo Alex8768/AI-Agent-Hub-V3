@@ -13,7 +13,7 @@ existing workflows that still read root-level paths.
 - `docs/architecture/` - architecture and platform contracts
 - `docs/development/` - workflow, status, and contributor process docs
 
-## Root-to-Target Map (Planned)
+## Root-to-Target Map (Canonical)
 
 - `PROJECT_ANCHOR.md` -> `docs/development/PROJECT_ANCHOR.md`
 - `STATUS.md` -> `docs/development/STATUS.md`
@@ -30,6 +30,12 @@ During migration patches:
 4. Existing scripts/workflows that read root paths must continue to work.
 
 Compatibility stubs should stay minimal and deterministic to avoid drift.
+
+Current state (after Patch 2):
+
+- canonical docs are already moved to target paths;
+- root files are temporary compatibility stubs;
+- stubs are removed only in Patch 5 after reference and quality-gate alignment.
 
 ## Patch Discipline for A2.32
 
