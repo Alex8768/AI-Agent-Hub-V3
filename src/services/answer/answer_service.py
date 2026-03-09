@@ -332,6 +332,7 @@ def _apply_diagnostics(
                     "blocking_checks": [],
                     "minimum_pass_rate": 0.8,
                     "minimum_average_score": 0.7,
+                    "minimum_coverage_ratio": 0.0,
                     "allow_skipped": False,
                     "require_benchmark_summary": True,
                     "require_optimization_review": True,

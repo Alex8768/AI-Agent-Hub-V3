@@ -55,6 +55,7 @@ def decide_enterprise_release_gate(
         blocking_checks=policy.get("blocking_checks", []),
         minimum_pass_rate=policy.get("minimum_pass_rate", 0.9),
         minimum_average_score=policy.get("minimum_average_score", 0.8),
+        minimum_coverage_ratio=policy.get("minimum_coverage_ratio", 0.0),
         allow_skipped=policy.get("allow_skipped", False),
         require_benchmark_summary=policy.get("require_benchmark_summary", True),
         require_optimization_review=policy.get("require_optimization_review", True),
@@ -66,6 +67,9 @@ def decide_enterprise_release_gate(
             "self_check": {"status": dict(inputs.get("release_checks", {})).get("self_check", "missing")},
             "reasoning_benchmark": {
                 "summary": dict(inputs.get("benchmark_summary", {})),
+            },
+            "coverage": {
+                "line_rate": inputs.get("coverage_ratio", None),
             },
             "reasoning_optimization": {
                 "decision": dict(inputs.get("optimization_decision", {})),
@@ -90,6 +94,7 @@ def decide_enterprise_release_gate(
     total_cases = int(benchmark.get("total_cases", 0) or 0)
     pass_rate = float(benchmark.get("pass_rate", 0.0) or 0.0)
     average_score = float(benchmark.get("average_score", 0.0) or 0.0)
+    coverage_ratio = normalized_inputs.get("coverage_ratio", None)
     if bool(normalized_policy.get("require_benchmark_summary", True)) and total_cases <= 0:
         has_failures = True
         reasons.append("benchmark_summary_missing")
@@ -99,6 +104,14 @@ def decide_enterprise_release_gate(
     if average_score < float(normalized_policy.get("minimum_average_score", 0.0) or 0.0):
         has_failures = True
         reasons.append("benchmark_average_score_below_threshold")
+    minimum_coverage_ratio = float(normalized_policy.get("minimum_coverage_ratio", 0.0) or 0.0)
+    if minimum_coverage_ratio > 0.0:
+        if coverage_ratio is None:
+            has_failures = True
+            reasons.append("coverage_summary_missing")
+        elif float(coverage_ratio) < minimum_coverage_ratio:
+            has_failures = True
+            reasons.append("coverage_ratio_below_threshold")
 
     optimization_action = str(optimization.get("action", "defer") or "defer")
     if optimization_action == "reject":

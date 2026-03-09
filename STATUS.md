@@ -13,25 +13,28 @@ deterministic contract quality gates, migration-safe mapping adapters, and CI bo
 
 ## Current Active Anchor
 
-TBD — Post-A2.29 planning
+A2.30 — Coverage Enforcement in Release Gate
 
 Current progress:
-- A2.29 complete.
-- Next anchor selection pending.
+- Patch 1 complete: `minimum_coverage_ratio` policy field added and enforced in release-gate decision/readiness paths.
+- Patch 2 pending.
+- Patch 3 pending.
+- Patch 4 pending.
+- Patch 5 pending.
 
 Focus:
-- post-A2.29 roadmap cut and priority selection
-- first patch definition for next anchor
+- explicit coverage-threshold enforcement in enterprise release gates
+- deterministic coverage handling in policy/aggregator/decision contracts
 
 Execution discipline:
 - keep work strictly inside the active anchor and move in micro-patches.
 
 ## Next Anchor
 
-TBD — Post-A2.29 planning
+TBD — Post-A2.30 planning
 
 Planned focus:
-- select next highest-value anchor from readiness backlog
+- post-A2.30 anchor planning
 
 ## CI Status
 
@@ -41,4 +44,4 @@ The noop tracing span compatibility fix is completed and treated as closed work.
 
 ## Upcoming Anchors
 
-- TBD — Post-A2.29 planning
+- TBD — Post-A2.30 planning

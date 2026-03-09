@@ -57,6 +57,22 @@ def _normalize_optimization_action(value: object) -> str:
     return action
 
 
+def _normalize_optional_coverage_ratio(value: object) -> float | None:
+    if value is None:
+        return None
+    try:
+        parsed = float(value)  # type: ignore[arg-type]
+    except Exception:
+        return None
+    if parsed > 1.0:
+        parsed = parsed / 100.0
+    if parsed < 0.0:
+        return 0.0
+    if parsed > 1.0:
+        return 1.0
+    return float(parsed)
+
+
 def build_enterprise_readiness_contract(
     *,
     profile_name: object,
@@ -102,6 +118,7 @@ def build_enterprise_readiness_contract_from_diagnostics(
     )
     benchmark = dict(diag.get("reasoning_benchmark") or {})
     summary = dict(benchmark.get("summary") or {})
+    coverage = dict(diag.get("coverage") or {})
     optimization = dict(diag.get("reasoning_optimization") or {})
     optimization_decision = dict(optimization.get("decision") or {})
     checks_state = dict(diag.get("release_checks") or {})
@@ -112,10 +129,21 @@ def build_enterprise_readiness_contract_from_diagnostics(
     ]
     pass_rate = _normalize_float_01(summary.get("pass_rate", 0.0), default=0.0)
     average_score = _normalize_float_01(summary.get("average_score", 0.0), default=0.0)
+    coverage_ratio = _normalize_optional_coverage_ratio(
+        coverage.get(
+            "line_rate",
+            coverage.get("coverage_ratio", coverage.get("line_coverage_ratio", coverage.get("coverage_percent"))),
+        )
+    )
+    minimum_coverage_ratio = float(gate_policy.get("minimum_coverage_ratio", 0.0) or 0.0)
     release_gate_passed = (
         len(failed_checks) == 0
         and pass_rate >= float(gate_policy.get("minimum_pass_rate", 0.0) or 0.0)
         and average_score >= float(gate_policy.get("minimum_average_score", 0.0) or 0.0)
+        and (
+            minimum_coverage_ratio <= 0.0
+            or (coverage_ratio is not None and float(coverage_ratio) >= minimum_coverage_ratio)
+        )
     )
     reasons: list[str] = []
     if failed_checks:
@@ -124,6 +152,11 @@ def build_enterprise_readiness_contract_from_diagnostics(
         reasons.append("benchmark_pass_rate_below_threshold")
     if average_score < float(gate_policy.get("minimum_average_score", 0.0) or 0.0):
         reasons.append("benchmark_average_score_below_threshold")
+    if minimum_coverage_ratio > 0.0:
+        if coverage_ratio is None:
+            reasons.append("coverage_summary_missing")
+        elif float(coverage_ratio) < minimum_coverage_ratio:
+            reasons.append("coverage_ratio_below_threshold")
     if bool(optimization_decision.get("requires_human_review", False)):
         reasons.append("optimization_requires_review")
     if str(optimization_decision.get("action", "") or "") == "reject":

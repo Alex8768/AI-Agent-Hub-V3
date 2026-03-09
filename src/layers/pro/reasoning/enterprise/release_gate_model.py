@@ -9,6 +9,7 @@ class EnterpriseReleaseGatePolicy(TypedDict):
     blocking_checks: list[str]
     minimum_pass_rate: float
     minimum_average_score: float
+    minimum_coverage_ratio: float
     allow_skipped: bool
     require_benchmark_summary: bool
     require_optimization_review: bool
@@ -43,6 +44,7 @@ def build_enterprise_release_gate_policy(
     blocking_checks: object = None,
     minimum_pass_rate: object = 0.9,
     minimum_average_score: object = 0.8,
+    minimum_coverage_ratio: object = 0.0,
     allow_skipped: object = False,
     require_benchmark_summary: object = True,
     require_optimization_review: object = True,
@@ -59,6 +61,7 @@ def build_enterprise_release_gate_policy(
         "blocking_checks": normalized_blocking_checks,
         "minimum_pass_rate": _normalize_float_01(minimum_pass_rate, default=0.9),
         "minimum_average_score": _normalize_float_01(minimum_average_score, default=0.8),
+        "minimum_coverage_ratio": _normalize_float_01(minimum_coverage_ratio, default=0.0),
         "allow_skipped": bool(allow_skipped),
         "require_benchmark_summary": bool(require_benchmark_summary),
         "require_optimization_review": bool(require_optimization_review),
@@ -76,6 +79,7 @@ def build_enterprise_release_gate_policy_from_dict(
         blocking_checks=raw.get("blocking_checks", []),
         minimum_pass_rate=raw.get("minimum_pass_rate", 0.9),
         minimum_average_score=raw.get("minimum_average_score", 0.8),
+        minimum_coverage_ratio=raw.get("minimum_coverage_ratio", 0.0),
         allow_skipped=raw.get("allow_skipped", False),
         require_benchmark_summary=raw.get("require_benchmark_summary", True),
         require_optimization_review=raw.get("require_optimization_review", True),

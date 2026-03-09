@@ -249,6 +249,7 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
         "blocking_checks",
         "minimum_pass_rate",
         "minimum_average_score",
+        "minimum_coverage_ratio",
         "allow_skipped",
         "require_benchmark_summary",
         "require_optimization_review",

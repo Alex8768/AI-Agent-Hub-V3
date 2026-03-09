@@ -14,6 +14,7 @@ def test_build_enterprise_release_gate_policy_defaults():
         "blocking_checks": [],
         "minimum_pass_rate": 0.9,
         "minimum_average_score": 0.8,
+        "minimum_coverage_ratio": 0.0,
         "allow_skipped": False,
         "require_benchmark_summary": True,
         "require_optimization_review": True,
@@ -28,6 +29,7 @@ def test_build_enterprise_release_gate_policy_normalizes_values():
         blocking_checks=[],
         minimum_pass_rate="1.4",
         minimum_average_score="-2",
+        minimum_coverage_ratio="95",
         allow_skipped=1,
         require_benchmark_summary=0,
         require_optimization_review=True,
@@ -39,6 +41,7 @@ def test_build_enterprise_release_gate_policy_normalizes_values():
         "blocking_checks": ["ci/lint", "ci/test"],
         "minimum_pass_rate": 1.0,
         "minimum_average_score": 0.0,
+        "minimum_coverage_ratio": 1.0,
         "allow_skipped": True,
         "require_benchmark_summary": False,
         "require_optimization_review": True,
@@ -54,6 +57,7 @@ def test_build_enterprise_release_gate_policy_from_dict_parses_payload():
             "blocking_checks": ["check_a"],
             "minimum_pass_rate": 0.95,
             "minimum_average_score": 0.9,
+            "minimum_coverage_ratio": 0.85,
             "allow_skipped": False,
             "require_benchmark_summary": True,
             "require_optimization_review": False,
@@ -65,6 +69,7 @@ def test_build_enterprise_release_gate_policy_from_dict_parses_payload():
     assert policy["blocking_checks"] == ["check_a"]
     assert policy["minimum_pass_rate"] == 0.95
     assert policy["minimum_average_score"] == 0.9
+    assert policy["minimum_coverage_ratio"] == 0.85
     assert policy["allow_skipped"] is False
     assert policy["require_benchmark_summary"] is True
     assert policy["require_optimization_review"] is False

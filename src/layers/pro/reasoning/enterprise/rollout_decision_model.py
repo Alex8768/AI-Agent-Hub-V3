@@ -97,6 +97,7 @@ def decide_enterprise_rollout_action(
         blocking_checks=policy.get("blocking_checks", []),
         minimum_pass_rate=policy.get("minimum_pass_rate", 0.9),
         minimum_average_score=policy.get("minimum_average_score", 0.8),
+        minimum_coverage_ratio=policy.get("minimum_coverage_ratio", 0.0),
         allow_skipped=policy.get("allow_skipped", False),
         require_benchmark_summary=policy.get("require_benchmark_summary", True),
         require_optimization_review=policy.get("require_optimization_review", True),

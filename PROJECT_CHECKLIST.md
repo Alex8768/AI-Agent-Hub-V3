@@ -35,14 +35,17 @@
 - [x] A2.28 Interface Foundation (MVP)
 - [x] A2.29 Service Contract Boundary Cleanup (Search)
 
-## Current Work — Post-A2.29 planning
+## Current Work — A2.30 Coverage Enforcement in Release Gate
 
-- [ ] Select next anchor
-- [ ] Define patch plan for next anchor
+- [x] Patch 1
+- [ ] Patch 2
+- [ ] Patch 3
+- [ ] Patch 4
+- [ ] Patch 5
 
 ## Next
 
-- [ ] Start next anchor Patch 1
+- [ ] Post-A2.30 anchor planning
 
 ## Later
 

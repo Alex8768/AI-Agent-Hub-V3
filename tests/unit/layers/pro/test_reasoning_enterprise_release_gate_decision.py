@@ -18,6 +18,7 @@ def _policy():
         blocking_checks=["verify", "self_check"],
         minimum_pass_rate=0.8,
         minimum_average_score=0.7,
+        minimum_coverage_ratio=0.8,
         allow_skipped=False,
         require_benchmark_summary=True,
         require_optimization_review=True,
@@ -33,6 +34,7 @@ def test_decide_enterprise_release_gate_is_deterministic():
             "reasoning_benchmark": {
                 "summary": {"suite_name": "s", "total_cases": 10, "passed_cases": 9, "pass_rate": 0.9, "average_score": 0.85}
             },
+            "coverage": {"line_rate": 0.9},
             "reasoning_optimization": {"decision": {"action": "approve", "requires_human_review": False}},
         },
         warnings=[],
@@ -51,6 +53,7 @@ def test_decide_enterprise_release_gate_fails_on_thresholds_and_blocking_checks(
             "reasoning_benchmark": {
                 "summary": {"suite_name": "s", "total_cases": 5, "passed_cases": 2, "pass_rate": 0.4, "average_score": 0.5}
             },
+            "coverage": {"line_rate": 0.5},
             "reasoning_optimization": {"decision": {"action": "approve", "requires_human_review": False}},
         },
         warnings=[],
@@ -62,6 +65,7 @@ def test_decide_enterprise_release_gate_fails_on_thresholds_and_blocking_checks(
     assert "required_checks_failed" in decision["reason_codes"]
     assert "benchmark_pass_rate_below_threshold" in decision["reason_codes"]
     assert "benchmark_average_score_below_threshold" in decision["reason_codes"]
+    assert "coverage_ratio_below_threshold" in decision["reason_codes"]
     assert decision["blocking_checks"] == ["verify"]
 
 
@@ -72,6 +76,7 @@ def test_decide_enterprise_release_gate_warns_when_review_required():
         blocking_checks=["verify", "self_check"],
         minimum_pass_rate=0.8,
         minimum_average_score=0.7,
+        minimum_coverage_ratio=0.8,
         allow_skipped=False,
         require_benchmark_summary=True,
         require_optimization_review=True,
@@ -84,6 +89,7 @@ def test_decide_enterprise_release_gate_warns_when_review_required():
             "reasoning_benchmark": {
                 "summary": {"suite_name": "s", "total_cases": 10, "passed_cases": 9, "pass_rate": 0.9, "average_score": 0.9}
             },
+            "coverage": {"line_rate": 0.92},
             "reasoning_optimization": {"decision": {"action": "defer", "requires_human_review": True}},
         },
         warnings=["minor_warning"],
@@ -94,3 +100,21 @@ def test_decide_enterprise_release_gate_warns_when_review_required():
     assert decision["recommended_action"] == "hold"
     assert "optimization_review_required" in decision["reason_codes"]
     assert "warnings_present" in decision["reason_codes"]
+
+
+def test_decide_enterprise_release_gate_fails_when_coverage_missing_and_required():
+    inputs = build_enterprise_release_gate_inputs(
+        diagnostics={
+            "verify": {"status": "pass"},
+            "self_check": {"status": "pass"},
+            "reasoning_benchmark": {
+                "summary": {"suite_name": "s", "total_cases": 10, "passed_cases": 9, "pass_rate": 0.9, "average_score": 0.9}
+            },
+            "reasoning_optimization": {"decision": {"action": "approve", "requires_human_review": False}},
+        },
+        warnings=[],
+        profile_name="enterprise_default",
+    )
+    decision = decide_enterprise_release_gate(inputs=inputs, policy=_policy(), decision_id="gate:coverage_missing")
+    assert decision["status"] == "fail"
+    assert "coverage_summary_missing" in decision["reason_codes"]

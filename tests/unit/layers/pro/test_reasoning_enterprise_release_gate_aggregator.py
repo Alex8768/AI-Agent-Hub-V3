@@ -22,6 +22,7 @@ def _diagnostics_payload() -> dict[str, object]:
                 "average_score": 0.81,
             }
         },
+        "coverage": {"line_rate": 0.86},
         "reasoning_optimization": {
             "decision": {
                 "action": "approve",
@@ -56,6 +57,7 @@ def test_build_enterprise_release_gate_inputs_normalizes_contract_shape():
         "profile_name",
         "release_checks",
         "benchmark_summary",
+        "coverage_ratio",
         "optimization_decision",
         "warnings",
         "warnings_count",
@@ -67,6 +69,7 @@ def test_build_enterprise_release_gate_inputs_normalizes_contract_shape():
     assert payload["release_checks"]["verify"] == "pass"
     assert payload["release_checks"]["self_check"] == "warn"
     assert payload["benchmark_summary"]["pass_rate"] == 0.8
+    assert payload["coverage_ratio"] == 0.86
     assert payload["optimization_decision"]["action"] == "approve"
 
 

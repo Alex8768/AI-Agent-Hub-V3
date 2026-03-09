@@ -22,6 +22,7 @@ def _policy():
         blocking_checks=["verify", "self_check"],
         minimum_pass_rate=0.8,
         minimum_average_score=0.7,
+        minimum_coverage_ratio=0.8,
         allow_skipped=False,
         require_benchmark_summary=True,
         require_optimization_review=True,
@@ -52,6 +53,7 @@ def _diagnostics_pass() -> dict[str, object]:
                 "average_score": 0.9,
             }
         },
+        "coverage": {"line_rate": 0.9},
         "reasoning_optimization": {
             "decision": {"action": "approve", "requires_human_review": False}
         },

@@ -320,6 +320,7 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
         "blocking_checks",
         "minimum_pass_rate",
         "minimum_average_score",
+        "minimum_coverage_ratio",
         "allow_skipped",
         "require_benchmark_summary",
         "require_optimization_review",

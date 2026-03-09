@@ -30,6 +30,7 @@ class EnterpriseReleaseGateInputs(TypedDict):
     profile_name: str
     release_checks: dict[str, str]
     benchmark_summary: EnterpriseReleaseGateBenchmarkSummary
+    coverage_ratio: float | None
     optimization_decision: EnterpriseReleaseGateOptimizationDecision
     warnings: list[str]
     warnings_count: int
@@ -79,6 +80,22 @@ def _normalize_optimization_action(value: object) -> str:
     return "defer"
 
 
+def _normalize_optional_coverage_ratio(value: object) -> float | None:
+    if value is None:
+        return None
+    try:
+        parsed = float(value)  # type: ignore[arg-type]
+    except Exception:
+        return None
+    if parsed > 1.0:
+        parsed = parsed / 100.0
+    if parsed < 0.0:
+        return 0.0
+    if parsed > 1.0:
+        return 1.0
+    return float(parsed)
+
+
 def build_enterprise_release_gate_inputs(
     *,
     diagnostics: dict[str, object] | None,
@@ -91,6 +108,7 @@ def build_enterprise_release_gate_inputs(
     self_check = dict(diag.get("self_check") or {})
     benchmark = dict(diag.get("reasoning_benchmark") or {})
     benchmark_summary = dict(benchmark.get("summary") or {})
+    coverage = dict(diag.get("coverage") or {})
     optimization = dict(diag.get("reasoning_optimization") or {})
     optimization_decision = dict(optimization.get("decision") or {})
 
@@ -127,6 +145,12 @@ def build_enterprise_release_gate_inputs(
             "pass_rate": _normalize_float_01(benchmark_summary.get("pass_rate", 0.0), default=0.0),
             "average_score": _normalize_float_01(benchmark_summary.get("average_score", 0.0), default=0.0),
         },
+        "coverage_ratio": _normalize_optional_coverage_ratio(
+            coverage.get(
+                "line_rate",
+                coverage.get("coverage_ratio", coverage.get("line_coverage_ratio", coverage.get("coverage_percent"))),
+            )
+        ),
         "optimization_decision": {
             "action": _normalize_optimization_action(optimization_decision.get("action", "defer")),
             "requires_human_review": bool(optimization_decision.get("requires_human_review", False)),

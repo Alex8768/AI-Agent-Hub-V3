@@ -2,46 +2,68 @@
 
 ## Active Anchor
 
-TBD — Post-A2.29 planning
+A2.30 — Coverage Enforcement in Release Gate
 
 ### Goal
 
-Define and prioritize the next anchor after completion of A2.29.
+Introduce explicit coverage-threshold policy in enterprise release gates.
 
 ### Architecture Position
 
 Planned modules:
 
-TBD
+`src/layers/pro/reasoning/enterprise/`
+`tests/unit/layers/pro/`
 
 Planned files:
-- TBD
+- `src/layers/pro/reasoning/enterprise/release_gate_model.py`
+- `src/layers/pro/reasoning/enterprise/release_gate_aggregator.py`
+- `src/layers/pro/reasoning/enterprise/release_gate_decision.py`
 
 ### Patch Plan
 
-#### Patch plan
-- TBD
+#### Patch 1 — Coverage threshold policy contract
+- Add `minimum_coverage_ratio` policy field and enforce it in release-gate decision path.
+
+#### Patch 2 — Coverage diagnostics source hardening
+- Normalize coverage inputs from diagnostics and ensure deterministic fallback behavior.
+
+#### Patch 3 — Coverage quality-gate tests
+- Add deterministic contract tests for missing/below/meeting coverage threshold.
+
+#### Patch 4 — CI/report alignment for coverage policy
+- Extend release-gate CI/report wiring with coverage field propagation.
+
+#### Patch 5 — Docs and roadmap sync
+- Finalize anchor docs/checklist/status and capture rollout guidance.
 
 ### Progress
 
-- [ ] TBD
+- [x] Patch 1 — Coverage threshold policy contract
+- [ ] Patch 2 — Coverage diagnostics source hardening
+- [ ] Patch 3 — Coverage quality-gate tests
+- [ ] Patch 4 — CI/report alignment for coverage policy
+- [ ] Patch 5 — Docs and roadmap sync
 
 ### Out of Scope
 
-Do NOT modify during planning:
-- existing stable contracts without explicit patch scope
-- unrelated subsystems outside next selected anchor
+Do NOT modify during A2.30:
+- search endpoint behavior and contracts
+- OCR pipeline
+- UI scope
+- unrelated reasoning modules outside release-gate path
 
 ### Definition of Done
 
-Planning is complete when:
-- next anchor is selected with explicit patch plan
-- scope and out-of-scope are documented
-- first patch is ready to execute
+A2.30 is complete when:
+- coverage threshold policy is explicit and normalized
+- missing/below coverage is fail-safe in release-gate decisions
+- coverage enforcement is covered by deterministic tests
+- CI release-gate path is aligned with new policy
 
 ## Next Anchor
 
-TBD — Post-A2.29 planning
+TBD — Post-A2.30 planning
 
 ### Discipline
 
