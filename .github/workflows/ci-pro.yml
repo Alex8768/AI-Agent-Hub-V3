@@ -32,6 +32,7 @@ jobs:
             tests/unit/layers/pro/test_reasoning_enterprise_required_checks_policy.py \
             tests/unit/layers/pro/test_reasoning_enterprise_release_gate_aggregator.py \
             tests/unit/layers/pro/test_reasoning_enterprise_release_gate_decision.py \
+            tests/unit/layers/pro/test_reasoning_enterprise_release_gate_coverage_quality_gate.py \
             tests/unit/layers/pro/test_reasoning_enterprise_productization_quality_gate.py
 
       - name: Build release-gate report artifact
@@ -57,6 +58,9 @@ jobs:
                       "average_score": 0.9,
                   }
               },
+              "coverage": {
+                  "line_rate": 0.92,
+              },
               "reasoning_optimization": {
                   "decision": {"action": "approve", "requires_human_review": False}
               },
@@ -67,6 +71,7 @@ jobs:
               blocking_checks=["verify", "self_check"],
               minimum_pass_rate=0.8,
               minimum_average_score=0.7,
+              minimum_coverage_ratio=0.85,
               allow_skipped=False,
               require_benchmark_summary=True,
               require_optimization_review=True,
@@ -86,6 +91,7 @@ jobs:
               "profile_name": policy["profile_name"],
               "required_checks": policy["required_checks"],
               "release_checks": inputs["release_checks"],
+              "coverage_ratio": inputs.get("coverage_ratio"),
               "required_checks_evaluation": inputs["required_checks_evaluation"],
               "decision": decision,
           }

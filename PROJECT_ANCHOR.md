@@ -42,7 +42,7 @@ Planned files:
 - [x] Patch 1 — Coverage threshold policy contract
 - [x] Patch 2 — Coverage diagnostics source hardening
 - [x] Patch 3 — Coverage quality-gate tests
-- [ ] Patch 4 — CI/report alignment for coverage policy
+- [x] Patch 4 — CI/report alignment for coverage policy
 - [ ] Patch 5 — Docs and roadmap sync
 
 ### Out of Scope
