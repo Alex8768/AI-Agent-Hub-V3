@@ -357,6 +357,38 @@ def _apply_diagnostics(
             },
         )
         diag.setdefault(
+            "meta_cognition",
+            {
+                "uncertainty": {
+                    "status": "low",
+                    "uncertainty_score": 0.0,
+                    "signals": [],
+                    "reason_codes": [],
+                    "warnings": list(getattr(resp, "warnings", []) or []),
+                },
+                "gap_map": {
+                    "session_id": str(diag.get("session_id", "") or ""),
+                    "status": "clear",
+                    "total_gaps": 0,
+                    "high_priority_gaps": 0,
+                    "coverage_score": 1.0,
+                    "gaps": [],
+                    "reason_codes": [],
+                    "warnings": list(getattr(resp, "warnings", []) or []),
+                },
+                "reflection": {
+                    "status": "ready",
+                    "confidence_score": 1.0,
+                    "uncertainty_score": 0.0,
+                    "coverage_score": 1.0,
+                    "insight_count": 0,
+                    "insights": [],
+                    "reason_codes": [],
+                    "warnings": list(getattr(resp, "warnings", []) or []),
+                },
+            },
+        )
+        diag.setdefault(
             "reasoning_trace",
             {
                 "query": str(getattr(req, "query", "") or ""),

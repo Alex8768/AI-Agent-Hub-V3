@@ -83,6 +83,7 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
         "reasoning_benchmark",
         "reasoning_optimization",
         "enterprise_productization",
+        "meta_cognition",
         "reasoning_trace",
         "reasoning_timeline",
         "verify",
@@ -275,6 +276,38 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
         "reason_codes",
         "confidence",
         "requires_human_approval",
+    }
+    mc = dict(diag.get("meta_cognition") or {})
+    assert set(mc.keys()) == {"uncertainty", "gap_map", "reflection"}
+    mc_uncertainty = dict(mc.get("uncertainty") or {})
+    assert set(mc_uncertainty.keys()) == {
+        "status",
+        "uncertainty_score",
+        "signals",
+        "reason_codes",
+        "warnings",
+    }
+    mc_gap_map = dict(mc.get("gap_map") or {})
+    assert set(mc_gap_map.keys()) == {
+        "session_id",
+        "status",
+        "total_gaps",
+        "high_priority_gaps",
+        "coverage_score",
+        "gaps",
+        "reason_codes",
+        "warnings",
+    }
+    mc_reflection = dict(mc.get("reflection") or {})
+    assert set(mc_reflection.keys()) == {
+        "status",
+        "confidence_score",
+        "uncertainty_score",
+        "coverage_score",
+        "insight_count",
+        "insights",
+        "reason_codes",
+        "warnings",
     }
     rt = dict(diag.get("reasoning_trace") or {})
     assert set(rt.keys()) == {

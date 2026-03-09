@@ -61,6 +61,9 @@ from src.layers.pro.reasoning.enterprise.release_gate_model import (
 from src.layers.pro.reasoning.enterprise.rollout_decision_model import (
     decide_enterprise_rollout_action,
 )
+from src.layers.pro.meta_cognition.gaps import build_gap_map
+from src.layers.pro.meta_cognition.reflection import build_reflection_report
+from src.layers.pro.meta_cognition.uncertainty import build_uncertainty_summary
 from src.layers.pro.reasoning.planner.planner import create_reasoning_plan
 from src.layers.pro.reasoning.planner.step_executor import execute_plan_steps
 from src.layers.pro.reasoning.tool_safety.runtime_guard import apply_tool_safety_runtime_guard
@@ -445,6 +448,131 @@ class ReasoningEngine:
         }
 
     @staticmethod
+    def _build_meta_cognition_diagnostics(
+        *,
+        diagnostics: dict[str, object],
+        warnings: list[str],
+    ) -> dict[str, object]:
+        reasoning_quality = dict(diagnostics.get("reasoning_quality") or {})
+        confidence = dict(reasoning_quality.get("confidence") or {})
+        coverage = dict(reasoning_quality.get("coverage") or {})
+        verify = dict(diagnostics.get("verify") or {})
+        self_check = dict(diagnostics.get("self_check") or {})
+
+        confidence_score = float(confidence.get("confidence_score", 0.0) or 0.0)
+        coverage_score = float(coverage.get("coverage_score", 0.0) or 0.0)
+        missing_claims = int(confidence.get("missing_claims", 0) or 0)
+        unsupported_claims = int(confidence.get("unsupported_claims", 0) or 0)
+
+        uncertainty_signals: list[dict[str, object]] = []
+        if confidence_score < 0.6:
+            uncertainty_signals.append(
+                {
+                    "code": "low_confidence",
+                    "severity": "high" if confidence_score < 0.4 else "medium",
+                    "confidence": confidence_score,
+                    "source": "reasoning_quality",
+                    "message": "Reasoning confidence below target",
+                }
+            )
+        if str(verify.get("status", "") or "") == "warn":
+            uncertainty_signals.append(
+                {
+                    "code": "verify_warn",
+                    "severity": "medium",
+                    "confidence": max(0.0, 1.0 - float(len(verify.get("reasons") or [])) * 0.25),
+                    "source": "verify",
+                    "message": "Verify preflight produced warning status",
+                }
+            )
+        if str(self_check.get("status", "") or "") == "warn":
+            uncertainty_signals.append(
+                {
+                    "code": "self_check_warn",
+                    "severity": "medium",
+                    "confidence": max(0.0, 1.0 - float(len(self_check.get("reasons") or [])) * 0.25),
+                    "source": "self_check",
+                    "message": "Self-check reported warning status",
+                }
+            )
+        uncertainty = build_uncertainty_summary(
+            signals=uncertainty_signals,
+            warnings=list(warnings or []),
+        )
+
+        gaps_raw: list[dict[str, object]] = []
+        if missing_claims > 0:
+            gaps_raw.append(
+                {
+                    "gap_id": "gap:missing_claims",
+                    "topic": "evidence coverage",
+                    "gap_type": "missing_data",
+                    "confidence": min(1.0, 0.5 + (missing_claims * 0.1)),
+                    "evidence_refs": [],
+                    "source": "reasoning_quality",
+                    "message": "Missing evidence-backed claims detected",
+                }
+            )
+        if unsupported_claims > 0:
+            gaps_raw.append(
+                {
+                    "gap_id": "gap:unsupported_claims",
+                    "topic": "claim support",
+                    "gap_type": "low_confidence",
+                    "confidence": min(1.0, 0.5 + (unsupported_claims * 0.1)),
+                    "evidence_refs": [],
+                    "source": "reasoning_quality",
+                    "message": "Unsupported claims detected",
+                }
+            )
+        if coverage_score < 0.6:
+            gaps_raw.append(
+                {
+                    "gap_id": "gap:coverage",
+                    "topic": "retrieval coverage",
+                    "gap_type": "missing_data",
+                    "confidence": max(0.0, 1.0 - coverage_score),
+                    "evidence_refs": [],
+                    "source": "reasoning_quality",
+                    "message": "Coverage score below target",
+                }
+            )
+        gap_map = build_gap_map(
+            session_id=str(diagnostics.get("session_id", "") or ""),
+            gaps=gaps_raw,
+            warnings=list(warnings or []),
+        )
+
+        insights: list[dict[str, object]] = []
+        if str(uncertainty.get("status", "") or "") == "high":
+            insights.append(
+                {
+                    "code": "reflection_uncertainty_high",
+                    "message": "High uncertainty requires additional verification",
+                    "severity": "high",
+                }
+            )
+        if str(gap_map.get("status", "") or "") == "needs_attention":
+            insights.append(
+                {
+                    "code": "reflection_gap_attention",
+                    "message": "High-priority knowledge gaps require remediation",
+                    "severity": "high",
+                }
+            )
+        reflection = build_reflection_report(
+            uncertainty_summary=uncertainty,
+            gap_map=gap_map,
+            insights=insights,
+            warnings=list(warnings or []),
+        )
+        return {
+            "uncertainty": dict(uncertainty),
+            "gap_map": dict(gap_map),
+            "reflection": dict(reflection),
+        }
+
+    @staticmethod
     def _build_multi_agent_coordination_plan_for_runtime(
         *,
         step_descriptions: list[str],
@@ -720,6 +848,10 @@ class ReasoningEngine:
                 diagnostics=diag,
                 warnings=list(getattr(resp, "warnings", []) or []),
             )
+            diag["meta_cognition"] = self._build_meta_cognition_diagnostics(
+                diagnostics=diag,
+                warnings=list(getattr(resp, "warnings", []) or []),
+            )
             diag["reasoning_timeline"] = dict(
                 (dict(diag.get("reasoning_trace") or {}).get("timeline") or {})
             )
@@ -900,6 +1032,13 @@ class ReasoningEngine:
             diag.setdefault(
                 "enterprise_productization",
                 self._build_enterprise_productization_diagnostics(
+                    diagnostics=diag,
+                    warnings=list(getattr(resp, "warnings", []) or []),
+                ),
+            )
+            diag.setdefault(
+                "meta_cognition",
+                self._build_meta_cognition_diagnostics(
                     diagnostics=diag,
                     warnings=list(getattr(resp, "warnings", []) or []),
                 ),
