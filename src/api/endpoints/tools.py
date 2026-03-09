@@ -3,7 +3,8 @@ from __future__ import annotations
 from fastapi import APIRouter, HTTPException, Request
 
 from src.core.config import get_settings
-from src.mcp_protocol import MCPToolRegistry, build_mcp_tool_discovery_payload, execute_mcp_tool_with_safety
+from src.mcp_protocol import MCPToolRegistry, build_mcp_tool_discovery_payload
+from src.mcp_protocol.mcp_runtime import execute_mcp_tool_with_safety
 
 router = APIRouter(tags=["Tools"])
 
