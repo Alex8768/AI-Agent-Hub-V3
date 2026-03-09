@@ -5,11 +5,19 @@ from typing import Any, Dict, List
 from fastapi import Request
 from loguru import logger
 
-from src.api.schemas import SearchRequest, SearchResult
 from src.observability.request_context import get_request_id
+from src.services.search.contracts import SearchServiceRequest, SearchServiceResult
 
 
-def log_observability(http: Request, *, workspace_id: str, req: SearchRequest, kind: str) -> None:
+def _coerce_request(request: Any) -> SearchServiceRequest:
+    if isinstance(request, SearchServiceRequest):
+        return request
+    if isinstance(request, dict):
+        return SearchServiceRequest.model_validate(request)
+    return SearchServiceRequest.model_validate(request, from_attributes=True)
+
+
+def log_observability(http: Request, *, workspace_id: str, req: SearchServiceRequest, kind: str) -> None:
     try:
         rid = get_request_id(http)
         logger.info(
@@ -27,8 +35,8 @@ def log_observability(http: Request, *, workspace_id: str, req: SearchRequest, k
 class SearchService:
     """Composition-friendly orchestration for /search and /search-hybrid endpoints."""
 
-    def _format_results(self, results: list[Any], request: SearchRequest) -> List[SearchResult]:
-        response: List[SearchResult] = []
+    def _format_results(self, results: list[Any], request: SearchServiceRequest) -> List[SearchServiceResult]:
+        response: List[SearchServiceResult] = []
         for r in results or []:
             if not getattr(r, "document", None):
                 continue
@@ -39,7 +47,7 @@ class SearchService:
             snippet = content[: int(getattr(request, "snippet_len", 200) or 200)]
 
             response.append(
-                SearchResult(
+                SearchServiceResult(
                     document_id=metadata.get("document_id", ""),
                     chunk_id=getattr(doc, "id", ""),
                     score=float(getattr(r, "score", 0.0) or 0.0),
@@ -54,37 +62,39 @@ class SearchService:
     async def search(
         self,
         http: Request,
-        request: SearchRequest,
+        request: SearchServiceRequest | dict[str, Any] | Any,
         *,
         workspace_id: str,
         engine: Any | None = None,
-    ) -> List[SearchResult]:
-        log_observability(http, workspace_id=workspace_id, req=request, kind="vector")
+    ) -> List[SearchServiceResult]:
+        req = _coerce_request(request)
+        log_observability(http, workspace_id=workspace_id, req=req, kind="vector")
 
         from src.layers.base.rag.engines.rag_engine import RAGEngine
 
         engine = engine or getattr(http.app.state, "rag_engine", None) or RAGEngine()
 
         results = await engine.search(
-            query=request.query,
-            k=request.k,
-            filters=request.filters,
-            similarity_threshold=request.similarity_threshold,
+            query=req.query,
+            k=req.k,
+            filters=req.filters,
+            similarity_threshold=req.similarity_threshold,
             workspace_id=workspace_id,
         )
-        return self._format_results(results, request)
+        return self._format_results(results, req)
 
     async def search_hybrid(
         self,
         http: Request,
-        request: SearchRequest,
+        request: SearchServiceRequest | dict[str, Any] | Any,
         *,
         workspace_id: str,
         graph_depth: int = 1,
         engine: Any | None = None,
         retriever: Any | None = None,
     ) -> Dict[str, Any]:
-        log_observability(http, workspace_id=workspace_id, req=request, kind="hybrid")
+        req = _coerce_request(request)
+        log_observability(http, workspace_id=workspace_id, req=req, kind="hybrid")
 
         from src.layers.base.rag.engines.rag_engine import RAGEngine
         from src.layers.pro.rag.retrieval.hybrid_retriever import HybridRetriever
@@ -97,17 +107,17 @@ class SearchService:
         out = await retriever.retrieve(
             engine=engine,
             workspace_id=workspace_id,
-            query=request.query,
-            k=request.k,
-            filters=request.filters,
-            similarity_threshold=request.similarity_threshold,
+            query=req.query,
+            k=req.k,
+            filters=req.filters,
+            similarity_threshold=req.similarity_threshold,
             graph_depth=int(graph_depth or 1),
-            evidence_max_total=int(getattr(request, "evidence_max_total", 50) or 50),
-            evidence_max_chunks=getattr(request, "evidence_max_chunks", None),
-            evidence_max_memory=getattr(request, "evidence_max_memory", None),
-            evidence_max_edges=getattr(request, "evidence_max_edges", None),
-            evidence_dedupe=bool(getattr(request, "evidence_dedupe", True)),
-            evidence_rerank=bool(getattr(request, "evidence_rerank", True)),
+            evidence_max_total=int(req.evidence_max_total or 50),
+            evidence_max_chunks=req.evidence_max_chunks,
+            evidence_max_memory=req.evidence_max_memory,
+            evidence_max_edges=req.evidence_max_edges,
+            evidence_dedupe=bool(req.evidence_dedupe),
+            evidence_rerank=bool(req.evidence_rerank),
         )
 
         # out may be object-like or dict-like depending on retriever evolution
@@ -122,7 +132,7 @@ class SearchService:
             evidence = out.get("evidence")
             stats = out.get("stats")
 
-        response = self._format_results(list(vector_results or []), request)
+        response = self._format_results(list(vector_results or []), req)
 
         return {
             "results": response,

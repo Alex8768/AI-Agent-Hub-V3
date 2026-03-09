@@ -2,70 +2,71 @@
 
 ## Active Anchor
 
-A2.28 — Interface Foundation (MVP)
+A2.29 — Service Contract Boundary Cleanup (Search)
 
 ### Goal
 
-Establish a first-party interface foundation with a stable app shell and typed API
-contracts for core backend journeys.
+Remove service-to-API schema coupling in search flow by introducing service-neutral
+contracts and explicit API/service mapping boundaries.
 
 ### Architecture Position
 
 Planned modules:
 
-`frontend/src/contracts/`
-`frontend/src/lib/`
-`frontend/src/`
+`src/services/search/`
+`src/api/endpoints/`
 
 Planned files:
-- `frontend/src/contracts/api.ts`
-- `frontend/src/lib/apiClient.ts`
-- `frontend/src/App.tsx`
+- `src/services/search/contracts.py`
+- `src/services/search/search_service.py`
+- `src/api/endpoints/search.py`
+- `src/api/endpoints/search_hybrid.py`
 
 ### Patch Plan
 
-#### Patch 1 — UI shell + API contracts baseline
-- Add frontend app shell scaffold and typed API contract/client foundation.
+#### Patch 1 — Introduce service-neutral search contracts
+- Add service-level request/response DTOs and switch `SearchService` to those contracts.
 
-#### Patch 2 — Documents + search journey wiring
-- Add basic document and search screens wired to backend endpoints.
+#### Patch 2 — API/service mapping hardening
+- Add explicit endpoint mapping and preserve stable API response models.
 
-#### Patch 3 — Answer + diagnostics journey wiring
-- Add answer workflow UI with diagnostics panel baseline.
+#### Patch 3 — Search endpoint contract quality gate
+- Add deterministic tests for boundary and contract parity.
 
-#### Patch 4 — Session/workspace UX hardening
-- Add state persistence, loading/error states, and navigation hardening.
+#### Patch 4 — Cleanup and migration safety
+- Remove leftover boundary leaks and keep compatibility across retrieval paths.
 
-#### Patch 5 — UI quality gate
-- Add deterministic UI contract/smoke checks and release wiring for interface flow.
+#### Patch 5 — Docs + CI policy alignment
+- Align architecture docs/checklists and ensure CI coverage for the boundary rules.
 
 ### Progress
 
-- [x] Patch 1 — UI shell + API contracts baseline
-- [x] Patch 2 — Documents + search journey wiring
-- [x] Patch 3 — Answer + diagnostics journey wiring
-- [x] Patch 4 — Session/workspace UX hardening
-- [x] Patch 5 — UI quality gate
+- [x] Patch 1 — Introduce service-neutral search contracts
+- [ ] Patch 2 — API/service mapping hardening
+- [ ] Patch 3 — Search endpoint contract quality gate
+- [ ] Patch 4 — Cleanup and migration safety
+- [ ] Patch 5 — Docs + CI policy alignment
 
 ### Out of Scope
 
-Do NOT modify during A2.28:
-- Retrieval redesign
+Do NOT modify during A2.29:
+- Retrieval algorithm behavior
 - OCR pipeline
 - Config architecture
 - major reasoning graph redesign
+- UI feature scope
 
 ### Definition of Done
 
-A2.28 is complete when:
-- first-party interface shell is available
-- core document/search/answer user journeys are wired
-- diagnostics visibility is available in UI
-- UI quality gates validate contract and smoke path behavior
+A2.29 is complete when:
+- `SearchService` no longer imports `src.api.schemas`
+- API schemas remain stable for `/api/v1/search` and `/api/v1/search-hybrid`
+- service-neutral contracts own search service boundary
+- boundary quality gates are present and green
 
 ## Next Anchor
 
-TBD — Post-A2.28 planning
+TBD — Post-A2.29 planning
 
 ### Discipline
 
@@ -77,11 +78,11 @@ Work order is strict:
 
 ### Last Completed Anchor
 
-A2.27 — Architecture & Readiness Audit
+A2.28 — Interface Foundation (MVP)
 
 Completed via patches:
-- Patch 1 — architecture/readiness baseline snapshot
-- Patch 2 — component dependency and boundary review
-- Patch 3 — operational readiness review
-- Patch 4 — product readiness review
-- Patch 5 — consolidated audit report with A2.28 priority proposal
+- Patch 1 — UI shell + API contracts baseline
+- Patch 2 — Documents + search journey wiring
+- Patch 3 — Answer + diagnostics journey wiring
+- Patch 4 — Session/workspace UX hardening
+- Patch 5 — UI quality gate

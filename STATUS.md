@@ -6,35 +6,35 @@ Pro Layer Development — Reasoning Stabilization
 
 ## Last Completed Anchor
 
-A2.27 — Architecture & Readiness Audit
+A2.28 — Interface Foundation (MVP)
 
-Architecture/readiness audit completed with baseline snapshot, boundary review, operational
-and product readiness assessments, and consolidated priority proposal.
+Interface foundation completed with first-party frontend shell, core document/search/answer
+journeys, workspace/session UX hardening, and deterministic UI quality gate wiring in CI.
 
 ## Current Active Anchor
 
-A2.28 — Interface Foundation (MVP)
+A2.29 — Service Contract Boundary Cleanup (Search)
 
 Current progress:
-- Patch 1 complete: frontend shell scaffold added with typed API contracts and base API client.
-- Patch 2 complete: documents and vector-search UI journeys wired with upload/list/delete and result rendering.
-- Patch 3 complete: answer flow wired to `/api/v1/answer` with diagnostics JSON panel and confidence/warnings view.
-- Patch 4 complete: workspace/session context controls, local persistence, and per-journey loading states added.
-- Patch 5 complete: deterministic UI quality gate script and CI interface-gate workflow wiring added.
+- Patch 1 complete: service-neutral search contracts introduced and SearchService decoupled from API schemas.
+- Patch 2 pending.
+- Patch 3 pending.
+- Patch 4 pending.
+- Patch 5 pending.
 
 Focus:
-- interface baseline with stable shell and backend health visibility
-- staged wiring of document/search/answer user journeys
+- boundary cleanup in search service and API mapping stability
+- strict layering between API schemas and service contracts
 
 Execution discipline:
 - keep work strictly inside the active anchor and move in micro-patches.
 
 ## Next Anchor
 
-TBD — Post-A2.28 planning
+TBD — Post-A2.29 planning
 
 Planned focus:
-- post-A2.28 anchor planning
+- follow-up architecture hardening after boundary cleanup
 
 ## CI Status
 
@@ -44,4 +44,4 @@ The noop tracing span compatibility fix is completed and treated as closed work.
 
 ## Upcoming Anchors
 
-- TBD — Post-A2.28 planning
+- TBD — Post-A2.29 planning

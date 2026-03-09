@@ -32,18 +32,19 @@
 - [x] A2.25 MCP Ecosystem Expansion
 - [x] A2.26 Release Gates & CI Policy Hardening
 - [x] A2.27 Architecture & Readiness Audit
+- [x] A2.28 Interface Foundation (MVP)
 
-## Current Work — A2.28 Interface Foundation (MVP)
+## Current Work — A2.29 Service Contract Boundary Cleanup (Search)
 
 - [x] Patch 1
-- [x] Patch 2
-- [x] Patch 3
-- [x] Patch 4
-- [x] Patch 5
+- [ ] Patch 2
+- [ ] Patch 3
+- [ ] Patch 4
+- [ ] Patch 5
 
 ## Next
 
-- [ ] Post-A2.28 anchor planning
+- [ ] Post-A2.29 anchor planning
 
 ## Later
 

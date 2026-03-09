@@ -12,9 +12,14 @@ from loguru import logger
 from src.api.schemas import SearchRequest, SearchResult
 from src.api.dependencies import get_workspace
 from src.api.dependencies_impl import get_rag_engine
+from src.services.search.contracts import SearchServiceRequest
 from src.services.search.search_service import SearchService
 
 router = APIRouter(tags=["Search"])
+
+
+def _to_service_request(request: SearchRequest) -> SearchServiceRequest:
+    return SearchServiceRequest.model_validate(request.model_dump())
 
 
 @router.post("/api/v1/search", response_model=List[SearchResult])
@@ -26,7 +31,13 @@ async def search_documents(
 ):
     """Search documents using vector search."""
     try:
-        return await SearchService().search(http, request, workspace_id=workspace_id, engine=engine)
+        rows = await SearchService().search(
+            http,
+            _to_service_request(request),
+            workspace_id=workspace_id,
+            engine=engine,
+        )
+        return [SearchResult.model_validate(row.model_dump()) for row in rows]
     except Exception as e:
         logger.error(f"Search error: {e}")
         raise HTTPException(

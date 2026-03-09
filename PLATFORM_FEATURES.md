@@ -32,6 +32,7 @@ AI-Agent-Hub-V3 is a modular AI platform for production-grade agent systems with
 - [x] Vector search (FAISS)
 - [x] Hybrid retrieval
 - [x] Qdrant path
+- [x] Search service-neutral contracts boundary (A2.29 patch 1)
 - [ ] Retrieval eval benchmark suite
 - [ ] Adaptive retrieval policy optimizer
 
