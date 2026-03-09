@@ -39,7 +39,7 @@
 
 - [x] Patch 1
 - [x] Patch 2
-- [ ] Patch 3
+- [x] Patch 3
 - [ ] Patch 4
 - [ ] Patch 5
 
