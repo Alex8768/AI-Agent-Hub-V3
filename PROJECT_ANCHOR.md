@@ -2,64 +2,42 @@
 
 ## Active Anchor
 
-A2.30 — Coverage Enforcement in Release Gate
+TBD — Post-A2.30 planning
 
 ### Goal
 
-Introduce explicit coverage-threshold policy in enterprise release gates.
+Define and prioritize the next anchor after completion of A2.30.
 
 ### Architecture Position
 
 Planned modules:
 
-`src/layers/pro/reasoning/enterprise/`
-`tests/unit/layers/pro/`
+TBD
 
 Planned files:
-- `src/layers/pro/reasoning/enterprise/release_gate_model.py`
-- `src/layers/pro/reasoning/enterprise/release_gate_aggregator.py`
-- `src/layers/pro/reasoning/enterprise/release_gate_decision.py`
+- TBD
 
 ### Patch Plan
 
-#### Patch 1 — Coverage threshold policy contract
-- Add `minimum_coverage_ratio` policy field and enforce it in release-gate decision path.
-
-#### Patch 2 — Coverage diagnostics source hardening
-- Normalize coverage inputs from diagnostics and ensure deterministic fallback behavior.
-
-#### Patch 3 — Coverage quality-gate tests
-- Add deterministic contract tests for missing/below/meeting coverage threshold.
-
-#### Patch 4 — CI/report alignment for coverage policy
-- Extend release-gate CI/report wiring with coverage field propagation.
-
-#### Patch 5 — Docs and roadmap sync
-- Finalize anchor docs/checklist/status and capture rollout guidance.
+#### Patch plan
+- TBD
 
 ### Progress
 
-- [x] Patch 1 — Coverage threshold policy contract
-- [x] Patch 2 — Coverage diagnostics source hardening
-- [x] Patch 3 — Coverage quality-gate tests
-- [x] Patch 4 — CI/report alignment for coverage policy
-- [ ] Patch 5 — Docs and roadmap sync
+- [ ] TBD
 
 ### Out of Scope
 
-Do NOT modify during A2.30:
-- search endpoint behavior and contracts
-- OCR pipeline
-- UI scope
-- unrelated reasoning modules outside release-gate path
+Do NOT modify during planning:
+- existing stable contracts without explicit patch scope
+- unrelated subsystems outside next selected anchor
 
 ### Definition of Done
 
-A2.30 is complete when:
-- coverage threshold policy is explicit and normalized
-- missing/below coverage is fail-safe in release-gate decisions
-- coverage enforcement is covered by deterministic tests
-- CI release-gate path is aligned with new policy
+Planning is complete when:
+- next anchor is selected with explicit patch plan
+- scope and out-of-scope are documented
+- first patch is ready to execute
 
 ## Next Anchor
 
@@ -75,11 +53,11 @@ Work order is strict:
 
 ### Last Completed Anchor
 
-A2.29 — Service Contract Boundary Cleanup (Search)
+A2.30 — Coverage Enforcement in Release Gate
 
 Completed via patches:
-- Patch 1 — Introduce service-neutral search contracts
-- Patch 2 — API/service mapping hardening
-- Patch 3 — Search endpoint contract quality gate
-- Patch 4 — Cleanup and migration safety
-- Patch 5 — Docs + CI policy alignment
+- Patch 1 — Coverage threshold policy contract
+- Patch 2 — Coverage diagnostics source hardening
+- Patch 3 — Coverage quality-gate tests
+- Patch 4 — CI/report alignment for coverage policy
+- Patch 5 — Docs and roadmap sync

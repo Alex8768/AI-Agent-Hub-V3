@@ -6,25 +6,22 @@ Pro Layer Development — Reasoning Stabilization
 
 ## Last Completed Anchor
 
-A2.29 — Service Contract Boundary Cleanup (Search)
+A2.30 — Coverage Enforcement in Release Gate
 
-Search boundary cleanup completed with service-neutral contracts, endpoint mapping hardening,
-deterministic contract quality gates, migration-safe mapping adapters, and CI boundary gate wiring.
+Coverage enforcement completed with explicit release-gate coverage policy thresholds,
+shared diagnostics normalization, deterministic quality gates, and CI/report alignment.
 
 ## Current Active Anchor
 
-A2.30 — Coverage Enforcement in Release Gate
+TBD — Post-A2.30 planning
 
 Current progress:
-- Patch 1 complete: `minimum_coverage_ratio` policy field added and enforced in release-gate decision/readiness paths.
-- Patch 2 complete: coverage diagnostics extraction centralized via shared enterprise coverage contract.
-- Patch 3 complete: deterministic coverage quality-gate tests added for missing/below/at-threshold scenarios.
-- Patch 4 complete: release-gate CI job/report updated with coverage policy checks and coverage artifact field.
-- Patch 5 pending.
+- A2.30 complete.
+- Next anchor selection pending.
 
 Focus:
-- explicit coverage-threshold enforcement in enterprise release gates
-- deterministic coverage handling in policy/aggregator/decision contracts
+- post-A2.30 roadmap cut and priority selection
+- first patch definition for next anchor
 
 Execution discipline:
 - keep work strictly inside the active anchor and move in micro-patches.
@@ -34,7 +31,7 @@ Execution discipline:
 TBD — Post-A2.30 planning
 
 Planned focus:
-- post-A2.30 anchor planning
+- select next highest-value anchor from readiness backlog
 
 ## CI Status
 

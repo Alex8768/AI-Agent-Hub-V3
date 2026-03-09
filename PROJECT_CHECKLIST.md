@@ -34,18 +34,16 @@
 - [x] A2.27 Architecture & Readiness Audit
 - [x] A2.28 Interface Foundation (MVP)
 - [x] A2.29 Service Contract Boundary Cleanup (Search)
+- [x] A2.30 Coverage Enforcement in Release Gate
 
-## Current Work — A2.30 Coverage Enforcement in Release Gate
+## Current Work — Post-A2.30 planning
 
-- [x] Patch 1
-- [x] Patch 2
-- [x] Patch 3
-- [x] Patch 4
-- [ ] Patch 5
+- [ ] Select next anchor
+- [ ] Define patch plan for next anchor
 
 ## Next
 
-- [ ] Post-A2.30 anchor planning
+- [ ] Start next anchor Patch 1
 
 ## Later
 
