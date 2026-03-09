@@ -39,6 +39,7 @@ from src.layers.pro.reasoning.multi_agent.coordination_model import (
 from src.layers.pro.reasoning.multi_agent.handoff_router import route_multi_agent_handoffs
 from src.layers.pro.reasoning.planner.planner import create_reasoning_plan
 from src.layers.pro.reasoning.planner.step_executor import execute_plan_steps
+from src.layers.pro.reasoning.tool_safety.runtime_guard import apply_tool_safety_runtime_guard
 from src.layers.pro.reasoning.trace.trace_collector import collect_reasoning_trace
 from src.core.config import get_settings
 
@@ -360,6 +361,7 @@ class ReasoningEngine:
             run_verify_step=_run_verify_step,
             max_steps=int(policy.get("max_steps", 0) or 0),
         )
+        step_results = apply_tool_safety_runtime_guard(step_results=list(step_results or []))
         plan_steps = [
             str((row or {}).get("description", "") or "")
             for row in list(bounded_plan.get("steps") or [])

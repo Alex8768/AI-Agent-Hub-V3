@@ -131,6 +131,8 @@ async def test_multi_agent_quality_gate_runtime_contract_parity(monkeypatch):
         "reasoning_output",
         "verify_status",
         "verify_reasons",
+        "tool_safety_decision",
+        "tool_safety_blocked",
         "agent_role",
         "handoff_transitions",
         "handoff_ok",
