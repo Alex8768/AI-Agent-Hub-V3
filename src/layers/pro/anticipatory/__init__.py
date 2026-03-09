@@ -12,6 +12,13 @@ from src.layers.pro.anticipatory.whisper import (
     build_whisper_execution_receipt,
     run_whisper_safe_mode,
 )
+from src.layers.pro.anticipatory.suggestions import (
+    ProactiveSuggestion,
+    ProactiveSuggestionBundle,
+    build_proactive_suggestion,
+    build_proactive_suggestion_bundle,
+    rank_proactive_suggestions,
+)
 
 __all__ = [
     "OpportunityScanResult",
@@ -24,4 +31,9 @@ __all__ = [
     "WhisperRunner",
     "build_whisper_execution_receipt",
     "run_whisper_safe_mode",
+    "ProactiveSuggestion",
+    "ProactiveSuggestionBundle",
+    "build_proactive_suggestion",
+    "build_proactive_suggestion_bundle",
+    "rank_proactive_suggestions",
 ]
