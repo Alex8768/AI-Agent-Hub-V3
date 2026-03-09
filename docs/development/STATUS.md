@@ -19,7 +19,8 @@ Current progress:
 - Patch 1 complete: docs topology map and compatibility policy introduced.
 - Patch 2 complete: roadmap docs moved to target topology with root stubs.
 - Patch 3 complete: references/workflow docs aligned to canonical moved paths.
-- Patch 4 next: add deterministic docs topology quality gate.
+- Patch 4 complete: deterministic docs topology quality gate added and wired in CI.
+- Patch 5 next: finalize docs policy closure and remove compatibility stubs.
 
 Focus:
 - move root docs without breaking current root-based workflow commands

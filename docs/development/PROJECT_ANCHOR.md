@@ -42,7 +42,7 @@ Planned files:
 - [x] Patch 1 — Introduce docs topology map and compatibility policy
 - [x] Patch 2 — Move roadmap docs with root stubs
 - [x] Patch 3 — Update references and workflow docs to new paths
-- [ ] Patch 4 — Add docs topology quality gate
+- [x] Patch 4 — Add docs topology quality gate
 - [ ] Patch 5 — Final docs policy alignment closure
 
 ### Out of Scope
