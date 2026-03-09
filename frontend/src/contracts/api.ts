@@ -41,3 +41,8 @@ export interface HealthDto {
   version?: string
 }
 
+export interface DeleteDocumentResponseDto {
+  status: string
+  document_id: string
+}
+

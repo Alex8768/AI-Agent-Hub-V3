@@ -36,7 +36,7 @@
 ## Current Work — A2.28 Interface Foundation (MVP)
 
 - [x] Patch 1
-- [ ] Patch 2
+- [x] Patch 2
 - [ ] Patch 3
 - [ ] Patch 4
 - [ ] Patch 5
