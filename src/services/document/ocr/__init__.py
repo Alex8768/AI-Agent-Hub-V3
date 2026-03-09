@@ -17,6 +17,11 @@ from src.services.document.ocr.provider_adapter import (
     build_ocr_provider_outcome,
     run_ocr_provider,
 )
+from src.services.document.ocr.quality_contract import (
+    OCRQualitySummary,
+    build_ocr_quality_summary,
+    build_ocr_quality_summary_from_payload,
+)
 
 __all__ = [
     "OCRExtractionResult",
@@ -34,4 +39,7 @@ __all__ = [
     "OCRProviderOutcome",
     "build_ocr_provider_outcome",
     "run_ocr_provider",
+    "OCRQualitySummary",
+    "build_ocr_quality_summary",
+    "build_ocr_quality_summary_from_payload",
 ]
