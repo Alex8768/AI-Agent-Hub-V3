@@ -90,6 +90,39 @@
 
 - `GET /api/v1/trace-test` -> tracing smoke payload
 
+## Feature-Flag Defaults and API Gating
+
+Runtime defaults in `src/core/config.py` are conservative: advanced Pro/API
+surfaces are disabled unless explicitly enabled.
+
+Default values:
+
+- `feature_reasoning_api=false`
+- `feature_reasoning=false`
+- `feature_graphrag=false`
+- `feature_hybrid_search_api=false`
+- `feature_reasoning_llm_enabled=false`
+- `feature_reasoning_llm_dry_run=false`
+- `streaming_enabled=false`
+- `rate_limit_enabled=false`
+
+Endpoint gating behavior:
+
+- `POST /api/v1/answer` requires:
+  - `feature_reasoning_api=true`
+  - `feature_reasoning=true`
+  - `feature_graphrag=true`
+- `POST /api/v1/search-hybrid` requires:
+  - `feature_hybrid_search_api=true`
+  - `feature_graphrag=true`
+- `/api/v1/tools*` endpoints require:
+  - `feature_reasoning_api=true`
+- `GET /api/v1/stream/{session_id}` requires:
+  - `streaming_enabled=true`
+
+When a feature-gated endpoint is disabled, handlers return `404 Not Found`.
+When streaming is disabled, streaming handler returns `400 Bad Request`.
+
 ## Schema Sources
 
 - API transport schemas: `src/api/schemas.py`

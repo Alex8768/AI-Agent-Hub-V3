@@ -18,7 +18,8 @@ A2.33 — API Docs & Feature-Flag Alignment
 Current progress:
 - Patch 1 complete: API/runtime contract drift audit documented.
 - Patch 2 complete: API docs endpoint/request/response parity updated.
-- Patch 3 next: align feature-flag docs with default behavior and gating semantics.
+- Patch 3 complete: feature-flag defaults and endpoint gating docs aligned with runtime.
+- Patch 4 next: add deterministic API docs quality gate.
 
 Focus:
 - eliminate API docs drift from contract/runtime behavior

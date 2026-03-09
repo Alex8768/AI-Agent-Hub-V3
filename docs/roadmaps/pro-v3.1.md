@@ -17,10 +17,19 @@ Base поведение не меняется при выключенных фл
 
 | Flag | Назначение | Статус |
 |------|------------|--------|
-| feature_qdrant | Pro vector store (Qdrant) | ✅ MVP |
-| feature_acl | Role-based workspace ACL | ✅ MVP |
-| feature_memory | Durable DB-backed memory | ✅ MVP |
-| feature_graphrag | Graph layer (nodes/edges) | ✅ MVP |
+| feature_qdrant | Pro vector store (Qdrant) | ✅ MVP (default OFF) |
+| feature_acl | Role-based workspace ACL | ✅ MVP (default OFF) |
+| feature_memory | Durable DB-backed memory | ✅ MVP (default OFF) |
+| feature_memory_embeddings | Semantic memory embedding index | ✅ MVP (default OFF) |
+| feature_graphrag | Graph layer (nodes/edges) | ✅ MVP (default OFF) |
+| feature_reasoning | Reasoning synthesis layer | ✅ MVP (default OFF) |
+| feature_reasoning_api | `/api/v1/answer` and `/api/v1/tools*` API surface | ✅ MVP (default OFF) |
+| feature_hybrid_search_api | `/api/v1/search-hybrid` API surface | ✅ MVP (default OFF) |
+| feature_reasoning_llm_enabled | Real LLM calls in reasoning pipeline | ✅ MVP (default OFF) |
+| feature_reasoning_llm_dry_run | Deterministic dry-run reasoning LLM mode | ✅ MVP (default OFF) |
+
+Alias compatibility:
+- `feature_graph_rag` is deprecated alias for `feature_graphrag` and should not be used as canonical config.
 
 ---
 
