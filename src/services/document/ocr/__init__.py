@@ -9,6 +9,14 @@ from src.services.document.ocr.ocr_contract import (
     build_ocr_source_ref,
     build_ocr_text_block,
 )
+from src.services.document.ocr.provider_adapter import (
+    NoopOCRProvider,
+    OCRProvider,
+    OCRProviderError,
+    OCRProviderOutcome,
+    build_ocr_provider_outcome,
+    run_ocr_provider,
+)
 
 __all__ = [
     "OCRExtractionResult",
@@ -20,4 +28,10 @@ __all__ = [
     "build_ocr_page_extraction",
     "build_ocr_source_ref",
     "build_ocr_text_block",
+    "NoopOCRProvider",
+    "OCRProvider",
+    "OCRProviderError",
+    "OCRProviderOutcome",
+    "build_ocr_provider_outcome",
+    "run_ocr_provider",
 ]
