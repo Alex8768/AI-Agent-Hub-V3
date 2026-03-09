@@ -85,6 +85,7 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
         "enterprise_productization",
         "meta_cognition",
         "reasoning_trace",
+        "anticipatory",
         "reasoning_timeline",
         "verify",
         "session_memory_loaded",
@@ -330,6 +331,38 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
     assert set(tl.keys()) == {"events", "total_duration_ms"}
     assert isinstance(tl.get("events"), list)
     assert isinstance(tl.get("total_duration_ms"), int)
+    ant = dict(diag.get("anticipatory") or {})
+    assert set(ant.keys()) == {
+        "whisper_receipt",
+        "opportunity_scan",
+        "proactive_suggestions",
+    }
+    ant_receipt = dict(ant.get("whisper_receipt") or {})
+    assert set(ant_receipt.keys()) == {
+        "run_id",
+        "status",
+        "safe_mode",
+        "duration_ms",
+        "suggestion_count",
+        "reason_codes",
+        "warnings",
+    }
+    ant_scan = dict(ant.get("opportunity_scan") or {})
+    assert set(ant_scan.keys()) == {
+        "status",
+        "opportunity_score",
+        "signals",
+        "reason_codes",
+        "warnings",
+    }
+    ant_suggestions = dict(ant.get("proactive_suggestions") or {})
+    assert set(ant_suggestions.keys()) == {
+        "status",
+        "suggestions",
+        "top_suggestion_id",
+        "reason_codes",
+        "warnings",
+    }
 
     # cleanup
     try:
