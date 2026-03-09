@@ -70,6 +70,7 @@ Base поведение не меняется при выключенных фл
 - Base CI (CPU hosted)
 - Pro CI (Qdrant service container)
 - Integration tests gated by env flag
+- Required-checks matrix consolidation for release-gate policy (A2.31)
 
 ---
 

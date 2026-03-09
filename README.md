@@ -284,6 +284,7 @@ DEMO_ENABLE_REASONING=1 python scripts/demo_golden_path.py
 Main project documentation:
 
 - `docs/architecture/ARCHITECTURE_V3.md`
+- `docs/architecture/REQUIRED_CHECKS_MATRIX.md`
 - `docs/api/README.md`
 - `docs/installation/`
 - `docs/roadmaps/pro-v3.1.md`

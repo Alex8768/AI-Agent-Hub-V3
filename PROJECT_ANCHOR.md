@@ -2,44 +2,43 @@
 
 ## Active Anchor
 
-A2.31 — CI Workflow Consolidation & Required Checks Matrix
+A2.32 — Docs Topology Cleanup (root -> docs/architecture + docs/development)
 
 ### Goal
 
-Consolidate required-check logic behind a deterministic matrix contract used as a
-single source for CI policy convergence.
+Move root-level operational docs into structured docs topology while preserving
+workflow-safe compatibility.
 
 ### Architecture Position
 
 Planned modules:
 
-- `src/layers/pro/reasoning/enterprise/required_checks_matrix.py`
-- `src/layers/pro/reasoning/enterprise/required_checks_normalizer.py`
+- `docs/architecture/*`
+- `docs/development/*`
 
 Planned files:
-- `src/layers/pro/reasoning/enterprise/required_checks_matrix.py`
-- `tests/unit/layers/pro/test_reasoning_enterprise_required_checks_matrix.py`
-- `src/layers/pro/reasoning/enterprise/required_checks_normalizer.py`
-- `tests/unit/layers/pro/test_reasoning_enterprise_required_checks_normalizer.py`
-- `tests/unit/layers/pro/test_reasoning_enterprise_required_checks_consolidation_quality_gate.py`
-- `.github/workflows/ci-pro.yml`
+- `PROJECT_ANCHOR.md` (compatibility stub candidate)
+- `STATUS.md` (compatibility stub candidate)
+- `PROJECT_CHECKLIST.md` (compatibility stub candidate)
+- `PLATFORM_FEATURES.md` (compatibility stub candidate)
+- `docs/architecture/*` and `docs/development/*` target locations
 
 ### Patch Plan
 
 #### Patch plan
-- Patch 1 — Required checks matrix contract + deterministic assembly test
-- Patch 2 — Normalize required checks inputs from CI workflow sources
-- Patch 3 — Consolidation rules deterministic quality tests
-- Patch 4 — Wire consolidated matrix into CI workflow
-- Patch 5 — Docs and policy alignment closure
+- Patch 1 — Introduce docs topology map and compatibility policy
+- Patch 2 — Move roadmap docs with root stubs
+- Patch 3 — Update references and workflow docs to new paths
+- Patch 4 — Add docs topology quality gate
+- Patch 5 — Final docs policy alignment closure
 
 ### Progress
 
-- [x] Patch 1 — Required checks matrix contract + deterministic assembly test
-- [x] Patch 2 — Normalize required checks inputs from CI workflow sources
-- [x] Patch 3 — Consolidation rules deterministic quality tests
-- [x] Patch 4 — Wire consolidated matrix into CI workflow
-- [ ] Patch 5 — Docs and policy alignment closure
+- [ ] Patch 1 — Introduce docs topology map and compatibility policy
+- [ ] Patch 2 — Move roadmap docs with root stubs
+- [ ] Patch 3 — Update references and workflow docs to new paths
+- [ ] Patch 4 — Add docs topology quality gate
+- [ ] Patch 5 — Final docs policy alignment closure
 
 ### Out of Scope
 
@@ -49,14 +48,14 @@ Do NOT modify during planning:
 
 ### Definition of Done
 
-A2.31 is complete when:
-- required-checks matrix is the deterministic source of truth
-- CI workflows consume consolidated policy without drift
-- quality gates validate policy assembly and consolidation behavior
+A2.32 is complete when:
+- root roadmap docs are moved under structured docs folders
+- root compatibility stubs keep existing workflows stable
+- references are aligned and protected by deterministic checks
 
 ## Next Anchor
 
-A2.32 — Docs Topology Cleanup (root -> docs/architecture + docs/development)
+A2.33 — API Docs & Feature-Flag Alignment
 
 ### Discipline
 
@@ -68,11 +67,11 @@ Work order is strict:
 
 ### Last Completed Anchor
 
-A2.30 — Coverage Enforcement in Release Gate
+A2.31 — CI Workflow Consolidation & Required Checks Matrix
 
 Completed via patches:
-- Patch 1 — Coverage threshold policy contract
-- Patch 2 — Coverage diagnostics source hardening
-- Patch 3 — Coverage quality-gate tests
-- Patch 4 — CI/report alignment for coverage policy
-- Patch 5 — Docs and roadmap sync
+- Patch 1 — Required checks matrix contract + deterministic assembly test
+- Patch 2 — Normalize required checks inputs from CI workflow sources
+- Patch 3 — Consolidation rules deterministic quality tests
+- Patch 4 — Wire consolidated matrix into CI workflow
+- Patch 5 — Docs and policy alignment closure

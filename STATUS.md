@@ -6,35 +6,32 @@ Pro Layer Development — Reasoning Stabilization
 
 ## Last Completed Anchor
 
-A2.30 — Coverage Enforcement in Release Gate
+A2.31 — CI Workflow Consolidation & Required Checks Matrix
 
-Coverage enforcement completed with explicit release-gate coverage policy thresholds,
-shared diagnostics normalization, deterministic quality gates, and CI/report alignment.
+Required-check convergence completed with deterministic matrix contracts, workflow
+normalization, consolidation quality gates, CI wiring, and documentation alignment.
 
 ## Current Active Anchor
 
-A2.31 — CI Workflow Consolidation & Required Checks Matrix
+A2.32 — Docs Topology Cleanup (root -> docs/architecture + docs/development)
 
 Current progress:
-- Patch 1 complete: required-checks matrix contract with deterministic assembly test.
-- Patch 2 complete: normalization contract for mixed workflow check definitions.
-- Patch 3 complete: deterministic consolidation quality tests for policy merge rules.
-- Patch 4 complete: CI release-gate path now uses consolidated required-checks matrix.
-- Patch 5 next: docs and CI policy alignment closure.
+- Anchor started.
+- Patch 1 next: topology map and compatibility policy.
 
 Focus:
-- eliminate required-check drift across CI jobs and policy sources
-- keep matrix assembly and input normalization deterministic and migration-safe
+- move root docs without breaking current root-based workflow commands
+- keep references deterministic during migration
 
 Execution discipline:
 - keep work strictly inside the active anchor and move in micro-patches.
 
 ## Next Anchor
 
-A2.32 — Docs Topology Cleanup (root -> docs/architecture + docs/development)
+A2.33 — API Docs & Feature-Flag Alignment
 
 Planned focus:
-- move root operational docs into structured docs topology with compatibility stubs
+- remove API docs and feature-flag behavior drift
 
 ## CI Status
 

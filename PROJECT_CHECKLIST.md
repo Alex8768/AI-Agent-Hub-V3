@@ -35,18 +35,19 @@
 - [x] A2.28 Interface Foundation (MVP)
 - [x] A2.29 Service Contract Boundary Cleanup (Search)
 - [x] A2.30 Coverage Enforcement in Release Gate
+- [x] A2.31 CI Workflow Consolidation & Required Checks Matrix
 
-## Current Work — A2.31 CI Workflow Consolidation & Required Checks Matrix
+## Current Work — A2.32 Docs Topology Cleanup
 
-- [x] Patch 1 — Required checks matrix contract + deterministic assembly test
-- [x] Patch 2 — Normalize required checks inputs from workflow sources
-- [x] Patch 3 — Consolidation rules deterministic quality tests
-- [x] Patch 4 — Wire consolidated matrix into CI workflow
-- [ ] Patch 5 — Docs + CI policy alignment closure
+- [ ] Patch 1 — Introduce docs topology map and compatibility policy
+- [ ] Patch 2 — Move roadmap docs with root compatibility stubs
+- [ ] Patch 3 — Update references/workflow docs to new paths
+- [ ] Patch 4 — Add docs topology quality gate
+- [ ] Patch 5 — Final docs policy alignment closure
 
 ## Next
 
-- [ ] Start A2.32 Patch 1 (docs topology cleanup)
+- [ ] Start A2.33 Patch 1 (API docs/feature-flag alignment)
 
 ## Later
 
