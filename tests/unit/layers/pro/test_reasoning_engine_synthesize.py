@@ -137,6 +137,11 @@ async def test_reasoning_engine_fallback_executes_planner_steps(monkeypatch):
     summary = dict(bench.get("summary") or {})
     assert summary.get("total_cases") == 2
     assert summary.get("passed_cases") == 2
+    optimization = dict(diag.get("reasoning_optimization") or {})
+    assert set(optimization.keys()) == {"signal", "proposals", "decision"}
+    assert isinstance(optimization.get("signal"), dict)
+    assert isinstance(optimization.get("proposals"), list)
+    assert isinstance(optimization.get("decision"), dict)
     trace = dict(diag.get("reasoning_trace") or {})
     assert trace.get("query") == "multi step query"
     assert trace.get("plan") == ["step one", "step two"]

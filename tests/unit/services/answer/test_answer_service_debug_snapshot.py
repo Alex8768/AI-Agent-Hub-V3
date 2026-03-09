@@ -142,6 +142,7 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
         "reasoning_execution_policy",
         "reasoning_quality",
         "reasoning_benchmark",
+        "reasoning_optimization",
         "reasoning_trace",
         "reasoning_timeline",
         "verify",
@@ -278,6 +279,29 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
         "pass_rate",
         "average_score",
         "results",
+    }
+    ro = dict(diag.get("reasoning_optimization") or {})
+    assert set(ro.keys()) == {"signal", "proposals", "decision"}
+    ro_signal = dict(ro.get("signal") or {})
+    assert set(ro_signal.keys()) == {
+        "trace_id",
+        "confidence_score",
+        "coverage_score",
+        "pass_rate",
+        "average_latency_ms",
+        "warnings_count",
+        "retry_rate",
+        "signal_tags",
+    }
+    assert isinstance(ro.get("proposals"), list)
+    ro_decision = dict(ro.get("decision") or {})
+    assert set(ro_decision.keys()) == {
+        "decision_id",
+        "action",
+        "selected_proposal_ids",
+        "reason_codes",
+        "confidence",
+        "requires_human_review",
     }
     rt = dict(diag.get("reasoning_trace") or {})
     assert set(rt.keys()) == {

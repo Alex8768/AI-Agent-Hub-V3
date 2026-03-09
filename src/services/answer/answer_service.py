@@ -295,6 +295,30 @@ def _apply_diagnostics(
             },
         )
         diag.setdefault(
+            "reasoning_optimization",
+            {
+                "signal": {
+                    "trace_id": str(diag.get("trace_id", "") or ""),
+                    "confidence_score": 0.0,
+                    "coverage_score": 0.0,
+                    "pass_rate": 0.0,
+                    "average_latency_ms": 0,
+                    "warnings_count": int(len(list(getattr(resp, "warnings", []) or []))),
+                    "retry_rate": 0.0,
+                    "signal_tags": [],
+                },
+                "proposals": [],
+                "decision": {
+                    "decision_id": "optimization_decision:runtime",
+                    "action": "defer",
+                    "selected_proposal_ids": [],
+                    "reason_codes": ["no_proposals"],
+                    "confidence": 0.0,
+                    "requires_human_review": False,
+                },
+            },
+        )
+        diag.setdefault(
             "reasoning_trace",
             {
                 "query": str(getattr(req, "query", "") or ""),

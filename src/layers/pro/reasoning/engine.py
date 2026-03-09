@@ -43,6 +43,15 @@ from src.layers.pro.reasoning.evaluation.benchmark_registry import (
 from src.layers.pro.reasoning.evaluation.benchmark_runner import (
     run_reasoning_benchmark_suite,
 )
+from src.layers.pro.reasoning.optimization.optimization_decision_model import (
+    decide_reasoning_optimization_action,
+)
+from src.layers.pro.reasoning.optimization.optimization_proposal_model import (
+    build_reasoning_optimization_proposals,
+)
+from src.layers.pro.reasoning.optimization.optimization_signal_model import (
+    build_reasoning_optimization_signal_from_diagnostics,
+)
 from src.layers.pro.reasoning.planner.planner import create_reasoning_plan
 from src.layers.pro.reasoning.planner.step_executor import execute_plan_steps
 from src.layers.pro.reasoning.tool_safety.runtime_guard import apply_tool_safety_runtime_guard
@@ -304,6 +313,82 @@ class ReasoningEngine:
             suite=suite,
             evaluate_case=_evaluate,
         )
+
+    @staticmethod
+    def _build_reasoning_optimization_diagnostics(
+        *,
+        diagnostics: dict[str, object],
+        warnings: list[str],
+    ) -> dict[str, object]:
+        signal = build_reasoning_optimization_signal_from_diagnostics(
+            diagnostics=dict(diagnostics or {}),
+            warnings=list(warnings or []),
+        )
+        proposals_raw: list[dict[str, object]] = []
+        confidence_score = float(signal.get("confidence_score", 0.0) or 0.0)
+        coverage_score = float(signal.get("coverage_score", 0.0) or 0.0)
+        pass_rate = float(signal.get("pass_rate", 0.0) or 0.0)
+        retry_rate = float(signal.get("retry_rate", 0.0) or 0.0)
+        signal_tags = [str(x) for x in list(signal.get("signal_tags") or [])]
+        if confidence_score < 0.8:
+            proposals_raw.append(
+                {
+                    "proposal_id": "opt_confidence_guardrail",
+                    "parameter": "confidence_target",
+                    "current_value": confidence_score,
+                    "proposed_value": min(1.0, confidence_score + 0.2),
+                    "expected_gain": min(1.0, 0.8 - confidence_score),
+                    "risk_level": "medium",
+                    "rationale": ["low_confidence", *signal_tags],
+                }
+            )
+        if coverage_score < 0.8:
+            proposals_raw.append(
+                {
+                    "proposal_id": "opt_coverage_guardrail",
+                    "parameter": "coverage_target",
+                    "current_value": coverage_score,
+                    "proposed_value": min(1.0, coverage_score + 0.2),
+                    "expected_gain": min(1.0, 0.8 - coverage_score),
+                    "risk_level": "low",
+                    "rationale": ["low_coverage", *signal_tags],
+                }
+            )
+        if pass_rate < 0.9:
+            proposals_raw.append(
+                {
+                    "proposal_id": "opt_passrate_guardrail",
+                    "parameter": "verification_strictness",
+                    "current_value": pass_rate,
+                    "proposed_value": min(1.0, pass_rate + 0.1),
+                    "expected_gain": min(1.0, 0.9 - pass_rate),
+                    "risk_level": "medium",
+                    "rationale": ["low_pass_rate", *signal_tags],
+                }
+            )
+        if retry_rate > 0.0:
+            proposals_raw.append(
+                {
+                    "proposal_id": "opt_retry_pressure",
+                    "parameter": "retry_budget",
+                    "current_value": retry_rate,
+                    "proposed_value": max(0.0, retry_rate - 0.5),
+                    "expected_gain": min(1.0, retry_rate * 0.5),
+                    "risk_level": "high",
+                    "rationale": ["retry_pressure", *signal_tags],
+                }
+            )
+        proposals = build_reasoning_optimization_proposals(proposals=proposals_raw)
+        decision = decide_reasoning_optimization_action(
+            signal=signal,
+            proposals=proposals,
+            decision_id=f"optimization_decision:{str(signal.get('trace_id', '') or 'runtime')}",
+        )
+        return {
+            "signal": dict(signal),
+            "proposals": [dict(x) for x in list(proposals or [])],
+            "decision": dict(decision),
+        }
 
     @staticmethod
     def _build_multi_agent_coordination_plan_for_runtime(
@@ -573,6 +658,10 @@ class ReasoningEngine:
                 suite_name="reasoning_runtime_graph",
                 step_results=per_step_results,
             )
+            diag["reasoning_optimization"] = self._build_reasoning_optimization_diagnostics(
+                diagnostics=diag,
+                warnings=list(getattr(resp, "warnings", []) or []),
+            )
             diag["reasoning_timeline"] = dict(
                 (dict(diag.get("reasoning_trace") or {}).get("timeline") or {})
             )
@@ -741,6 +830,13 @@ class ReasoningEngine:
                 self._build_reasoning_benchmark_diagnostics(
                     suite_name="reasoning_runtime_fallback",
                     step_results=list(planner_step_results or []),
+                ),
+            )
+            diag.setdefault(
+                "reasoning_optimization",
+                self._build_reasoning_optimization_diagnostics(
+                    diagnostics=diag,
+                    warnings=list(getattr(resp, "warnings", []) or []),
                 ),
             )
             diag.setdefault(
