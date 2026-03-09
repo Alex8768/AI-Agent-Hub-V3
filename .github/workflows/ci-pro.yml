@@ -7,6 +7,101 @@ on:
     branches: [ "pro-v3.1-dev" ]
 
 jobs:
+  release-gate:
+    name: ubuntu-latest / py3.12 / release-gate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install package (test deps)
+        shell: bash
+        run: |
+          python -m pip install -U pip setuptools wheel
+          python -m pip install -e ".[test]"
+
+      - name: Release-gate contract tests
+        shell: bash
+        run: |
+          pytest -q \
+            tests/unit/layers/pro/test_reasoning_enterprise_required_checks_policy.py \
+            tests/unit/layers/pro/test_reasoning_enterprise_release_gate_aggregator.py \
+            tests/unit/layers/pro/test_reasoning_enterprise_release_gate_decision.py \
+            tests/unit/layers/pro/test_reasoning_enterprise_productization_quality_gate.py
+
+      - name: Build release-gate report artifact
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          from src.layers.pro.reasoning.enterprise.release_gate_aggregator import build_enterprise_release_gate_inputs
+          from src.layers.pro.reasoning.enterprise.release_gate_decision import decide_enterprise_release_gate
+          from src.layers.pro.reasoning.enterprise.release_gate_model import build_enterprise_release_gate_policy
+
+          diagnostics = {
+              "verify": {"status": "pass"},
+              "self_check": {"status": "pass"},
+              "reasoning_benchmark": {
+                  "summary": {
+                      "suite_name": "ci-release-gate",
+                      "total_cases": 10,
+                      "passed_cases": 9,
+                      "pass_rate": 0.9,
+                      "average_score": 0.9,
+                  }
+              },
+              "reasoning_optimization": {
+                  "decision": {"action": "approve", "requires_human_review": False}
+              },
+          }
+          policy = build_enterprise_release_gate_policy(
+              profile_name="enterprise_default",
+              required_checks=["verify", "self_check", "reasoning_benchmark", "reasoning_optimization"],
+              blocking_checks=["verify", "self_check"],
+              minimum_pass_rate=0.8,
+              minimum_average_score=0.7,
+              allow_skipped=False,
+              require_benchmark_summary=True,
+              require_optimization_review=True,
+              allowed_warning_codes=[],
+          )
+          inputs = build_enterprise_release_gate_inputs(
+              diagnostics=diagnostics,
+              warnings=[],
+              profile_name="enterprise_default",
+          )
+          decision = decide_enterprise_release_gate(
+              inputs=inputs,
+              policy=policy,
+              decision_id="ci_release_gate",
+          )
+          report = {
+              "profile_name": policy["profile_name"],
+              "required_checks": policy["required_checks"],
+              "release_checks": inputs["release_checks"],
+              "required_checks_evaluation": inputs["required_checks_evaluation"],
+              "decision": decision,
+          }
+          Path("release-gate-report.json").write_text(
+              json.dumps(report, sort_keys=True, indent=2) + "\n",
+              encoding="utf-8",
+          )
+          PY
+
+      - name: Upload release-gate report
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-gate-report
+          path: release-gate-report.json
+          if-no-files-found: error
+
   qdrant-it:
     name: ubuntu-latest / py3.12 / qdrant-it
     runs-on: ubuntu-latest
