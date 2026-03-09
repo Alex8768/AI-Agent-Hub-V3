@@ -140,3 +140,34 @@ code {
   color: #6b7280;
   font-size: 0.9rem;
 }
+
+.answer-block {
+  display: grid;
+  gap: 0.7rem;
+  margin-top: 0.85rem;
+}
+
+.answer-text {
+  margin: 0;
+  line-height: 1.45;
+}
+
+.meta-inline {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.86rem;
+  color: #6b7280;
+}
+
+details summary {
+  cursor: pointer;
+}
+
+pre {
+  margin: 0.4rem 0 0;
+  padding: 0.65rem;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.55rem;
+  overflow-x: auto;
+}

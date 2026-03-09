@@ -1,8 +1,16 @@
 import './App.css'
 import { useEffect, useState } from 'react'
 import type { ChangeEvent, FormEvent } from 'react'
-import { API_BASE, deleteDocument, getHealth, listDocuments, searchDocuments, uploadDocument } from './lib/apiClient'
-import type { DocumentItem, SearchResultDto } from './contracts/api'
+import {
+  API_BASE,
+  askAnswer,
+  deleteDocument,
+  getHealth,
+  listDocuments,
+  searchDocuments,
+  uploadDocument,
+} from './lib/apiClient'
+import type { AnswerResponseDto, DocumentItem, SearchResultDto } from './contracts/api'
 
 function App() {
   const [healthStatus, setHealthStatus] = useState('checking')
@@ -11,6 +19,8 @@ function App() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [query, setQuery] = useState('')
   const [searchResults, setSearchResults] = useState<SearchResultDto[]>([])
+  const [question, setQuestion] = useState('')
+  const [answer, setAnswer] = useState<AnswerResponseDto | null>(null)
   const [busy, setBusy] = useState(false)
 
   useEffect(() => {
@@ -96,6 +106,21 @@ function App() {
     }
   }
 
+  const onAsk = async (event: FormEvent) => {
+    event.preventDefault()
+    if (!question.trim()) return
+    setBusy(true)
+    setError('')
+    try {
+      const payload = await askAnswer({ query: question.trim(), k: 8, graph_depth: 1 })
+      setAnswer(payload)
+    } catch (err: unknown) {
+      setError(String(err))
+    } finally {
+      setBusy(false)
+    }
+  }
+
   return (
     <div className="app-shell">
       <header className="top-bar">
@@ -172,6 +197,36 @@ function App() {
             {searchResults.length === 0 ? <li className="muted">No search results yet.</li> : null}
           </ul>
         </article>
+      </section>
+
+      <section className="card">
+        <h2>Answer + Diagnostics</h2>
+        <form className="inline-form" onSubmit={onAsk}>
+          <input
+            type="text"
+            value={question}
+            placeholder="Ask a question"
+            onChange={(event) => setQuestion(event.target.value)}
+          />
+          <button type="submit" disabled={busy || !question.trim()}>
+            Ask
+          </button>
+        </form>
+        {answer ? (
+          <div className="answer-block">
+            <p className="answer-text">{answer.answer}</p>
+            <div className="meta-inline">
+              <span>confidence: {answer.confidence.toFixed(2)}</span>
+              <span>warnings: {answer.warnings.length}</span>
+            </div>
+            <details>
+              <summary>Diagnostics JSON</summary>
+              <pre>{JSON.stringify(answer.diagnostics, null, 2)}</pre>
+            </details>
+          </div>
+        ) : (
+          <p className="muted">No answer yet.</p>
+        )}
       </section>
     </div>
   )

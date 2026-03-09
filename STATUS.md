@@ -18,7 +18,7 @@ A2.28 — Interface Foundation (MVP)
 Current progress:
 - Patch 1 complete: frontend shell scaffold added with typed API contracts and base API client.
 - Patch 2 complete: documents and vector-search UI journeys wired with upload/list/delete and result rendering.
-- Patch 3 pending.
+- Patch 3 complete: answer flow wired to `/api/v1/answer` with diagnostics JSON panel and confidence/warnings view.
 - Patch 4 pending.
 - Patch 5 pending.
 

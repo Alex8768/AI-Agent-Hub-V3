@@ -43,7 +43,7 @@ Planned files:
 
 - [x] Patch 1 — UI shell + API contracts baseline
 - [x] Patch 2 — Documents + search journey wiring
-- [ ] Patch 3 — Answer + diagnostics journey wiring
+- [x] Patch 3 — Answer + diagnostics journey wiring
 - [ ] Patch 4 — Session/workspace UX hardening
 - [ ] Patch 5 — UI quality gate
 

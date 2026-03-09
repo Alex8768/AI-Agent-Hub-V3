@@ -1,4 +1,6 @@
 import type {
+  AnswerRequestDto,
+  AnswerResponseDto,
   DeleteDocumentResponseDto,
   DocumentItem,
   HealthDto,
@@ -62,6 +64,22 @@ export async function searchDocuments(payload: SearchRequestDto): Promise<Search
     }),
   })
   return parseJson<SearchResultDto[]>(response)
+}
+
+export async function askAnswer(payload: AnswerRequestDto): Promise<AnswerResponseDto> {
+  const response = await fetch(`${API_BASE}/api/v1/answer`, {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      query: payload.query,
+      k: payload.k ?? 8,
+      graph_depth: payload.graph_depth ?? 1,
+    }),
+  })
+  return parseJson<AnswerResponseDto>(response)
 }
 
 export { API_BASE }

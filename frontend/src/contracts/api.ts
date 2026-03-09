@@ -25,13 +25,23 @@ export interface SearchResultDto {
 }
 
 export interface AnswerRequestDto {
-  question: string
-  top_k?: number
+  query: string
+  k?: number
+  graph_depth?: number
 }
 
 export interface AnswerResponseDto {
   answer: string
-  sources: Array<Record<string, unknown>>
+  confidence: number
+  context_preview: string
+  provenance: Array<Record<string, unknown>>
+  used_chunks: string[]
+  used_nodes: string[]
+  used_edges: string[]
+  request_id: string
+  workspace_id: string
+  timings: Record<string, number>
+  warnings: string[]
   diagnostics: Record<string, unknown>
 }
 
