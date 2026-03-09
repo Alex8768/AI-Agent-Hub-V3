@@ -2,17 +2,16 @@ from __future__ import annotations
 
 from typing import TypedDict
 
+from src.layers.pro.reasoning.governance.policy_decision_model import (
+    ReasoningPolicyDecision,
+    build_reasoning_policy_decisions,
+)
+
 
 class ExecutionReceiptSource(TypedDict):
     source_id: str
     source_type: str
     confidence: float
-
-
-class ExecutionReceiptPolicyDecision(TypedDict):
-    policy_name: str
-    status: str
-    reason: str
 
 
 class ReasoningExecutionReceipt(TypedDict):
@@ -23,7 +22,7 @@ class ReasoningExecutionReceipt(TypedDict):
     answer: str
     confidence_score: float
     sources: list[ExecutionReceiptSource]
-    policy_decisions: list[ExecutionReceiptPolicyDecision]
+    policy_decisions: list[ReasoningPolicyDecision]
     risk_flags: list[str]
 
 
@@ -63,27 +62,6 @@ def _normalize_sources(items: list[dict[str, object]]) -> list[ExecutionReceiptS
     return normalized
 
 
-def _normalize_policy_decisions(
-    items: list[dict[str, object]],
-) -> list[ExecutionReceiptPolicyDecision]:
-    normalized: list[ExecutionReceiptPolicyDecision] = []
-    for raw in list(items or []):
-        item = raw if isinstance(raw, dict) else {}
-        policy_name = str(item.get("policy_name", "") or "").strip()
-        status = str(item.get("status", "") or "").strip()
-        reason = str(item.get("reason", "") or "").strip()
-        if not policy_name and not status and not reason:
-            continue
-        normalized.append(
-            {
-                "policy_name": policy_name,
-                "status": status,
-                "reason": reason,
-            }
-        )
-    return normalized
-
-
 def build_reasoning_execution_receipt(
     *,
     trace_id: str,
@@ -104,6 +82,6 @@ def build_reasoning_execution_receipt(
         "answer": str(answer or "").strip(),
         "confidence_score": _normalize_float_01(confidence_score, default=0.0),
         "sources": _normalize_sources(sources),
-        "policy_decisions": _normalize_policy_decisions(policy_decisions),
+        "policy_decisions": build_reasoning_policy_decisions(rows=policy_decisions),
         "risk_flags": _normalize_string_list(risk_flags),
     }

@@ -2,6 +2,10 @@ from __future__ import annotations
 
 from typing import Any
 
+from src.layers.pro.reasoning.governance.policy_decision_model import (
+    ReasoningPolicyDecision,
+    build_reasoning_policy_decision,
+)
 from src.layers.pro.reasoning.governance.receipt_model import (
     ReasoningExecutionReceipt,
     build_reasoning_execution_receipt,
@@ -40,45 +44,45 @@ def _extract_sources(
     return sources
 
 
-def _extract_policy_decisions(diagnostics: dict[str, Any]) -> list[dict[str, object]]:
-    decisions: list[dict[str, object]] = []
+def _extract_policy_decisions(diagnostics: dict[str, Any]) -> list[ReasoningPolicyDecision]:
+    decisions: list[ReasoningPolicyDecision] = []
     self_check = dict(diagnostics.get("self_check") or {})
     decisions.append(
-        {
-            "policy_name": "self_check",
-            "status": str(self_check.get("status", "") or ""),
-            "reason": ";".join(str(x or "") for x in list(self_check.get("reasons") or [])),
-        }
+        build_reasoning_policy_decision(
+            policy_name="self_check",
+            status=self_check.get("status", ""),
+            reason=";".join(str(x or "") for x in list(self_check.get("reasons") or [])),
+        )
     )
     verify = dict(diagnostics.get("verify") or {})
     decisions.append(
-        {
-            "policy_name": "verify",
-            "status": str(verify.get("status", "") or ""),
-            "reason": ";".join(str(x or "") for x in list(verify.get("reasons") or [])),
-        }
+        build_reasoning_policy_decision(
+            policy_name="verify",
+            status=verify.get("status", ""),
+            reason=";".join(str(x or "") for x in list(verify.get("reasons") or [])),
+        )
     )
     policy = dict(diagnostics.get("reasoning_execution_policy") or {})
     if policy:
         decisions.append(
-            {
-                "policy_name": "execution_policy",
-                "status": "applied",
-                "reason": (
+            build_reasoning_policy_decision(
+                policy_name="execution_policy",
+                status="applied",
+                reason=(
                     f"max_steps={int(policy.get('max_steps', 0) or 0)},"
                     f"max_retries={int(policy.get('max_retries', 0) or 0)},"
                     f"max_latency_ms={int(policy.get('max_latency_ms', 0) or 0)}"
                 ),
-            }
+            )
         )
     for raw in list(diagnostics.get("policy_decisions") or []):
         item = raw if isinstance(raw, dict) else {}
         decisions.append(
-            {
-                "policy_name": item.get("policy_name", ""),
-                "status": item.get("status", ""),
-                "reason": item.get("reason", ""),
-            }
+            build_reasoning_policy_decision(
+                policy_name=item.get("policy_name", ""),
+                status=item.get("status", ""),
+                reason=item.get("reason", ""),
+            )
         )
     return decisions
 
