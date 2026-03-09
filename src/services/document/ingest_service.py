@@ -24,6 +24,12 @@ from src.core.exceptions import (
     VectorStoreError,
     wrap_exception
 )
+from src.services.document.ocr import (
+    NoopOCRProvider,
+    OCRProvider,
+    build_ocr_quality_summary,
+    run_ocr_provider,
+)
 
 
 class ChunkingStrategy(str, Enum):
@@ -185,7 +191,10 @@ class IngestService:
         vector_store: VectorStore,
         embedding_model: Optional[EmbeddingModel] = None,
         chunk_size: int = 1000,
-        chunk_overlap: int = 200
+        chunk_overlap: int = 200,
+        ocr_provider: Optional[OCRProvider] = None,
+        ocr_min_confidence: float = 0.6,
+        ocr_min_coverage: float = 0.7,
     ):
         """
         Инициализация с инъекцией зависимостей.
@@ -201,6 +210,9 @@ class IngestService:
         self._embedding_model = embedding_model
         self.chunker = RecursiveCharacterChunker(chunk_size, chunk_overlap)
         self._logger = get_logger()
+        self._ocr_provider = ocr_provider or NoopOCRProvider()
+        self._ocr_min_confidence = float(ocr_min_confidence)
+        self._ocr_min_coverage = float(ocr_min_coverage)
         
         self._logger.info(
             "IngestService инициализирован",
@@ -208,7 +220,8 @@ class IngestService:
                 "chunk_size": chunk_size,
                 "chunk_overlap": chunk_overlap,
                 "vector_store": vector_store.name if hasattr(vector_store, 'name') else "FAISS",
-                "embedding_model_provided": embedding_model is not None
+                "embedding_model_provided": embedding_model is not None,
+                "ocr_provider": getattr(self._ocr_provider, "name", "noop"),
             }
         )
     
@@ -227,6 +240,8 @@ class IngestService:
         filename: str,
         metadata: Optional[Dict[str, Any]] = None,
         document_id: Optional[str] = None,
+        source_bytes: Optional[bytes] = None,
+        mime_type: Optional[str] = None,
     ) -> IngestResult:
         """
         Основной метод обработки текста.
@@ -247,38 +262,51 @@ class IngestService:
         chunks = []  # инициализируем заранее
         
         try:
-            # 1. Валидация
-            await self._validate_text(text)
-            
-            # 2-3. Определение формата + подготовка метаданных
+            # 1-2. Определение формата + подготовка метаданных
             format, final_metadata = self._prepare_ingest_metadata_boundary(
                 metadata=metadata or {},
                 filename=filename,
                 text_length=len(text),
                 document_id=document_id,
             )
-            
-            # 4. Чанкинг
-            chunks = self._chunk_text_boundary(
+            # 3. OCR ветка для image/pdf, если есть бинарный контент
+            runtime_text, ocr_diag = await self._maybe_apply_ocr_boundary(
                 text=text,
+                filename=filename,
+                format=format,
+                document_id=document_id,
+                source_bytes=source_bytes,
+                mime_type=mime_type,
+            )
+            if ocr_diag:
+                diagnostics = dict(final_metadata.get("diagnostics", {}) or {})
+                diagnostics["ocr"] = dict(ocr_diag)
+                final_metadata["diagnostics"] = diagnostics
+                final_metadata["ocr_used"] = bool(ocr_diag.get("ocr_used", False))
+            # 4. Валидация текста после OCR ветки
+            await self._validate_text(runtime_text)
+            
+            # 5. Чанкинг
+            chunks = self._chunk_text_boundary(
+                text=runtime_text,
                 filename=filename,
                 final_metadata=final_metadata,
             )
             
-            # 5. Генерация эмбеддингов (оптимизация для M4)
+            # 6. Генерация эмбеддингов (оптимизация для M4)
             self._logger.info(f"Генерация эмбеддингов для {len(chunks)} чанков")
             chunks = await self._generate_embeddings_batch(chunks)
             
-            # 6. Подготовка VectorDocument
+            # 7. Подготовка VectorDocument
             vector_docs = self._prepare_vector_documents(chunks, document_id)
 
-            # 7. Сохранение в векторное хранилище
+            # 8. Сохранение в векторное хранилище
             saved_ids = await self._persist_vectors_boundary(
                 vector_docs=vector_docs,
             )
             chunk_ids.extend(saved_ids)
             
-            # 8. Статистика
+            # 9. Статистика
             store_stats = await self.vector_store.get_stats()
             
             processing_time_ms = int((time.time() - start_time) * 1000)
@@ -344,6 +372,50 @@ class IngestService:
                 metadata=meta
             )
             
+    async def _maybe_apply_ocr_boundary(
+        self,
+        *,
+        text: str,
+        filename: str,
+        format: DocumentFormat,
+        document_id: str,
+        source_bytes: bytes | None,
+        mime_type: str | None,
+    ) -> tuple[str, Dict[str, Any]]:
+        """Run OCR branch for image/pdf inputs and return updated text + diagnostics."""
+        detected_mime = str(mime_type or self._detect_mime_type(filename) or "")
+        should_use_ocr = bool(source_bytes) and (
+            detected_mime.startswith("image/")
+            or detected_mime == "application/pdf"
+            or format == DocumentFormat.PDF
+        )
+        if not should_use_ocr:
+            return text, {}
+
+        outcome = await run_ocr_provider(
+            provider=self._ocr_provider,
+            document_id=document_id,
+            content_bytes=bytes(source_bytes or b""),
+            mime_type=detected_mime,
+        )
+        quality = build_ocr_quality_summary(
+            extraction_result=dict(outcome.get("result", {}) or {}),
+            min_confidence=self._ocr_min_confidence,
+            min_coverage=self._ocr_min_coverage,
+        )
+        extracted_text = str(dict(outcome.get("result", {}) or {}).get("combined_text", "") or "")
+        merged_text = extracted_text if extracted_text else text
+        diagnostics: Dict[str, Any] = {
+            "ocr_used": True,
+            "provider": str(outcome.get("provider", "") or ""),
+            "ok": bool(outcome.get("ok", False)),
+            "mime_type": detected_mime,
+            "result_pages": int(dict(outcome.get("result", {}) or {}).get("total_pages", 0) or 0),
+            "quality": dict(quality),
+            "error": dict(outcome.get("error", {}) or {}) if outcome.get("error") else None,
+        }
+        return merged_text, diagnostics
+
     def _prepare_ingest_metadata_boundary(
         self,
         *,
@@ -462,6 +534,20 @@ class IngestService:
         }
         
         return format_map.get(ext, DocumentFormat.UNKNOWN)
+
+    def _detect_mime_type(self, filename: str) -> str:
+        ext = Path(filename).suffix.lower()
+        mime_map = {
+            ".png": "image/png",
+            ".jpg": "image/jpeg",
+            ".jpeg": "image/jpeg",
+            ".webp": "image/webp",
+            ".gif": "image/gif",
+            ".bmp": "image/bmp",
+            ".tiff": "image/tiff",
+            ".pdf": "application/pdf",
+        }
+        return mime_map.get(ext, "")
     
     def _prepare_metadata(
         self,

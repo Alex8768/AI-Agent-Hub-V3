@@ -6,6 +6,19 @@ from src.core.exceptions import EmbeddingError, ValidationError
 from src.adapters.embedding import get_embedding_factory
 
 
+class _StaticOCRProvider:
+    name = "static_ocr"
+
+    def __init__(self, payload):
+        self.payload = payload
+
+    async def extract(self, *, document_id: str, content_bytes: bytes, mime_type: str):
+        _ = document_id
+        _ = content_bytes
+        _ = mime_type
+        return dict(self.payload)
+
+
 @pytest.fixture
 def mock_vector_store():
     store = AsyncMock()
@@ -145,6 +158,34 @@ async def test_document_format_detection(ingest_service):
             filename=filename
         )
         assert result.format == expected_format, f"Failed for {filename}"
+
+
+@pytest.mark.asyncio
+async def test_ingest_text_uses_ocr_for_image_source(mock_vector_store):
+    svc = IngestService(
+        vector_store=mock_vector_store,
+        ocr_provider=_StaticOCRProvider(
+            {"pages": [{"page_index": 0, "text": "ocr text", "confidence": 0.95}], "warnings": []}
+        ),
+        chunk_size=100,
+        chunk_overlap=20,
+    )
+    result = await svc.ingest_text(
+        text="fallback text",
+        filename="scan.png",
+        source_bytes=b"fake-image-bytes",
+        mime_type="image/png",
+    )
+    assert result.success is True
+    diagnostics = dict(result.metadata.get("diagnostics", {}) or {})
+    ocr = dict(diagnostics.get("ocr", {}) or {})
+    assert ocr.get("ocr_used") is True
+    assert ocr.get("provider") == "static_ocr"
+    assert ocr.get("mime_type") == "image/png"
+    assert dict(ocr.get("quality") or {}).get("status") == "pass"
+    # ensure OCR text reached ingest path
+    docs_args = mock_vector_store.add_documents.call_args.kwargs["documents"]
+    assert any(str(getattr(doc, "content", "") or "") == "ocr text" for doc in list(docs_args or []))
 
 
 @pytest.mark.asyncio
