@@ -55,3 +55,6 @@ Access interactive documentation at:
 ## Rate Limiting
 - 100 requests per minute per IP
 - Headers: X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset
+
+## A2.33 Audit Reference
+- `docs/api/A2.33_PATCH1_API_RUNTIME_AUDIT.md`

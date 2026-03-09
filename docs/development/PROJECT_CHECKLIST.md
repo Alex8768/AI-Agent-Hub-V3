@@ -40,7 +40,7 @@
 
 ## Current Work — A2.33 API Docs & Feature-Flag Alignment
 
-- [ ] Patch 1 — Audit API docs vs runtime contracts
+- [x] Patch 1 — Audit API docs vs runtime contracts
 - [ ] Patch 2 — Update API docs for request/response parity
 - [ ] Patch 3 — Align feature-flag docs with default behavior
 - [ ] Patch 4 — Add deterministic API docs quality gate

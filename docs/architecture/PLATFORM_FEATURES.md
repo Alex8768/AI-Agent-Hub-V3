@@ -100,7 +100,7 @@ AI-Agent-Hub-V3 is a modular AI platform for production-grade agent systems with
 - [x] Docs references/workflow path alignment (A2.32 patch 3)
 - [x] Docs topology quality gate (A2.32 patch 4)
 - [x] Docs topology closure and policy sync (A2.32 patch 5)
-- [ ] API docs/runtime contract parity alignment (A2.33 patch 1)
+- [x] API docs/runtime contract parity alignment (A2.33 patch 1)
 - [ ] API docs request/response closure (A2.33 patch 2)
 - [ ] Feature-flag docs/default behavior alignment (A2.33 patch 3)
 - [ ] API docs deterministic quality gate (A2.33 patch 4)

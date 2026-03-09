@@ -17,7 +17,8 @@ A2.33 — API Docs & Feature-Flag Alignment
 
 Current progress:
 - Anchor started.
-- Patch 1 next: audit API docs vs runtime contracts and flag defaults.
+- Patch 1 complete: API/runtime contract drift audit documented.
+- Patch 2 next: update API docs endpoint and response parity.
 
 Focus:
 - eliminate API docs drift from contract/runtime behavior
