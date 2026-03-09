@@ -44,7 +44,7 @@ Planned files:
 - [x] Patch 1 — Introduce service-neutral search contracts
 - [x] Patch 2 — API/service mapping hardening
 - [x] Patch 3 — Search endpoint contract quality gate
-- [ ] Patch 4 — Cleanup and migration safety
+- [x] Patch 4 — Cleanup and migration safety
 - [ ] Patch 5 — Docs + CI policy alignment
 
 ### Out of Scope

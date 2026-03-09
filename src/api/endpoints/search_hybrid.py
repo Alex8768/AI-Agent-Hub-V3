@@ -4,23 +4,17 @@ Hybrid search endpoint: vector search + optional graph augmentation.
 
 from __future__ import annotations
 
-from typing import Any, Dict
-
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from loguru import logger
 
 from src.core.config import get_settings
-from src.api.schemas import HybridSearchResponse, SearchRequest, SearchResult
+from src.api.schemas import HybridSearchResponse, SearchRequest
 from src.api.dependencies import get_workspace
 from src.api.dependencies_impl import get_hybrid_retriever, get_rag_engine
-from src.services.search.contracts import SearchServiceRequest
+from src.api.endpoints.search_mapping import to_hybrid_search_response, to_service_request
 from src.services.search.search_service import SearchService
 
 router = APIRouter(tags=["Search"])
-
-
-def _to_service_request(request: SearchRequest) -> SearchServiceRequest:
-    return SearchServiceRequest.model_validate(request.model_dump())
 
 
 @router.post("/api/v1/search-hybrid", response_model=HybridSearchResponse)
@@ -44,26 +38,13 @@ async def search_documents_hybrid(
     try:
         payload = await SearchService().search_hybrid(
             http,
-            _to_service_request(request),
+            to_service_request(request),
             workspace_id=workspace_id,
             graph_depth=1,
             engine=engine,
             retriever=retriever,
         )
-        rows = payload.get("results", [])
-        normalized_rows = [
-            SearchResult.model_validate(row.model_dump() if hasattr(row, "model_dump") else row)
-            for row in rows
-        ]
-        graph = payload.get("graph")
-        evidence = payload.get("evidence")
-        stats = payload.get("stats")
-        return HybridSearchResponse(
-            results=normalized_rows,
-            graph=(graph if isinstance(graph, dict) else {}),
-            evidence=(evidence if isinstance(evidence, list) else []),
-            stats=(stats if isinstance(stats, dict) else {}),
-        )
+        return to_hybrid_search_response(payload)
     except Exception as e:
         logger.error(f"Hybrid search error: {e}")
         raise HTTPException(
