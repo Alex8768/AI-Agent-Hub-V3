@@ -1,0 +1,169 @@
+# Platform Features Catalog
+
+## Purpose
+
+This document is the single source of truth for:
+
+- what the platform should be able to do;
+- which capabilities are already implemented;
+- which capabilities are planned next;
+- how future anchors should be derived.
+
+Use this file before creating or updating `PROJECT_ANCHOR.md`, `STATUS.md`, and `PROJECT_CHECKLIST.md`.
+
+---
+
+## Product Direction
+
+AI-Agent-Hub-V3 is a modular AI platform for production-grade agent systems with:
+
+- retrieval and ingestion;
+- memory and context continuity;
+- graph-aware reasoning;
+- tool orchestration;
+- execution control, traceability, and governance.
+
+---
+
+## Capability Map
+
+### 1) Retrieval Layer
+
+- [x] Vector search (FAISS)
+- [x] Hybrid retrieval
+- [x] Qdrant path
+- [x] Search service-neutral contracts boundary (A2.29 patch 1)
+- [x] Hybrid search API mapping hardening with response model sanitation (A2.29 patch 2)
+- [x] Search endpoint deterministic quality gate coverage (A2.29 patch 3)
+- [x] Search API mapping adapters with migration-safe normalization (A2.29 patch 4)
+- [x] Search docs + CI policy alignment (A2.29 patch 5)
+- [ ] Retrieval eval benchmark suite
+- [ ] Adaptive retrieval policy optimizer
+
+### 2) Ingestion Layer
+
+- [x] Text/document ingest pipeline
+- [x] Chunking and embeddings
+- [ ] OCR for scanned PDFs/images (planned for A2.21)
+- [ ] Structured layout extraction (tables/forms)
+- [ ] Multilingual ingest quality checks
+
+### 3) Memory Layer
+
+- [x] Workspace memory baseline
+- [x] Semantic memory integration
+- [ ] Long-horizon memory policies
+- [ ] Memory conflict resolution
+
+### 4) Reasoning Layer
+
+- [x] Multi-step planner
+- [x] Step executor
+- [x] Quality loop
+- [x] Trace + replay
+- [x] Timeline observability
+- [x] Execution control (policy, loop guard, retries)
+- [x] Trust/Governance execution receipts
+- [x] Multi-agent coordination
+- [x] Adaptive optimization diagnostics
+- [x] Enterprise productization diagnostics
+
+### 5) Tooling Layer
+
+- [x] Tool integration boundaries
+- [x] Tool permission model (capability-based)
+- [x] Sandbox execution modes
+- [x] Side-effect risk classification
+- [x] MCP connector expansion (A2.25 complete: registry/discovery/safety/runtime with quality gates)
+
+### 6) Platform/Operations
+
+- [x] Feature flags
+- [x] CI workflows
+- [x] Ruleset-protected main branch flow
+- [x] Stable required checks policy (A2.26 complete)
+- [x] Release quality gates and benchmark reports (A2.26 complete)
+- [x] Search boundary CI quality gate (A2.29 patch 5)
+- [x] Release-gate coverage threshold policy contract (A2.30 patch 1)
+- [x] Shared coverage diagnostics normalization contract (A2.30 patch 2)
+- [x] Release-gate coverage quality-gate tests (A2.30 patch 3)
+- [x] Release-gate CI/report coverage policy alignment (A2.30 patch 4)
+- [x] Coverage enforcement docs/roadmap closure (A2.30 patch 5)
+- [x] Required checks matrix source-of-truth contract introduced (A2.31 patch 1)
+- [x] Required checks workflow input normalization (A2.31 patch 2)
+- [x] Required checks consolidation deterministic gates (A2.31 patch 3)
+- [x] CI wiring for consolidated required checks matrix (A2.31 patch 4)
+- [x] Required checks docs/policy closure (A2.31 patch 5)
+- [x] Docs topology map and compatibility policy (A2.32 patch 1)
+- [x] Docs migration to target topology with root stubs (A2.32 patch 2)
+- [ ] Docs references/workflow path alignment (A2.32 patch 3)
+- [ ] Docs topology quality gate (A2.32 patch 4)
+- [ ] Docs topology closure and policy sync (A2.32 patch 5)
+
+### 7) Interface Layer
+
+- [x] First-party web interface (workspace/session UX) (A2.28 patch 4: context controls + local persistence + loading hardening)
+- [x] Answer/debug diagnostics panel (A2.28 patch 3)
+- [x] Document/search/answer end-user flows (A2.28 patches 2-4)
+- [x] UI deterministic quality gate + CI interface smoke wiring (A2.28 patch 5)
+
+---
+
+## Planned Anchor Ideas (Draft)
+
+- `A2.15` Trust & Governance Layer (verifiable execution receipts)
+- `A2.16` Multi-Agent Coordination Fabric
+- `A2.17` Tool Safety Sandbox
+- `A2.18` Evaluation & Benchmark Hub
+- `A2.19` Adaptive Optimization Layer
+- `A2.20` Enterprise Productization Pack
+- `A2.21` OCR Ingestion Layer
+- `A2.22` Dynamic Composition Engine (MVP)
+- `A2.23` Meta-Cognition Engine (Lite)
+- `A2.24` Anticipatory Engine (Safe Mode)
+- `A2.25` MCP Ecosystem Expansion
+- `A2.26` Release Gates & CI Policy Hardening
+- `A2.27` Architecture & Readiness Audit
+- `A2.28` Interface Foundation (MVP)
+- `A2.29` Service Contract Boundary Cleanup (Search)
+- `A2.30` Coverage Enforcement in Release Gate
+- `A2.31` CI Workflow Consolidation & Required Checks Matrix
+- `A2.32` Docs Topology Cleanup (root -> docs/architecture + docs/development)
+- `A2.33` API Docs & Feature-Flag Alignment
+
+Roadmap order:
+
+- `A2.15 -> A2.16 -> A2.17 -> A2.18 -> A2.19 -> A2.20 -> A2.21 -> A2.22 -> A2.23 -> A2.24 -> A2.25 -> A2.26 -> A2.27 -> A2.28 -> A2.29 -> A2.30 -> A2.31 -> A2.32 -> A2.33`
+- OCR remains the current anchor and must close before composition work.
+- Composition should start as rule-based MVP before advanced autonomy.
+- Meta-cognition should consume existing diagnostics first (no graph redesign in first pass).
+- Anticipatory mode should start as safe post-response suggestions (lightweight).
+- MCP expansion remains deferred until after A2.21 stabilization and quality gates.
+
+---
+
+## Feature Spec Template
+
+Copy this section when defining a new major feature:
+
+### Feature: <name>
+
+- **Problem:** <what pain it solves>
+- **Value:** <why this matters for users/business>
+- **Scope (in):** <included>
+- **Scope (out):** <excluded>
+- **Contracts:** <data/API/model contracts to add>
+- **Observability:** <metrics, diagnostics, traces>
+- **Security/Policy:** <controls/guardrails>
+- **Tests:** <unit/integration/quality gate>
+- **Rollout:** <flag/gradual rollout strategy>
+
+---
+
+## Working Rule
+
+Every new anchor should reference at least one item from this catalog and clearly mark:
+
+- implemented capabilities;
+- net-new capabilities;
+- deferred capabilities.
