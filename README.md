@@ -287,6 +287,7 @@ Main project documentation:
 - `docs/architecture/REQUIRED_CHECKS_MATRIX.md`
 - `docs/development/DOCS_TOPOLOGY_POLICY.md`
 - `docs/api/README.md`
+- `docs/api/A2.33_PATCH1_API_RUNTIME_AUDIT.md`
 - `docs/installation/`
 - `docs/roadmaps/pro-v3.1.md`
 - `docs/snapshots/`

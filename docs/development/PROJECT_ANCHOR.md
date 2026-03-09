@@ -2,39 +2,37 @@
 
 ## Active Anchor
 
-A2.33 — API Docs & Feature-Flag Alignment
+A2.34 — TBD
 
 ### Goal
 
-Align API documentation with actual feature-flag behavior and contract defaults.
+TBD.
 
 ### Architecture Position
 
 Planned modules:
 
-- `docs/architecture/*`
-- `docs/development/*`
+- TBD
 
 Planned files:
-- `docs/api/*`
-- feature-flag docs references in developer docs
+- TBD
 
 ### Patch Plan
 
 #### Patch plan
-- Patch 1 — Audit API docs vs runtime contracts
-- Patch 2 — Update API docs for request/response parity
-- Patch 3 — Align feature-flag docs with default behavior
-- Patch 4 — Add deterministic API docs quality gate
-- Patch 5 — Docs closure and roadmap sync
+- Patch 1 — TBD
+- Patch 2 — TBD
+- Patch 3 — TBD
+- Patch 4 — TBD
+- Patch 5 — TBD
 
 ### Progress
 
-- [x] Patch 1 — Audit API docs vs runtime contracts
-- [x] Patch 2 — Update API docs for request/response parity
-- [x] Patch 3 — Align feature-flag docs with default behavior
-- [x] Patch 4 — Add deterministic API docs quality gate
-- [ ] Patch 5 — Docs closure and roadmap sync
+- [ ] Patch 1 — TBD
+- [ ] Patch 2 — TBD
+- [ ] Patch 3 — TBD
+- [ ] Patch 4 — TBD
+- [ ] Patch 5 — TBD
 
 ### Out of Scope
 
@@ -44,14 +42,12 @@ Do NOT modify during planning:
 
 ### Definition of Done
 
-A2.33 is complete when:
-- API docs match delivery contracts
-- feature-flag docs match runtime defaults
-- docs quality gate protects against contract drift
+A2.34 is complete when:
+- TBD
 
 ## Next Anchor
 
-A2.34 — TBD
+A2.35 — TBD
 
 ### Discipline
 
@@ -63,11 +59,11 @@ Work order is strict:
 
 ### Last Completed Anchor
 
-A2.32 — Docs Topology Cleanup (root -> docs/architecture + docs/development)
+A2.33 — API Docs & Feature-Flag Alignment
 
 Completed via patches:
-- Patch 1 — Docs topology map and compatibility policy
-- Patch 2 — Roadmap docs moved to canonical topology with root stubs
-- Patch 3 — References/workflow aligned to canonical docs paths
-- Patch 4 — Deterministic docs topology quality gate and CI wiring
-- Patch 5 — Final docs policy sync and root compatibility stubs removal
+- Patch 1 — Audit API docs vs runtime contracts
+- Patch 2 — Update API docs for request/response parity
+- Patch 3 — Align feature-flag docs with default behavior
+- Patch 4 — Add deterministic API docs quality gate
+- Patch 5 — Docs closure and roadmap sync

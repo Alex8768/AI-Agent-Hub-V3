@@ -131,3 +131,12 @@ When streaming is disabled, streaming handler returns `400 Bad Request`.
 ## A2.33 Audit Reference
 
 - `docs/api/A2.33_PATCH1_API_RUNTIME_AUDIT.md`
+
+## API Docs Quality Gate
+
+- Deterministic docs parity gate: `tests/unit/docs/test_api_docs_quality_gate.py`
+- CI wiring: `.github/workflows/ci-pro.yml` (`release-gate` contract tests)
+- Gate enforces:
+  - runtime endpoint marker coverage for documented API surface
+  - feature-flag defaults and endpoint-gating notes
+  - roadmap feature-flag default-off markers parity

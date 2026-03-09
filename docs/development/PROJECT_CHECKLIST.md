@@ -37,18 +37,19 @@
 - [x] A2.30 Coverage Enforcement in Release Gate
 - [x] A2.31 CI Workflow Consolidation & Required Checks Matrix
 - [x] A2.32 Docs Topology Cleanup (root -> docs/architecture + docs/development)
+- [x] A2.33 API Docs & Feature-Flag Alignment
 
-## Current Work — A2.33 API Docs & Feature-Flag Alignment
+## Current Work — A2.34 TBD
 
-- [x] Patch 1 — Audit API docs vs runtime contracts
-- [x] Patch 2 — Update API docs for request/response parity
-- [x] Patch 3 — Align feature-flag docs with default behavior
-- [x] Patch 4 — Add deterministic API docs quality gate
-- [ ] Patch 5 — Docs closure and roadmap sync
+- [ ] Patch 1 — TBD
+- [ ] Patch 2 — TBD
+- [ ] Patch 3 — TBD
+- [ ] Patch 4 — TBD
+- [ ] Patch 5 — TBD
 
 ## Next
 
-- [ ] Start A2.34 Patch 1 (TBD)
+- [ ] Start A2.35 Patch 1 (TBD)
 
 ## Later
 

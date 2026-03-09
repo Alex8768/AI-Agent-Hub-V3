@@ -80,6 +80,7 @@ Alias compatibility:
 - Pro CI (Qdrant service container)
 - Integration tests gated by env flag
 - Required-checks matrix consolidation for release-gate policy (A2.31)
+- API docs deterministic quality gate in release-gate contracts (A2.33)
 
 ---
 
