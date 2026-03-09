@@ -40,7 +40,7 @@
 
 - [x] Patch 1 — Required checks matrix contract + deterministic assembly test
 - [x] Patch 2 — Normalize required checks inputs from workflow sources
-- [ ] Patch 3 — Consolidation rules deterministic quality tests
+- [x] Patch 3 — Consolidation rules deterministic quality tests
 - [ ] Patch 4 — Wire consolidated matrix into CI workflow
 - [ ] Patch 5 — Docs + CI policy alignment closure
 

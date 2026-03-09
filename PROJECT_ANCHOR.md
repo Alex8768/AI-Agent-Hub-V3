@@ -21,6 +21,7 @@ Planned files:
 - `tests/unit/layers/pro/test_reasoning_enterprise_required_checks_matrix.py`
 - `src/layers/pro/reasoning/enterprise/required_checks_normalizer.py`
 - `tests/unit/layers/pro/test_reasoning_enterprise_required_checks_normalizer.py`
+- `tests/unit/layers/pro/test_reasoning_enterprise_required_checks_consolidation_quality_gate.py`
 
 ### Patch Plan
 
@@ -35,7 +36,7 @@ Planned files:
 
 - [x] Patch 1 — Required checks matrix contract + deterministic assembly test
 - [x] Patch 2 — Normalize required checks inputs from CI workflow sources
-- [ ] Patch 3 — Consolidation rules deterministic quality tests
+- [x] Patch 3 — Consolidation rules deterministic quality tests
 - [ ] Patch 4 — Wire consolidated matrix into CI workflow
 - [ ] Patch 5 — Docs and policy alignment closure
 

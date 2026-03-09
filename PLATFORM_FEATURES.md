@@ -91,7 +91,7 @@ AI-Agent-Hub-V3 is a modular AI platform for production-grade agent systems with
 - [x] Coverage enforcement docs/roadmap closure (A2.30 patch 5)
 - [x] Required checks matrix source-of-truth contract introduced (A2.31 patch 1)
 - [x] Required checks workflow input normalization (A2.31 patch 2)
-- [ ] Required checks consolidation deterministic gates (A2.31 patch 3)
+- [x] Required checks consolidation deterministic gates (A2.31 patch 3)
 - [ ] CI wiring for consolidated required checks matrix (A2.31 patch 4)
 - [ ] Required checks docs/policy closure (A2.31 patch 5)
 
