@@ -2,29 +2,39 @@
 
 ## Active Anchor
 
-TBD — Post-A2.30 planning
+A2.31 — CI Workflow Consolidation & Required Checks Matrix
 
 ### Goal
 
-Define and prioritize the next anchor after completion of A2.30.
+Consolidate required-check logic behind a deterministic matrix contract used as a
+single source for CI policy convergence.
 
 ### Architecture Position
 
 Planned modules:
 
-TBD
+- `src/layers/pro/reasoning/enterprise/required_checks_matrix.py`
 
 Planned files:
-- TBD
+- `src/layers/pro/reasoning/enterprise/required_checks_matrix.py`
+- `tests/unit/layers/pro/test_reasoning_enterprise_required_checks_matrix.py`
 
 ### Patch Plan
 
 #### Patch plan
-- TBD
+- Patch 1 — Required checks matrix contract + deterministic assembly test
+- Patch 2 — Normalize required checks inputs from CI workflow sources
+- Patch 3 — Consolidation rules deterministic quality tests
+- Patch 4 — Wire consolidated matrix into CI workflow
+- Patch 5 — Docs and policy alignment closure
 
 ### Progress
 
-- [ ] TBD
+- [x] Patch 1 — Required checks matrix contract + deterministic assembly test
+- [ ] Patch 2 — Normalize required checks inputs from CI workflow sources
+- [ ] Patch 3 — Consolidation rules deterministic quality tests
+- [ ] Patch 4 — Wire consolidated matrix into CI workflow
+- [ ] Patch 5 — Docs and policy alignment closure
 
 ### Out of Scope
 
@@ -34,14 +44,14 @@ Do NOT modify during planning:
 
 ### Definition of Done
 
-Planning is complete when:
-- next anchor is selected with explicit patch plan
-- scope and out-of-scope are documented
-- first patch is ready to execute
+A2.31 is complete when:
+- required-checks matrix is the deterministic source of truth
+- CI workflows consume consolidated policy without drift
+- quality gates validate policy assembly and consolidation behavior
 
 ## Next Anchor
 
-TBD — Post-A2.30 planning
+A2.32 — Docs Topology Cleanup (root -> docs/architecture + docs/development)
 
 ### Discipline
 

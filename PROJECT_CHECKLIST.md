@@ -36,14 +36,17 @@
 - [x] A2.29 Service Contract Boundary Cleanup (Search)
 - [x] A2.30 Coverage Enforcement in Release Gate
 
-## Current Work — Post-A2.30 planning
+## Current Work — A2.31 CI Workflow Consolidation & Required Checks Matrix
 
-- [ ] Select next anchor
-- [ ] Define patch plan for next anchor
+- [x] Patch 1 — Required checks matrix contract + deterministic assembly test
+- [ ] Patch 2 — Normalize required checks inputs from workflow sources
+- [ ] Patch 3 — Consolidation rules deterministic quality tests
+- [ ] Patch 4 — Wire consolidated matrix into CI workflow
+- [ ] Patch 5 — Docs + CI policy alignment closure
 
 ## Next
 
-- [ ] Start next anchor Patch 1
+- [ ] Start A2.32 Patch 1 (docs topology cleanup)
 
 ## Later
 

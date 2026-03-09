@@ -13,25 +13,25 @@ shared diagnostics normalization, deterministic quality gates, and CI/report ali
 
 ## Current Active Anchor
 
-TBD — Post-A2.30 planning
+A2.31 — CI Workflow Consolidation & Required Checks Matrix
 
 Current progress:
-- A2.30 complete.
-- Next anchor selection pending.
+- Patch 1 complete: required-checks matrix contract with deterministic assembly test.
+- Patch 2 next: normalize required checks inputs from workflow sources.
 
 Focus:
-- post-A2.30 roadmap cut and priority selection
-- first patch definition for next anchor
+- eliminate required-check drift across CI jobs and policy sources
+- keep matrix assembly deterministic and migration-safe
 
 Execution discipline:
 - keep work strictly inside the active anchor and move in micro-patches.
 
 ## Next Anchor
 
-TBD — Post-A2.30 planning
+A2.32 — Docs Topology Cleanup (root -> docs/architecture + docs/development)
 
 Planned focus:
-- select next highest-value anchor from readiness backlog
+- move root operational docs into structured docs topology with compatibility stubs
 
 ## CI Status
 
@@ -41,4 +41,5 @@ The noop tracing span compatibility fix is completed and treated as closed work.
 
 ## Upcoming Anchors
 
-- TBD — Post-A2.30 planning
+- A2.32 — Docs Topology Cleanup (root -> docs/architecture + docs/development)
+- A2.33 — API Docs & Feature-Flag Alignment

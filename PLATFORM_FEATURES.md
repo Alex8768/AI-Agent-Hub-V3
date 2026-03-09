@@ -89,6 +89,11 @@ AI-Agent-Hub-V3 is a modular AI platform for production-grade agent systems with
 - [x] Release-gate coverage quality-gate tests (A2.30 patch 3)
 - [x] Release-gate CI/report coverage policy alignment (A2.30 patch 4)
 - [x] Coverage enforcement docs/roadmap closure (A2.30 patch 5)
+- [x] Required checks matrix source-of-truth contract introduced (A2.31 patch 1)
+- [ ] Required checks workflow input normalization (A2.31 patch 2)
+- [ ] Required checks consolidation deterministic gates (A2.31 patch 3)
+- [ ] CI wiring for consolidated required checks matrix (A2.31 patch 4)
+- [ ] Required checks docs/policy closure (A2.31 patch 5)
 
 ### 7) Interface Layer
 
@@ -117,10 +122,13 @@ AI-Agent-Hub-V3 is a modular AI platform for production-grade agent systems with
 - `A2.28` Interface Foundation (MVP)
 - `A2.29` Service Contract Boundary Cleanup (Search)
 - `A2.30` Coverage Enforcement in Release Gate
+- `A2.31` CI Workflow Consolidation & Required Checks Matrix
+- `A2.32` Docs Topology Cleanup (root -> docs/architecture + docs/development)
+- `A2.33` API Docs & Feature-Flag Alignment
 
 Roadmap order:
 
-- `A2.15 -> A2.16 -> A2.17 -> A2.18 -> A2.19 -> A2.20 -> A2.21 -> A2.22 -> A2.23 -> A2.24 -> A2.25 -> A2.26 -> A2.27 -> A2.28 -> A2.29 -> A2.30`
+- `A2.15 -> A2.16 -> A2.17 -> A2.18 -> A2.19 -> A2.20 -> A2.21 -> A2.22 -> A2.23 -> A2.24 -> A2.25 -> A2.26 -> A2.27 -> A2.28 -> A2.29 -> A2.30 -> A2.31 -> A2.32 -> A2.33`
 - OCR remains the current anchor and must close before composition work.
 - Composition should start as rule-based MVP before advanced autonomy.
 - Meta-cognition should consume existing diagnostics first (no graph redesign in first pass).
