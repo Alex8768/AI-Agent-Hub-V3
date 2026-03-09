@@ -37,6 +37,12 @@ from src.layers.pro.reasoning.multi_agent.coordination_model import (
     build_multi_agent_coordination_plan,
 )
 from src.layers.pro.reasoning.multi_agent.handoff_router import route_multi_agent_handoffs
+from src.layers.pro.reasoning.evaluation.benchmark_registry import (
+    build_reasoning_benchmark_suite,
+)
+from src.layers.pro.reasoning.evaluation.benchmark_runner import (
+    run_reasoning_benchmark_suite,
+)
 from src.layers.pro.reasoning.planner.planner import create_reasoning_plan
 from src.layers.pro.reasoning.planner.step_executor import execute_plan_steps
 from src.layers.pro.reasoning.tool_safety.runtime_guard import apply_tool_safety_runtime_guard
@@ -247,6 +253,56 @@ class ReasoningEngine:
             step_results=list(step_results or []),
             quality=dict(quality or {}),
             answer=answer_text,
+        )
+
+    @staticmethod
+    def _build_reasoning_benchmark_diagnostics(
+        *,
+        suite_name: str,
+        step_results: list[dict[str, object]],
+    ) -> dict[str, object]:
+        indexed: dict[str, dict[str, object]] = {}
+        cases: list[dict[str, object]] = []
+        for idx, row in enumerate(list(step_results or [])):
+            result = dict(row or {})
+            case_id = f"step_{idx}"
+            indexed[case_id] = result
+            cases.append(
+                {
+                    "case_id": case_id,
+                    "query": str(result.get("step_description", "") or ""),
+                    "expected_signals": ["verify_pass"],
+                    "tags": ["runtime_step"],
+                    "weight": 1.0,
+                }
+            )
+        suite = build_reasoning_benchmark_suite(
+            suite_name=suite_name,
+            owner="reasoning_engine",
+            tags=["runtime", "diagnostics"],
+            cases=cases,
+        )
+
+        def _evaluate(case: dict[str, object]) -> dict[str, object]:
+            cid = str(case.get("case_id", "") or "")
+            row = dict(indexed.get(cid) or {})
+            verify_status = str(row.get("verify_status", "") or "")
+            passed = verify_status == "pass"
+            if "arbitration_score" in row:
+                score = float(row.get("arbitration_score", 0.0) or 0.0)
+            else:
+                score = 1.0 if passed else 0.0
+            reasons = [str(x) for x in list(row.get("verify_reasons") or [])]
+            return {
+                "score": score,
+                "passed": passed,
+                "reasons": reasons,
+                "latency_ms": int(idx if (idx := int(row.get("step_index", 0) or 0)) >= 0 else 0),
+            }
+
+        return run_reasoning_benchmark_suite(
+            suite=suite,
+            evaluate_case=_evaluate,
         )
 
     @staticmethod
@@ -513,6 +569,10 @@ class ReasoningEngine:
                 plan_steps=planner_actions,
                 step_results=per_step_results,
             )
+            diag["reasoning_benchmark"] = self._build_reasoning_benchmark_diagnostics(
+                suite_name="reasoning_runtime_graph",
+                step_results=per_step_results,
+            )
             diag["reasoning_timeline"] = dict(
                 (dict(diag.get("reasoning_trace") or {}).get("timeline") or {})
             )
@@ -673,6 +733,13 @@ class ReasoningEngine:
                     answer_text=answer_text,
                     quality=dict(diag.get("reasoning_quality") or {}),
                     plan_steps=fallback_plan_steps,
+                    step_results=list(planner_step_results or []),
+                ),
+            )
+            diag.setdefault(
+                "reasoning_benchmark",
+                self._build_reasoning_benchmark_diagnostics(
+                    suite_name="reasoning_runtime_fallback",
                     step_results=list(planner_step_results or []),
                 ),
             )

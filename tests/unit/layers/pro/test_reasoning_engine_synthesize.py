@@ -132,6 +132,11 @@ async def test_reasoning_engine_fallback_executes_planner_steps(monkeypatch):
     assert calls.get("max_steps") == 3
     assert diag.get("agent_current_action") == "ANSWER"
     assert diag.get("agent_current_step") == 1
+    bench = dict(diag.get("reasoning_benchmark") or {})
+    assert bench.get("suite_name") == "reasoning_runtime_fallback"
+    summary = dict(bench.get("summary") or {})
+    assert summary.get("total_cases") == 2
+    assert summary.get("passed_cases") == 2
     trace = dict(diag.get("reasoning_trace") or {})
     assert trace.get("query") == "multi step query"
     assert trace.get("plan") == ["step one", "step two"]

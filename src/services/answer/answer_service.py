@@ -278,6 +278,23 @@ def _apply_diagnostics(
         )
         reasoning_quality = dict(diag.get("reasoning_quality") or {})
         diag.setdefault(
+            "reasoning_benchmark",
+            {
+                "suite_name": "reasoning_runtime_fallback",
+                "summary": {
+                    "suite_name": "reasoning_runtime_fallback",
+                    "total_cases": 0,
+                    "passed_cases": 0,
+                    "pass_rate": 0.0,
+                    "average_score": 0.0,
+                    "results": [],
+                },
+                "failed_case_ids": [],
+                "average_latency_ms": 0,
+                "results": [],
+            },
+        )
+        diag.setdefault(
             "reasoning_trace",
             {
                 "query": str(getattr(req, "query", "") or ""),

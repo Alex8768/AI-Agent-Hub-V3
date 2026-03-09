@@ -80,6 +80,7 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
         "self_check",
         "reasoning_execution_policy",
         "reasoning_quality",
+        "reasoning_benchmark",
         "reasoning_trace",
         "reasoning_timeline",
         "verify",
@@ -189,6 +190,23 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
         "next_attempt",
         "loop_guard_triggered",
         "reason",
+    }
+    rb = dict(diag.get("reasoning_benchmark") or {})
+    assert set(rb.keys()) == {
+        "suite_name",
+        "summary",
+        "failed_case_ids",
+        "average_latency_ms",
+        "results",
+    }
+    rb_summary = dict(rb.get("summary") or {})
+    assert set(rb_summary.keys()) == {
+        "suite_name",
+        "total_cases",
+        "passed_cases",
+        "pass_rate",
+        "average_score",
+        "results",
     }
     rt = dict(diag.get("reasoning_trace") or {})
     assert set(rt.keys()) == {
