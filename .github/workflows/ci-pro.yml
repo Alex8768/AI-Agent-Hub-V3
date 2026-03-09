@@ -29,6 +29,9 @@ jobs:
         shell: bash
         run: |
           pytest -q \
+            tests/unit/layers/pro/test_reasoning_enterprise_required_checks_matrix.py \
+            tests/unit/layers/pro/test_reasoning_enterprise_required_checks_normalizer.py \
+            tests/unit/layers/pro/test_reasoning_enterprise_required_checks_consolidation_quality_gate.py \
             tests/unit/layers/pro/test_reasoning_enterprise_required_checks_policy.py \
             tests/unit/layers/pro/test_reasoning_enterprise_release_gate_aggregator.py \
             tests/unit/layers/pro/test_reasoning_enterprise_release_gate_decision.py \
@@ -42,6 +45,15 @@ jobs:
           import json
           from pathlib import Path
 
+          from src.layers.pro.reasoning.enterprise.required_checks_matrix import (
+              consolidate_enterprise_required_checks_matrix,
+          )
+          from src.layers.pro.reasoning.enterprise.required_checks_normalizer import (
+              normalize_enterprise_required_checks_by_profile,
+          )
+          from src.layers.pro.reasoning.enterprise.required_checks_policy import (
+              build_enterprise_required_checks_policy,
+          )
           from src.layers.pro.reasoning.enterprise.release_gate_aggregator import build_enterprise_release_gate_inputs
           from src.layers.pro.reasoning.enterprise.release_gate_decision import decide_enterprise_release_gate
           from src.layers.pro.reasoning.enterprise.release_gate_model import build_enterprise_release_gate_policy
@@ -65,10 +77,42 @@ jobs:
                   "decision": {"action": "approve", "requires_human_review": False}
               },
           }
-          policy = build_enterprise_release_gate_policy(
+          policy_seed = build_enterprise_required_checks_policy(
               profile_name="enterprise_default",
               required_checks=["verify", "self_check", "reasoning_benchmark", "reasoning_optimization"],
-              blocking_checks=["verify", "self_check"],
+              stable_statuses=["pass"],
+              treat_missing_as_failure=True,
+              allow_warnings=False,
+          )
+          workflow_required_checks_by_profile = normalize_enterprise_required_checks_by_profile(
+              workflow_definitions={
+                  "by_profile": {
+                      "enterprise_default": {
+                          "checks": ["release-gate", "interface-gate", "search-boundary-gate"],
+                      }
+                  }
+              },
+              aliases={
+                  "release_gate": ["verify", "self_check", "reasoning_benchmark", "reasoning_optimization"],
+                  "interface_gate": ["ui_quality_gate"],
+                  "search_boundary_gate": ["search_contract_quality"],
+              },
+          )
+          checks_matrix = consolidate_enterprise_required_checks_matrix(
+              policies=[policy_seed],
+              workflow_required_checks_by_profile=workflow_required_checks_by_profile,
+              blocking_checks_by_profile={"enterprise_default": ["verify", "self_check"]},
+              version="v1",
+          )
+          default_profile = next(
+              profile
+              for profile in checks_matrix["profiles"]
+              if profile["profile_name"] == "enterprise_default"
+          )
+          policy = build_enterprise_release_gate_policy(
+              profile_name=default_profile["profile_name"],
+              required_checks=default_profile["required_checks"],
+              blocking_checks=default_profile["blocking_checks"],
               minimum_pass_rate=0.8,
               minimum_average_score=0.7,
               minimum_coverage_ratio=0.85,
@@ -90,6 +134,7 @@ jobs:
           report = {
               "profile_name": policy["profile_name"],
               "required_checks": policy["required_checks"],
+              "required_checks_matrix": checks_matrix,
               "release_checks": inputs["release_checks"],
               "coverage_ratio": inputs.get("coverage_ratio"),
               "required_checks_evaluation": inputs["required_checks_evaluation"],
