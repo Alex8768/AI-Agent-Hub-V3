@@ -14,6 +14,12 @@ from src.layers.pro.composition.composer import (
     build_composed_agent_node,
     validate_composed_agent_graph_spec,
 )
+from src.layers.pro.composition.runtime import (
+    CompositionNodeExecutionResult,
+    CompositionPlanResult,
+    CompositionRuntimeResult,
+    run_composed_agent_graph,
+)
 
 __all__ = [
     "AgentRegistry",
@@ -28,4 +34,8 @@ __all__ = [
     "build_composed_agent_graph_spec",
     "build_composed_agent_node",
     "validate_composed_agent_graph_spec",
+    "CompositionNodeExecutionResult",
+    "CompositionPlanResult",
+    "CompositionRuntimeResult",
+    "run_composed_agent_graph",
 ]
