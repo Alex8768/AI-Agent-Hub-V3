@@ -100,6 +100,7 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
         "assistant_contract_version",
         "response_mode",
         "response_language",
+        "assistant_recovery_policy",
         "assistant_mode_enabled",
         "assistant_proactive_enabled",
         "assistant_actions_enabled",
@@ -157,6 +158,19 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
         "entities",
         "implicit_tasks",
         "source",
+    }
+    recovery_policy = dict(diag.get("assistant_recovery_policy") or {})
+    assert set(recovery_policy.keys()) == {
+        "mode",
+        "allow_low_evidence_only",
+        "allowed_intents",
+        "block_greeting_queries",
+        "allowed_languages",
+        "require_assistant_mode",
+        "fallback_on_policy_violation",
+        "target_language",
+        "violations",
+        "applied_reason_codes",
     }
     plan = dict(diag.get("assistant_plan") or {})
     assert set(plan.keys()) == {

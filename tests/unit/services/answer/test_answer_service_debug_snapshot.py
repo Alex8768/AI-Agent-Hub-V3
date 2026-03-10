@@ -162,6 +162,7 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
         "assistant_contract_version",
         "response_mode",
         "response_language",
+        "assistant_recovery_policy",
         "assistant_mode_enabled",
         "assistant_proactive_enabled",
         "assistant_actions_enabled",
@@ -997,6 +998,21 @@ async def test_answer_service_assistant_fallback_localizes_russian(monkeypatch):
     assert "Привет!" in str(getattr(resp, "answer", ""))
     assert diag.get("response_mode") == "assistant_fallback"
     assert diag.get("response_language") == "ru"
+    recovery_policy = dict(diag.get("assistant_recovery_policy") or {})
+    assert set(recovery_policy.keys()) == {
+        "mode",
+        "allow_low_evidence_only",
+        "allowed_intents",
+        "block_greeting_queries",
+        "allowed_languages",
+        "require_assistant_mode",
+        "fallback_on_policy_violation",
+        "target_language",
+        "violations",
+        "applied_reason_codes",
+    }
+    assert "assistant_chat_recovery_greeting_blocked" in list(recovery_policy.get("violations") or [])
+    assert "assistant_chat_recovery_policy_forced_fallback" in list(recovery_policy.get("applied_reason_codes") or [])
     assert diag.get("assistant_mode_enabled") is True
 
 
@@ -1084,6 +1100,43 @@ async def test_build_assistant_chat_recovery_answer_keeps_user_language(monkeypa
         current_answer="Извините, я не знаю.",
     )
     assert "Да, конечно" in out
+
+
+@pytest.mark.asyncio
+async def test_answer_service_recovery_policy_blocks_recovery_for_greeting(monkeypatch):
+    class _S:
+        feature_reasoning = True
+        feature_graphrag = True
+        feature_reasoning_llm_enabled = False
+        feature_assistant_mode = True
+        feature_assistant_proactive = False
+        feature_assistant_actions = False
+        llm_provider = "ollama"
+        openai_model = ""
+        ollama_model = "llama3.2:latest"
+
+    monkeypatch.setattr("src.core.config.get_settings", lambda: _S())
+    monkeypatch.setattr("src.observability.trace.make_trace_id", lambda **kwargs: "trace-123", raising=False)
+    monkeypatch.setattr(
+        "src.core.providers.get_reasoning_engine",
+        lambda *, retriever=None, llm=None, llm_timeout_s=None: _FakeReasoningEngine(retriever),
+    )
+
+    async def _fake_chat_recovery(**kwargs):
+        _ = kwargs
+        return "Этот текст не должен применяться"
+
+    monkeypatch.setattr("src.services.answer.answer_service._build_assistant_chat_recovery_answer", _fake_chat_recovery)
+
+    http = _DummyHTTP(request_id="rid-assistant-recovery-policy-greeting", rag_engine=object(), hybrid_retriever=_FakeHybrid())
+    req = AnswerRequest(query="Привет, ты тут?")
+    resp = await AnswerService().handle(http, req, workspace_id="default")
+    diag = dict(getattr(resp, "diagnostics", {}) or {})
+    policy = dict(diag.get("assistant_recovery_policy") or {})
+
+    assert "assistant_chat_recovery_greeting_blocked" in list(policy.get("violations") or [])
+    assert "assistant_chat_recovery_policy_forced_fallback" in list(policy.get("applied_reason_codes") or [])
+    assert diag.get("assistant_chat_recovery_applied") is not True
 
 
 @pytest.mark.asyncio

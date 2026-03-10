@@ -203,6 +203,65 @@ async def _build_assistant_chat_recovery_answer(
     )
 
 
+def _build_assistant_recovery_policy_contract() -> dict[str, object]:
+    return {
+        "mode": "assistant_chat_recovery_guarded",
+        "allow_low_evidence_only": True,
+        "allowed_intents": ["general_chat", "general_query"],
+        "block_greeting_queries": True,
+        "allowed_languages": ["ru", "en"],
+        "require_assistant_mode": True,
+        "fallback_on_policy_violation": True,
+    }
+
+
+def _apply_assistant_recovery_policy_guards(
+    *,
+    policy_contract: dict[str, object],
+    assistant_mode_enabled: bool,
+    has_evidence: bool,
+    plan_intent: str,
+    query: str,
+    target_language: str,
+) -> tuple[bool, dict[str, object]]:
+    policy = dict(policy_contract or {})
+    allowed_intents = {str(x).strip() for x in list(policy.get("allowed_intents") or []) if str(x).strip()}
+    allowed_languages = {str(x).strip() for x in list(policy.get("allowed_languages") or []) if str(x).strip()}
+    allow_low_evidence_only = bool(policy.get("allow_low_evidence_only", True))
+    block_greetings = bool(policy.get("block_greeting_queries", True))
+    require_assistant_mode = bool(policy.get("require_assistant_mode", True))
+    fallback_on_violation = bool(policy.get("fallback_on_policy_violation", True))
+
+    normalized_intent = str(plan_intent or "general_query").strip() or "general_query"
+    normalized_language = _normalize_language_tag(target_language, query=query)
+    violations: list[str] = []
+    applied_reason_codes: list[str] = []
+
+    if require_assistant_mode and not assistant_mode_enabled:
+        violations.append("assistant_chat_recovery_assistant_mode_disabled")
+    if allow_low_evidence_only and has_evidence:
+        violations.append("assistant_chat_recovery_requires_low_evidence")
+    if normalized_intent not in allowed_intents:
+        violations.append("assistant_chat_recovery_intent_not_allowlisted")
+    if block_greetings and _is_simple_greeting_query(query):
+        violations.append("assistant_chat_recovery_greeting_blocked")
+    if normalized_language not in allowed_languages:
+        violations.append("assistant_chat_recovery_language_not_allowlisted")
+
+    allow_recovery = not violations
+    if violations and fallback_on_violation:
+        allow_recovery = False
+        applied_reason_codes.append("assistant_chat_recovery_policy_forced_fallback")
+
+    policy_eval = {
+        **policy,
+        "target_language": normalized_language,
+        "violations": sorted(set(violations)),
+        "applied_reason_codes": sorted(set(applied_reason_codes)),
+    }
+    return allow_recovery, policy_eval
+
+
 def _rank_proactive_bundle(bundle: dict[str, object]) -> dict[str, object]:
     suggestions = [dict(row or {}) for row in list(bundle.get("suggestions") or [])]
     normalized: list[dict[str, object]] = []
@@ -3515,11 +3574,23 @@ class AnswerService:
             diag = dict(getattr(resp, "diagnostics", None) or {})
             has_evidence = int(diag.get("retrieved_provenance_count", 0) or 0) > 0
             plan_intent = str((dict(diag.get("assistant_plan") or {})).get("intent", "general_query") or "general_query")
+            recovery_policy = _build_assistant_recovery_policy_contract()
+            allow_recovery, recovery_policy_eval = _apply_assistant_recovery_policy_guards(
+                policy_contract=recovery_policy,
+                assistant_mode_enabled=assistant_mode_enabled,
+                has_evidence=has_evidence,
+                plan_intent=plan_intent,
+                query=str(getattr(req, "query", "") or ""),
+                target_language=str(assistant_response_language or "auto"),
+            )
+            diag["assistant_recovery_policy"] = recovery_policy_eval
+            policy_reasons = [str(x) for x in list(recovery_policy_eval.get("applied_reason_codes") or []) if str(x or "").strip()]
+            if policy_reasons:
+                reason_codes = [str(x) for x in list(diag.get("planning_reason_codes") or []) if str(x or "").strip()]
+                reason_codes.extend(policy_reasons)
+                diag["planning_reason_codes"] = sorted(set(reason_codes))
             if (
-                assistant_mode_enabled
-                and not has_evidence
-                and plan_intent in {"general_chat", "general_query"}
-                and not _is_simple_greeting_query(str(getattr(req, "query", "") or ""))
+                allow_recovery
             ):
                 recovered = await _build_assistant_chat_recovery_answer(
                     query=str(getattr(req, "query", "") or ""),
@@ -3533,7 +3604,7 @@ class AnswerService:
                     reason_codes.append("assistant_chat_recovery_applied")
                     diag["planning_reason_codes"] = sorted(set(reason_codes))
                     diag["assistant_chat_recovery_applied"] = True
-                    resp.diagnostics = diag
+            resp.diagnostics = diag
         except Exception:
             pass
         try:
