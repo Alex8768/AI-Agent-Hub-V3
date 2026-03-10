@@ -631,6 +631,7 @@ def _apply_execution_idempotency_guard(
     transition_input: dict[str, object],
     workspace_id: str,
     plan_id: str,
+    prior_record: dict[str, object] | None = None,
     persist: bool = True,
 ) -> tuple[dict[str, object], dict[str, object]]:
     normalized = dict(transition_input or {})
@@ -668,6 +669,30 @@ def _apply_execution_idempotency_guard(
             "guard_action": "none",
             "reason_codes": ["idempotency_evaluation_deferred"],
         }
+    prior = dict(prior_record or {})
+    prior_key = str(prior.get("idempotency_key", "") or "")
+    prior_fingerprint = str(prior.get("operation_fingerprint", "") or "")
+    if prior_key and prior_key == idem_key and prior_fingerprint:
+        if prior_fingerprint == fingerprint:
+            return normalized, {
+                "contract_version": EXECUTION_IDEMPOTENCY_CONTRACT_VERSION,
+                "status": "replayed",
+                "idempotency_key": idem_key,
+                "operation_fingerprint": fingerprint,
+                "guard_action": "recovered_from_durable_replay",
+                "reason_codes": ["idempotency_replay_recovered_from_durable"],
+            }
+        normalized["decision"] = ""
+        normalized["requested_action_ids"] = []
+        return normalized, {
+            "contract_version": EXECUTION_IDEMPOTENCY_CONTRACT_VERSION,
+            "status": "conflict",
+            "idempotency_key": idem_key,
+            "operation_fingerprint": fingerprint,
+            "guard_action": "blocked_durable_conflict",
+            "reason_codes": ["idempotency_conflict_blocked"],
+        }
+
     prev = _EXECUTION_IDEMPOTENCY_SEEN.get(idem_key)
     if prev is None:
         _EXECUTION_IDEMPOTENCY_SEEN[idem_key] = fingerprint
@@ -2109,6 +2134,7 @@ class AnswerService:
                     transition_input=transition_input,
                     workspace_id=str(workspace_id or ""),
                     plan_id=str(plan_bundle.get("plan_id", "") or ""),
+                    prior_record=loaded_durable_idempotency,
                 )
                 handshake = _apply_handshake_transition(
                     handshake_bundle=handshake,
@@ -2208,6 +2234,7 @@ class AnswerService:
                     transition_input=transition_input,
                     workspace_id=str(workspace_id or ""),
                     plan_id=str(plan_bundle.get("plan_id", "") or ""),
+                    prior_record=loaded_durable_idempotency,
                 )
                 handshake = _apply_handshake_transition(
                     handshake_bundle=handshake,

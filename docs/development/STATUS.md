@@ -16,11 +16,11 @@ Current progress:
 - Patch 1 completed: Durable Contracts Baseline.
 - Patch 2 completed: Persistence Wiring for Approval/Idempotency Records.
 - Patch 3 completed: Token TTL + One-Time Consumption Guards.
-- Patch 4 pending: TBD.
+- Patch 4 completed: Restart Recovery + Deterministic Replay Outcomes.
 - Patch 5 pending: TBD.
 
 Focus:
-- token expiration and one-time confirmation guards over durable records
+- restart-safe deterministic replay outcomes from durable idempotency records
 - strict micro-patch progression toward persistent recovery flow
 
 Execution discipline:

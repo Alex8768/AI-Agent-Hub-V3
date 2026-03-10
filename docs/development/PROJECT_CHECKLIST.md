@@ -48,7 +48,7 @@
 - [x] Patch 1 — Durable Contracts Baseline
 - [x] Patch 2 — Persistence Wiring for Approval/Idempotency Records
 - [x] Patch 3 — Token TTL + One-Time Consumption Guards
-- [ ] Patch 4 — TBD
+- [x] Patch 4 — Restart Recovery + Deterministic Replay Outcomes
 - [ ] Patch 5 — TBD
 
 ## Next
