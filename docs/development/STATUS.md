@@ -20,10 +20,11 @@ Current progress:
 - Patch 1 completed: Intent Contract Baseline.
 - Patch 2 completed: Deterministic Plan Builder MVP.
 - Patch 3 completed: Plan -> Draft Actions Bridge.
+- Patch 4 completed: Policy Guards for Planning.
 
 Focus:
 - deterministic intent extraction and planning diagnostics contracts
-- deterministic review-only plan builder with plan-to-draft bridge (no side effects)
+- deterministic review-only planning with policy guard enforcement (no side effects)
 
 Execution discipline:
 - keep work strictly inside the active anchor and move in micro-patches.

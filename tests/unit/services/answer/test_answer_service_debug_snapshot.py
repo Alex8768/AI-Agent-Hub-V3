@@ -168,6 +168,7 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
         "plan_contract_version",
         "assistant_intent",
         "assistant_plan",
+        "planning_policy",
         "planning_reason_codes",
         "plan_id",
         "retriever_stats",
@@ -203,6 +204,15 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
         "intent",
         "steps",
         "requires_confirmation",
+        "reason_codes",
+    }
+    policy = dict(diag.get("planning_policy") or {})
+    assert set(policy.keys()) == {
+        "mode",
+        "max_steps",
+        "blocked_steps_count",
+        "truncated",
+        "allowed_action_pattern",
         "reason_codes",
     }
     assert isinstance(diag.get("planning_reason_codes"), list)
@@ -946,3 +956,59 @@ async def test_answer_service_bridges_plan_to_draft_actions_when_proactive_off(m
     assert len(rows) >= 1
     assert str((rows[0] or {}).get("action_id", "")).startswith("draft_action:plan:start_project:")
     assert "draft_actions_from_plan_bridge" in list(actions.get("reason_codes") or [])
+
+
+@pytest.mark.asyncio
+async def test_answer_service_planning_policy_blocks_unsafe_steps(monkeypatch):
+    class _S:
+        feature_reasoning = True
+        feature_graphrag = True
+        feature_reasoning_llm_enabled = False
+        feature_assistant_mode = True
+        feature_assistant_proactive = False
+        feature_assistant_actions = True
+        llm_provider = "ollama"
+        openai_model = ""
+        ollama_model = "llama3.2:latest"
+
+    monkeypatch.setattr("src.core.config.get_settings", lambda: _S())
+    monkeypatch.setattr("src.observability.trace.make_trace_id", lambda **kwargs: "trace-123", raising=False)
+    monkeypatch.setattr(
+        "src.core.providers.get_reasoning_engine",
+        lambda *, retriever=None, llm=None, llm_timeout_s=None: _FakeReasoningEngine(retriever),
+    )
+
+    def _unsafe_plan(**kwargs):
+        return {
+            "contract_version": "v1",
+            "plan_id": "plan:test:unsafe",
+            "status": "ready",
+            "deterministic": True,
+            "intent": "start_project",
+            "steps": [
+                {
+                    "step_id": "step:1",
+                    "role": "ops",
+                    "action": "execute_shell_command",
+                    "parameters": {},
+                    "depends_on": [],
+                }
+            ],
+            "requires_confirmation": True,
+            "reason_codes": ["deterministic_plan_built"],
+        }
+
+    monkeypatch.setattr("src.services.answer.answer_service._build_deterministic_plan", _unsafe_plan)
+
+    http = _DummyHTTP(request_id="rid-plan-guard", rag_engine=object(), hybrid_retriever=_FakeHybrid())
+    req = AnswerRequest(query="project", session_id="default")
+    resp = await AnswerService().handle(http, req, workspace_id="default")
+    diag = dict(getattr(resp, "diagnostics", {}) or {})
+    plan = dict(diag.get("assistant_plan") or {})
+    policy = dict(diag.get("planning_policy") or {})
+
+    assert plan.get("status") == "guarded"
+    assert plan.get("steps") == []
+    assert plan.get("requires_confirmation") is False
+    assert policy.get("blocked_steps_count") == 1
+    assert "unsafe_steps_blocked" in list(policy.get("reason_codes") or [])

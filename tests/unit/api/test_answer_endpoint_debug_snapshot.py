@@ -107,6 +107,7 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
         "plan_contract_version",
         "assistant_intent",
         "assistant_plan",
+        "planning_policy",
         "planning_reason_codes",
         "plan_id",
         "retriever_stats",
@@ -136,6 +137,15 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
         "intent",
         "steps",
         "requires_confirmation",
+        "reason_codes",
+    }
+    policy = dict(diag.get("planning_policy") or {})
+    assert set(policy.keys()) == {
+        "mode",
+        "max_steps",
+        "blocked_steps_count",
+        "truncated",
+        "allowed_action_pattern",
         "reason_codes",
     }
     assert isinstance(diag.get("planning_reason_codes"), list)

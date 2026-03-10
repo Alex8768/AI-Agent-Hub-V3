@@ -45,7 +45,7 @@
 - [x] Patch 1 — Intent Contract Baseline
 - [x] Patch 2 — Deterministic Plan Builder MVP
 - [x] Patch 3 — Plan -> Draft Actions Bridge
-- [ ] Patch 4 — Policy Guards for Planning
+- [x] Patch 4 — Policy Guards for Planning
 - [ ] Patch 5 — Docs/CI Closure
 
 ## Next

@@ -113,6 +113,7 @@ AI-Agent-Hub-V3 is a modular AI platform for production-grade agent systems with
 - [x] Intent contract baseline with planning diagnostics (A2.35 patch 1)
 - [x] Deterministic review-only plan builder baseline (A2.35 patch 2)
 - [x] Plan-to-draft-actions deterministic diagnostics bridge (A2.35 patch 3)
+- [x] Planning policy guards for review-only safety (A2.35 patch 4)
 
 ### 7) Interface Layer
 
