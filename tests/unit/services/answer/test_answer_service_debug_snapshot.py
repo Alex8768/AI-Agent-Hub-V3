@@ -1279,6 +1279,49 @@ async def test_answer_service_tool_selection_policy_forces_fallback_on_violation
 
 
 @pytest.mark.asyncio
+async def test_answer_service_feedback_capture_adapter_normalizes_signals(monkeypatch):
+    class _S:
+        feature_reasoning = True
+        feature_graphrag = True
+        feature_reasoning_llm_enabled = False
+        feature_assistant_mode = True
+        feature_assistant_proactive = False
+        feature_assistant_actions = False
+        llm_provider = "ollama"
+        openai_model = ""
+        ollama_model = "llama3.2:latest"
+
+    monkeypatch.setattr("src.core.config.get_settings", lambda: _S())
+    monkeypatch.setattr("src.observability.trace.make_trace_id", lambda **kwargs: "trace-123", raising=False)
+    monkeypatch.setattr(
+        "src.core.providers.get_reasoning_engine",
+        lambda *, retriever=None, llm=None, llm_timeout_s=None: _FakeReasoningEngine(retriever),
+    )
+
+    http = _DummyHTTP(request_id="rid-feedback-normalize", rag_engine=object(), hybrid_retriever=_FakeHybrid())
+    req = AnswerRequest(
+        query="feedback normalization test",
+        session_id="default",
+        filters={
+            "feedback_signals": ["approve", "approve", "UNKNOWN"],
+            "feedback_events": [{"signal": "cancel"}, {"signal": "edit"}],
+            "feedback_signal": "approve",
+            "handshake_decision": "edit",
+            "feedback_edit_payload": {"note": "update action order"},
+        },
+    )
+    resp = await AnswerService().handle(http, req, workspace_id="default")
+    diag = dict(getattr(resp, "diagnostics", {}) or {})
+    feedback = dict(diag.get("assistant_feedback_learning") or {})
+
+    assert feedback.get("signals") == ["approve", "cancel", "edit"]
+    assert feedback.get("latest_signal") == "edit"
+    assert feedback.get("signal_counts") == {"approve": 1, "cancel": 1, "edit": 1}
+    assert "feedback_capture_adapter_normalized" in list(feedback.get("reason_codes") or [])
+    assert "feedback_signal_detected:edit" in list(feedback.get("reason_codes") or [])
+
+
+@pytest.mark.asyncio
 async def test_answer_service_llm_planner_policy_forces_fallback_on_violation(monkeypatch):
     class _S:
         feature_reasoning = True

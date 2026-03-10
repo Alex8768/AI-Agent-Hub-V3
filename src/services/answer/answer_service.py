@@ -704,32 +704,59 @@ def _build_feedback_learning_bundle(
         }
 
     filters = dict(getattr(req, "filters", {}) or {})
-    decision = str(filters.get("handshake_decision", "") or "").strip().lower()
-    explicit_signal = str(filters.get("feedback_signal", "") or "").strip().lower()
-    has_edit_payload = bool(filters.get("feedback_edit_payload") or filters.get("handshake_edit_payload"))
-    signal = "none"
-    if explicit_signal in {"approve", "cancel", "edit"}:
-        signal = explicit_signal
-    elif decision in {"approve", "cancel", "edit"}:
-        signal = decision
-    elif has_edit_payload:
-        signal = "edit"
+    allowed = {"approve", "cancel", "edit"}
 
-    signals = [signal] if signal in {"approve", "cancel", "edit"} else []
+    def _to_signal(raw: object) -> str:
+        value = str(raw or "").strip().lower()
+        return value if value in allowed else ""
+
+    normalized_signals: list[str] = []
+    for raw in list(filters.get("feedback_signals") or []):
+        signal = _to_signal(raw)
+        if signal:
+            normalized_signals.append(signal)
+
+    for row in list(filters.get("feedback_events") or []):
+        event = dict(row or {})
+        signal = _to_signal(event.get("signal", ""))
+        if signal:
+            normalized_signals.append(signal)
+
+    explicit_signal = _to_signal(filters.get("feedback_signal", ""))
+    if explicit_signal:
+        normalized_signals.append(explicit_signal)
+
+    decision_signal = _to_signal(filters.get("handshake_decision", ""))
+    if decision_signal:
+        normalized_signals.append(decision_signal)
+
+    if bool(filters.get("feedback_edit_payload") or filters.get("handshake_edit_payload")):
+        normalized_signals.append("edit")
+
+    # Deterministic normalization: preserve first occurrence order, drop unknown/duplicates.
+    signals: list[str] = []
+    seen: set[str] = set()
+    for signal in normalized_signals:
+        if signal in seen:
+            continue
+        seen.add(signal)
+        signals.append(signal)
+
+    latest = signals[-1] if signals else "none"
     counts = {
-        "approve": int(1 if signal == "approve" else 0),
-        "cancel": int(1 if signal == "cancel" else 0),
-        "edit": int(1 if signal == "edit" else 0),
+        "approve": int(1 if "approve" in signals else 0),
+        "cancel": int(1 if "cancel" in signals else 0),
+        "edit": int(1 if "edit" in signals else 0),
     }
-    reasons = ["feedback_contract_baseline_built"]
-    if signal != "none":
-        reasons.append(f"feedback_signal_detected:{signal}")
+    reasons = ["feedback_capture_adapter_normalized"]
+    if latest != "none":
+        reasons.append(f"feedback_signal_detected:{latest}")
     return {
         "contract_version": FEEDBACK_CONTRACT_VERSION,
         "mode": "approve_cancel_edit_feedback",
         "status": "ready",
         "signals": signals,
-        "latest_signal": signal,
+        "latest_signal": latest,
         "signal_counts": counts,
         "reason_codes": reasons,
     }

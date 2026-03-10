@@ -50,7 +50,7 @@
 ## Current Work — A2.42 Learning from Feedback (Approve/Cancel/Edit)
 
 - [x] Patch 1 — Feedback Contract Baseline
-- [ ] Patch 2 — Feedback Capture Adapter + Deterministic Normalization
+- [x] Patch 2 — Feedback Capture Adapter + Deterministic Normalization
 - [ ] Patch 3 — Feedback Policy Guardrails
 - [ ] Patch 4 — Runtime Wiring + Diagnostics Parity
 - [ ] Patch 5 — Docs/CI Closure
