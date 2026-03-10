@@ -79,3 +79,21 @@ def test_topology_dependency_gate_extensions_forbidden_execution_side_effects():
         ],
         gate_name="extensions_forbidden_execution_dependencies",
     )
+
+
+def test_topology_dependency_gate_planner_forbidden_composition_assembly_imports():
+    planner_file = ROOT / "src/layers/pro/reasoning/planner/planner.py"
+    modules = _read_import_modules(planner_file)
+    forbidden_prefixes = [
+        "src.layers.pro.composition.registry",
+        "src.layers.pro.composition.composer",
+    ]
+    violations = [
+        mod
+        for mod in modules
+        if any(mod == prefix or mod.startswith(f"{prefix}.") for prefix in forbidden_prefixes)
+    ]
+    assert not violations, (
+        "planner_forbidden_composition_assembly_imports violations detected:\n"
+        + "\n".join(sorted(violations))
+    )

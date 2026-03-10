@@ -43,7 +43,7 @@ A2.50 preserves A2.46-A2.49 constraints and decisions, with no behavior expansio
 
 - [x] Patch 1 — composition boundary contract + scope lock
 - [x] Patch 2 — composition resolver/adapter extraction
-- [ ] Patch 3 — dependency/parity/fallback guardrails
+- [x] Patch 3 — dependency/parity/fallback guardrails
 
 ### Patch 1 Outputs
 
@@ -91,11 +91,9 @@ Work order is strict:
 
 ### Last Completed Anchor
 
-A2.49 — Conversational Reliability Track (Human-Friendly Safe UX)
+A2.50 — Planner Residual Decoupling (Composition Boundary Closure)
 
 Completed via patches:
-- Patch 1 — conversational reliability inventory + scope lock
-- Patch 2 — response-style boundary seam extraction
-- Patch 3 — low-evidence friendliness normalization
-- Patch 4 — conversational diagnostics/runtime parity guardrails
-- Patch 5 — docs/CI closure for A2.49
+- Patch 1 — composition boundary contract + scope lock
+- Patch 2 — composition resolver/adapter extraction
+- Patch 3 — dependency/parity/fallback guardrails

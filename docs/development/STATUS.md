@@ -6,19 +6,17 @@ Platform Hardening — Architectural Topology Stabilization
 
 ## Last Completed Anchor
 
-A2.49 — Conversational Reliability Track (Human-Friendly Safe UX)
+A2.50 — Planner Residual Decoupling (Composition Boundary Closure)
 
 ## Current Active Anchor
 
-A2.50 — Planner Residual Decoupling (Composition Boundary Closure)
+A2.51 — TBD
 
 Current progress:
-- Patch 1 complete: composition boundary contract + scope lock.
-- Patch 2 complete: composition resolver/adapter extraction.
-- Patch 3 pending: dependency/parity/fallback guardrails.
+- Patch 1 pending: scope lock and inventory definition.
 
 Focus:
-- close residual planner/composition coupling debt without behavior change
+- define next stabilization scope with strict non-expansion constraints
 - keep topology/dependency quality gates active
 - preserve strict micro-patch execution discipline
 
@@ -34,7 +32,7 @@ Execution discipline:
 A2.51 — TBD
 
 Planned focus:
-- execute A2.50 patch 3 dependency/parity/fallback guardrails
+- define and start A2.51 patch 1 scope lock
 
 ## CI Status
 
@@ -44,4 +42,4 @@ The noop tracing span compatibility fix is completed and treated as closed work.
 
 ## Upcoming Anchors
 
-- A2.50 — Planner Residual Decoupling (Composition Boundary Closure)
+- A2.51 — TBD

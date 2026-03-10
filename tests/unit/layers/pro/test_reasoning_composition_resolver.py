@@ -54,3 +54,14 @@ def test_resolve_composition_request_fallback_mode_when_graph_unavailable():
     assert resolution["step_descriptions"] == [
         "Answer query using verified evidence: Summarize launch risks"
     ]
+
+
+def test_resolve_composition_request_fallback_is_deterministic():
+    request = build_composition_request(
+        query="Summarize launch risks",
+        composition_mode=True,
+        composition_registry=AgentRegistry(),
+    )
+    resolution_a = resolve_composition_request(request=request)
+    resolution_b = resolve_composition_request(request=request)
+    assert resolution_a == resolution_b

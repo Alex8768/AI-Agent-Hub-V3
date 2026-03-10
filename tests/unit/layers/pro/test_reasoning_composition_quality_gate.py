@@ -99,3 +99,19 @@ def test_composition_quality_gate_invalid_graph_is_rejected_safely() -> None:
     assert runtime["status"] == "rejected"
     assert runtime["reason_codes"] == ["validation_failed"]
     assert "unknown_entry_node" in list(runtime.get("warnings") or [])
+
+
+def test_composition_quality_gate_fallback_decision_is_deterministic() -> None:
+    empty_registry = AgentRegistry()
+    plan_a = create_reasoning_plan(
+        query="Summarize launch risks",
+        composition_mode=True,
+        composition_registry=empty_registry,
+    )
+    plan_b = create_reasoning_plan(
+        query="Summarize launch risks",
+        composition_mode=True,
+        composition_registry=empty_registry,
+    )
+    assert plan_a == plan_b
+    assert plan_a.get("reason_codes") == ["composition_graph_unavailable"]
