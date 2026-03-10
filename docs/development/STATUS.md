@@ -16,14 +16,15 @@ Current progress:
 - Patch 1 complete: Execution Pilot Contract Baseline.
 - Patch 2 complete: Allowlist + Policy Gate.
 - Patch 3 complete: Receipt + Rollback Contract Enforcement.
-- Patch 4 pending: Pilot Runtime Wiring.
+- Patch 4 complete: Pilot Runtime Wiring.
 - Patch 5 pending: Docs/CI Closure.
 
 Focus:
 - pilot contract baseline is in place and exposed in diagnostics
 - allowlist and policy gate are enforced for approval transitions
 - receipt and rollback contract enforcement is active for approve transitions
-- proceed with controlled runtime wiring in patch 4
+- pilot runtime wiring executes allowlisted low-risk draft actions in safe mode diagnostics
+- proceed with docs/ci closure in patch 5
 - preserve strict micro-patch execution discipline
 
 Execution discipline:

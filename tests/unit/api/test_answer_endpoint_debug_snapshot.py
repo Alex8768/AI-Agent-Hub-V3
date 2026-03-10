@@ -246,6 +246,7 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
         "requested_action_ids",
         "eligible_action_ids",
         "blocked_action_ids",
+        "executed_action_ids",
         "reason_codes",
     }
     assert diag.get("approval_session_contract_version") == "v1"

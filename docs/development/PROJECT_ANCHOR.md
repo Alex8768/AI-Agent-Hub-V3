@@ -34,7 +34,7 @@ Planned modules:
 - [x] Patch 1 — Execution Pilot Contract Baseline
 - [x] Patch 2 — Allowlist + Policy Gate
 - [x] Patch 3 — Receipt + Rollback Contract Enforcement
-- [ ] Patch 4 — Pilot Runtime Wiring
+- [x] Patch 4 — Pilot Runtime Wiring
 - [ ] Patch 5 — Docs/CI Closure
 
 ### Out of Scope

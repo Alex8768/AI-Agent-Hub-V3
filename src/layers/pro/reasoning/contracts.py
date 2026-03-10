@@ -242,7 +242,9 @@ class AssistantExecutionPilot(BaseModel):
 
     contract_version: str = Field(default=EXECUTION_PILOT_CONTRACT_VERSION)
     mode: Literal["controlled_pilot"] = Field(default="controlled_pilot")
-    state: Literal["idle", "disabled", "awaiting_confirmation", "ready", "blocked"] = Field(default="idle")
+    state: Literal["idle", "disabled", "awaiting_confirmation", "ready", "blocked", "executed"] = Field(
+        default="idle"
+    )
     safe_mode: bool = Field(default=True)
     execute_enabled: bool = Field(default=False)
     max_actions_per_run: int = Field(default=1, ge=0)
@@ -250,6 +252,7 @@ class AssistantExecutionPilot(BaseModel):
     requested_action_ids: list[str] = Field(default_factory=list)
     eligible_action_ids: list[str] = Field(default_factory=list)
     blocked_action_ids: list[str] = Field(default_factory=list)
+    executed_action_ids: list[str] = Field(default_factory=list)
     reason_codes: list[str] = Field(default_factory=list)
 
 

@@ -314,6 +314,7 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
         "requested_action_ids",
         "eligible_action_ids",
         "blocked_action_ids",
+        "executed_action_ids",
         "reason_codes",
     }
     assert diag.get("approval_session_contract_version") == "v1"
@@ -1225,11 +1226,12 @@ async def test_answer_service_handshake_transition_approve(monkeypatch):
     assert receipt.get("status") == "recorded"
     assert receipt.get("handshake_state") == "approved"
     assert str(receipt.get("receipt_id", "")).startswith("receipt:")
+    assert receipt.get("executed_action_ids") == [action_id]
     gateway = dict(diag.get("assistant_execution_gateway") or {})
-    assert gateway.get("state") == "ready_for_execution"
+    assert gateway.get("state") == "executed_in_pilot"
     assert gateway.get("safe_mode") is True
-    assert gateway.get("executed_action_ids") == []
-    assert gateway.get("dry_run_action_ids") == [action_id]
+    assert gateway.get("executed_action_ids") == [action_id]
+    assert gateway.get("dry_run_action_ids") == []
 
 
 @pytest.mark.asyncio

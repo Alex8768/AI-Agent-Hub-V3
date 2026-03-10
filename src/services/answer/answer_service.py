@@ -915,6 +915,46 @@ def _apply_rollback_contract_guard(
     }
 
 
+def _run_execution_pilot_runtime(
+    *,
+    handshake_bundle: dict[str, object],
+    draft_actions_bundle: dict[str, object],
+    actions_enabled: bool,
+) -> tuple[list[str], list[str]]:
+    handshake = dict(handshake_bundle or {})
+    if not actions_enabled:
+        return [], ["pilot_runtime_disabled"]
+    if str(handshake.get("state", "idle") or "idle") != "approved":
+        return [], ["pilot_runtime_not_approved"]
+
+    approved_action_ids = [str(x) for x in list(handshake.get("approved_action_ids") or []) if str(x)]
+    if not approved_action_ids:
+        return [], ["pilot_runtime_no_approved_actions"]
+
+    action_rows = [dict(row or {}) for row in list(draft_actions_bundle.get("actions") or [])]
+    action_type_by_id = {
+        str(row.get("action_id", "") or ""): str(row.get("action_type", "") or "")
+        for row in action_rows
+        if str(row.get("action_id", "") or "").strip()
+    }
+    rollback_by_id = {
+        str(row.get("action_id", "") or ""): str(row.get("rollback_plan", "") or "")
+        for row in action_rows
+        if str(row.get("action_id", "") or "").strip()
+    }
+    allowlisted_set = set(EXECUTION_PILOT_ALLOWLISTED_ACTION_TYPES)
+    eligible = [
+        aid
+        for aid in approved_action_ids
+        if _is_allowlisted_pilot_action_type(str(action_type_by_id.get(aid, "") or ""), allowlisted_set)
+        and bool(str(rollback_by_id.get(aid, "") or "").strip())
+    ]
+    executed_action_ids = eligible[: int(EXECUTION_PILOT_MAX_APPROVED_ACTION_IDS)]
+    if executed_action_ids:
+        return executed_action_ids, ["pilot_runtime_executed"]
+    return [], ["pilot_runtime_no_eligible_actions"]
+
+
 def _build_execution_receipt_stub(
     *,
     handshake_bundle: dict[str, object],
@@ -922,6 +962,7 @@ def _build_execution_receipt_stub(
     draft_actions_bundle: dict[str, object],
     workspace_id: str,
     request_id: str,
+    executed_action_ids: list[str] | None = None,
 ) -> dict[str, object]:
     handshake = dict(handshake_bundle or {})
     plan_id = str(plan_bundle.get("plan_id", "") or "")
@@ -953,11 +994,14 @@ def _build_execution_receipt_stub(
             and str((row or {}).get("action_id", "") or "") not in set(approved)
         ]
 
+    executed = [str(x) for x in list(executed_action_ids or []) if str(x)]
     if state in {"approved", "cancelled"}:
         seed = f"{workspace_id}|{request_id}|{plan_id}|{state}|{','.join(sorted(approved))}|{','.join(sorted(blocked))}"
         receipt_id = f"receipt:{hashlib.sha1(seed.encode('utf-8')).hexdigest()[:12]}"
         status = "recorded"
         reason_codes = ["execution_receipt_stub_recorded"]
+        if executed:
+            reason_codes.append("pilot_runtime_execution_recorded")
     elif state == "pending_confirmation":
         receipt_id = ""
         status = "awaiting_confirmation"
@@ -975,7 +1019,7 @@ def _build_execution_receipt_stub(
         "plan_id": plan_id,
         "approved_action_ids": approved,
         "blocked_action_ids": blocked,
-        "executed_action_ids": [],
+        "executed_action_ids": executed,
         "rollback_status": rollback_status,
         "rollback_required_action_ids": rollback_required_action_ids,
         "rollback_ready_action_ids": rollback_ready_action_ids,
@@ -1008,6 +1052,19 @@ def _build_safe_mode_execution_gateway(
             "reason_codes": ["assistant_actions_disabled"],
         }
     if state == "approved":
+        executed = [str(x) for x in list(receipt.get("executed_action_ids") or []) if str(x)]
+        if executed:
+            return {
+                "contract_version": EXECUTION_GATEWAY_CONTRACT_VERSION,
+                "mode": "safe_mode",
+                "state": "executed_in_pilot",
+                "safe_mode": True,
+                "approved_action_ids": approved,
+                "blocked_action_ids": blocked,
+                "executed_action_ids": executed,
+                "dry_run_action_ids": [],
+                "reason_codes": ["pilot_runtime_executed_no_external_side_effects"],
+            }
         return {
             "contract_version": EXECUTION_GATEWAY_CONTRACT_VERSION,
             "mode": "safe_mode",
@@ -1054,10 +1111,13 @@ def _build_execution_pilot_bundle(
     *,
     handshake_bundle: dict[str, object],
     draft_actions_bundle: dict[str, object],
+    receipt_bundle: dict[str, object],
     actions_enabled: bool,
 ) -> dict[str, object]:
     handshake = dict(handshake_bundle or {})
+    receipt = dict(receipt_bundle or {})
     requested_action_ids = [str(x) for x in list(handshake.get("approved_action_ids") or []) if str(x)]
+    executed_action_ids = [str(x) for x in list(receipt.get("executed_action_ids") or []) if str(x)]
     actions = [dict(row or {}) for row in list(draft_actions_bundle.get("actions") or [])]
     action_type_by_id = {
         str(row.get("action_id", "") or ""): str(row.get("action_type", "") or "")
@@ -1077,6 +1137,7 @@ def _build_execution_pilot_bundle(
             "requested_action_ids": requested_action_ids,
             "eligible_action_ids": [],
             "blocked_action_ids": [],
+            "executed_action_ids": [],
             "reason_codes": ["assistant_actions_disabled"],
         }
 
@@ -1088,7 +1149,10 @@ def _build_execution_pilot_bundle(
     ]
     blocked = [aid for aid in requested_action_ids if aid not in set(eligible)]
     state = str(handshake.get("state", "idle") or "idle")
-    if state == "pending_confirmation":
+    if executed_action_ids:
+        pilot_state = "executed"
+        reasons = ["pilot_runtime_executed"]
+    elif state == "pending_confirmation":
         pilot_state = "awaiting_confirmation"
         reasons = ["pilot_waiting_confirmation"]
     elif eligible:
@@ -1111,6 +1175,7 @@ def _build_execution_pilot_bundle(
         "requested_action_ids": requested_action_ids,
         "eligible_action_ids": eligible[:1],
         "blocked_action_ids": blocked,
+        "executed_action_ids": executed_action_ids,
         "reason_codes": reasons,
     }
 
@@ -1854,12 +1919,24 @@ def _apply_diagnostics(
                 + [str(x) for x in list(rollback_contract_eval.get("reason_codes") or []) if str(x)]
             )
         )
+        executed_action_ids, pilot_runtime_reasons = _run_execution_pilot_runtime(
+            handshake_bundle=handshake,
+            draft_actions_bundle=draft_actions,
+            actions_enabled=assistant_actions_enabled,
+        )
+        transition_policy_eval["applied_reason_codes"] = sorted(
+            set(
+                [str(x) for x in list(transition_policy_eval.get("applied_reason_codes") or []) if str(x)]
+                + [str(x) for x in list(pilot_runtime_reasons or []) if str(x)]
+            )
+        )
         receipt = _build_execution_receipt_stub(
             handshake_bundle=handshake,
             plan_bundle=plan,
             draft_actions_bundle=draft_actions,
             workspace_id=str(workspace_id or ""),
             request_id=str(get_request_id(http) or ""),
+            executed_action_ids=executed_action_ids,
         )
         approval_session = _build_approval_session_bundle(
             handshake_bundle=handshake,
@@ -1894,6 +1971,7 @@ def _apply_diagnostics(
         execution_pilot = _build_execution_pilot_bundle(
             handshake_bundle=handshake,
             draft_actions_bundle=draft_actions,
+            receipt_bundle=receipt,
             actions_enabled=assistant_actions_enabled,
         )
         diag.setdefault("execution_gateway_contract_version", EXECUTION_GATEWAY_CONTRACT_VERSION)
@@ -2377,12 +2455,33 @@ class AnswerService:
                 resp.diagnostics["assistant_execution_handshake"] = handshake
                 resp.diagnostics["execution_transition_policy"] = transition_policy_eval
                 resp.diagnostics["execution_idempotency"] = execution_idempotency
+                executed_action_ids, pilot_runtime_reasons = _run_execution_pilot_runtime(
+                    handshake_bundle=handshake,
+                    draft_actions_bundle=dict(anticipatory.get("draft_actions") or {}),
+                    actions_enabled=assistant_actions_enabled,
+                )
+                resp.diagnostics["execution_transition_policy"]["applied_reason_codes"] = sorted(
+                    set(
+                        [
+                            str(x)
+                            for x in list(
+                                (dict(resp.diagnostics.get("execution_transition_policy") or {})).get(
+                                    "applied_reason_codes", []
+                                )
+                                or []
+                            )
+                            if str(x)
+                        ]
+                        + [str(x) for x in list(pilot_runtime_reasons or []) if str(x)]
+                    )
+                )
                 resp.diagnostics["assistant_execution_receipt"] = _build_execution_receipt_stub(
                     handshake_bundle=handshake,
                     plan_bundle=plan_bundle,
                     draft_actions_bundle=dict(anticipatory.get("draft_actions") or {}),
                     workspace_id=str(workspace_id or ""),
                     request_id=str(get_request_id(http) or ""),
+                    executed_action_ids=executed_action_ids,
                 )
                 resp.diagnostics["execution_gateway_contract_version"] = EXECUTION_GATEWAY_CONTRACT_VERSION
                 resp.diagnostics["assistant_execution_gateway"] = _build_safe_mode_execution_gateway(
@@ -2394,6 +2493,7 @@ class AnswerService:
                 resp.diagnostics["assistant_execution_pilot"] = _build_execution_pilot_bundle(
                     handshake_bundle=handshake,
                     draft_actions_bundle=dict(anticipatory.get("draft_actions") or {}),
+                    receipt_bundle=dict(resp.diagnostics.get("assistant_execution_receipt") or {}),
                     actions_enabled=assistant_actions_enabled,
                 )
                 resp.diagnostics["assistant_approval_session"] = _build_approval_session_bundle(
@@ -2499,12 +2599,33 @@ class AnswerService:
                 resp.diagnostics["assistant_execution_handshake"] = handshake
                 resp.diagnostics["execution_transition_policy"] = transition_policy_eval
                 resp.diagnostics["execution_idempotency"] = execution_idempotency
+                executed_action_ids, pilot_runtime_reasons = _run_execution_pilot_runtime(
+                    handshake_bundle=handshake,
+                    draft_actions_bundle=dict(base.get("draft_actions") or {}),
+                    actions_enabled=assistant_actions_enabled,
+                )
+                resp.diagnostics["execution_transition_policy"]["applied_reason_codes"] = sorted(
+                    set(
+                        [
+                            str(x)
+                            for x in list(
+                                (dict(resp.diagnostics.get("execution_transition_policy") or {})).get(
+                                    "applied_reason_codes", []
+                                )
+                                or []
+                            )
+                            if str(x)
+                        ]
+                        + [str(x) for x in list(pilot_runtime_reasons or []) if str(x)]
+                    )
+                )
                 resp.diagnostics["assistant_execution_receipt"] = _build_execution_receipt_stub(
                     handshake_bundle=handshake,
                     plan_bundle=plan_bundle,
                     draft_actions_bundle=dict(base.get("draft_actions") or {}),
                     workspace_id=str(workspace_id or ""),
                     request_id=str(get_request_id(http) or ""),
+                    executed_action_ids=executed_action_ids,
                 )
                 resp.diagnostics["execution_gateway_contract_version"] = EXECUTION_GATEWAY_CONTRACT_VERSION
                 resp.diagnostics["assistant_execution_gateway"] = _build_safe_mode_execution_gateway(
@@ -2516,6 +2637,7 @@ class AnswerService:
                 resp.diagnostics["assistant_execution_pilot"] = _build_execution_pilot_bundle(
                     handshake_bundle=handshake,
                     draft_actions_bundle=dict(base.get("draft_actions") or {}),
+                    receipt_bundle=dict(resp.diagnostics.get("assistant_execution_receipt") or {}),
                     actions_enabled=assistant_actions_enabled,
                 )
                 resp.diagnostics["assistant_approval_session"] = _build_approval_session_bundle(
