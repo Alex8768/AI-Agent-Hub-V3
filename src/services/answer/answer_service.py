@@ -43,6 +43,10 @@ from src.layers.pro.reasoning.contracts import (
     VERIFY_SELF_CHECK_STATUS_REQUIRED,
 )
 from src.observability.request_context import get_request_id
+from src.services.answer.interface_contract import (
+    AnswerServiceRequestContract,
+    build_answer_service_request_contract,
+)
 from src.services.answer.orchestrator import run_answer_orchestration_core
 from src.services.answer.response_assembly import run_answer_response_assembly
 
@@ -3706,9 +3710,24 @@ class AnswerService:
         engine: object | None = None,
         retriever: object | None = None,
     ):
+        contract = build_answer_service_request_contract(
+            http=http,
+            req=req,
+            workspace_id=workspace_id,
+            engine=engine,
+            retriever=retriever,
+        )
+        return await self.handle_contract(contract)
+
+    async def handle_contract(self, contract: AnswerServiceRequestContract):
         from src.core.config import get_settings
         from src.core.providers import get_reasoning_engine, get_memory_store
 
+        http = contract.http
+        req = contract.req
+        workspace_id = str(contract.workspace_id or "")
+        engine = contract.engine
+        retriever = contract.retriever
         s = get_settings()
         runtime_context = _build_answer_service_runtime_context(settings=s)
         if not bool(runtime_context.get("reasoning_enabled", False)) or not bool(runtime_context.get("graphrag_enabled", False)):

@@ -9,6 +9,7 @@ from src.api.schemas import AnswerConfirmRequest
 from src.layers.pro.reasoning.contracts import AnswerRequest, AnswerResponse
 
 from src.services.answer.answer_service import AnswerService
+from src.services.answer.interface_contract import build_answer_service_request_contract
 
 
 router = APIRouter(prefix="/api/v1", tags=["reasoning"])
@@ -32,13 +33,14 @@ async def answer(
         raise HTTPException(status_code=404, detail="Not Found")
 
     service = AnswerService()
-    return await service.handle(
-        http,
-        req,
+    contract = build_answer_service_request_contract(
+        http=http,
+        req=req,
         workspace_id=workspace_id,
         engine=engine,
         retriever=retriever,
     )
+    return await service.handle_contract(contract)
 
 
 @router.post("/answer/confirm", response_model=AnswerResponse)
@@ -71,10 +73,11 @@ async def answer_confirm(
         },
     )
     service = AnswerService()
-    return await service.handle(
-        http,
-        mapped,
+    contract = build_answer_service_request_contract(
+        http=http,
+        req=mapped,
         workspace_id=workspace_id,
         engine=engine,
         retriever=retriever,
     )
+    return await service.handle_contract(contract)

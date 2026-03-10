@@ -49,12 +49,12 @@
 - [x] Patch 1 — answer path inventory + scope lock
 - [x] Patch 2 — orchestrator seam extraction
 - [x] Patch 3 — response assembly extraction
-- [ ] Patch 4 — interface contract cleanup
+- [x] Patch 4 — interface contract cleanup
 - [ ] Patch 5 — dependency / parity / quality gates
 
 ## Next
 
-- [ ] Start A2.51 patch 4 implementation
+- [ ] Start A2.51 patch 5 implementation
 
 ## Later
 
