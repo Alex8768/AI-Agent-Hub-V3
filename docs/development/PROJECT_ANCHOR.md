@@ -2,73 +2,75 @@
 
 ## Active Anchor
 
-A2.48 — Planner Decoupling Track (Kernel Composition Independence)
+A2.49 — Conversational Reliability Track (Human-Friendly Safe UX)
 
 ### Goal
 
-Close remaining planner-coupling debt by separating planner composition paths from
-concrete provider/runtime assembly, while preserving strict runtime parity.
+Make assistant responses consistently human-friendly and conversationally reliable
+while preserving existing safety, policy, and runtime contracts.
 
 This anchor targets:
 
-- planner runtime dependency decoupling
-- prompt/planner boundary normalization
-- deterministic planner diagnostics parity
-- CI/documentation enforcement for planner boundary drift
+- response-style reliability under low evidence and fallback paths
+- deterministic friendliness guardrails without policy drift
+- diagnostics visibility for conversational quality decisions
+- CI/documentation enforcement for conversational boundary drift
 
 ### Why Now
 
-A2.47 closed the major runtime/debt items and left one tracked architectural item:
+A2.48 closed planner-coupling debt and restored strict composition independence.
+The next operational risk is user-facing interaction quality: answers can stay safe
+but still feel too abrupt or non-human in constrained contexts.
 
-- `TD-A2.45-002`
+This anchor keeps behavior safe while normalizing a friendlier, reliable interaction tone.
 
-Planner behavior is guarded, but runtime composition is still more coupled than desired.
-Decoupling this path is the next low-risk/high-value stabilization step.
+No net-new intelligence capability is introduced.
 
 ### Architecture Position
 
 Primary closure zones:
 
-- `layers/pro/reasoning/kernel` planner-facing contracts
-- `core/providers_parts` runtime composition seams
-- `services/answer` planner adapter wiring (no behavior expansion)
-- planner boundary quality-gate tests and docs
+- `services/answer` response-shaping seams and diagnostics handoff
+- `layers/pro/reasoning` fallback/recovery conversational boundaries
+- assistant runtime policy adapters (guarded, deterministic)
+- docs + quality gates for conversational reliability contracts
 
-A2.48 preserves A2.46 topology constraints and A2.47 runtime decisions.
+A2.49 preserves A2.46 topology constraints, A2.47 debt decisions, and A2.48 planner decoupling outcomes.
 
 ### Patch Plan
 
 #### Patch plan
-- Patch 1 — planner decoupling inventory + scope lock
-- Patch 2 — planner composition seam extraction
-- Patch 3 — prompt/planner boundary normalization
-- Patch 4 — planner diagnostics/runtime parity guardrails
-- Patch 5 — debt registry/docs/CI closure for A2.48
+- Patch 1 — conversational reliability inventory + scope lock
+- Patch 2 — response-style boundary seam extraction
+- Patch 3 — low-evidence friendliness normalization
+- Patch 4 — conversational diagnostics/runtime parity guardrails
+- Patch 5 — docs/CI closure for A2.49
 
 ### Progress
 
-- [x] Patch 1 — planner decoupling inventory + scope lock
-- [x] Patch 2 — planner composition seam extraction
-- [x] Patch 3 — prompt/planner boundary normalization
-- [x] Patch 4 — planner diagnostics/runtime parity guardrails
-- [x] Patch 5 — debt registry/docs/CI closure for A2.48
+- [x] Patch 1 — conversational reliability inventory + scope lock
+- [ ] Patch 2 — response-style boundary seam extraction
+- [ ] Patch 3 — low-evidence friendliness normalization
+- [ ] Patch 4 — conversational diagnostics/runtime parity guardrails
+- [ ] Patch 5 — docs/CI closure for A2.49
 
 ### Patch 1 Outputs
 
-Debt inventory mapped to A2.48:
+Conversational reliability inventory mapped to A2.49:
 
-- `TD-A2.45-002`: planner wiring still depends on concrete runtime/provider composition paths.
+- low-evidence answer tone remains safe but can be too rigid in user-facing dialogue
+- fallback responses need clearer friendly-presence baseline across contexts
 
 Scope lock:
 
-- preserve planner behavior, outputs, and diagnostics contracts
+- preserve existing safety behavior, outputs, and diagnostics contracts
 - no net-new model/provider/intelligence capabilities
-- no planner quality-threshold policy changes
-- keep topology/dependency gates from A2.46 and debt gates from A2.47 active
+- no quality-threshold policy changes for verify/self-check/release gates
+- keep topology/dependency/debt gates from A2.46-A2.48 active
 
 ### Out of Scope
 
-Do NOT modify during planning:
+Do NOT modify during A2.49:
 - new model/provider integrations
 - net-new intelligence capabilities
 - OCR redesign
@@ -79,16 +81,15 @@ Do NOT modify during planning:
 
 ### Definition of Done
 
-A2.48 completion criteria:
-- `TD-A2.45-002` has explicit closure outcome in debt registry;
-- planner composition path is decoupled from concrete provider assembly seams;
-- prompt/planner boundaries are normalized without behavior drift;
-- planner diagnostics/runtime parity is preserved and test-covered;
+A2.49 completion criteria:
+- assistant response style stays human-friendly under constrained evidence paths;
+- friendliness normalization remains policy-safe and deterministic;
+- conversational diagnostics/runtime parity is preserved and test-covered;
 - docs/checklist/status/features and CI quality gates reflect closure state.
 
 ## Next Anchor
 
-A2.49 — TBD
+A2.50 — TBD
 
 ### Discipline
 

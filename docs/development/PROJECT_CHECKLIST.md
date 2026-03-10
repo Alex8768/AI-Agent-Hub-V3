@@ -52,18 +52,19 @@
 - [x] A2.45 Architecture Hardening Track (COO Runtime Reliability)
 - [x] A2.46 Kernel / Extensions / Execution Plane Hardening
 - [x] A2.47 Debt Resolution Track (Runtime Clarity + Reliability)
+- [x] A2.48 Planner Decoupling Track (Kernel Composition Independence)
 
-## Current Work — A2.48 Planner Decoupling Track (Kernel Composition Independence)
+## Current Work — A2.49 Conversational Reliability Track (Human-Friendly Safe UX)
 
-- [x] Patch 1 — planner decoupling inventory + scope lock
-- [x] Patch 2 — planner composition seam extraction
-- [x] Patch 3 — prompt/planner boundary normalization
-- [x] Patch 4 — planner diagnostics/runtime parity guardrails
-- [x] Patch 5 — debt registry/docs/CI closure
+- [x] Patch 1 — conversational reliability inventory + scope lock
+- [ ] Patch 2 — response-style boundary seam extraction
+- [ ] Patch 3 — low-evidence friendliness normalization
+- [ ] Patch 4 — conversational diagnostics/runtime parity guardrails
+- [ ] Patch 5 — docs/CI closure
 
 ## Next
 
-- [ ] Define A2.49 anchor scope and patch plan
+- [ ] Start A2.49 patch 2 implementation
 
 ## Later
 

@@ -180,6 +180,7 @@ AI-Agent-Hub-V3 is a modular AI platform for production-grade agent systems with
 - [x] Prompt/planner boundary normalization via shared query-input contract (A2.48 patch 3)
 - [x] Planner diagnostics/runtime parity guardrails via dedicated parity contract (A2.48 patch 4)
 - [x] Planner decoupling debt registry/docs/CI closure with runtime quality gate (A2.48 patch 5)
+- [x] Conversational reliability inventory and scope lock for human-friendly safe UX (A2.49 patch 1)
 
 ### 7) Interface Layer
 
