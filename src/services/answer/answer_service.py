@@ -44,6 +44,7 @@ from src.layers.pro.reasoning.contracts import (
 )
 from src.observability.request_context import get_request_id
 from src.services.answer.orchestrator import run_answer_orchestration_core
+from src.services.answer.response_assembly import run_answer_response_assembly
 
 SESSION_MEMORY_MAX_CHARS = 4000
 EXECUTION_IDEMPOTENCY_CONTRACT_VERSION = "v1"
@@ -3750,63 +3751,18 @@ class AnswerService:
         assistant_response_language = str(orchestration.assistant_response_language or "auto")
         loaded_durable_approval = dict(orchestration.loaded_durable_approval or {})
         loaded_durable_idempotency = dict(orchestration.loaded_durable_idempotency or {})
-        try:
-            diag = dict(getattr(resp, "diagnostics", None) or {})
-            has_evidence = int(diag.get("retrieved_provenance_count", 0) or 0) > 0
-            plan_intent = str((dict(diag.get("assistant_plan") or {})).get("intent", "general_query") or "general_query")
-            recovery_policy = _build_assistant_recovery_policy_contract()
-            allow_recovery, recovery_policy_eval = _apply_assistant_recovery_policy_guards(
-                policy_contract=recovery_policy,
-                assistant_mode_enabled=assistant_mode_enabled,
-                has_evidence=has_evidence,
-                plan_intent=plan_intent,
-                query=str(getattr(req, "query", "") or ""),
-                target_language=str(assistant_response_language or "auto"),
-            )
-            diag["assistant_recovery_policy"] = recovery_policy_eval
-            policy_reasons = [str(x) for x in list(recovery_policy_eval.get("applied_reason_codes") or []) if str(x or "").strip()]
-            if policy_reasons:
-                reason_codes = [str(x) for x in list(diag.get("planning_reason_codes") or []) if str(x or "").strip()]
-                reason_codes.extend(policy_reasons)
-                diag["planning_reason_codes"] = sorted(set(reason_codes))
-            if (
-                allow_recovery
-            ):
-                recovered = await _build_assistant_chat_recovery_answer(
-                    query=str(getattr(req, "query", "") or ""),
-                    language=str(assistant_response_language or "auto"),
-                    llm=llm,
-                    current_answer=str(getattr(resp, "answer", "") or ""),
-                )
-                if recovered and recovered.strip() != str(getattr(resp, "answer", "") or "").strip():
-                    resp.answer = recovered
-                    reason_codes = [str(x) for x in list(diag.get("planning_reason_codes") or []) if str(x or "").strip()]
-                    reason_codes.append("assistant_chat_recovery_applied")
-                    diag["planning_reason_codes"] = sorted(set(reason_codes))
-                    diag["assistant_chat_recovery_applied"] = True
-            if assistant_mode_enabled and not has_evidence:
-                normalized_low_evidence_answer = _normalize_low_evidence_friendliness(
-                    query=str(getattr(req, "query", "") or ""),
-                    language=str(assistant_response_language or "auto"),
-                    answer=str(getattr(resp, "answer", "") or ""),
-                )
-                if normalized_low_evidence_answer.strip() != str(getattr(resp, "answer", "") or "").strip():
-                    resp.answer = normalized_low_evidence_answer
-                    reason_codes = [str(x) for x in list(diag.get("planning_reason_codes") or []) if str(x or "").strip()]
-                    reason_codes.append("assistant_low_evidence_friendliness_applied")
-                    diag["planning_reason_codes"] = sorted(set(reason_codes))
-            conversational_runtime_parity = _build_conversational_runtime_parity_bundle(
-                diagnostics=diag,
-                query=str(getattr(req, "query", "") or ""),
-                answer=str(getattr(resp, "answer", "") or ""),
-            )
-            diag["conversational_runtime_parity"] = conversational_runtime_parity
-            reason_codes = [str(x) for x in list(diag.get("planning_reason_codes") or []) if str(x or "").strip()]
-            reason_codes.extend(list(conversational_runtime_parity.get("reason_codes") or []))
-            diag["planning_reason_codes"] = sorted(set(reason_codes))
-            resp.diagnostics = diag
-        except Exception:
-            pass
+        resp = await run_answer_response_assembly(
+            resp=resp,
+            req=req,
+            llm=llm,
+            assistant_mode_enabled=assistant_mode_enabled,
+            assistant_response_language=assistant_response_language,
+            build_assistant_recovery_policy_contract=_build_assistant_recovery_policy_contract,
+            apply_assistant_recovery_policy_guards=_apply_assistant_recovery_policy_guards,
+            build_assistant_chat_recovery_answer=_build_assistant_chat_recovery_answer,
+            normalize_low_evidence_friendliness=_normalize_low_evidence_friendliness,
+            build_conversational_runtime_parity_bundle=_build_conversational_runtime_parity_bundle,
+        )
         try:
             if assistant_proactive_enabled:
                 anticipatory = await _run_anticipatory_safe_mode(

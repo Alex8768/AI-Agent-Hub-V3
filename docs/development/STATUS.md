@@ -25,7 +25,7 @@ Current focus:
 Current progress:
 - Patch 1 complete: answer path inventory + scope lock.
 - Patch 2 complete: orchestrator seam extraction.
-- Patch 3 pending: response assembly extraction.
+- Patch 3 complete: response assembly extraction.
 - Patch 4 pending: interface contract cleanup.
 - Patch 5 pending: dependency / parity / quality gates.
 
