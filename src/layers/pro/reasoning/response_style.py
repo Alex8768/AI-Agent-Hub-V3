@@ -117,3 +117,31 @@ async def build_assistant_chat_recovery_answer(
         "Absolutely. I am here to help step by step: "
         "clarify your request, propose a clear plan, and move it forward safely."
     )
+
+
+def normalize_low_evidence_friendliness(
+    *,
+    query: str,
+    language: str,
+    answer: str,
+) -> str:
+    """Normalize low-evidence responses to a friendly deterministic style."""
+    target_language = _normalize_language_tag(language, query=query)
+    current = str(answer or "").strip()
+    if (
+        current
+        and not is_unknown_style_answer(current)
+        and _answer_language(current) == target_language
+    ):
+        return current
+    if is_simple_greeting_query(query):
+        return build_assistant_fallback_answer(query=query, language=target_language)
+    if target_language == "ru":
+        return (
+            "Да, конечно. Я рядом и готова помочь. "
+            "Можем вместе уточнить задачу и сразу наметить понятные шаги."
+        )
+    return (
+        "Absolutely. I am here to help. "
+        "We can clarify your goal and map clear next steps right away."
+    )

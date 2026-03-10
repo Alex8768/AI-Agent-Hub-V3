@@ -50,7 +50,7 @@ A2.49 preserves A2.46 topology constraints, A2.47 debt decisions, and A2.48 plan
 
 - [x] Patch 1 — conversational reliability inventory + scope lock
 - [x] Patch 2 — response-style boundary seam extraction
-- [ ] Patch 3 — low-evidence friendliness normalization
+- [x] Patch 3 — low-evidence friendliness normalization
 - [ ] Patch 4 — conversational diagnostics/runtime parity guardrails
 - [ ] Patch 5 — docs/CI closure for A2.49
 

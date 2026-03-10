@@ -44,9 +44,11 @@ def test_build_reasoning_response_style_runtime_exposes_callables():
         "is_simple_greeting_query",
         "is_unknown_style_answer",
         "is_generic_assistant_fallback_answer",
+        "normalize_low_evidence_friendliness",
     }
     assert callable(out["build_fallback_answer"])
     assert callable(out["build_chat_recovery_answer"])
     assert callable(out["is_simple_greeting_query"])
     assert callable(out["is_unknown_style_answer"])
     assert callable(out["is_generic_assistant_fallback_answer"])
+    assert callable(out["normalize_low_evidence_friendliness"])

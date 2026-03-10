@@ -11,6 +11,7 @@ def build_reasoning_response_style_runtime() -> dict[str, Callable[..., object]]
         is_generic_assistant_fallback_answer,
         is_simple_greeting_query,
         is_unknown_style_answer,
+        normalize_low_evidence_friendliness,
     )
 
     return {
@@ -19,4 +20,5 @@ def build_reasoning_response_style_runtime() -> dict[str, Callable[..., object]]
         "is_simple_greeting_query": is_simple_greeting_query,
         "is_unknown_style_answer": is_unknown_style_answer,
         "is_generic_assistant_fallback_answer": is_generic_assistant_fallback_answer,
+        "normalize_low_evidence_friendliness": normalize_low_evidence_friendliness,
     }

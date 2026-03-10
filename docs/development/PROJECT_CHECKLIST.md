@@ -58,13 +58,13 @@
 
 - [x] Patch 1 — conversational reliability inventory + scope lock
 - [x] Patch 2 — response-style boundary seam extraction
-- [ ] Patch 3 — low-evidence friendliness normalization
+- [x] Patch 3 — low-evidence friendliness normalization
 - [ ] Patch 4 — conversational diagnostics/runtime parity guardrails
 - [ ] Patch 5 — docs/CI closure
 
 ## Next
 
-- [ ] Start A2.49 patch 3 implementation
+- [ ] Start A2.49 patch 4 implementation
 
 ## Later
 

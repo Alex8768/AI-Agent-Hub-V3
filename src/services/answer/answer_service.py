@@ -236,6 +236,7 @@ _build_assistant_chat_recovery_answer = _RESPONSE_STYLE_RUNTIME["build_chat_reco
 _is_simple_greeting_query = _RESPONSE_STYLE_RUNTIME["is_simple_greeting_query"]
 _is_unknown_style_answer = _RESPONSE_STYLE_RUNTIME["is_unknown_style_answer"]
 _is_generic_assistant_fallback_answer = _RESPONSE_STYLE_RUNTIME["is_generic_assistant_fallback_answer"]
+_normalize_low_evidence_friendliness = _RESPONSE_STYLE_RUNTIME["normalize_low_evidence_friendliness"]
 
 
 def _build_assistant_recovery_policy_contract() -> dict[str, object]:
@@ -3769,6 +3770,17 @@ class AnswerService:
                     reason_codes.append("assistant_chat_recovery_applied")
                     diag["planning_reason_codes"] = sorted(set(reason_codes))
                     diag["assistant_chat_recovery_applied"] = True
+            if assistant_mode_enabled and not has_evidence:
+                normalized_low_evidence_answer = _normalize_low_evidence_friendliness(
+                    query=str(getattr(req, "query", "") or ""),
+                    language=str(assistant_response_language or "auto"),
+                    answer=str(getattr(resp, "answer", "") or ""),
+                )
+                if normalized_low_evidence_answer.strip() != str(getattr(resp, "answer", "") or "").strip():
+                    resp.answer = normalized_low_evidence_answer
+                    reason_codes = [str(x) for x in list(diag.get("planning_reason_codes") or []) if str(x or "").strip()]
+                    reason_codes.append("assistant_low_evidence_friendliness_applied")
+                    diag["planning_reason_codes"] = sorted(set(reason_codes))
             resp.diagnostics = diag
         except Exception:
             pass
