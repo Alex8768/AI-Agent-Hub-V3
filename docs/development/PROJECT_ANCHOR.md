@@ -37,7 +37,7 @@ Planned files:
 
 - [x] Patch 1 — Durable Contracts Baseline
 - [x] Patch 2 — Persistence Wiring for Approval/Idempotency Records
-- [ ] Patch 3 — TBD
+- [x] Patch 3 — Token TTL + One-Time Consumption Guards
 - [ ] Patch 4 — TBD
 - [ ] Patch 5 — TBD
 

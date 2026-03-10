@@ -1407,3 +1407,168 @@ async def test_answer_service_persists_durable_records_to_memory_store(monkeypat
     idem = dict(json.loads(idem_raw) or {})
     assert approval.get("contract_version") == "v1"
     assert idem.get("contract_version") == "v1"
+
+
+@pytest.mark.asyncio
+async def test_answer_service_blocks_consumed_confirmation_token(monkeypatch):
+    class _S:
+        feature_reasoning = True
+        feature_graphrag = True
+        feature_reasoning_llm_enabled = False
+        feature_assistant_mode = True
+        feature_assistant_proactive = False
+        feature_assistant_actions = True
+        llm_provider = "ollama"
+        openai_model = ""
+        ollama_model = "llama3.2:latest"
+
+    class _Mem:
+        def __init__(self):
+            self.data = {}
+
+        async def put(self, *, workspace_id, key, value, metadata=None):
+            self.data[(workspace_id, key)] = str(value or "")
+
+        async def get(self, *, workspace_id, key):
+            return self.data.get((workspace_id, key))
+
+        async def query(self, *, workspace_id, text, limit=10):
+            return []
+
+        async def semantic_query(self, *, workspace_id, text, limit=10):
+            return []
+
+    mem = _Mem()
+    monkeypatch.setattr("src.core.config.get_settings", lambda: _S())
+    monkeypatch.setattr("src.observability.trace.make_trace_id", lambda **kwargs: "trace-123", raising=False)
+    monkeypatch.setattr(
+        "src.core.providers.get_reasoning_engine",
+        lambda *, retriever=None, llm=None, llm_timeout_s=None: _FakeReasoningEngine(retriever),
+    )
+    monkeypatch.setattr("src.core.providers.get_memory_store", lambda: mem)
+    import src.services.answer.answer_service as answer_service_module
+
+    answer_service_module._EXECUTION_IDEMPOTENCY_SEEN.clear()
+    http = _DummyHTTP(request_id="rid-consumed-token", rag_engine=object(), hybrid_retriever=_FakeHybrid())
+    base = await AnswerService().handle(http, AnswerRequest(query="new project planning", session_id="default"), workspace_id="default")
+    base_diag = dict(getattr(base, "diagnostics", {}) or {})
+    token = str((dict(base_diag.get("assistant_execution_handshake") or {})).get("confirmation_token", "") or "")
+    ant = dict(base_diag.get("anticipatory") or {})
+    action_id = str((dict((list((dict(ant.get("draft_actions") or {})).get("actions") or [{}])[0]) or {})).get("action_id", "") or "")
+
+    first = await AnswerService().handle(
+        http,
+        AnswerRequest(
+            query="new project planning",
+            session_id="default",
+            filters={
+                "handshake_decision": "approve",
+                "handshake_confirmation_token": token,
+                "handshake_action_ids": [action_id],
+                "handshake_idempotency_key": "idem-consumed-1",
+            },
+        ),
+        workspace_id="default",
+    )
+    first_diag = dict(getattr(first, "diagnostics", {}) or {})
+    assert dict(first_diag.get("assistant_execution_handshake") or {}).get("state") == "approved"
+    approval_key = ("default", "session:default:durable:approval_session_record")
+    raw = str(mem.data.get(approval_key, "") or "")
+    loaded = dict(json.loads(raw) or {}) if raw else {}
+    loaded["confirmation_token"] = token
+    loaded["last_decision"] = "approve"
+    loaded["token_expires_at"] = str(9999999999)
+    mem.data[approval_key] = json.dumps(loaded, ensure_ascii=True, sort_keys=True)
+
+    second = await AnswerService().handle(
+        http,
+        AnswerRequest(
+            query="new project planning",
+            session_id="default",
+            filters={
+                "handshake_decision": "approve",
+                "handshake_confirmation_token": token,
+                "handshake_action_ids": [action_id],
+                "handshake_idempotency_key": "idem-consumed-2",
+            },
+        ),
+        workspace_id="default",
+    )
+    second_diag = dict(getattr(second, "diagnostics", {}) or {})
+    transition_policy = dict(second_diag.get("execution_transition_policy") or {})
+    handshake = dict(second_diag.get("assistant_execution_handshake") or {})
+    assert "confirmation_token_consumed" in list(transition_policy.get("applied_reason_codes") or [])
+    assert handshake.get("state") == "pending_confirmation"
+
+
+@pytest.mark.asyncio
+async def test_answer_service_blocks_expired_confirmation_token(monkeypatch):
+    class _S:
+        feature_reasoning = True
+        feature_graphrag = True
+        feature_reasoning_llm_enabled = False
+        feature_assistant_mode = True
+        feature_assistant_proactive = False
+        feature_assistant_actions = True
+        llm_provider = "ollama"
+        openai_model = ""
+        ollama_model = "llama3.2:latest"
+
+    class _Mem:
+        def __init__(self):
+            self.data = {}
+
+        async def put(self, *, workspace_id, key, value, metadata=None):
+            self.data[(workspace_id, key)] = str(value or "")
+
+        async def get(self, *, workspace_id, key):
+            return self.data.get((workspace_id, key))
+
+        async def query(self, *, workspace_id, text, limit=10):
+            return []
+
+        async def semantic_query(self, *, workspace_id, text, limit=10):
+            return []
+
+    mem = _Mem()
+    monkeypatch.setattr("src.core.config.get_settings", lambda: _S())
+    monkeypatch.setattr("src.observability.trace.make_trace_id", lambda **kwargs: "trace-123", raising=False)
+    monkeypatch.setattr(
+        "src.core.providers.get_reasoning_engine",
+        lambda *, retriever=None, llm=None, llm_timeout_s=None: _FakeReasoningEngine(retriever),
+    )
+    monkeypatch.setattr("src.core.providers.get_memory_store", lambda: mem)
+    http = _DummyHTTP(request_id="rid-expired-token", rag_engine=object(), hybrid_retriever=_FakeHybrid())
+
+    base = await AnswerService().handle(http, AnswerRequest(query="new project planning", session_id="default"), workspace_id="default")
+    base_diag = dict(getattr(base, "diagnostics", {}) or {})
+    token = str((dict(base_diag.get("assistant_execution_handshake") or {})).get("confirmation_token", "") or "")
+    ant = dict(base_diag.get("anticipatory") or {})
+    action_id = str((dict((list((dict(ant.get("draft_actions") or {})).get("actions") or [{}])[0]) or {})).get("action_id", "") or "")
+    approval_key = ("default", "session:default:durable:approval_session_record")
+    raw = str(mem.data.get(approval_key, "") or "")
+    loaded = dict(json.loads(raw) or {}) if raw else {}
+    loaded["confirmation_token"] = token
+    loaded["token_expires_at"] = "1"
+    loaded["last_decision"] = ""
+    mem.data[approval_key] = json.dumps(loaded, ensure_ascii=True, sort_keys=True)
+
+    resp = await AnswerService().handle(
+        http,
+        AnswerRequest(
+            query="new project planning",
+            session_id="default",
+            filters={
+                "handshake_decision": "approve",
+                "handshake_confirmation_token": token,
+                "handshake_action_ids": [action_id],
+                "handshake_idempotency_key": "idem-expired-1",
+            },
+        ),
+        workspace_id="default",
+    )
+    diag = dict(getattr(resp, "diagnostics", {}) or {})
+    transition_policy = dict(diag.get("execution_transition_policy") or {})
+    handshake = dict(diag.get("assistant_execution_handshake") or {})
+    assert "confirmation_token_expired" in list(transition_policy.get("applied_reason_codes") or [])
+    assert handshake.get("state") == "pending_confirmation"

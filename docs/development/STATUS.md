@@ -15,12 +15,12 @@ A2.38 — TBD
 Current progress:
 - Patch 1 completed: Durable Contracts Baseline.
 - Patch 2 completed: Persistence Wiring for Approval/Idempotency Records.
-- Patch 3 pending: TBD.
+- Patch 3 completed: Token TTL + One-Time Consumption Guards.
 - Patch 4 pending: TBD.
 - Patch 5 pending: TBD.
 
 Focus:
-- durable approval/idempotency records persisted via memory store wiring
+- token expiration and one-time confirmation guards over durable records
 - strict micro-patch progression toward persistent recovery flow
 
 Execution discipline:

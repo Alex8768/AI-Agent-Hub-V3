@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import time
 from time import perf_counter
 from typing import Any
 
@@ -745,6 +746,41 @@ def _apply_handshake_transition_policy(
     return normalized, policy_eval
 
 
+def _apply_durable_confirmation_token_guards(
+    *,
+    transition_input: dict[str, object],
+    durable_approval_record: dict[str, object],
+) -> tuple[dict[str, object], list[str]]:
+    normalized = dict(transition_input or {})
+    decision = str(normalized.get("decision", "") or "")
+    if not decision:
+        return normalized, []
+
+    record = dict(durable_approval_record or {})
+    provided_token = str(normalized.get("confirmation_token", "") or "")
+    stored_token = str(record.get("confirmation_token", "") or "")
+    if not provided_token or not stored_token or provided_token != stored_token:
+        return normalized, []
+
+    reasons: list[str] = []
+    try:
+        expires_at = int(str(record.get("token_expires_at", "") or "0") or "0")
+    except Exception:
+        expires_at = 0
+    now_ts = int(time.time())
+    if expires_at > 0 and now_ts >= expires_at:
+        reasons.append("confirmation_token_expired")
+
+    last_decision = str(record.get("last_decision", "") or "")
+    if last_decision in {"approve", "cancel"}:
+        reasons.append("confirmation_token_consumed")
+
+    if reasons:
+        normalized["decision"] = ""
+        normalized["requested_action_ids"] = []
+    return normalized, sorted(set(reasons))
+
+
 def _build_execution_receipt_stub(
     *,
     handshake_bundle: dict[str, object],
@@ -914,18 +950,36 @@ def _build_durable_approval_session_record(
     approval_session_bundle: dict[str, object],
     session_id: str,
     confirmation_token: str,
+    transition_input: dict[str, object],
+    previous_record: dict[str, object] | None = None,
 ) -> dict[str, object]:
     approval = dict(approval_session_bundle or {})
+    previous = dict(previous_record or {})
+    status = str(approval.get("status", "idle") or "idle")
+    ttl = int(approval.get("token_ttl_seconds", 0) or 0)
+    token = str(confirmation_token or previous.get("confirmation_token", "") or "")
+    prev_exp = str(previous.get("token_expires_at", "") or "")
+    token_expires_at = prev_exp
+    if status == "open" and token:
+        if not token_expires_at:
+            token_expires_at = str(int(time.time()) + ttl if ttl > 0 else 0)
+        last_decision = ""
+    elif status == "closed":
+        current_decision = str(transition_input.get("decision", "") or "")
+        previous_decision = str(previous.get("last_decision", "") or "")
+        last_decision = current_decision if current_decision in {"approve", "cancel"} else previous_decision
+    else:
+        last_decision = str(previous.get("last_decision", "") or "")
     return {
         "contract_version": DURABLE_APPROVAL_SESSION_CONTRACT_VERSION,
         "approval_id": str(approval.get("approval_id", "") or ""),
         "workspace_id": str(approval.get("workspace_id", "") or ""),
         "session_id": str(session_id or "default"),
         "plan_id": str(approval.get("plan_id", "") or ""),
-        "status": str(approval.get("status", "idle") or "idle"),
-        "confirmation_token": str(confirmation_token or ""),
-        "token_expires_at": "",
-        "last_decision": "",
+        "status": status,
+        "confirmation_token": token,
+        "token_expires_at": token_expires_at,
+        "last_decision": last_decision,
         "reason_codes": ["durable_record_not_persisted_yet"],
     }
 
@@ -1583,6 +1637,8 @@ def _apply_diagnostics(
             approval_session_bundle=approval_session,
             session_id=str(getattr(req, "session_id", "") or "default"),
             confirmation_token=str(handshake.get("confirmation_token", "") or ""),
+            transition_input=transition_input,
+            previous_record={},
         )
         idempotency_record = _build_idempotency_record_snapshot(
             execution_idempotency_bundle=execution_idempotency,
@@ -2039,6 +2095,16 @@ class AnswerService:
                     draft_actions_bundle=dict(anticipatory.get("draft_actions") or {}),
                     policy_contract=transition_policy,
                 )
+                transition_input, token_guard_reasons = _apply_durable_confirmation_token_guards(
+                    transition_input=transition_input,
+                    durable_approval_record=loaded_durable_approval,
+                )
+                transition_policy_eval["applied_reason_codes"] = sorted(
+                    set(
+                        [str(x) for x in list(transition_policy_eval.get("applied_reason_codes") or []) if str(x)]
+                        + list(token_guard_reasons or [])
+                    )
+                )
                 transition_input, execution_idempotency = _apply_execution_idempotency_guard(
                     transition_input=transition_input,
                     workspace_id=str(workspace_id or ""),
@@ -2076,6 +2142,8 @@ class AnswerService:
                     approval_session_bundle=dict(resp.diagnostics.get("assistant_approval_session") or {}),
                     session_id=str(getattr(req, "session_id", "") or "default"),
                     confirmation_token=str(handshake.get("confirmation_token", "") or ""),
+                    transition_input=transition_input,
+                    previous_record=loaded_durable_approval,
                 )
                 resp.diagnostics["idempotency_record_contract_version"] = IDEMPOTENCY_RECORD_CONTRACT_VERSION
                 resp.diagnostics["assistant_idempotency_record"] = _build_idempotency_record_snapshot(
@@ -2126,6 +2194,16 @@ class AnswerService:
                     draft_actions_bundle=dict(base.get("draft_actions") or {}),
                     policy_contract=transition_policy,
                 )
+                transition_input, token_guard_reasons = _apply_durable_confirmation_token_guards(
+                    transition_input=transition_input,
+                    durable_approval_record=loaded_durable_approval,
+                )
+                transition_policy_eval["applied_reason_codes"] = sorted(
+                    set(
+                        [str(x) for x in list(transition_policy_eval.get("applied_reason_codes") or []) if str(x)]
+                        + list(token_guard_reasons or [])
+                    )
+                )
                 transition_input, execution_idempotency = _apply_execution_idempotency_guard(
                     transition_input=transition_input,
                     workspace_id=str(workspace_id or ""),
@@ -2163,6 +2241,8 @@ class AnswerService:
                     approval_session_bundle=dict(resp.diagnostics.get("assistant_approval_session") or {}),
                     session_id=str(getattr(req, "session_id", "") or "default"),
                     confirmation_token=str(handshake.get("confirmation_token", "") or ""),
+                    transition_input=transition_input,
+                    previous_record=loaded_durable_approval,
                 )
                 resp.diagnostics["idempotency_record_contract_version"] = IDEMPOTENCY_RECORD_CONTRACT_VERSION
                 resp.diagnostics["assistant_idempotency_record"] = _build_idempotency_record_snapshot(
