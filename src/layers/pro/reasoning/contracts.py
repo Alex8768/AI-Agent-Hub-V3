@@ -20,6 +20,7 @@ PLAN_CONTRACT_VERSION = "v1"
 LLM_PLANNER_CONTRACT_VERSION = "v1"
 TOOL_SELECTION_CONTRACT_VERSION = "v1"
 FEEDBACK_CONTRACT_VERSION = "v1"
+ADAPTATION_CONTRACT_VERSION = "v1"
 HANDSHAKE_CONTRACT_VERSION = "v1"
 EXECUTION_RECEIPT_CONTRACT_VERSION = "v1"
 APPROVAL_SESSION_CONTRACT_VERSION = "v1"
@@ -202,6 +203,19 @@ class AssistantFeedbackLearning(BaseModel):
     signals: list[str] = Field(default_factory=list)
     latest_signal: Literal["none", "approve", "cancel", "edit"] = Field(default="none")
     signal_counts: dict[str, int] = Field(default_factory=dict)
+    reason_codes: list[str] = Field(default_factory=list)
+
+
+class AssistantFeedbackAdaptation(BaseModel):
+    """Feedback-to-planning adaptation diagnostics contract (baseline)."""
+
+    contract_version: str = Field(default=ADAPTATION_CONTRACT_VERSION)
+    mode: Literal["feedback_to_planning_adaptation"] = Field(default="feedback_to_planning_adaptation")
+    status: Literal["idle", "disabled", "ready"] = Field(default="idle")
+    source: Literal["deterministic"] = Field(default="deterministic")
+    latest_signal: Literal["none", "approve", "cancel", "edit"] = Field(default="none")
+    boosted_intents: list[str] = Field(default_factory=list)
+    suppressed_intents: list[str] = Field(default_factory=list)
     reason_codes: list[str] = Field(default_factory=list)
 
 

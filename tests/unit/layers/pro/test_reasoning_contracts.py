@@ -4,6 +4,7 @@ import pytest
 
 from src.layers.pro.reasoning.contracts import (
     APPROVAL_SESSION_CONTRACT_VERSION,
+    ADAPTATION_CONTRACT_VERSION,
     ASSISTANT_CONTRACT_VERSION,
     DURABLE_APPROVAL_SESSION_CONTRACT_VERSION,
     EXECUTION_PILOT_CONTRACT_VERSION,
@@ -20,6 +21,7 @@ from src.layers.pro.reasoning.contracts import (
     AssistantDigest,
     AssistantExecutionReceipt,
     AssistantExecutionPilot,
+    AssistantFeedbackAdaptation,
     AssistantExecutionHandshake,
     AssistantFeedbackLearning,
     AssistantIdempotencyRecord,
@@ -93,6 +95,7 @@ def test_assistant_contract_models_defaults():
     assert LLM_PLANNER_CONTRACT_VERSION == "v1"
     assert TOOL_SELECTION_CONTRACT_VERSION == "v1"
     assert FEEDBACK_CONTRACT_VERSION == "v1"
+    assert ADAPTATION_CONTRACT_VERSION == "v1"
     assert HANDSHAKE_CONTRACT_VERSION == "v1"
     assert EXECUTION_RECEIPT_CONTRACT_VERSION == "v1"
     assert APPROVAL_SESSION_CONTRACT_VERSION == "v1"
@@ -184,6 +187,17 @@ def test_assistant_contract_models_defaults():
     assert feedback.contract_version == "v1"
     assert feedback.mode == "approve_cancel_edit_feedback"
     assert feedback.status == "ready"
+
+    adaptation = AssistantFeedbackAdaptation(
+        status="ready",
+        latest_signal="approve",
+        boosted_intents=["start_project"],
+        suppressed_intents=["general_query"],
+        reason_codes=["feedback_adaptation_contract_baseline_built"],
+    )
+    assert adaptation.contract_version == "v1"
+    assert adaptation.mode == "feedback_to_planning_adaptation"
+    assert adaptation.status == "ready"
 
     handshake = AssistantExecutionHandshake(
         state="pending_confirmation",

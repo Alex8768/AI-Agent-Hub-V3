@@ -50,7 +50,7 @@
 
 ## Current Work — A2.43 Feedback-to-Planning Adaptation (MVP)
 
-- [ ] Patch 1 — Adaptation Contract Baseline
+- [x] Patch 1 — Adaptation Contract Baseline
 - [ ] Patch 2 — Signal-to-Plan Adapter + Deterministic Ranking
 - [ ] Patch 3 — Adaptation Policy Guardrails
 - [ ] Patch 4 — Runtime Wiring + Diagnostics Parity

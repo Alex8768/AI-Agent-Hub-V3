@@ -177,6 +177,8 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
         "feedback_contract_version",
         "assistant_feedback_learning",
         "feedback_policy",
+        "adaptation_contract_version",
+        "assistant_feedback_adaptation",
         "llm_planner_policy",
         "planning_policy",
         "execution_handshake_contract_version",
@@ -286,6 +288,18 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
         "fallback_on_policy_violation",
         "violations",
         "applied_reason_codes",
+    }
+    assert diag.get("adaptation_contract_version") == "v1"
+    feedback_adaptation = dict(diag.get("assistant_feedback_adaptation") or {})
+    assert set(feedback_adaptation.keys()) == {
+        "contract_version",
+        "mode",
+        "status",
+        "source",
+        "latest_signal",
+        "boosted_intents",
+        "suppressed_intents",
+        "reason_codes",
     }
     llm_planner_policy = dict(diag.get("llm_planner_policy") or {})
     assert set(llm_planner_policy.keys()) == {
@@ -1379,6 +1393,27 @@ async def test_answer_service_feedback_policy_forces_fallback_on_violation(monke
     assert "feedback_signal_not_allowlisted" in list(policy.get("violations") or [])
     assert "feedback_signals_exceed_max" in list(policy.get("violations") or [])
     assert "feedback_policy_forced_fallback" in list(policy.get("applied_reason_codes") or [])
+
+
+def test_build_feedback_adaptation_bundle_baseline():
+    import src.services.answer.answer_service as answer_service_module
+
+    out = answer_service_module._build_feedback_adaptation_bundle(
+        feedback_bundle={
+            "latest_signal": "approve",
+            "signals": ["approve"],
+            "reason_codes": ["feedback_capture_adapter_normalized"],
+        },
+        assistant_mode_enabled=True,
+    )
+    assert out.get("contract_version") == "v1"
+    assert out.get("mode") == "feedback_to_planning_adaptation"
+    assert out.get("status") == "ready"
+    assert out.get("source") == "deterministic"
+    assert out.get("latest_signal") == "approve"
+    assert out.get("boosted_intents") == []
+    assert out.get("suppressed_intents") == []
+    assert "feedback_adaptation_contract_baseline_built" in list(out.get("reason_codes") or [])
 
 
 @pytest.mark.asyncio

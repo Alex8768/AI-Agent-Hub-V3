@@ -13,13 +13,14 @@ A2.42 — Learning from Feedback (Approve/Cancel/Edit)
 A2.43 — Feedback-to-Planning Adaptation (MVP)
 
 Current progress:
-- Patch 1 pending: Adaptation Contract Baseline.
+- Patch 1 complete: Adaptation Contract Baseline.
 - Patch 2 pending: Signal-to-Plan Adapter + Deterministic Ranking.
 - Patch 3 pending: Adaptation Policy Guardrails.
 - Patch 4 pending: Runtime Wiring + Diagnostics Parity.
 - Patch 5 pending: Docs/CI Closure.
 
 Focus:
+- adaptation contract baseline is exposed in diagnostics
 - adapt planning relevance using approve/cancel/edit feedback signals
 - keep adaptation deterministic and policy-guarded
 - preserve review-safe behavior and existing execution boundaries

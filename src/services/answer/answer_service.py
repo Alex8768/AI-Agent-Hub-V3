@@ -16,6 +16,7 @@ from src.layers.pro.anticipatory import (
 from src.layers.pro.reasoning.control.execution_policy import build_reasoning_execution_policy
 from src.layers.pro.reasoning.contracts import (
     APPROVAL_SESSION_CONTRACT_VERSION,
+    ADAPTATION_CONTRACT_VERSION,
     AnswerRequest,
     DURABLE_APPROVAL_SESSION_CONTRACT_VERSION,
     EVIDENCE_CONTRACT_VERSION,
@@ -886,6 +887,46 @@ def _apply_feedback_policy_guards(
         "applied_reason_codes": sorted(set(applied_reason_codes)),
     }
     return feedback, policy_eval
+
+
+def _build_feedback_adaptation_bundle(
+    *,
+    feedback_bundle: dict[str, object],
+    assistant_mode_enabled: bool,
+) -> dict[str, object]:
+    if not assistant_mode_enabled:
+        return {
+            "contract_version": ADAPTATION_CONTRACT_VERSION,
+            "mode": "feedback_to_planning_adaptation",
+            "status": "disabled",
+            "source": "deterministic",
+            "latest_signal": "none",
+            "boosted_intents": [],
+            "suppressed_intents": [],
+            "reason_codes": ["assistant_mode_disabled"],
+        }
+
+    feedback = dict(feedback_bundle or {})
+    latest = str(feedback.get("latest_signal", "none") or "none").strip().lower()
+    if latest not in {"approve", "cancel", "edit"}:
+        latest = "none"
+
+    reason_codes = ["feedback_adaptation_contract_baseline_built"]
+    status = "ready"
+    if latest == "none":
+        status = "idle"
+        reason_codes = ["feedback_adaptation_no_signal"]
+
+    return {
+        "contract_version": ADAPTATION_CONTRACT_VERSION,
+        "mode": "feedback_to_planning_adaptation",
+        "status": status,
+        "source": "deterministic",
+        "latest_signal": latest,
+        "boosted_intents": [],
+        "suppressed_intents": [],
+        "reason_codes": reason_codes,
+    }
 
 
 def _build_tool_selection_bundle(
@@ -2620,6 +2661,10 @@ async def _apply_diagnostics(
             feedback_bundle=feedback_learning,
             policy_contract=feedback_policy,
         )
+        feedback_adaptation = _build_feedback_adaptation_bundle(
+            feedback_bundle=feedback_learning,
+            assistant_mode_enabled=assistant_mode_enabled,
+        )
         diag.setdefault("plan_contract_version", PLAN_CONTRACT_VERSION)
         diag.setdefault("assistant_plan", dict(plan))
         llm_planner["plan_id"] = str(plan.get("plan_id", "") or "")
@@ -2631,6 +2676,8 @@ async def _apply_diagnostics(
         diag.setdefault("feedback_contract_version", FEEDBACK_CONTRACT_VERSION)
         diag.setdefault("assistant_feedback_learning", feedback_learning)
         diag.setdefault("feedback_policy", feedback_policy_eval)
+        diag.setdefault("adaptation_contract_version", ADAPTATION_CONTRACT_VERSION)
+        diag.setdefault("assistant_feedback_adaptation", feedback_adaptation)
         diag.setdefault("llm_planner_policy", llm_planner_policy_eval)
         diag.setdefault("planning_policy", dict(planning_policy))
         diag = _wire_runtime_diagnostics(diagnostics=diag)
@@ -2744,6 +2791,7 @@ async def _apply_diagnostics(
         reason_codes.extend(list(tool_selection_policy_eval.get("applied_reason_codes") or []))
         reason_codes.extend(list(feedback_learning.get("reason_codes") or []))
         reason_codes.extend(list(feedback_policy_eval.get("applied_reason_codes") or []))
+        reason_codes.extend(list(feedback_adaptation.get("reason_codes") or []))
         reason_codes.extend(list(llm_planner_policy_eval.get("applied_reason_codes") or []))
         reason_codes.extend(list(planning_policy.get("reason_codes") or []))
         reason_codes.extend(list(handshake.get("reason_codes") or []))

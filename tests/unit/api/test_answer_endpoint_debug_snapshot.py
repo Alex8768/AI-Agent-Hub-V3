@@ -115,6 +115,8 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
         "feedback_contract_version",
         "assistant_feedback_learning",
         "feedback_policy",
+        "adaptation_contract_version",
+        "assistant_feedback_adaptation",
         "llm_planner_policy",
         "planning_policy",
         "execution_handshake_contract_version",
@@ -218,6 +220,18 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
         "fallback_on_policy_violation",
         "violations",
         "applied_reason_codes",
+    }
+    assert diag.get("adaptation_contract_version") == "v1"
+    feedback_adaptation = dict(diag.get("assistant_feedback_adaptation") or {})
+    assert set(feedback_adaptation.keys()) == {
+        "contract_version",
+        "mode",
+        "status",
+        "source",
+        "latest_signal",
+        "boosted_intents",
+        "suppressed_intents",
+        "reason_codes",
     }
     llm_planner_policy = dict(diag.get("llm_planner_policy") or {})
     assert set(llm_planner_policy.keys()) == {
