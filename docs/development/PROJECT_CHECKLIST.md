@@ -45,18 +45,19 @@
 - [x] A2.38 Durable Approval Recovery Runtime (Safe Mode)
 - [x] A2.39 Controlled Execution Pilot (Strict Safe Mode+)
 - [x] A2.40 Intent-based Planning Engine (LLM Planner)
+- [x] A2.41 Dynamic Tool Selection (MCP-aware)
 
-## Current Work — A2.41 Dynamic Tool Selection (MCP-aware)
+## Current Work — A2.42 Learning from Feedback (Approve/Cancel/Edit)
 
-- [x] Patch 1 — Tool Selection Contract Baseline
-- [x] Patch 2 — MCP-aware Selector Adapter + Fallback
-- [x] Patch 3 — Tool Selection Policy Guardrails
-- [x] Patch 4 — Runtime Wiring + Diagnostics Parity
+- [ ] Patch 1 — Feedback Contract Baseline
+- [ ] Patch 2 — Feedback Capture Adapter + Deterministic Normalization
+- [ ] Patch 3 — Feedback Policy Guardrails
+- [ ] Patch 4 — Runtime Wiring + Diagnostics Parity
 - [ ] Patch 5 — Docs/CI Closure
 
 ## Next
 
-- [ ] Start A2.42 Patch 1 (Learning from feedback baseline)
+- [ ] Define post-A2.42 next anchor
 
 ## Later
 

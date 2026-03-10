@@ -2,38 +2,38 @@
 
 ## Active Anchor
 
-A2.41 — Dynamic Tool Selection (MCP-aware)
+A2.42 — Learning from Feedback (Approve/Cancel/Edit)
 
 ### Goal
 
-Introduce policy-sandboxed dynamic tool selection for planner steps with
-MCP-aware routing and strict execution safeguards.
+Introduce a deterministic feedback-learning baseline that captures
+approve/cancel/edit signals and improves plan/action relevance diagnostics.
 
 ### Architecture Position
 
 Planned modules:
 
-- MCP-aware tool selection contract baseline
-- tool selection adapter + deterministic fallback
-- tool selection policy guardrails
+- feedback-learning contract baseline
+- feedback capture adapter + deterministic normalization
+- feedback policy guardrails
 - runtime wiring + diagnostics parity
 - docs + CI quality-gate closure
 
 ### Patch Plan
 
 #### Patch plan
-- Patch 1 — Tool Selection Contract Baseline
-- Patch 2 — MCP-aware Selector Adapter + Fallback
-- Patch 3 — Tool Selection Policy Guardrails
+- Patch 1 — Feedback Contract Baseline
+- Patch 2 — Feedback Capture Adapter + Deterministic Normalization
+- Patch 3 — Feedback Policy Guardrails
 - Patch 4 — Runtime Wiring + Diagnostics Parity
 - Patch 5 — Docs/CI Closure
 
 ### Progress
 
-- [x] Patch 1 — Tool Selection Contract Baseline
-- [x] Patch 2 — MCP-aware Selector Adapter + Fallback
-- [x] Patch 3 — Tool Selection Policy Guardrails
-- [x] Patch 4 — Runtime Wiring + Diagnostics Parity
+- [ ] Patch 1 — Feedback Contract Baseline
+- [ ] Patch 2 — Feedback Capture Adapter + Deterministic Normalization
+- [ ] Patch 3 — Feedback Policy Guardrails
+- [ ] Patch 4 — Runtime Wiring + Diagnostics Parity
 - [ ] Patch 5 — Docs/CI Closure
 
 ### Out of Scope
@@ -44,14 +44,14 @@ Do NOT modify during planning:
 
 ### Definition of Done
 
-A2.41 completion criteria:
-- selected tools remain policy-guarded with deterministic safe fallback.
-- MCP-aware selection stays explicit and diagnosable in runtime snapshots.
+A2.42 completion criteria:
+- feedback capture remains deterministic, explainable, and policy-guarded.
+- approve/cancel/edit signals are reflected in planning diagnostics contracts.
 - full unit suite and quality-gate coverage remain green.
 
 ## Next Anchor
 
-A2.42 — Learning from Feedback (Approve/Cancel/Edit)
+A2.43 — TBD (post-feedback planning)
 
 ### Discipline
 
@@ -63,11 +63,11 @@ Work order is strict:
 
 ### Last Completed Anchor
 
-A2.40 — Intent-based Planning Engine (LLM Planner)
+A2.41 — Dynamic Tool Selection (MCP-aware)
 
 Completed via patches:
-- Patch 1 — LLM Planner Contract Baseline
-- Patch 2 — Planner Adapter + Deterministic Fallback
-- Patch 3 — Planner Policy Guardrails
+- Patch 1 — Tool Selection Contract Baseline
+- Patch 2 — MCP-aware Selector Adapter + Fallback
+- Patch 3 — Tool Selection Policy Guardrails
 - Patch 4 — Runtime Wiring + Diagnostics Parity
 - Patch 5 — Docs/CI Closure

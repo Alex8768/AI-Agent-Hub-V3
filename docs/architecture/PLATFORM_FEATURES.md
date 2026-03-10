@@ -144,6 +144,7 @@ AI-Agent-Hub-V3 is a modular AI platform for production-grade agent systems with
 - [x] MCP-aware selector adapter with deterministic fallback diagnostics (A2.41 patch 2)
 - [x] Tool selection policy guardrails with forced fallback diagnostics (A2.41 patch 3)
 - [x] Tool selection runtime wiring and diagnostics parity (A2.41 patch 4)
+- [x] Dynamic tool selection docs/CI closure (A2.41 patch 5)
 
 ### 7) Interface Layer
 

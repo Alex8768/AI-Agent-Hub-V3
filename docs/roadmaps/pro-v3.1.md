@@ -91,6 +91,7 @@ Alias compatibility:
 - Durable approval recovery runtime docs quality gate in release-gate contracts (A2.38)
 - Controlled execution pilot runtime docs quality gate in release-gate contracts (A2.39)
 - LLM planner runtime docs quality gate in release-gate contracts (A2.40)
+- Dynamic tool selection runtime docs quality gate in release-gate contracts (A2.41)
 
 ---
 

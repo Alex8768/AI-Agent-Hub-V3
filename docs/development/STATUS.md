@@ -6,25 +6,22 @@ Pro Layer Development — Reasoning Stabilization
 
 ## Last Completed Anchor
 
-A2.40 — Intent-based Planning Engine (LLM Planner)
+A2.41 — Dynamic Tool Selection (MCP-aware)
 
 ## Current Active Anchor
 
-A2.41 — Dynamic Tool Selection (MCP-aware)
+A2.42 — Learning from Feedback (Approve/Cancel/Edit)
 
 Current progress:
-- Patch 1 complete: Tool Selection Contract Baseline.
-- Patch 2 complete: MCP-aware Selector Adapter + Fallback.
-- Patch 3 complete: Tool Selection Policy Guardrails.
-- Patch 4 complete: Runtime Wiring + Diagnostics Parity.
+- Patch 1 pending: Feedback Contract Baseline.
+- Patch 2 pending: Feedback Capture Adapter + Deterministic Normalization.
+- Patch 3 pending: Feedback Policy Guardrails.
+- Patch 4 pending: Runtime Wiring + Diagnostics Parity.
 - Patch 5 pending: Docs/CI Closure.
 
 Focus:
-- tool-selection contract baseline is exposed in diagnostics
-- mcp-aware selector adapter applies deterministic fallback when no tool match
-- tool-selection policy guardrails enforce allowlisted routing with forced fallback
-- runtime wiring keeps tool-selection diagnostics parity across proactive/non-proactive paths
-- keep policy sandboxing and deterministic fallback during MCP-aware routing
+- formalize approve/cancel/edit feedback contracts for reasoning runtime
+- keep deterministic normalization and policy-guarded safety in feedback flow
 - preserve strict micro-patch execution discipline
 
 Execution discipline:
@@ -32,10 +29,10 @@ Execution discipline:
 
 ## Next Anchor
 
-A2.42 — Learning from Feedback (Approve/Cancel/Edit)
+A2.43 — TBD (post-feedback planning)
 
 Planned focus:
-- user feedback loop for plan/action quality improvement
+- finalize post-feedback roadmap after A2.42 stabilization
 
 ## CI Status
 
@@ -45,5 +42,5 @@ The noop tracing span compatibility fix is completed and treated as closed work.
 
 ## Upcoming Anchors
 
-- A2.41 — Dynamic Tool Selection (MCP-aware)
 - A2.42 — Learning from Feedback (Approve/Cancel/Edit)
+- A2.43 — TBD (post-feedback planning)
