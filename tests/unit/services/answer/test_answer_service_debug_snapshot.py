@@ -172,6 +172,7 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
         "execution_handshake_contract_version",
         "assistant_execution_handshake",
         "execution_transition_policy",
+        "execution_idempotency",
         "execution_receipt_contract_version",
         "assistant_execution_receipt",
         "approval_session_contract_version",
@@ -245,6 +246,15 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
         "available_action_ids_count",
         "unknown_action_ids",
         "applied_reason_codes",
+    }
+    idempotency = dict(diag.get("execution_idempotency") or {})
+    assert set(idempotency.keys()) == {
+        "contract_version",
+        "status",
+        "idempotency_key",
+        "operation_fingerprint",
+        "guard_action",
+        "reason_codes",
     }
     assert diag.get("execution_receipt_contract_version") == "v1"
     receipt = dict(diag.get("assistant_execution_receipt") or {})
@@ -1102,6 +1112,9 @@ async def test_answer_service_handshake_transition_approve(monkeypatch):
         "src.core.providers.get_reasoning_engine",
         lambda *, retriever=None, llm=None, llm_timeout_s=None: _FakeReasoningEngine(retriever),
     )
+    import src.services.answer.answer_service as answer_service_module
+
+    answer_service_module._EXECUTION_IDEMPOTENCY_SEEN.clear()
 
     http = _DummyHTTP(request_id="rid-handshake-approve", rag_engine=object(), hybrid_retriever=_FakeHybrid())
     base_req = AnswerRequest(query="new project planning", session_id="default")
@@ -1120,6 +1133,7 @@ async def test_answer_service_handshake_transition_approve(monkeypatch):
             "handshake_decision": "approve",
             "handshake_confirmation_token": token,
             "handshake_action_ids": [action_id],
+            "handshake_idempotency_key": f"idem-approve-{str(token)[-6:]}",
         },
     )
     resp = await AnswerService().handle(http, req, workspace_id="default")
@@ -1130,6 +1144,9 @@ async def test_answer_service_handshake_transition_approve(monkeypatch):
     assert handshake.get("requires_confirmation") is False
     assert handshake.get("approved_action_ids") == [action_id]
     assert "user_approved" in list(handshake.get("reason_codes") or [])
+    idempotency = dict(diag.get("execution_idempotency") or {})
+    assert idempotency.get("status") == "fresh"
+    assert str(idempotency.get("idempotency_key", "")).startswith("idem-approve-")
     receipt = dict(diag.get("assistant_execution_receipt") or {})
     assert receipt.get("status") == "recorded"
     assert receipt.get("handshake_state") == "approved"
@@ -1169,6 +1186,7 @@ async def test_answer_service_handshake_transition_policy_blocks_unknown_action_
             "handshake_decision": "approve",
             "handshake_confirmation_token": token,
             "handshake_action_ids": ["draft_action:unknown"],
+            "handshake_idempotency_key": "idem-unknown-1",
         },
     )
     resp = await AnswerService().handle(http, req, workspace_id="default")
@@ -1213,6 +1231,7 @@ async def test_answer_service_handshake_transition_cancel(monkeypatch):
         filters={
             "handshake_decision": "cancel",
             "handshake_confirmation_token": token,
+            "handshake_idempotency_key": "idem-cancel-1",
         },
     )
     resp = await AnswerService().handle(http, req, workspace_id="default")
@@ -1227,3 +1246,55 @@ async def test_answer_service_handshake_transition_cancel(monkeypatch):
     assert receipt.get("status") == "recorded"
     assert receipt.get("handshake_state") == "cancelled"
     assert str(receipt.get("receipt_id", "")).startswith("receipt:")
+
+
+@pytest.mark.asyncio
+async def test_answer_service_idempotency_replay_detected(monkeypatch):
+    class _S:
+        feature_reasoning = True
+        feature_graphrag = True
+        feature_reasoning_llm_enabled = False
+        feature_assistant_mode = True
+        feature_assistant_proactive = False
+        feature_assistant_actions = True
+        llm_provider = "ollama"
+        openai_model = ""
+        ollama_model = "llama3.2:latest"
+
+    monkeypatch.setattr("src.core.config.get_settings", lambda: _S())
+    monkeypatch.setattr("src.observability.trace.make_trace_id", lambda **kwargs: "trace-123", raising=False)
+    monkeypatch.setattr(
+        "src.core.providers.get_reasoning_engine",
+        lambda *, retriever=None, llm=None, llm_timeout_s=None: _FakeReasoningEngine(retriever),
+    )
+    import src.services.answer.answer_service as answer_service_module
+
+    answer_service_module._EXECUTION_IDEMPOTENCY_SEEN.clear()
+
+    http = _DummyHTTP(request_id="rid-idem-replay", rag_engine=object(), hybrid_retriever=_FakeHybrid())
+    base = await AnswerService().handle(http, AnswerRequest(query="new project planning", session_id="default"), workspace_id="default")
+    base_diag = dict(getattr(base, "diagnostics", {}) or {})
+    token = str((dict(base_diag.get("assistant_execution_handshake") or {})).get("confirmation_token", "") or "")
+    ant = dict(base_diag.get("anticipatory") or {})
+    draft_actions = dict(ant.get("draft_actions") or {})
+    action_id = str((dict((list(draft_actions.get("actions") or [{}])[0]) or {})).get("action_id", "") or "")
+
+    req = AnswerRequest(
+        query="new project planning",
+        session_id="default",
+        filters={
+            "handshake_decision": "approve",
+            "handshake_confirmation_token": token,
+            "handshake_action_ids": [action_id],
+            "handshake_idempotency_key": "idem-replay-1",
+        },
+    )
+    first = await AnswerService().handle(http, req, workspace_id="default")
+    first_diag = dict(getattr(first, "diagnostics", {}) or {})
+    assert dict(first_diag.get("execution_idempotency") or {}).get("status") == "fresh"
+
+    second = await AnswerService().handle(http, req, workspace_id="default")
+    second_diag = dict(getattr(second, "diagnostics", {}) or {})
+    idem2 = dict(second_diag.get("execution_idempotency") or {})
+    assert idem2.get("status") == "replayed"
+    assert "idempotency_replay_detected" in list(idem2.get("reason_codes") or [])

@@ -97,6 +97,7 @@ class AnswerConfirmRequest(BaseModel):
     )
     confirmation_token: str = Field(min_length=1)
     action_ids: List[str] = Field(default_factory=list)
+    idempotency_key: str = Field(default="")
     session_id: str = Field(default="default", min_length=1, max_length=128)
     filters: Dict[str, Any] = Field(default_factory=dict)
 

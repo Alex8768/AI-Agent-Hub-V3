@@ -30,6 +30,8 @@ from src.layers.pro.reasoning.contracts import (
 from src.observability.request_context import get_request_id
 
 SESSION_MEMORY_MAX_CHARS = 4000
+EXECUTION_IDEMPOTENCY_CONTRACT_VERSION = "v1"
+_EXECUTION_IDEMPOTENCY_SEEN: dict[str, str] = {}
 
 
 def _clip_text(value: object, *, max_chars: int = SESSION_MEMORY_MAX_CHARS) -> str:
@@ -525,10 +527,12 @@ def _extract_handshake_transition_input(req: AnswerRequest) -> dict[str, object]
     token = str(filters.get("handshake_confirmation_token", "") or "").strip()
     requested_action_ids_raw = list(filters.get("handshake_action_ids") or [])
     requested_action_ids = [str(x).strip() for x in requested_action_ids_raw if str(x or "").strip()]
+    idempotency_key = str(filters.get("handshake_idempotency_key", "") or "").strip()
     return {
         "decision": decision_raw,
         "confirmation_token": token,
         "requested_action_ids": requested_action_ids,
+        "idempotency_key": idempotency_key,
     }
 
 
@@ -601,6 +605,75 @@ def _apply_handshake_transition(
         "blocked_action_ids": blocked,
         "receipt_id": "",
         "reason_codes": reasons,
+    }
+
+
+def _apply_execution_idempotency_guard(
+    *,
+    transition_input: dict[str, object],
+    workspace_id: str,
+    plan_id: str,
+    persist: bool = True,
+) -> tuple[dict[str, object], dict[str, object]]:
+    normalized = dict(transition_input or {})
+    decision = str(normalized.get("decision", "") or "")
+    idem_key = str(normalized.get("idempotency_key", "") or "").strip()
+    if not decision:
+        return normalized, {
+            "contract_version": EXECUTION_IDEMPOTENCY_CONTRACT_VERSION,
+            "status": "not_applicable",
+            "idempotency_key": idem_key,
+            "operation_fingerprint": "",
+            "guard_action": "none",
+            "reason_codes": ["no_transition_decision"],
+        }
+    if not idem_key:
+        return normalized, {
+            "contract_version": EXECUTION_IDEMPOTENCY_CONTRACT_VERSION,
+            "status": "missing_key",
+            "idempotency_key": "",
+            "operation_fingerprint": "",
+            "guard_action": "warning_only",
+            "reason_codes": ["idempotency_key_missing"],
+        }
+
+    requested = [str(x) for x in list(normalized.get("requested_action_ids") or []) if str(x)]
+    token = str(normalized.get("confirmation_token", "") or "")
+    seed = f"{workspace_id}|{plan_id}|{decision}|{token}|{','.join(sorted(requested))}"
+    fingerprint = hashlib.sha1(seed.encode("utf-8")).hexdigest()[:16]
+    if not persist:
+        return normalized, {
+            "contract_version": EXECUTION_IDEMPOTENCY_CONTRACT_VERSION,
+            "status": "dry_run",
+            "idempotency_key": idem_key,
+            "operation_fingerprint": fingerprint,
+            "guard_action": "none",
+            "reason_codes": ["idempotency_evaluation_deferred"],
+        }
+    prev = _EXECUTION_IDEMPOTENCY_SEEN.get(idem_key)
+    if prev is None:
+        _EXECUTION_IDEMPOTENCY_SEEN[idem_key] = fingerprint
+        status = "fresh"
+        guard_action = "recorded"
+        reason_codes = ["idempotency_recorded"]
+    elif prev == fingerprint:
+        status = "replayed"
+        guard_action = "short_circuit_replay_safe"
+        reason_codes = ["idempotency_replay_detected"]
+    else:
+        normalized["decision"] = ""
+        normalized["requested_action_ids"] = []
+        status = "conflict"
+        guard_action = "blocked_conflict"
+        reason_codes = ["idempotency_conflict_blocked"]
+
+    return normalized, {
+        "contract_version": EXECUTION_IDEMPOTENCY_CONTRACT_VERSION,
+        "status": status,
+        "idempotency_key": idem_key,
+        "operation_fingerprint": fingerprint,
+        "guard_action": guard_action,
+        "reason_codes": reason_codes,
     }
 
 
@@ -1261,6 +1334,12 @@ def _apply_diagnostics(
             draft_actions_bundle=draft_actions,
             policy_contract=transition_policy,
         )
+        transition_input, execution_idempotency = _apply_execution_idempotency_guard(
+            transition_input=transition_input,
+            workspace_id=str(workspace_id or ""),
+            plan_id=str(plan.get("plan_id", "") or ""),
+            persist=False,
+        )
         handshake = _apply_handshake_transition(
             handshake_bundle=handshake,
             transition_input=transition_input,
@@ -1282,6 +1361,7 @@ def _apply_diagnostics(
         diag.setdefault("execution_handshake_contract_version", HANDSHAKE_CONTRACT_VERSION)
         diag.setdefault("assistant_execution_handshake", handshake)
         diag.setdefault("execution_transition_policy", transition_policy_eval)
+        diag.setdefault("execution_idempotency", execution_idempotency)
         diag.setdefault("execution_receipt_contract_version", EXECUTION_RECEIPT_CONTRACT_VERSION)
         diag.setdefault("assistant_execution_receipt", receipt)
         diag.setdefault("approval_session_contract_version", APPROVAL_SESSION_CONTRACT_VERSION)
@@ -1289,6 +1369,7 @@ def _apply_diagnostics(
         reason_codes = list(intent.get("reason_codes") or []) + list(plan.get("reason_codes") or [])
         reason_codes.extend(list(planning_policy.get("reason_codes") or []))
         reason_codes.extend(list(handshake.get("reason_codes") or []))
+        reason_codes.extend(list(execution_idempotency.get("reason_codes") or []))
         reason_codes.extend(list(receipt.get("reason_codes") or []))
         reason_codes.extend(list(approval_session.get("reason_codes") or []))
         reason_codes = sorted(set([str(x) for x in reason_codes if str(x or "").strip()]))
@@ -1707,6 +1788,11 @@ class AnswerService:
                     draft_actions_bundle=dict(anticipatory.get("draft_actions") or {}),
                     policy_contract=transition_policy,
                 )
+                transition_input, execution_idempotency = _apply_execution_idempotency_guard(
+                    transition_input=transition_input,
+                    workspace_id=str(workspace_id or ""),
+                    plan_id=str(plan_bundle.get("plan_id", "") or ""),
+                )
                 handshake = _apply_handshake_transition(
                     handshake_bundle=handshake,
                     transition_input=transition_input,
@@ -1714,6 +1800,7 @@ class AnswerService:
                 )
                 resp.diagnostics["assistant_execution_handshake"] = handshake
                 resp.diagnostics["execution_transition_policy"] = transition_policy_eval
+                resp.diagnostics["execution_idempotency"] = execution_idempotency
                 resp.diagnostics["assistant_execution_receipt"] = _build_execution_receipt_stub(
                     handshake_bundle=handshake,
                     plan_bundle=plan_bundle,
@@ -1769,6 +1856,11 @@ class AnswerService:
                     draft_actions_bundle=dict(base.get("draft_actions") or {}),
                     policy_contract=transition_policy,
                 )
+                transition_input, execution_idempotency = _apply_execution_idempotency_guard(
+                    transition_input=transition_input,
+                    workspace_id=str(workspace_id or ""),
+                    plan_id=str(plan_bundle.get("plan_id", "") or ""),
+                )
                 handshake = _apply_handshake_transition(
                     handshake_bundle=handshake,
                     transition_input=transition_input,
@@ -1776,6 +1868,7 @@ class AnswerService:
                 )
                 resp.diagnostics["assistant_execution_handshake"] = handshake
                 resp.diagnostics["execution_transition_policy"] = transition_policy_eval
+                resp.diagnostics["execution_idempotency"] = execution_idempotency
                 resp.diagnostics["assistant_execution_receipt"] = _build_execution_receipt_stub(
                     handshake_bundle=handshake,
                     plan_bundle=plan_bundle,

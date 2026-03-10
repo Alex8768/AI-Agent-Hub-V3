@@ -111,6 +111,7 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
         "execution_handshake_contract_version",
         "assistant_execution_handshake",
         "execution_transition_policy",
+        "execution_idempotency",
         "execution_receipt_contract_version",
         "assistant_execution_receipt",
         "approval_session_contract_version",
@@ -178,6 +179,15 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
         "available_action_ids_count",
         "unknown_action_ids",
         "applied_reason_codes",
+    }
+    idempotency = dict(diag.get("execution_idempotency") or {})
+    assert set(idempotency.keys()) == {
+        "contract_version",
+        "status",
+        "idempotency_key",
+        "operation_fingerprint",
+        "guard_action",
+        "reason_codes",
     }
     assert diag.get("execution_receipt_contract_version") == "v1"
     receipt = dict(diag.get("assistant_execution_receipt") or {})

@@ -67,6 +67,7 @@ async def answer_confirm(
             "handshake_decision": str(req.decision),
             "handshake_confirmation_token": str(req.confirmation_token),
             "handshake_action_ids": list(req.action_ids or []),
+            "handshake_idempotency_key": str(req.idempotency_key or ""),
         },
     )
     service = AnswerService()

@@ -134,6 +134,7 @@ def test_answer_confirm_endpoint_uses_dedicated_contract_surface(monkeypatch):
             "query": "new project planning",
             "decision": "cancel",
             "confirmation_token": token,
+            "idempotency_key": "idem-confirm-1",
         },
     )
     assert r.status_code == 200

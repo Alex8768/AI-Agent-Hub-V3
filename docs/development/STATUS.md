@@ -15,10 +15,11 @@ A2.37 — Approval Session & Idempotent Execution Gateway (Safe Mode)
 Current progress:
 - Patch 1 completed: Approval Session Contract Baseline.
 - Patch 2 completed: Confirm/Cancel API Contract Surface.
+- Patch 3 completed: Idempotency Key + Replay Guard.
 
 Focus:
 - explicit approval-session diagnostics contract in answer runtime
-- dedicated confirm/cancel API contract surface over handshake transitions
+- replay-safe confirmation transitions with idempotency diagnostics
 
 Execution discipline:
 - keep work strictly inside the active anchor and move in micro-patches.
