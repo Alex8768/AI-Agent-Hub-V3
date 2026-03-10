@@ -14,7 +14,7 @@ A2.49 — Conversational Reliability Track (Human-Friendly Safe UX)
 
 Current progress:
 - Patch 1 complete: conversational reliability inventory + scope lock.
-- Patch 2 pending: response-style boundary seam extraction.
+- Patch 2 complete: response-style boundary seam extraction.
 - Patch 3 pending: low-evidence friendliness normalization.
 - Patch 4 pending: conversational diagnostics/runtime parity guardrails.
 - Patch 5 pending: docs/CI closure.
@@ -36,7 +36,7 @@ Execution discipline:
 A2.50 — TBD
 
 Planned focus:
-- execute A2.49 patch 2 response-style boundary seam extraction
+- execute A2.49 patch 3 low-evidence friendliness normalization
 
 ## CI Status
 

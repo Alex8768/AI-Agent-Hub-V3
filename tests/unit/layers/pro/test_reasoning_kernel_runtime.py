@@ -32,3 +32,21 @@ def test_normalize_reasoning_query_input_supports_request_and_string():
 
     assert normalize_reasoning_query_input("  q  ") == "q"
     assert normalize_reasoning_query_input(AnswerRequest(query="  q  ")) == "q"
+
+
+def test_build_reasoning_response_style_runtime_exposes_callables():
+    from src.layers.pro.reasoning.kernel import build_reasoning_response_style_runtime
+
+    out = build_reasoning_response_style_runtime()
+    assert set(out.keys()) == {
+        "build_fallback_answer",
+        "build_chat_recovery_answer",
+        "is_simple_greeting_query",
+        "is_unknown_style_answer",
+        "is_generic_assistant_fallback_answer",
+    }
+    assert callable(out["build_fallback_answer"])
+    assert callable(out["build_chat_recovery_answer"])
+    assert callable(out["is_simple_greeting_query"])
+    assert callable(out["is_unknown_style_answer"])
+    assert callable(out["is_generic_assistant_fallback_answer"])

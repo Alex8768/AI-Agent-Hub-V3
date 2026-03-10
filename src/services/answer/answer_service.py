@@ -17,6 +17,7 @@ from src.layers.pro.reasoning.execution_plane.request_boundary import (
     build_execution_request_boundary_bundle,
     normalize_execution_request,
 )
+from src.layers.pro.reasoning.kernel import build_reasoning_response_style_runtime
 from src.layers.pro.reasoning.control.execution_policy import build_reasoning_execution_policy
 from src.layers.pro.reasoning.governance.subcore import build_governance_subcore_bundle
 from src.layers.pro.reasoning.contracts import (
@@ -229,100 +230,12 @@ def _is_allowlisted_pilot_action_type(action_type: str, allowlisted_action_types
     return normalized.startswith("prepare_") and normalized.endswith("_draft")
 
 
-def _build_assistant_fallback_answer(*, query: str, language: str) -> str:
-    if language == "ru":
-        return (
-            "Привет! Я готов помочь как ассистент по рабочим задачам. "
-            "Могу подготовить план, черновики и следующие шаги по вашему запросу. "
-            "Если хотите точный ответ по внутренним данным, загрузите документы или уточните контекст."
-        )
-    return (
-        "Hi! I can help as an operations assistant. "
-        "I can prepare a plan, drafts, and next steps for your request. "
-        "If you need a source-grounded answer from internal data, upload documents or provide more context."
-    )
-
-
-def _is_simple_greeting_query(query: str) -> bool:
-    lowered = str(query or "").strip().lower()
-    if not lowered:
-        return False
-    return (
-        "привет" in lowered
-        or lowered.startswith("hi")
-        or "hello" in lowered
-    )
-
-
-def _is_unknown_style_answer(answer: str) -> bool:
-    lowered = str(answer or "").strip().lower()
-    if not lowered:
-        return False
-    markers = [
-        "извините, я не знаю",
-        "я не знаю",
-        "i don't know",
-        "i do not know",
-        "sorry, i don't know",
-    ]
-    return any(marker in lowered for marker in markers)
-
-
-def _is_generic_assistant_fallback_answer(answer: str) -> bool:
-    lowered = str(answer or "").strip().lower()
-    if not lowered:
-        return False
-    return (
-        "готов помочь как ассистент" in lowered
-        or "i can help as an operations assistant" in lowered
-    )
-
-
-async def _build_assistant_chat_recovery_answer(
-    *,
-    query: str,
-    language: str,
-    llm: object | None,
-    current_answer: str,
-) -> str:
-    target_language = _normalize_language_tag(language, query=query)
-    current = str(current_answer or "").strip()
-    if (
-        current
-        and not _is_unknown_style_answer(current)
-        and not _is_generic_assistant_fallback_answer(current)
-        and _answer_language(current) == target_language
-    ):
-        return current
-
-    if llm is not None and hasattr(llm, "generate"):
-        prompt = (
-            "You are a helpful operations assistant. "
-            "The user asked a conversational question with low evidence context. "
-            "Answer naturally in the user's language in 1-3 short sentences. "
-            "Do not say you don't know. "
-            f"User query: {str(query or '').strip()}"
-        )
-        try:
-            candidate = str(await llm.generate(prompt)).strip()
-        except Exception:
-            candidate = ""
-        if (
-            candidate
-            and not _is_unknown_style_answer(candidate)
-            and _answer_language(candidate) == target_language
-        ):
-            return candidate
-
-    if target_language == "ru":
-        return (
-            "Да, конечно. Я рядом и готова помогать по задачам шаг за шагом: "
-            "разобрать запрос, предложить понятный план и аккуратно довести до результата."
-        )
-    return (
-        "Absolutely. I am here to help step by step: "
-        "clarify your request, propose a clear plan, and move it forward safely."
-    )
+_RESPONSE_STYLE_RUNTIME = build_reasoning_response_style_runtime()
+_build_assistant_fallback_answer = _RESPONSE_STYLE_RUNTIME["build_fallback_answer"]
+_build_assistant_chat_recovery_answer = _RESPONSE_STYLE_RUNTIME["build_chat_recovery_answer"]
+_is_simple_greeting_query = _RESPONSE_STYLE_RUNTIME["is_simple_greeting_query"]
+_is_unknown_style_answer = _RESPONSE_STYLE_RUNTIME["is_unknown_style_answer"]
+_is_generic_assistant_fallback_answer = _RESPONSE_STYLE_RUNTIME["is_generic_assistant_fallback_answer"]
 
 
 def _build_assistant_recovery_policy_contract() -> dict[str, object]:
