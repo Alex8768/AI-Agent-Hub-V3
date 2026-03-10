@@ -125,6 +125,37 @@ def _build_reasoning_runtime_adapter(
     return adapter
 
 
+def _build_memory_consistency_bundle(
+    *,
+    session_memory_loaded: bool,
+    session_memory_hit: bool,
+    durable_approval_record_loaded: bool,
+    durable_idempotency_record_loaded: bool,
+) -> dict[str, object]:
+    reason_codes: list[str] = ["memory_consistency_guard_evaluated"]
+    if not session_memory_loaded:
+        reason_codes.append("memory_consistency_store_unavailable")
+    if session_memory_hit:
+        reason_codes.append("memory_consistency_session_hit")
+    if durable_approval_record_loaded:
+        reason_codes.append("memory_consistency_durable_approval_loaded")
+    if durable_idempotency_record_loaded:
+        reason_codes.append("memory_consistency_durable_idempotency_loaded")
+    status = "warn" if not session_memory_loaded else "ok"
+    return {
+        "contract_version": "v1",
+        "mode": "memory_consistency_guarded",
+        "status": status,
+        "inputs": {
+            "session_memory_loaded": bool(session_memory_loaded),
+            "session_memory_hit": bool(session_memory_hit),
+            "durable_approval_record_loaded": bool(durable_approval_record_loaded),
+            "durable_idempotency_record_loaded": bool(durable_idempotency_record_loaded),
+        },
+        "reason_codes": sorted(set(reason_codes)),
+    }
+
+
 def _is_allowlisted_pilot_action_type(action_type: str, allowlisted_action_types: set[str]) -> bool:
     normalized = str(action_type or "").strip()
     if not normalized:
@@ -2637,6 +2668,8 @@ async def _apply_diagnostics(
     assistant_response_language: str,
     session_memory_loaded: bool,
     session_memory_hit: bool,
+    durable_approval_record_loaded: bool,
+    durable_idempotency_record_loaded: bool,
 ) -> None:
     try:
         diag = dict(getattr(resp, "diagnostics", None) or {})
@@ -3022,6 +3055,13 @@ async def _apply_diagnostics(
         )
         diag.setdefault("session_memory_loaded", bool(session_memory_loaded))
         diag.setdefault("session_memory_hit", bool(session_memory_hit))
+        memory_consistency = _build_memory_consistency_bundle(
+            session_memory_loaded=bool(session_memory_loaded),
+            session_memory_hit=bool(session_memory_hit),
+            durable_approval_record_loaded=bool(durable_approval_record_loaded),
+            durable_idempotency_record_loaded=bool(durable_idempotency_record_loaded),
+        )
+        diag.setdefault("memory_consistency", memory_consistency)
         diag.setdefault("evidence_type_counts", {})
         # top_evidence: prefer retriever snapshot; fallback to response used_chunks
         try:
@@ -3277,6 +3317,7 @@ async def _apply_diagnostics(
         reason_codes.extend(list(approval_session.get("reason_codes") or []))
         reason_codes.extend(list(durable_approval_record.get("reason_codes") or []))
         reason_codes.extend(list(idempotency_record.get("reason_codes") or []))
+        reason_codes.extend(list(memory_consistency.get("reason_codes") or []))
         reason_codes = sorted(set([str(x) for x in reason_codes if str(x or "").strip()]))
         diag.setdefault("planning_reason_codes", reason_codes)
         diag.setdefault("plan_id", str(plan.get("plan_id", "") or ""))
@@ -3663,6 +3704,8 @@ class AnswerService:
             assistant_response_language=assistant_response_language,
             session_memory_loaded=session_memory_loaded,
             session_memory_hit=session_memory_hit,
+            durable_approval_record_loaded=bool(loaded_durable_approval),
+            durable_idempotency_record_loaded=bool(loaded_durable_idempotency),
         )
         try:
             diag = dict(getattr(resp, "diagnostics", None) or {})

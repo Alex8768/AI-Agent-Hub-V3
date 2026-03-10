@@ -152,6 +152,7 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
         "verify",
         "session_memory_loaded",
         "session_memory_hit",
+        "memory_consistency",
         "evidence_type_counts",
         "top_evidence",
         "trace_id",
@@ -462,6 +463,24 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
     assert isinstance(diag.get("planning_reason_codes"), list)
     assert isinstance(diag.get("plan_id"), str)
     assert diag.get("session_id") == "default"
+    memory_consistency = dict(diag.get("memory_consistency") or {})
+    assert set(memory_consistency.keys()) == {
+        "contract_version",
+        "mode",
+        "status",
+        "inputs",
+        "reason_codes",
+    }
+    assert memory_consistency.get("contract_version") == "v1"
+    assert memory_consistency.get("mode") == "memory_consistency_guarded"
+    assert memory_consistency.get("status") in {"ok", "warn"}
+    memory_inputs = dict(memory_consistency.get("inputs") or {})
+    assert set(memory_inputs.keys()) == {
+        "session_memory_loaded",
+        "session_memory_hit",
+        "durable_approval_record_loaded",
+        "durable_idempotency_record_loaded",
+    }
     assert diag.get("evidence_contract_version") == "v1"
     assert isinstance(diag.get("evidence_contract_valid_minimal"), bool)
     assert isinstance(diag.get("evidence_contract_missing_minimal_fields"), list)
@@ -2003,6 +2022,31 @@ def test_build_reasoning_runtime_adapter_requires_synthesize():
     assert out_bad is None
     assert out_none is None
     assert out_good is not None
+
+
+def test_build_memory_consistency_bundle_warns_when_memory_not_loaded():
+    import src.services.answer.answer_service as answer_service_module
+
+    out = answer_service_module._build_memory_consistency_bundle(
+        session_memory_loaded=False,
+        session_memory_hit=False,
+        durable_approval_record_loaded=True,
+        durable_idempotency_record_loaded=False,
+    )
+    assert out.get("contract_version") == "v1"
+    assert out.get("mode") == "memory_consistency_guarded"
+    assert out.get("status") == "warn"
+    inputs = dict(out.get("inputs") or {})
+    assert inputs == {
+        "session_memory_loaded": False,
+        "session_memory_hit": False,
+        "durable_approval_record_loaded": True,
+        "durable_idempotency_record_loaded": False,
+    }
+    reason_codes = list(out.get("reason_codes") or [])
+    assert "memory_consistency_guard_evaluated" in reason_codes
+    assert "memory_consistency_store_unavailable" in reason_codes
+    assert "memory_consistency_durable_approval_loaded" in reason_codes
 
 
 def test_wire_tool_selection_runtime_diagnostics_syncs_plan_steps():

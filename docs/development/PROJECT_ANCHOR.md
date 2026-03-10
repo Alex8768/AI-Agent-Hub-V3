@@ -34,7 +34,7 @@ Planned modules:
 - [x] Patch 1 — Anchor Formalization + Scope Lock
 - [x] Patch 2 — AnswerService Boundary Hardening Baseline
 - [x] Patch 3 — Planner Coupling Guardrail (Abstraction Seam)
-- [ ] Patch 4 — Memory Consistency Diagnostics Guardrails
+- [x] Patch 4 — Memory Consistency Diagnostics Guardrails
 - [ ] Patch 5 — Docs/CI Closure + Technical-Debt Registry
 
 ### Out of Scope

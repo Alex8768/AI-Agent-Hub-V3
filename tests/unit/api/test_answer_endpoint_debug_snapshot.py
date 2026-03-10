@@ -90,6 +90,7 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
         "verify",
         "session_memory_loaded",
         "session_memory_hit",
+        "memory_consistency",
         "evidence_type_counts",
         "top_evidence",
         "trace_id",
@@ -151,6 +152,14 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
     assert diag.get("plan_contract_version") == "v1"
     assert diag.get("llm_planner_contract_version") == "v1"
     assert diag.get("tool_selection_contract_version") == "v1"
+    memory_consistency = dict(diag.get("memory_consistency") or {})
+    assert set(memory_consistency.keys()) == {
+        "contract_version",
+        "mode",
+        "status",
+        "inputs",
+        "reason_codes",
+    }
     intent = dict(diag.get("assistant_intent") or {})
     assert set(intent.keys()) == {
         "intent",
