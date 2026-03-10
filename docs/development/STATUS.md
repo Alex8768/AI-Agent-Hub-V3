@@ -15,7 +15,7 @@ A2.46 — Kernel / Extensions / Execution Plane Hardening
 Current progress:
 - Patch 1 complete: architecture zoning inventory + scope lock.
 - Patch 2 complete: kernel boundary formalization.
-- Patch 3 pending: governance subcore extraction.
+- Patch 3 complete: governance subcore extraction.
 - Patch 4 pending: execution request boundary + execution plane isolation.
 - Patch 5 pending: dependency quality gates + docs closure.
 
@@ -23,6 +23,7 @@ Focus:
 - formalize architectural homes for all major capability clusters
 - minimize the reasoning kernel
 - lock kernel runtime construction behind explicit kernel seam
+- represent governance receipts/trace/timeline as explicit trusted subcore
 - isolate governance as trusted execution subcore
 - establish explicit boundary between reasoning and acting
 - add dependency-quality gates to prevent drift
@@ -40,7 +41,7 @@ Execution discipline:
 A2.47 — TBD
 
 Planned focus:
-- execute A2.46 patch 3 governance subcore extraction
+- execute A2.46 patch 4 execution request boundary isolation
 
 ## CI Status
 

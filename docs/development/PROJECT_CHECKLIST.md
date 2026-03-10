@@ -55,13 +55,13 @@
 
 - [x] Patch 1 — architecture zoning inventory + scope lock
 - [x] Patch 2 — kernel boundary formalization
-- [ ] Patch 3 — governance subcore extraction
+- [x] Patch 3 — governance subcore extraction
 - [ ] Patch 4 — execution request boundary + execution plane isolation
 - [ ] Patch 5 — dependency quality gates + docs closure
 
 ## Next
 
-- [ ] Start A2.46 patch 3 implementation
+- [ ] Start A2.46 patch 4 implementation
 
 ## Later
 

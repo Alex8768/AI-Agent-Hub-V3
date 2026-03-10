@@ -14,6 +14,7 @@ from src.layers.pro.anticipatory import (
     build_proactive_suggestion_bundle,
 )
 from src.layers.pro.reasoning.control.execution_policy import build_reasoning_execution_policy
+from src.layers.pro.reasoning.governance.subcore import build_governance_subcore_bundle
 from src.layers.pro.reasoning.contracts import (
     APPROVAL_SESSION_CONTRACT_VERSION,
     ADAPTATION_CONTRACT_VERSION,
@@ -3299,6 +3300,12 @@ async def _apply_diagnostics(
         diag.setdefault("assistant_durable_approval_session", durable_approval_record)
         diag.setdefault("idempotency_record_contract_version", IDEMPOTENCY_RECORD_CONTRACT_VERSION)
         diag.setdefault("assistant_idempotency_record", idempotency_record)
+        governance_subcore = build_governance_subcore_bundle(
+            reasoning_trace=dict(diag.get("reasoning_trace") or {}),
+            reasoning_timeline=dict(diag.get("reasoning_timeline") or {}),
+            execution_receipt=receipt,
+        )
+        diag.setdefault("governance_subcore", governance_subcore)
         reason_codes = list(intent.get("reason_codes") or []) + list(plan.get("reason_codes") or [])
         reason_codes.extend(list(llm_planner.get("reason_codes") or []))
         reason_codes.extend(list(tool_selection.get("reason_codes") or []))
@@ -3317,6 +3324,7 @@ async def _apply_diagnostics(
         reason_codes.extend(list(approval_session.get("reason_codes") or []))
         reason_codes.extend(list(durable_approval_record.get("reason_codes") or []))
         reason_codes.extend(list(idempotency_record.get("reason_codes") or []))
+        reason_codes.extend(list(governance_subcore.get("reason_codes") or []))
         reason_codes.extend(list(memory_consistency.get("reason_codes") or []))
         reason_codes = sorted(set([str(x) for x in reason_codes if str(x or "").strip()]))
         diag.setdefault("planning_reason_codes", reason_codes)

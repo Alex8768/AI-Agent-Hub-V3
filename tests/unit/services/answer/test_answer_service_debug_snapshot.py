@@ -153,6 +153,7 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
         "session_memory_loaded",
         "session_memory_hit",
         "memory_consistency",
+        "governance_subcore",
         "evidence_type_counts",
         "top_evidence",
         "trace_id",
@@ -481,6 +482,19 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
         "durable_approval_record_loaded",
         "durable_idempotency_record_loaded",
     }
+    governance_subcore = dict(diag.get("governance_subcore") or {})
+    assert set(governance_subcore.keys()) == {
+        "contract_version",
+        "mode",
+        "status",
+        "trace_status",
+        "timeline_status",
+        "receipt_status",
+        "replay_status",
+        "reason_codes",
+    }
+    assert governance_subcore.get("contract_version") == "v1"
+    assert governance_subcore.get("mode") == "governance_subcore"
     assert diag.get("evidence_contract_version") == "v1"
     assert isinstance(diag.get("evidence_contract_valid_minimal"), bool)
     assert isinstance(diag.get("evidence_contract_missing_minimal_fields"), list)

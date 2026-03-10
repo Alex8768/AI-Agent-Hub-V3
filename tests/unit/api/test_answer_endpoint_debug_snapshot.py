@@ -91,6 +91,7 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
         "session_memory_loaded",
         "session_memory_hit",
         "memory_consistency",
+        "governance_subcore",
         "evidence_type_counts",
         "top_evidence",
         "trace_id",
@@ -158,6 +159,17 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
         "mode",
         "status",
         "inputs",
+        "reason_codes",
+    }
+    governance_subcore = dict(diag.get("governance_subcore") or {})
+    assert set(governance_subcore.keys()) == {
+        "contract_version",
+        "mode",
+        "status",
+        "trace_status",
+        "timeline_status",
+        "receipt_status",
+        "replay_status",
         "reason_codes",
     }
     intent = dict(diag.get("assistant_intent") or {})
