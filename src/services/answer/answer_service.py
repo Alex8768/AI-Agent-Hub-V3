@@ -46,6 +46,12 @@ EXECUTION_PILOT_ALLOWLISTED_ACTION_TYPES: tuple[str, ...] = (
 EXECUTION_PILOT_ALLOWLISTED_ACTION_PATTERN = "prepare_*_draft"
 EXECUTION_PILOT_MAX_APPROVED_ACTION_IDS = 1
 _EXECUTION_IDEMPOTENCY_SEEN: dict[str, str] = {}
+_LLM_PLANNER_ALLOWED_INTENTS: tuple[str, ...] = (
+    "start_project",
+    "prepare_meeting",
+    "general_chat",
+    "general_query",
+)
 
 
 def _clip_text(value: object, *, max_chars: int = SESSION_MEMORY_MAX_CHARS) -> str:
@@ -377,6 +383,119 @@ def _build_deterministic_plan(
     }
 
 
+def _parse_llm_planner_intent(raw_text: str) -> str:
+    lowered = str(raw_text or "").strip().lower()
+    for label in _LLM_PLANNER_ALLOWED_INTENTS:
+        if label in lowered:
+            return label
+    if lowered in {"project", "start project"}:
+        return "start_project"
+    if lowered in {"meeting", "prepare meeting"}:
+        return "prepare_meeting"
+    if lowered in {"chat", "general chat"}:
+        return "general_chat"
+    return ""
+
+
+async def _build_planner_with_fallback(
+    *,
+    query: str,
+    intent_payload: dict[str, object],
+    assistant_mode_enabled: bool,
+    llm: object | None,
+    llm_enabled: bool,
+    llm_model: str,
+    llm_error: str,
+) -> tuple[dict[str, object], dict[str, object], dict[str, object]]:
+    base_intent = dict(intent_payload or {})
+    plan = _build_deterministic_plan(
+        query=query,
+        intent_payload=base_intent,
+        assistant_mode_enabled=assistant_mode_enabled,
+    )
+    intent_name = str(base_intent.get("intent", "general_query") or "general_query")
+    plan_id = str(plan.get("plan_id", "") or "")
+    if not assistant_mode_enabled:
+        return base_intent, plan, {
+            "contract_version": LLM_PLANNER_CONTRACT_VERSION,
+            "source": "heuristic",
+            "status": "disabled",
+            "model": str(llm_model or ""),
+            "intent": intent_name,
+            "plan_id": plan_id,
+            "reason_codes": ["assistant_mode_disabled"],
+        }
+    if not llm_enabled:
+        return base_intent, plan, {
+            "contract_version": LLM_PLANNER_CONTRACT_VERSION,
+            "source": "heuristic",
+            "status": "disabled",
+            "model": str(llm_model or ""),
+            "intent": intent_name,
+            "plan_id": plan_id,
+            "reason_codes": ["llm_planner_disabled"],
+        }
+    if llm is None or not callable(getattr(llm, "generate", None)):
+        reason_codes = ["llm_planner_adapter_unavailable"]
+        if str(llm_error or "").strip():
+            reason_codes.append("llm_planner_adapter_error")
+        return base_intent, plan, {
+            "contract_version": LLM_PLANNER_CONTRACT_VERSION,
+            "source": "fallback",
+            "status": "fallback",
+            "model": str(llm_model or ""),
+            "intent": intent_name,
+            "plan_id": plan_id,
+            "reason_codes": reason_codes,
+        }
+
+    prompt = (
+        "Classify user request intent with one label only: "
+        "start_project, prepare_meeting, general_chat, general_query.\n"
+        f"User request: {str(query or '').strip()}\n"
+        "Label:"
+    )
+    try:
+        raw = await llm.generate(prompt)
+        selected_intent = _parse_llm_planner_intent(str(raw or ""))
+    except Exception:
+        selected_intent = ""
+    if not selected_intent:
+        return base_intent, plan, {
+            "contract_version": LLM_PLANNER_CONTRACT_VERSION,
+            "source": "fallback",
+            "status": "fallback",
+            "model": str(llm_model or ""),
+            "intent": intent_name,
+            "plan_id": plan_id,
+            "reason_codes": ["llm_planner_invalid_response_fallback"],
+        }
+
+    merged_intent = dict(base_intent)
+    merged_intent["intent"] = selected_intent
+    merged_intent["source"] = "llm"
+    merged_intent["reason_codes"] = sorted(
+        set(
+            [str(x) for x in list(base_intent.get("reason_codes") or []) if str(x or "").strip()]
+            + ["llm_planner_intent_selected"]
+        )
+    )
+    llm_plan = _build_deterministic_plan(
+        query=query,
+        intent_payload=merged_intent,
+        assistant_mode_enabled=assistant_mode_enabled,
+    )
+    return merged_intent, llm_plan, {
+        "contract_version": LLM_PLANNER_CONTRACT_VERSION,
+        "source": "llm",
+        "status": "ready",
+        "model": str(llm_model or ""),
+        "intent": selected_intent,
+        "plan_id": str(llm_plan.get("plan_id", "") or ""),
+        "reason_codes": ["llm_planner_adapter_selected_intent"],
+    }
+
+
 def _bridge_plan_to_draft_actions(
     *,
     plan_bundle: dict[str, object],
@@ -495,36 +614,6 @@ def _apply_plan_policy_guards(
         "reason_codes": reason_codes,
     }
     return guarded_plan, policy
-
-
-def _build_llm_planner_bundle(
-    *,
-    intent_payload: dict[str, object],
-    plan_bundle: dict[str, object],
-    llm_enabled: bool,
-    llm_model: str,
-) -> dict[str, object]:
-    intent_name = str(intent_payload.get("intent", "general_query") or "general_query")
-    plan_id = str(plan_bundle.get("plan_id", "") or "")
-    if not llm_enabled:
-        return {
-            "contract_version": LLM_PLANNER_CONTRACT_VERSION,
-            "source": "heuristic",
-            "status": "disabled",
-            "model": str(llm_model or ""),
-            "intent": intent_name,
-            "plan_id": plan_id,
-            "reason_codes": ["llm_planner_disabled"],
-        }
-    return {
-        "contract_version": LLM_PLANNER_CONTRACT_VERSION,
-        "source": "fallback",
-        "status": "fallback",
-        "model": str(llm_model or ""),
-        "intent": intent_name,
-        "plan_id": plan_id,
-        "reason_codes": ["llm_planner_fallback_to_deterministic_plan"],
-    }
 
 
 def _build_execution_handshake_bundle(
@@ -1434,7 +1523,7 @@ def log_observability(http: Request, *, workspace_id: str, req: AnswerRequest) -
         pass
 
 
-def _apply_diagnostics(
+async def _apply_diagnostics(
     *,
     resp: Any,
     req: AnswerRequest,
@@ -1902,20 +1991,19 @@ def _apply_diagnostics(
                 "source": str(intent.get("source", "heuristic") or "heuristic"),
             },
         )
-        plan = _build_deterministic_plan(
+        intent, plan, llm_planner = await _build_planner_with_fallback(
             query=str(getattr(req, "query", "") or ""),
             intent_payload=intent,
             assistant_mode_enabled=assistant_mode_enabled,
+            llm=llm,
+            llm_enabled=bool(llm_enabled),
+            llm_model=str(llm_model or ""),
+            llm_error=str(llm_error or ""),
         )
         plan, planning_policy = _apply_plan_policy_guards(plan_bundle=plan, max_steps=5)
         diag.setdefault("plan_contract_version", PLAN_CONTRACT_VERSION)
         diag.setdefault("assistant_plan", dict(plan))
-        llm_planner = _build_llm_planner_bundle(
-            intent_payload=intent,
-            plan_bundle=plan,
-            llm_enabled=bool(llm_enabled),
-            llm_model=str(llm_model or ""),
-        )
+        llm_planner["plan_id"] = str(plan.get("plan_id", "") or "")
         diag.setdefault("llm_planner_contract_version", LLM_PLANNER_CONTRACT_VERSION)
         diag.setdefault("assistant_llm_planner", llm_planner)
         diag.setdefault("planning_policy", dict(planning_policy))
@@ -2398,7 +2486,7 @@ class AnswerService:
             pass
 
         # base diagnostics + trace
-        _apply_diagnostics(
+        await _apply_diagnostics(
             resp=resp,
             req=req,
             http=http,

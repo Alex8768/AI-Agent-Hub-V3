@@ -136,6 +136,7 @@ AI-Agent-Hub-V3 is a modular AI platform for production-grade agent systems with
 - [x] Controlled execution pilot runtime wiring (allowlisted safe-mode actions) (A2.39 patch 4)
 - [x] Controlled execution pilot docs/CI closure (A2.39 patch 5)
 - [x] LLM planner diagnostics contract baseline (A2.40 patch 1)
+- [x] Planner adapter wiring with deterministic fallback behavior (A2.40 patch 2)
 
 ### 7) Interface Layer
 

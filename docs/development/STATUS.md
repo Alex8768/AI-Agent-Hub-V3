@@ -14,7 +14,7 @@ A2.40 — Intent-based Planning Engine (LLM Planner)
 
 Current progress:
 - Patch 1 complete: LLM Planner Contract Baseline.
-- Patch 2 pending: Planner Adapter + Deterministic Fallback.
+- Patch 2 complete: Planner Adapter + Deterministic Fallback.
 - Patch 3 pending: Planner Policy Guardrails.
 - Patch 4 pending: Runtime Wiring + Diagnostics Parity.
 - Patch 5 pending: Docs/CI Closure.
@@ -22,7 +22,8 @@ Current progress:
 Focus:
 - LLM planner contract baseline is exposed in diagnostics
 - keep deterministic safety guards while introducing LLM planning path
-- proceed with planner adapter wiring and deterministic fallback in patch 2
+- planner adapter wiring with deterministic fallback is active
+- proceed with planner policy guardrails in patch 3
 - preserve strict micro-patch execution discipline
 
 Execution discipline:

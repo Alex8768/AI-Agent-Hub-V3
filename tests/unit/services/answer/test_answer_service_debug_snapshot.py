@@ -1079,6 +1079,54 @@ async def test_answer_service_builds_deterministic_plan_for_project_intent(monke
 
 
 @pytest.mark.asyncio
+async def test_answer_service_uses_llm_planner_adapter_with_deterministic_plan_fallback(monkeypatch):
+    class _S:
+        feature_reasoning = True
+        feature_graphrag = True
+        feature_reasoning_llm_enabled = True
+        feature_assistant_mode = True
+        feature_assistant_proactive = False
+        feature_assistant_actions = False
+        llm_provider = "openai"
+        openai_model = "gpt-4o-mini"
+        ollama_model = ""
+
+    class _Completion:
+        def __init__(self, content: str):
+            self.content = content
+
+    class _Provider:
+        async def complete(self, *, messages, config=None):
+            return _Completion("start_project")
+
+    async def _fake_get_llm_provider():
+        return _Provider()
+
+    monkeypatch.setattr("src.core.config.get_settings", lambda: _S())
+    monkeypatch.setattr("src.observability.trace.make_trace_id", lambda **kwargs: "trace-123", raising=False)
+    monkeypatch.setattr("src.api.dependencies_impl.get_llm_provider", _fake_get_llm_provider)
+    monkeypatch.setattr(
+        "src.core.providers.get_reasoning_engine",
+        lambda *, retriever=None, llm=None, llm_timeout_s=None: _FakeReasoningEngine(retriever),
+    )
+
+    http = _DummyHTTP(request_id="rid-plan-llm-adapter", rag_engine=object(), hybrid_retriever=_FakeHybrid())
+    req = AnswerRequest(query="Нужна помощь с новым проектом", session_id="default")
+    resp = await AnswerService().handle(http, req, workspace_id="default")
+    diag = dict(getattr(resp, "diagnostics", {}) or {})
+    planner = dict(diag.get("assistant_llm_planner") or {})
+    plan = dict(diag.get("assistant_plan") or {})
+
+    assert planner.get("source") == "llm"
+    assert planner.get("status") == "ready"
+    assert planner.get("model") == "gpt-4o-mini"
+    assert planner.get("intent") == "start_project"
+    assert "llm_planner_adapter_selected_intent" in list(planner.get("reason_codes") or [])
+    assert str(plan.get("plan_id", "")).startswith("plan:start_project:")
+    assert "deterministic_plan_built" in list(plan.get("reason_codes") or [])
+
+
+@pytest.mark.asyncio
 async def test_answer_service_bridges_plan_to_draft_actions_when_proactive_off(monkeypatch):
     class _S:
         feature_reasoning = True
