@@ -32,6 +32,7 @@ jobs:
             tests/unit/docs/test_docs_topology_quality_gate.py \
             tests/unit/docs/test_api_docs_quality_gate.py \
             tests/unit/docs/test_assistant_runtime_quality_gate.py \
+            tests/unit/docs/test_intent_plan_orchestrator_quality_gate.py \
             tests/unit/layers/pro/test_reasoning_enterprise_required_checks_matrix.py \
             tests/unit/layers/pro/test_reasoning_enterprise_required_checks_normalizer.py \
             tests/unit/layers/pro/test_reasoning_enterprise_required_checks_consolidation_quality_gate.py \

@@ -39,18 +39,19 @@
 - [x] A2.32 Docs Topology Cleanup (root -> docs/architecture + docs/development)
 - [x] A2.33 API Docs & Feature-Flag Alignment
 - [x] A2.34 Digital COO Runtime (Assistant + Draft Actions)
+- [x] A2.35 Intent-to-Plan Orchestrator (COO MVP)
 
-## Current Work — A2.35 Intent-to-Plan Orchestrator (COO MVP)
+## Current Work — A2.36 TBD
 
-- [x] Patch 1 — Intent Contract Baseline
-- [x] Patch 2 — Deterministic Plan Builder MVP
-- [x] Patch 3 — Plan -> Draft Actions Bridge
-- [x] Patch 4 — Policy Guards for Planning
-- [ ] Patch 5 — Docs/CI Closure
+- [ ] Patch 1 — TBD
+- [ ] Patch 2 — TBD
+- [ ] Patch 3 — TBD
+- [ ] Patch 4 — TBD
+- [ ] Patch 5 — TBD
 
 ## Next
 
-- [ ] Start A2.36 Patch 1 (TBD)
+- [ ] Start A2.37 Patch 1 (TBD)
 
 ## Later
 

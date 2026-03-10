@@ -85,6 +85,7 @@ Alias compatibility:
 - Required-checks matrix consolidation for release-gate policy (A2.31)
 - API docs deterministic quality gate in release-gate contracts (A2.33)
 - Assistant runtime docs quality gate in release-gate contracts (A2.34)
+- Intent-to-plan orchestrator docs quality gate in release-gate contracts (A2.35)
 
 ---
 

@@ -6,32 +6,28 @@ Pro Layer Development — Reasoning Stabilization
 
 ## Last Completed Anchor
 
-A2.34 — Digital COO Runtime (Assistant + Draft Actions)
+A2.35 — Intent-to-Plan Orchestrator (COO MVP)
 
-Assistant runtime completed with contracts/flags baseline, language-native
-fallback behavior, deterministic proactive ranking, and review-before-execute
-draft action diagnostics.
+Intent-to-plan orchestrator completed with deterministic intent diagnostics,
+deterministic review-only plan builder, plan-to-draft-actions bridge, and policy
+guards for safe planning.
 
 ## Current Active Anchor
 
-A2.35 — Intent-to-Plan Orchestrator (COO MVP)
+A2.36 — TBD
 
 Current progress:
-- Patch 1 completed: Intent Contract Baseline.
-- Patch 2 completed: Deterministic Plan Builder MVP.
-- Patch 3 completed: Plan -> Draft Actions Bridge.
-- Patch 4 completed: Policy Guards for Planning.
+- Patch plan TBD.
 
 Focus:
-- deterministic intent extraction and planning diagnostics contracts
-- deterministic review-only planning with policy guard enforcement (no side effects)
+- TBD
 
 Execution discipline:
 - keep work strictly inside the active anchor and move in micro-patches.
 
 ## Next Anchor
 
-A2.36 — TBD
+A2.37 — TBD
 
 Planned focus:
 - TBD
@@ -44,5 +40,5 @@ The noop tracing span compatibility fix is completed and treated as closed work.
 
 ## Upcoming Anchors
 
-- A2.35 — Intent-to-Plan Orchestrator (COO MVP)
 - A2.36 — TBD
+- A2.37 — TBD
