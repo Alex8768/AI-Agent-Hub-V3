@@ -13,6 +13,10 @@ from src.layers.pro.anticipatory import (
     WhisperRunner,
     build_proactive_suggestion_bundle,
 )
+from src.layers.pro.reasoning.execution_plane.request_boundary import (
+    build_execution_request_boundary_bundle,
+    normalize_execution_request,
+)
 from src.layers.pro.reasoning.control.execution_policy import build_reasoning_execution_policy
 from src.layers.pro.reasoning.governance.subcore import build_governance_subcore_bundle
 from src.layers.pro.reasoning.contracts import (
@@ -1803,20 +1807,7 @@ def _build_execution_handshake_bundle(
 
 def _extract_handshake_transition_input(req: AnswerRequest) -> dict[str, object]:
     filters = dict(getattr(req, "filters", {}) or {})
-    decision_raw = str(filters.get("handshake_decision", "") or "").strip().lower()
-    if decision_raw not in {"approve", "cancel"}:
-        decision_raw = ""
-
-    token = str(filters.get("handshake_confirmation_token", "") or "").strip()
-    requested_action_ids_raw = list(filters.get("handshake_action_ids") or [])
-    requested_action_ids = [str(x).strip() for x in requested_action_ids_raw if str(x or "").strip()]
-    idempotency_key = str(filters.get("handshake_idempotency_key", "") or "").strip()
-    return {
-        "decision": decision_raw,
-        "confirmation_token": token,
-        "requested_action_ids": requested_action_ids,
-        "idempotency_key": idempotency_key,
-    }
+    return normalize_execution_request(filters=filters)
 
 
 def _apply_handshake_transition(
@@ -3210,6 +3201,10 @@ async def _apply_diagnostics(
             draft_actions_bundle=draft_actions,
             policy_contract=transition_policy,
         )
+        execution_request_boundary = build_execution_request_boundary_bundle(
+            execution_request=transition_input,
+            transition_policy=transition_policy_eval,
+        )
         transition_input, execution_idempotency = _apply_execution_idempotency_guard(
             transition_input=transition_input,
             workspace_id=str(workspace_id or ""),
@@ -3276,6 +3271,7 @@ async def _apply_diagnostics(
         diag.setdefault("execution_handshake_contract_version", HANDSHAKE_CONTRACT_VERSION)
         diag.setdefault("assistant_execution_handshake", handshake)
         diag.setdefault("execution_transition_policy", transition_policy_eval)
+        diag.setdefault("execution_request_boundary", execution_request_boundary)
         diag.setdefault("execution_idempotency", execution_idempotency)
         diag.setdefault("execution_receipt_contract_version", EXECUTION_RECEIPT_CONTRACT_VERSION)
         diag.setdefault("assistant_execution_receipt", receipt)
@@ -3318,6 +3314,7 @@ async def _apply_diagnostics(
         reason_codes.extend(list(planning_policy.get("reason_codes") or []))
         reason_codes.extend(list(handshake.get("reason_codes") or []))
         reason_codes.extend(list(execution_idempotency.get("reason_codes") or []))
+        reason_codes.extend(list(execution_request_boundary.get("reason_codes") or []))
         reason_codes.extend(list(receipt.get("reason_codes") or []))
         reason_codes.extend(list(execution_gateway.get("reason_codes") or []))
         reason_codes.extend(list(execution_pilot.get("reason_codes") or []))

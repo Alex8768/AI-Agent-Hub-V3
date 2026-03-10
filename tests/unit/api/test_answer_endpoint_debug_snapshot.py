@@ -126,6 +126,7 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
         "execution_handshake_contract_version",
         "assistant_execution_handshake",
         "execution_transition_policy",
+        "execution_request_boundary",
         "execution_idempotency",
         "execution_receipt_contract_version",
         "assistant_execution_receipt",
@@ -329,6 +330,18 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
         "rollback_contract_status",
         "rollback_missing_action_ids",
         "applied_reason_codes",
+    }
+    execution_request_boundary = dict(diag.get("execution_request_boundary") or {})
+    assert set(execution_request_boundary.keys()) == {
+        "contract_version",
+        "mode",
+        "status",
+        "decision",
+        "requested_action_ids_count",
+        "has_confirmation_token",
+        "idempotency_key_present",
+        "transition_policy_mode",
+        "reason_codes",
     }
     idempotency = dict(diag.get("execution_idempotency") or {})
     assert set(idempotency.keys()) == {

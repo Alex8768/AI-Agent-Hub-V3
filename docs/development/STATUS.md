@@ -16,7 +16,7 @@ Current progress:
 - Patch 1 complete: architecture zoning inventory + scope lock.
 - Patch 2 complete: kernel boundary formalization.
 - Patch 3 complete: governance subcore extraction.
-- Patch 4 pending: execution request boundary + execution plane isolation.
+- Patch 4 complete: execution request boundary + execution plane isolation.
 - Patch 5 pending: dependency quality gates + docs closure.
 
 Focus:
@@ -41,7 +41,7 @@ Execution discipline:
 A2.47 — TBD
 
 Planned focus:
-- execute A2.46 patch 4 execution request boundary isolation
+- execute A2.46 patch 5 dependency quality gates + docs closure
 
 ## CI Status
 
