@@ -61,8 +61,10 @@ def get_reasoning_engine(
     if retriever is None:
         raise RuntimeError("ReasoningEngine requires retriever injection")
 
-    from src.layers.pro.reasoning.engine import ReasoningEngine
+    from src.layers.pro.reasoning.kernel import build_reasoning_kernel
 
-    if llm_timeout_s is None:
-        return ReasoningEngine(retriever=retriever, llm=llm)
-    return ReasoningEngine(retriever=retriever, llm=llm, llm_timeout_s=float(llm_timeout_s))
+    return build_reasoning_kernel(
+        retriever=retriever,
+        llm=llm,
+        llm_timeout_s=llm_timeout_s,
+    )

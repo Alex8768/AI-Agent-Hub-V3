@@ -54,14 +54,14 @@
 ## Current Work — A2.46 Kernel / Extensions / Execution Plane Hardening
 
 - [x] Patch 1 — architecture zoning inventory + scope lock
-- [ ] Patch 2 — kernel boundary formalization
+- [x] Patch 2 — kernel boundary formalization
 - [ ] Patch 3 — governance subcore extraction
 - [ ] Patch 4 — execution request boundary + execution plane isolation
 - [ ] Patch 5 — dependency quality gates + docs closure
 
 ## Next
 
-- [ ] Post-A2.46 anchor planning
+- [ ] Start A2.46 patch 3 implementation
 
 ## Later
 
