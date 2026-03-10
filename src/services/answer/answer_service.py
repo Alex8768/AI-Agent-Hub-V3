@@ -98,6 +98,17 @@ def _answer_language(answer: str) -> str:
     return "en"
 
 
+def _build_answer_service_runtime_context(*, settings: object) -> dict[str, object]:
+    return {
+        "reasoning_enabled": bool(getattr(settings, "feature_reasoning", False)),
+        "graphrag_enabled": bool(getattr(settings, "feature_graphrag", False)),
+        "assistant_mode_enabled": bool(getattr(settings, "feature_assistant_mode", False)),
+        "assistant_proactive_enabled": bool(getattr(settings, "feature_assistant_proactive", False)),
+        "assistant_actions_enabled": bool(getattr(settings, "feature_assistant_actions", False)),
+        "assistant_response_language": "auto",
+    }
+
+
 def _is_allowlisted_pilot_action_type(action_type: str, allowlisted_action_types: set[str]) -> bool:
     normalized = str(action_type or "").strip()
     if not normalized:
@@ -3547,7 +3558,8 @@ class AnswerService:
         from src.core.providers import get_reasoning_engine, get_memory_store
 
         s = get_settings()
-        if not getattr(s, "feature_reasoning", False) or not getattr(s, "feature_graphrag", False):
+        runtime_context = _build_answer_service_runtime_context(settings=s)
+        if not bool(runtime_context.get("reasoning_enabled", False)) or not bool(runtime_context.get("graphrag_enabled", False)):
             # Endpoint uses 404 for feature-gated routes
             from fastapi import HTTPException
             raise HTTPException(status_code=404, detail="Not Found")
@@ -3563,10 +3575,10 @@ class AnswerService:
         llm, llm_enabled, llm_provider_name, llm_model, llm_error = await _build_llm_adapter(
             settings=s
         )
-        assistant_mode_enabled = bool(getattr(s, "feature_assistant_mode", False))
-        assistant_proactive_enabled = bool(getattr(s, "feature_assistant_proactive", False))
-        assistant_actions_enabled = bool(getattr(s, "feature_assistant_actions", False))
-        assistant_response_language = "auto"
+        assistant_mode_enabled = bool(runtime_context.get("assistant_mode_enabled", False))
+        assistant_proactive_enabled = bool(runtime_context.get("assistant_proactive_enabled", False))
+        assistant_actions_enabled = bool(runtime_context.get("assistant_actions_enabled", False))
+        assistant_response_language = str(runtime_context.get("assistant_response_language", "auto") or "auto")
         session_memory_loaded = False
         session_memory_hit = False
 

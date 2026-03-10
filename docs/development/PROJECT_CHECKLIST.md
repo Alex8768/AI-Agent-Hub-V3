@@ -53,14 +53,14 @@
 ## Current Work — A2.45 Architecture Hardening Track (COO Runtime Reliability)
 
 - [x] Patch 1 — Anchor Formalization + Scope Lock
-- [ ] Patch 2 — AnswerService Boundary Hardening Baseline
+- [x] Patch 2 — AnswerService Boundary Hardening Baseline
 - [ ] Patch 3 — Planner Coupling Guardrail (Abstraction Seam)
 - [ ] Patch 4 — Memory Consistency Diagnostics Guardrails
 - [ ] Patch 5 — Docs/CI Closure + Technical-Debt Registry
 
 ## Next
 
-- [ ] Start A2.45 patch 2 implementation
+- [ ] Start A2.45 patch 3 implementation
 
 ## Later
 

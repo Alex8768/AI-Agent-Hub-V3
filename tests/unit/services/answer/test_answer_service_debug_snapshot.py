@@ -1952,6 +1952,27 @@ def test_wire_planner_runtime_diagnostics_syncs_plan_id():
     assert "llm_planner_runtime_wired" in list(policy.get("applied_reason_codes") or [])
 
 
+def test_build_answer_service_runtime_context_normalizes_flags():
+    import src.services.answer.answer_service as answer_service_module
+
+    class _S:
+        feature_reasoning = 1
+        feature_graphrag = "yes"
+        feature_assistant_mode = True
+        feature_assistant_proactive = 0
+        feature_assistant_actions = None
+
+    out = answer_service_module._build_answer_service_runtime_context(settings=_S())
+    assert out == {
+        "reasoning_enabled": True,
+        "graphrag_enabled": True,
+        "assistant_mode_enabled": True,
+        "assistant_proactive_enabled": False,
+        "assistant_actions_enabled": False,
+        "assistant_response_language": "auto",
+    }
+
+
 def test_wire_tool_selection_runtime_diagnostics_syncs_plan_steps():
     import src.services.answer.answer_service as answer_service_module
 
