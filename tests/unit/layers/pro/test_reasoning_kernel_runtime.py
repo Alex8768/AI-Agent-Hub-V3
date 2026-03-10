@@ -14,3 +14,13 @@ def test_build_reasoning_kernel_returns_reasoning_engine():
     assert out is not None
     assert out.__class__.__name__ == "ReasoningEngine"
     assert out.__class__.__module__ == "src.layers.pro.reasoning.engine"
+
+
+def test_build_reasoning_planner_runtime_exposes_callables():
+    from src.layers.pro.reasoning.kernel import build_reasoning_planner_runtime
+
+    out = build_reasoning_planner_runtime()
+    assert set(out.keys()) == {"create_plan", "execute_steps", "build_prompt"}
+    assert callable(out["create_plan"])
+    assert callable(out["execute_steps"])
+    assert callable(out["build_prompt"])

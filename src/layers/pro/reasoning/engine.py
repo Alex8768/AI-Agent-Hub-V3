@@ -64,11 +64,15 @@ from src.layers.pro.reasoning.enterprise.rollout_decision_model import (
 from src.layers.pro.meta_cognition.gaps import build_gap_map
 from src.layers.pro.meta_cognition.reflection import build_reflection_report
 from src.layers.pro.meta_cognition.uncertainty import build_uncertainty_summary
-from src.layers.pro.reasoning.planner.planner import create_reasoning_plan
-from src.layers.pro.reasoning.planner.step_executor import execute_plan_steps
+from src.layers.pro.reasoning.kernel import build_reasoning_planner_runtime
 from src.layers.pro.reasoning.tool_safety.runtime_guard import apply_tool_safety_runtime_guard
 from src.layers.pro.reasoning.trace.trace_collector import collect_reasoning_trace
 from src.core.config import get_settings
+
+_PLANNER_RUNTIME = build_reasoning_planner_runtime()
+create_reasoning_plan = _PLANNER_RUNTIME["create_plan"]
+execute_plan_steps = _PLANNER_RUNTIME["execute_steps"]
+build_reasoning_prompt = _PLANNER_RUNTIME["build_prompt"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -916,7 +920,6 @@ class ReasoningEngine:
 
         if self.llm is not None and not dry_run:
             # Пробуем вызвать LLM напрямую (один раз)
-            from src.layers.pro.reasoning.prompt_builder import build_reasoning_prompt
             import asyncio
 
             prompt = build_reasoning_prompt(

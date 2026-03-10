@@ -56,14 +56,14 @@
 ## Current Work — A2.48 Planner Decoupling Track (Kernel Composition Independence)
 
 - [x] Patch 1 — planner decoupling inventory + scope lock
-- [ ] Patch 2 — planner composition seam extraction
+- [x] Patch 2 — planner composition seam extraction
 - [ ] Patch 3 — prompt/planner boundary normalization
 - [ ] Patch 4 — planner diagnostics/runtime parity guardrails
 - [ ] Patch 5 — debt registry/docs/CI closure
 
 ## Next
 
-- [ ] Start A2.48 patch 2 implementation
+- [ ] Start A2.48 patch 3 implementation
 
 ## Later
 
