@@ -49,18 +49,15 @@
 - [x] A2.42 Learning from Feedback (Approve/Cancel/Edit)
 - [x] A2.43 Feedback-to-Planning Adaptation (MVP)
 - [x] A2.44 Assistant Conversational Recovery (Low-Evidence UX)
+- [x] A2.45 Architecture Hardening Track (COO Runtime Reliability)
 
-## Current Work — A2.45 Architecture Hardening Track (COO Runtime Reliability)
+## Current Work — A2.46 TBD
 
-- [x] Patch 1 — Anchor Formalization + Scope Lock
-- [x] Patch 2 — AnswerService Boundary Hardening Baseline
-- [x] Patch 3 — Planner Coupling Guardrail (Abstraction Seam)
-- [x] Patch 4 — Memory Consistency Diagnostics Guardrails
-- [ ] Patch 5 — Docs/CI Closure + Technical-Debt Registry
+- [ ] Formalize A2.46 patch plan
 
 ## Next
 
-- [ ] Start A2.45 patch 5 implementation
+- [ ] Start A2.46 implementation after formalization
 
 ## Later
 

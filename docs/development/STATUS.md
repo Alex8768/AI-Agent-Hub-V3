@@ -6,26 +6,18 @@ Pro Layer Development — Reasoning Stabilization
 
 ## Last Completed Anchor
 
-A2.44 — Assistant Conversational Recovery (Low-Evidence UX)
+A2.45 — Architecture Hardening Track (COO Runtime Reliability)
 
 ## Current Active Anchor
 
-A2.45 — Architecture Hardening Track (COO Runtime Reliability)
+A2.46 — TBD
 
 Current progress:
-- Patch 1 complete: Anchor Formalization + Scope Lock.
-- Patch 2 complete: AnswerService Boundary Hardening Baseline.
-- Patch 3 complete: Planner Coupling Guardrail (Abstraction Seam).
-- Patch 4 complete: Memory Consistency Diagnostics Guardrails.
-- Patch 5 pending: Docs/CI Closure + Technical-Debt Registry.
+- A2.46 scope is pending formalization.
 
 Focus:
-- reduce architectural coupling without changing runtime behavior
-- stabilize AnswerService runtime-context boundary as baseline seam
-- enforce planner adapter boundary via guarded runtime abstraction seam
-- add deterministic memory consistency guard diagnostics in debug snapshots
-- establish deterministic hardening diagnostics contracts
-- keep technical debt visible and explicitly tracked
+- finalize A2.45 closure consistency across docs/CI
+- formalize A2.46 scope and micro-patch plan
 - preserve strict micro-patch execution discipline
 
 Execution discipline:
@@ -33,10 +25,10 @@ Execution discipline:
 
 ## Next Anchor
 
-A2.46 — TBD
+A2.47 — TBD
 
 Planned focus:
-- execute A2.45 patch 5 docs/CI closure and technical-debt registry
+- define and start A2.46
 
 ## CI Status
 
@@ -46,4 +38,4 @@ The noop tracing span compatibility fix is completed and treated as closed work.
 
 ## Upcoming Anchors
 
-- A2.45 — TBD
+- A2.46 — TBD

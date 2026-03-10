@@ -2,40 +2,26 @@
 
 ## Active Anchor
 
-A2.45 — Architecture Hardening Track (COO Runtime Reliability)
+A2.46 — TBD
 
 ### Goal
 
-Reduce architectural risk accumulated during fast feature delivery by
-introducing deterministic hardening around service boundaries, planner coupling,
-and memory consistency diagnostics while preserving current behavior.
+To be defined after A2.45 closure.
 
 ### Architecture Position
 
 Planned modules:
 
-- AnswerService boundary extraction scaffold (orchestrator-first shape)
-- planner runtime abstraction seam (provider-agnostic boundary)
-- memory consistency diagnostics contract (sqlite index parity visibility)
-- technical debt ledger + cleanup policy for legacy/temporary runners
-- docs/CI closure for hardening policy
+- TBD
 
 ### Patch Plan
 
 #### Patch plan
-- Patch 1 — Anchor Formalization + Scope Lock
-- Patch 2 — AnswerService Boundary Hardening Baseline
-- Patch 3 — Planner Coupling Guardrail (Abstraction Seam)
-- Patch 4 — Memory Consistency Diagnostics Guardrails
-- Patch 5 — Docs/CI Closure + Technical-Debt Registry
+- Pending formalization
 
 ### Progress
 
-- [x] Patch 1 — Anchor Formalization + Scope Lock
-- [x] Patch 2 — AnswerService Boundary Hardening Baseline
-- [x] Patch 3 — Planner Coupling Guardrail (Abstraction Seam)
-- [x] Patch 4 — Memory Consistency Diagnostics Guardrails
-- [ ] Patch 5 — Docs/CI Closure + Technical-Debt Registry
+- [ ] Formalize A2.46 scope and patch plan
 
 ### Out of Scope
 
@@ -45,16 +31,12 @@ Do NOT modify during planning:
 
 ### Definition of Done
 
-A2.45 completion criteria:
-- core runtime contracts and behavior remain backward-compatible;
-- hardening diagnostics are deterministic and visible in debug snapshots;
-- memory consistency risks are surfaced through explicit policy diagnostics;
-- technical-debt items are cataloged with explicit decision status;
-- full unit suite and release-gate docs checks remain green.
+A2.46 completion criteria:
+- TBD
 
 ## Next Anchor
 
-A2.46 — TBD
+A2.47 — TBD
 
 ### Discipline
 
@@ -66,11 +48,11 @@ Work order is strict:
 
 ### Last Completed Anchor
 
-A2.44 — Assistant Conversational Recovery (Low-Evidence UX)
+A2.45 — Architecture Hardening Track (COO Runtime Reliability)
 
 Completed via patches:
-- Patch 1 — Conversational Recovery Baseline + Runtime Hook
-- Patch 2 — Language-Native Recovery Adapter Hardening
-- Patch 3 — Recovery Policy Guardrails
-- Patch 4 — Runtime Wiring + Diagnostics Parity
-- Patch 5 — Docs/CI Closure
+- Patch 1 — Anchor Formalization + Scope Lock
+- Patch 2 — AnswerService Boundary Hardening Baseline
+- Patch 3 — Planner Coupling Guardrail (Abstraction Seam)
+- Patch 4 — Memory Consistency Diagnostics Guardrails
+- Patch 5 — Docs/CI Closure + Technical-Debt Registry
