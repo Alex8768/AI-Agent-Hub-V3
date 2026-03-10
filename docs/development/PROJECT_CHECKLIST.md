@@ -57,12 +57,12 @@
 - [x] Patch 1 — debt closure inventory + scope lock
 - [x] Patch 2 — AnswerService orchestration extraction seam
 - [x] Patch 3 — memory consistency strategy contract
-- [ ] Patch 4 — runtime entrypoint cleanup decision
+- [x] Patch 4 — runtime entrypoint cleanup decision
 - [ ] Patch 5 — debt registry/docs/CI closure
 
 ## Next
 
-- [ ] Start A2.47 patch 4 implementation
+- [ ] Start A2.47 patch 5 implementation
 
 ## Later
 
