@@ -37,6 +37,7 @@ jobs:
             tests/unit/docs/test_approval_execution_gateway_runtime_quality_gate.py \
             tests/unit/docs/test_durable_approval_recovery_runtime_quality_gate.py \
             tests/unit/docs/test_controlled_execution_pilot_runtime_quality_gate.py \
+            tests/unit/docs/test_llm_planner_runtime_quality_gate.py \
             tests/unit/layers/pro/test_reasoning_enterprise_required_checks_matrix.py \
             tests/unit/layers/pro/test_reasoning_enterprise_required_checks_normalizer.py \
             tests/unit/layers/pro/test_reasoning_enterprise_required_checks_consolidation_quality_gate.py \

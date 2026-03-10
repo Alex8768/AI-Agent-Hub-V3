@@ -2,38 +2,38 @@
 
 ## Active Anchor
 
-A2.40 — Intent-based Planning Engine (LLM Planner)
+A2.41 — Dynamic Tool Selection (MCP-aware)
 
 ### Goal
 
-Introduce an LLM-driven intent planning layer while preserving deterministic
-planning guards and safe-mode execution boundaries.
+Introduce policy-sandboxed dynamic tool selection for planner steps with
+MCP-aware routing and strict execution safeguards.
 
 ### Architecture Position
 
 Planned modules:
 
-- planner contract baseline for LLM intent planning
-- llm planner adapter wiring with deterministic fallback
-- planning policy invariants and safety guards
-- diagnostics parity for planner decisions
+- MCP-aware tool selection contract baseline
+- tool selection adapter + deterministic fallback
+- tool selection policy guardrails
+- runtime wiring + diagnostics parity
 - docs + CI quality-gate closure
 
 ### Patch Plan
 
 #### Patch plan
-- Patch 1 — LLM Planner Contract Baseline
-- Patch 2 — Planner Adapter + Deterministic Fallback
-- Patch 3 — Planner Policy Guardrails
+- Patch 1 — Tool Selection Contract Baseline
+- Patch 2 — MCP-aware Selector Adapter + Fallback
+- Patch 3 — Tool Selection Policy Guardrails
 - Patch 4 — Runtime Wiring + Diagnostics Parity
 - Patch 5 — Docs/CI Closure
 
 ### Progress
 
-- [x] Patch 1 — LLM Planner Contract Baseline
-- [x] Patch 2 — Planner Adapter + Deterministic Fallback
-- [x] Patch 3 — Planner Policy Guardrails
-- [x] Patch 4 — Runtime Wiring + Diagnostics Parity
+- [ ] Patch 1 — Tool Selection Contract Baseline
+- [ ] Patch 2 — MCP-aware Selector Adapter + Fallback
+- [ ] Patch 3 — Tool Selection Policy Guardrails
+- [ ] Patch 4 — Runtime Wiring + Diagnostics Parity
 - [ ] Patch 5 — Docs/CI Closure
 
 ### Out of Scope
@@ -44,14 +44,14 @@ Do NOT modify during planning:
 
 ### Definition of Done
 
-A2.40 completion criteria:
-- LLM planner decisions remain policy-guarded and deterministic where required.
-- fallback path preserves current safe-mode behavior when planner is unavailable.
+A2.41 completion criteria:
+- selected tools remain policy-guarded with deterministic safe fallback.
+- MCP-aware selection stays explicit and diagnosable in runtime snapshots.
 - full unit suite and quality-gate coverage remain green.
 
 ## Next Anchor
 
-A2.41 — Dynamic Tool Selection (MCP-aware)
+A2.42 — Learning from Feedback (Approve/Cancel/Edit)
 
 ### Discipline
 
@@ -63,11 +63,11 @@ Work order is strict:
 
 ### Last Completed Anchor
 
-A2.39 — Controlled Execution Pilot (Strict Safe Mode+)
+A2.40 — Intent-based Planning Engine (LLM Planner)
 
 Completed via patches:
-- Patch 1 — Execution Pilot Contract Baseline
-- Patch 2 — Allowlist + Policy Gate
-- Patch 3 — Receipt + Rollback Contract Enforcement
-- Patch 4 — Pilot Runtime Wiring
+- Patch 1 — LLM Planner Contract Baseline
+- Patch 2 — Planner Adapter + Deterministic Fallback
+- Patch 3 — Planner Policy Guardrails
+- Patch 4 — Runtime Wiring + Diagnostics Parity
 - Patch 5 — Docs/CI Closure

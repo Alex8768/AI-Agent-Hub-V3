@@ -44,18 +44,19 @@
 - [x] A2.37 Approval Session & Idempotent Execution Gateway (Safe Mode)
 - [x] A2.38 Durable Approval Recovery Runtime (Safe Mode)
 - [x] A2.39 Controlled Execution Pilot (Strict Safe Mode+)
+- [x] A2.40 Intent-based Planning Engine (LLM Planner)
 
-## Current Work — A2.40 Intent-based Planning Engine (LLM Planner)
+## Current Work — A2.41 Dynamic Tool Selection (MCP-aware)
 
-- [x] Patch 1 — LLM Planner Contract Baseline
-- [x] Patch 2 — Planner Adapter + Deterministic Fallback
-- [x] Patch 3 — Planner Policy Guardrails
-- [x] Patch 4 — Runtime Wiring + Diagnostics Parity
+- [ ] Patch 1 — Tool Selection Contract Baseline
+- [ ] Patch 2 — MCP-aware Selector Adapter + Fallback
+- [ ] Patch 3 — Tool Selection Policy Guardrails
+- [ ] Patch 4 — Runtime Wiring + Diagnostics Parity
 - [ ] Patch 5 — Docs/CI Closure
 
 ## Next
 
-- [ ] Start A2.41 Patch 1 (Dynamic Tool Selection baseline)
+- [ ] Start A2.42 Patch 1 (Learning from feedback baseline)
 
 ## Later
 

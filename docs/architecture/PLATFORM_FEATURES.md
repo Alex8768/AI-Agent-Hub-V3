@@ -139,6 +139,7 @@ AI-Agent-Hub-V3 is a modular AI platform for production-grade agent systems with
 - [x] Planner adapter wiring with deterministic fallback behavior (A2.40 patch 2)
 - [x] LLM planner policy guardrails with forced fallback on violations (A2.40 patch 3)
 - [x] LLM planner runtime wiring and diagnostics parity (A2.40 patch 4)
+- [x] LLM planner runtime docs/CI closure (A2.40 patch 5)
 
 ### 7) Interface Layer
 
@@ -177,6 +178,8 @@ AI-Agent-Hub-V3 is a modular AI platform for production-grade agent systems with
 - `A2.38` Durable Approval Recovery Runtime (Safe Mode)
 - `A2.39` Controlled Execution Pilot (Strict Safe Mode+)
 - `A2.40` Intent-based Planning Engine (LLM Planner)
+- `A2.41` Dynamic Tool Selection (MCP-aware)
+- `A2.42` Learning from Feedback (Approve/Cancel/Edit)
 
 Roadmap order:
 
