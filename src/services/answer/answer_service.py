@@ -1103,6 +1103,70 @@ def _wire_runtime_diagnostics(
     return diag
 
 
+def _build_conversational_runtime_parity_bundle(
+    *,
+    diagnostics: dict[str, object],
+    query: str,
+    answer: str,
+) -> dict[str, object]:
+    diag = dict(diagnostics or {})
+    query_text = str(query or "")
+    answer_text = str(answer or "")
+    assistant_mode_enabled = bool(diag.get("assistant_mode_enabled", False))
+    response_mode = str(diag.get("response_mode", "") or "")
+    response_language = _normalize_language_tag(
+        str(diag.get("response_language", "auto") or "auto"),
+        query=query_text,
+    )
+    answer_language = _answer_language(answer_text)
+    has_evidence = int(diag.get("retrieved_provenance_count", 0) or 0) > 0
+    unknown_style = _is_unknown_style_answer(answer_text)
+    recovery_applied = bool(diag.get("assistant_chat_recovery_applied", False))
+    friendliness_applied = "assistant_low_evidence_friendliness_applied" in {
+        str(x) for x in list(diag.get("planning_reason_codes") or []) if str(x or "").strip()
+    }
+    reason_codes: list[str] = ["conversational_runtime_parity_evaluated"]
+    status = "pass"
+    if assistant_mode_enabled:
+        reason_codes.append("conversational_runtime_assistant_enabled")
+    else:
+        reason_codes.append("conversational_runtime_assistant_disabled")
+    if answer_language == response_language:
+        reason_codes.append("conversational_runtime_language_aligned")
+    else:
+        status = "warn"
+        reason_codes.append("conversational_runtime_language_mismatch")
+    if assistant_mode_enabled and not has_evidence and unknown_style:
+        status = "warn"
+        reason_codes.append("conversational_runtime_low_evidence_unknown_style")
+    else:
+        reason_codes.append("conversational_runtime_low_evidence_style_ok")
+    if recovery_applied:
+        reason_codes.append("conversational_runtime_recovery_applied")
+    if friendliness_applied:
+        reason_codes.append("conversational_runtime_friendliness_applied")
+    return {
+        "contract_version": "v1",
+        "mode": "conversational_runtime_parity_guarded",
+        "status": status,
+        "inputs": {
+            "assistant_mode_enabled": assistant_mode_enabled,
+            "response_mode": response_mode,
+            "response_language": response_language,
+            "answer_language": answer_language,
+            "has_evidence": has_evidence,
+            "unknown_style_answer": unknown_style,
+            "recovery_applied": recovery_applied,
+            "friendliness_applied": friendliness_applied,
+        },
+        "thresholds": {
+            "require_language_alignment": True,
+            "require_non_unknown_style_when_low_evidence": True,
+        },
+        "reason_codes": sorted(set(reason_codes)),
+    }
+
+
 def _build_feedback_learning_bundle(
     *,
     req: AnswerRequest,
@@ -3781,6 +3845,15 @@ class AnswerService:
                     reason_codes = [str(x) for x in list(diag.get("planning_reason_codes") or []) if str(x or "").strip()]
                     reason_codes.append("assistant_low_evidence_friendliness_applied")
                     diag["planning_reason_codes"] = sorted(set(reason_codes))
+            conversational_runtime_parity = _build_conversational_runtime_parity_bundle(
+                diagnostics=diag,
+                query=str(getattr(req, "query", "") or ""),
+                answer=str(getattr(resp, "answer", "") or ""),
+            )
+            diag["conversational_runtime_parity"] = conversational_runtime_parity
+            reason_codes = [str(x) for x in list(diag.get("planning_reason_codes") or []) if str(x or "").strip()]
+            reason_codes.extend(list(conversational_runtime_parity.get("reason_codes") or []))
+            diag["planning_reason_codes"] = sorted(set(reason_codes))
             resp.diagnostics = diag
         except Exception:
             pass

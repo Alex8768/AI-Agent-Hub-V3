@@ -167,6 +167,7 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
         "response_mode",
         "response_language",
         "assistant_recovery_policy",
+        "conversational_runtime_parity",
         "assistant_mode_enabled",
         "assistant_proactive_enabled",
         "assistant_actions_enabled",
@@ -1082,6 +1083,17 @@ async def test_answer_service_assistant_fallback_localizes_russian(monkeypatch):
         "violations",
         "applied_reason_codes",
     }
+    conversational_parity = dict(diag.get("conversational_runtime_parity") or {})
+    assert set(conversational_parity.keys()) == {
+        "contract_version",
+        "mode",
+        "status",
+        "inputs",
+        "thresholds",
+        "reason_codes",
+    }
+    assert conversational_parity.get("contract_version") == "v1"
+    assert conversational_parity.get("mode") == "conversational_runtime_parity_guarded"
     assert "assistant_chat_recovery_greeting_blocked" in list(recovery_policy.get("violations") or [])
     assert "assistant_chat_recovery_policy_forced_fallback" in list(recovery_policy.get("applied_reason_codes") or [])
     assert diag.get("assistant_mode_enabled") is True

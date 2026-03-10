@@ -105,6 +105,7 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
         "response_mode",
         "response_language",
         "assistant_recovery_policy",
+        "conversational_runtime_parity",
         "assistant_mode_enabled",
         "assistant_proactive_enabled",
         "assistant_actions_enabled",
@@ -214,6 +215,15 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
         "target_language",
         "violations",
         "applied_reason_codes",
+    }
+    conversational_parity = dict(diag.get("conversational_runtime_parity") or {})
+    assert set(conversational_parity.keys()) == {
+        "contract_version",
+        "mode",
+        "status",
+        "inputs",
+        "thresholds",
+        "reason_codes",
     }
     plan = dict(diag.get("assistant_plan") or {})
     assert set(plan.keys()) == {
