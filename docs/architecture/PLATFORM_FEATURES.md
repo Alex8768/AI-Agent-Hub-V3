@@ -172,6 +172,7 @@ AI-Agent-Hub-V3 is a modular AI platform for production-grade agent systems with
 - [x] Topology dependency quality gates + docs/CI closure (A2.46 patch 5)
 - [x] Debt-closure inventory and scope lock for runtime clarity/reliability (A2.47 patch 1)
 - [x] AnswerService orchestration extraction seam with runtime parity preserved (A2.47 patch 2)
+- [x] Memory consistency strategy contract for best-effort dual-store with deferred outbox/compensation (A2.47 patch 3)
 
 ### 7) Interface Layer
 

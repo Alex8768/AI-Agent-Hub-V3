@@ -153,6 +153,7 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
         "session_memory_loaded",
         "session_memory_hit",
         "memory_consistency",
+        "memory_consistency_strategy",
         "governance_subcore",
         "evidence_type_counts",
         "top_evidence",
@@ -495,6 +496,18 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
         "durable_approval_record_loaded",
         "durable_idempotency_record_loaded",
     }
+    memory_strategy = dict(diag.get("memory_consistency_strategy") or {})
+    assert set(memory_strategy.keys()) == {
+        "contract_version",
+        "mode",
+        "consistency_target",
+        "write_strategy",
+        "outbox_strategy",
+        "compensation_strategy",
+        "reason_codes",
+    }
+    assert memory_strategy.get("contract_version") == "v1"
+    assert memory_strategy.get("mode") == "best_effort_dual_store"
     governance_subcore = dict(diag.get("governance_subcore") or {})
     assert set(governance_subcore.keys()) == {
         "contract_version",
@@ -2074,6 +2087,21 @@ def test_build_memory_consistency_bundle_warns_when_memory_not_loaded():
     assert "memory_consistency_guard_evaluated" in reason_codes
     assert "memory_consistency_store_unavailable" in reason_codes
     assert "memory_consistency_durable_approval_loaded" in reason_codes
+
+
+def test_build_memory_consistency_strategy_contract_defaults():
+    import src.services.answer.answer_service as answer_service_module
+
+    out = answer_service_module._build_memory_consistency_strategy_contract()
+    assert out.get("contract_version") == "v1"
+    assert out.get("mode") == "best_effort_dual_store"
+    assert out.get("consistency_target") == "eventual_consistency"
+    assert out.get("write_strategy") == "sqlite_primary_qdrant_best_effort"
+    assert out.get("outbox_strategy") == "deferred"
+    assert out.get("compensation_strategy") == "deferred"
+    reason_codes = list(out.get("reason_codes") or [])
+    assert "memory_consistency_strategy_contract_defined" in reason_codes
+    assert "memory_consistency_strategy_best_effort" in reason_codes
 
 
 def test_wire_tool_selection_runtime_diagnostics_syncs_plan_steps():

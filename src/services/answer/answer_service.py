@@ -161,6 +161,24 @@ def _build_memory_consistency_bundle(
     }
 
 
+def _build_memory_consistency_strategy_contract() -> dict[str, object]:
+    reason_codes = [
+        "memory_consistency_strategy_contract_defined",
+        "memory_consistency_strategy_best_effort",
+        "memory_consistency_strategy_outbox_deferred",
+        "memory_consistency_strategy_compensation_deferred",
+    ]
+    return {
+        "contract_version": "v1",
+        "mode": "best_effort_dual_store",
+        "consistency_target": "eventual_consistency",
+        "write_strategy": "sqlite_primary_qdrant_best_effort",
+        "outbox_strategy": "deferred",
+        "compensation_strategy": "deferred",
+        "reason_codes": sorted(set(reason_codes)),
+    }
+
+
 def _is_allowlisted_pilot_action_type(action_type: str, allowlisted_action_types: set[str]) -> bool:
     normalized = str(action_type or "").strip()
     if not normalized:
@@ -3171,7 +3189,9 @@ async def _apply_diagnostics(
             durable_approval_record_loaded=bool(durable_approval_record_loaded),
             durable_idempotency_record_loaded=bool(durable_idempotency_record_loaded),
         )
+        memory_consistency_strategy = _build_memory_consistency_strategy_contract()
         diag.setdefault("memory_consistency", memory_consistency)
+        diag.setdefault("memory_consistency_strategy", memory_consistency_strategy)
         diag.setdefault("evidence_type_counts", {})
         # top_evidence: prefer retriever snapshot; fallback to response used_chunks
         try:
@@ -3368,6 +3388,7 @@ async def _apply_diagnostics(
         reason_codes.extend(list(idempotency_record.get("reason_codes") or []))
         reason_codes.extend(list(governance_subcore.get("reason_codes") or []))
         reason_codes.extend(list(memory_consistency.get("reason_codes") or []))
+        reason_codes.extend(list(memory_consistency_strategy.get("reason_codes") or []))
         reason_codes = sorted(set([str(x) for x in reason_codes if str(x or "").strip()]))
         diag.setdefault("planning_reason_codes", reason_codes)
         diag.setdefault("plan_id", str(plan.get("plan_id", "") or ""))

@@ -91,6 +91,7 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
         "session_memory_loaded",
         "session_memory_hit",
         "memory_consistency",
+        "memory_consistency_strategy",
         "governance_subcore",
         "evidence_type_counts",
         "top_evidence",
@@ -160,6 +161,16 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
         "mode",
         "status",
         "inputs",
+        "reason_codes",
+    }
+    memory_strategy = dict(diag.get("memory_consistency_strategy") or {})
+    assert set(memory_strategy.keys()) == {
+        "contract_version",
+        "mode",
+        "consistency_target",
+        "write_strategy",
+        "outbox_strategy",
+        "compensation_strategy",
         "reason_codes",
     }
     governance_subcore = dict(diag.get("governance_subcore") or {})
