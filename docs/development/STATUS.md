@@ -6,29 +6,29 @@ Pro Layer Development — Reasoning Stabilization
 
 ## Last Completed Anchor
 
-A2.37 — Approval Session & Idempotent Execution Gateway (Safe Mode)
+A2.38 — Durable Approval Recovery Runtime (Safe Mode)
 
 ## Current Active Anchor
 
-A2.38 — TBD
+A2.39 — TBD
 
 Current progress:
-- Patch 1 completed: Durable Contracts Baseline.
-- Patch 2 completed: Persistence Wiring for Approval/Idempotency Records.
-- Patch 3 completed: Token TTL + One-Time Consumption Guards.
-- Patch 4 completed: Restart Recovery + Deterministic Replay Outcomes.
+- Patch 1 pending: TBD.
+- Patch 2 pending: TBD.
+- Patch 3 pending: TBD.
+- Patch 4 pending: TBD.
 - Patch 5 pending: TBD.
 
 Focus:
-- restart-safe deterministic replay outcomes from durable idempotency records
-- strict micro-patch progression toward persistent recovery flow
+- define A2.39 scope and patch decomposition
+- preserve strict micro-patch execution discipline
 
 Execution discipline:
 - keep work strictly inside the active anchor and move in micro-patches.
 
 ## Next Anchor
 
-A2.39 — TBD
+A2.40 — TBD
 
 Planned focus:
 - TBD
@@ -41,5 +41,5 @@ The noop tracing span compatibility fix is completed and treated as closed work.
 
 ## Upcoming Anchors
 
-- A2.38 — TBD
 - A2.39 — TBD
+- A2.40 — TBD

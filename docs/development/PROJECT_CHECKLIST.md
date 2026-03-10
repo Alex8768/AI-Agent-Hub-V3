@@ -42,18 +42,19 @@
 - [x] A2.35 Intent-to-Plan Orchestrator (COO MVP)
 - [x] A2.36 Confirmation-to-Execution Handshake (MVP)
 - [x] A2.37 Approval Session & Idempotent Execution Gateway (Safe Mode)
+- [x] A2.38 Durable Approval Recovery Runtime (Safe Mode)
 
-## Current Work — A2.38 TBD
+## Current Work — A2.39 TBD
 
-- [x] Patch 1 — Durable Contracts Baseline
-- [x] Patch 2 — Persistence Wiring for Approval/Idempotency Records
-- [x] Patch 3 — Token TTL + One-Time Consumption Guards
-- [x] Patch 4 — Restart Recovery + Deterministic Replay Outcomes
+- [ ] Patch 1 — TBD
+- [ ] Patch 2 — TBD
+- [ ] Patch 3 — TBD
+- [ ] Patch 4 — TBD
 - [ ] Patch 5 — TBD
 
 ## Next
 
-- [ ] Start A2.39 Patch 1 (TBD)
+- [ ] Start A2.40 Patch 1 (TBD)
 
 ## Later
 
