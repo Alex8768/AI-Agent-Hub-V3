@@ -6,18 +6,23 @@ Pro Layer Development — Reasoning Stabilization
 
 ## Last Completed Anchor
 
-A2.45 — TBD
+A2.44 — Assistant Conversational Recovery (Low-Evidence UX)
 
 ## Current Active Anchor
 
-A2.44 — Assistant Conversational Recovery (Low-Evidence UX)
+A2.45 — Architecture Hardening Track (COO Runtime Reliability)
 
 Current progress:
-- A2.45 scope is pending formalization.
+- Patch 1 complete: Anchor Formalization + Scope Lock.
+- Patch 2 pending: AnswerService Boundary Hardening Baseline.
+- Patch 3 pending: Planner Coupling Guardrail (Abstraction Seam).
+- Patch 4 pending: Memory Consistency Diagnostics Guardrails.
+- Patch 5 pending: Docs/CI Closure + Technical-Debt Registry.
 
 Focus:
-- close-out discipline after A2.44 completion
-- formalize A2.45 scope and micro-patch plan
+- reduce architectural coupling without changing runtime behavior
+- establish deterministic hardening diagnostics contracts
+- keep technical debt visible and explicitly tracked
 - preserve strict micro-patch execution discipline
 
 Execution discipline:
@@ -28,7 +33,7 @@ Execution discipline:
 A2.46 — TBD
 
 Planned focus:
-- formalize and start A2.45 scope
+- execute A2.45 patch 2 boundary hardening baseline
 
 ## CI Status
 

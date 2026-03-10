@@ -2,26 +2,40 @@
 
 ## Active Anchor
 
-A2.45 — TBD
+A2.45 — Architecture Hardening Track (COO Runtime Reliability)
 
 ### Goal
 
-To be defined after A2.44 closure.
+Reduce architectural risk accumulated during fast feature delivery by
+introducing deterministic hardening around service boundaries, planner coupling,
+and memory consistency diagnostics while preserving current behavior.
 
 ### Architecture Position
 
 Planned modules:
 
-- TBD
+- AnswerService boundary extraction scaffold (orchestrator-first shape)
+- planner runtime abstraction seam (provider-agnostic boundary)
+- memory consistency diagnostics contract (sqlite index parity visibility)
+- technical debt ledger + cleanup policy for legacy/temporary runners
+- docs/CI closure for hardening policy
 
 ### Patch Plan
 
 #### Patch plan
-- Pending formalization
+- Patch 1 — Anchor Formalization + Scope Lock
+- Patch 2 — AnswerService Boundary Hardening Baseline
+- Patch 3 — Planner Coupling Guardrail (Abstraction Seam)
+- Patch 4 — Memory Consistency Diagnostics Guardrails
+- Patch 5 — Docs/CI Closure + Technical-Debt Registry
 
 ### Progress
 
-- [ ] Formalize A2.45 scope and patch plan
+- [x] Patch 1 — Anchor Formalization + Scope Lock
+- [ ] Patch 2 — AnswerService Boundary Hardening Baseline
+- [ ] Patch 3 — Planner Coupling Guardrail (Abstraction Seam)
+- [ ] Patch 4 — Memory Consistency Diagnostics Guardrails
+- [ ] Patch 5 — Docs/CI Closure + Technical-Debt Registry
 
 ### Out of Scope
 
@@ -32,7 +46,11 @@ Do NOT modify during planning:
 ### Definition of Done
 
 A2.45 completion criteria:
-- TBD
+- core runtime contracts and behavior remain backward-compatible;
+- hardening diagnostics are deterministic and visible in debug snapshots;
+- memory consistency risks are surfaced through explicit policy diagnostics;
+- technical-debt items are cataloged with explicit decision status;
+- full unit suite and release-gate docs checks remain green.
 
 ## Next Anchor
 
