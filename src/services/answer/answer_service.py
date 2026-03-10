@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 from time import perf_counter
 from typing import Any
 
@@ -42,6 +43,19 @@ def _clip_text(value: object, *, max_chars: int = SESSION_MEMORY_MAX_CHARS) -> s
     if len(text) <= max_chars:
         return text
     return text[:max_chars]
+
+
+def _durable_approval_record_key(*, session_id: str) -> str:
+    sid = str(session_id or "default")
+    return f"session:{sid}:durable:approval_session_record"
+
+
+def _durable_idempotency_record_key(*, session_id: str, idempotency_key: str = "") -> str:
+    sid = str(session_id or "default")
+    ikey = str(idempotency_key or "").strip()
+    if ikey:
+        return f"session:{sid}:durable:idempotency_record:{ikey}"
+    return f"session:{sid}:durable:idempotency_record:last"
 
 
 def _detect_response_language(query: str) -> str:
@@ -935,6 +949,102 @@ def _build_idempotency_record_snapshot(
         "decision": str(transition_input.get("decision", "") or ""),
         "reason_codes": ["durable_record_not_persisted_yet"],
     }
+
+
+async def _load_durable_records(
+    *,
+    req: AnswerRequest,
+    workspace_id: str,
+    get_memory_store: object,
+) -> tuple[dict[str, object], dict[str, object]]:
+    sid = str(getattr(req, "session_id", "") or "default")
+    mem = get_memory_store()
+    approval_raw = ""
+    try:
+        mem_get = getattr(mem, "get", None)
+        if callable(mem_get):
+            approval_raw = await mem_get(
+                workspace_id=workspace_id,
+                key=_durable_approval_record_key(session_id=sid),
+            )
+    except Exception:
+        approval_raw = ""
+    approval_loaded: dict[str, object] = {}
+    try:
+        approval_loaded = dict(json.loads(str(approval_raw or "")) or {})
+    except Exception:
+        approval_loaded = {}
+
+    idem_from_filters = str((dict(getattr(req, "filters", {}) or {})).get("handshake_idempotency_key", "") or "")
+    idem_raw = ""
+    try:
+        mem_get = getattr(mem, "get", None)
+        if callable(mem_get):
+            idem_raw = await mem_get(
+                workspace_id=workspace_id,
+                key=_durable_idempotency_record_key(session_id=sid, idempotency_key=idem_from_filters),
+            )
+    except Exception:
+        idem_raw = ""
+    idempotency_loaded: dict[str, object] = {}
+    try:
+        idempotency_loaded = dict(json.loads(str(idem_raw or "")) or {})
+    except Exception:
+        idempotency_loaded = {}
+    return approval_loaded, idempotency_loaded
+
+
+def _hydrate_durable_records_into_diagnostics(
+    *,
+    diagnostics: dict[str, object],
+    loaded_approval: dict[str, object],
+    loaded_idempotency: dict[str, object],
+) -> None:
+    current_approval = dict(diagnostics.get("assistant_durable_approval_session") or {})
+    current_idem = dict(diagnostics.get("assistant_idempotency_record") or {})
+    if loaded_approval and not str(current_approval.get("approval_id", "") or ""):
+        reasons = sorted(
+            set([str(x) for x in list(loaded_approval.get("reason_codes") or []) if str(x)] + ["loaded_from_durable_store"])
+        )
+        diagnostics["assistant_durable_approval_session"] = {
+            **loaded_approval,
+            "reason_codes": reasons,
+        }
+    if loaded_idempotency and not str(current_idem.get("idempotency_key", "") or ""):
+        reasons = sorted(
+            set([str(x) for x in list(loaded_idempotency.get("reason_codes") or []) if str(x)] + ["loaded_from_durable_store"])
+        )
+        diagnostics["assistant_idempotency_record"] = {
+            **loaded_idempotency,
+            "reason_codes": reasons,
+        }
+
+
+async def _persist_durable_records(
+    *,
+    req: AnswerRequest,
+    resp: object,
+    workspace_id: str,
+    get_memory_store: object,
+) -> None:
+    diag = dict(getattr(resp, "diagnostics", None) or {})
+    approval_record = dict(diag.get("assistant_durable_approval_session") or {})
+    idempotency_record = dict(diag.get("assistant_idempotency_record") or {})
+    sid = str(getattr(req, "session_id", "") or "default")
+    mem = get_memory_store()
+    await mem.put(
+        workspace_id=workspace_id,
+        key=_durable_approval_record_key(session_id=sid),
+        value=json.dumps(approval_record, ensure_ascii=True, sort_keys=True),
+        metadata={"session_id": sid, "kind": "durable_approval_session_record"},
+    )
+    idem_key = str(idempotency_record.get("idempotency_key", "") or "")
+    await mem.put(
+        workspace_id=workspace_id,
+        key=_durable_idempotency_record_key(session_id=sid, idempotency_key=idem_key),
+        value=json.dumps(idempotency_record, ensure_ascii=True, sort_keys=True),
+        metadata={"session_id": sid, "kind": "durable_idempotency_record"},
+    )
 
 
 def log_observability(http: Request, *, workspace_id: str, req: AnswerRequest) -> None:
@@ -1833,6 +1943,11 @@ class AnswerService:
             workspace_id=workspace_id,
             get_memory_store=get_memory_store,
         )
+        loaded_durable_approval, loaded_durable_idempotency = await _load_durable_records(
+            req=req,
+            workspace_id=workspace_id,
+            get_memory_store=get_memory_store,
+        )
 
         retriever = RetrieverAdapter(engine=engine, hybrid=hybrid, workspace_id=workspace_id)
         reasoning = get_reasoning_engine(retriever=retriever, llm=llm)
@@ -2056,6 +2171,26 @@ class AnswerService:
                     plan_id=str(plan_bundle.get("plan_id", "") or ""),
                     transition_input=transition_input,
                 )
+        except Exception:
+            pass
+
+        try:
+            resp.diagnostics = dict(getattr(resp, "diagnostics", None) or {})
+            _hydrate_durable_records_into_diagnostics(
+                diagnostics=resp.diagnostics,
+                loaded_approval=loaded_durable_approval,
+                loaded_idempotency=loaded_durable_idempotency,
+            )
+        except Exception:
+            pass
+
+        try:
+            await _persist_durable_records(
+                req=req,
+                resp=resp,
+                workspace_id=workspace_id,
+                get_memory_store=get_memory_store,
+            )
         except Exception:
             pass
 

@@ -46,7 +46,7 @@
 ## Current Work — A2.38 TBD
 
 - [x] Patch 1 — Durable Contracts Baseline
-- [ ] Patch 2 — TBD
+- [x] Patch 2 — Persistence Wiring for Approval/Idempotency Records
 - [ ] Patch 3 — TBD
 - [ ] Patch 4 — TBD
 - [ ] Patch 5 — TBD

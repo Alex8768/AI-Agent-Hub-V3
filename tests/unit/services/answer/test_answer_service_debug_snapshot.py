@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import pytest
 
 from src.services.answer.answer_service import AnswerService
@@ -1352,3 +1353,57 @@ async def test_answer_service_idempotency_replay_detected(monkeypatch):
     idem2 = dict(second_diag.get("execution_idempotency") or {})
     assert idem2.get("status") == "replayed"
     assert "idempotency_replay_detected" in list(idem2.get("reason_codes") or [])
+
+
+@pytest.mark.asyncio
+async def test_answer_service_persists_durable_records_to_memory_store(monkeypatch):
+    class _S:
+        feature_reasoning = True
+        feature_graphrag = True
+        feature_reasoning_llm_enabled = False
+        feature_assistant_mode = True
+        feature_assistant_proactive = False
+        feature_assistant_actions = True
+        llm_provider = "ollama"
+        openai_model = ""
+        ollama_model = "llama3.2:latest"
+
+    class _Mem:
+        def __init__(self):
+            self.data = {}
+
+        async def put(self, *, workspace_id, key, value, metadata=None):
+            self.data[(workspace_id, key)] = str(value or "")
+
+        async def get(self, *, workspace_id, key):
+            return self.data.get((workspace_id, key))
+
+        async def query(self, *, workspace_id, text, limit=10):
+            return []
+
+        async def semantic_query(self, *, workspace_id, text, limit=10):
+            return []
+
+    mem = _Mem()
+    monkeypatch.setattr("src.core.config.get_settings", lambda: _S())
+    monkeypatch.setattr("src.observability.trace.make_trace_id", lambda **kwargs: "trace-123", raising=False)
+    monkeypatch.setattr(
+        "src.core.providers.get_reasoning_engine",
+        lambda *, retriever=None, llm=None, llm_timeout_s=None: _FakeReasoningEngine(retriever),
+    )
+    monkeypatch.setattr("src.core.providers.get_memory_store", lambda: mem)
+
+    http = _DummyHTTP(request_id="rid-durable-store", rag_engine=object(), hybrid_retriever=_FakeHybrid())
+    req = AnswerRequest(query="new project planning", session_id="default")
+    await AnswerService().handle(http, req, workspace_id="default")
+
+    approval_key = "session:default:durable:approval_session_record"
+    idem_last_key = "session:default:durable:idempotency_record:last"
+    approval_raw = str(mem.data.get(("default", approval_key), "") or "")
+    idem_raw = str(mem.data.get(("default", idem_last_key), "") or "")
+    assert approval_raw
+    assert idem_raw
+    approval = dict(json.loads(approval_raw) or {})
+    idem = dict(json.loads(idem_raw) or {})
+    assert approval.get("contract_version") == "v1"
+    assert idem.get("contract_version") == "v1"

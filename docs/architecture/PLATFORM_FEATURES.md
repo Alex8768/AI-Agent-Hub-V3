@@ -126,6 +126,7 @@ AI-Agent-Hub-V3 is a modular AI platform for production-grade agent systems with
 - [x] Safe-mode execution gateway diagnostics (A2.37 patch 4)
 - [x] Approval execution gateway docs/CI closure (A2.37 patch 5)
 - [x] Durable approval/idempotency contract baseline diagnostics (A2.38 patch 1)
+- [x] Durable approval/idempotency persistence wiring (A2.38 patch 2)
 
 ### 7) Interface Layer
 
