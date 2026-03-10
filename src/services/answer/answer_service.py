@@ -37,6 +37,13 @@ from src.observability.request_context import get_request_id
 SESSION_MEMORY_MAX_CHARS = 4000
 EXECUTION_IDEMPOTENCY_CONTRACT_VERSION = "v1"
 EXECUTION_GATEWAY_CONTRACT_VERSION = "v1"
+EXECUTION_PILOT_ALLOWLISTED_ACTION_TYPES: tuple[str, ...] = (
+    "prepare_summary_draft",
+    "collect_context_draft",
+    "prepare_workflow_draft",
+)
+EXECUTION_PILOT_ALLOWLISTED_ACTION_PATTERN = "prepare_*_draft"
+EXECUTION_PILOT_MAX_APPROVED_ACTION_IDS = 1
 _EXECUTION_IDEMPOTENCY_SEEN: dict[str, str] = {}
 
 
@@ -65,6 +72,15 @@ def _detect_response_language(query: str) -> str:
     if any("\u0400" <= ch <= "\u04FF" for ch in text):
         return "ru"
     return "en"
+
+
+def _is_allowlisted_pilot_action_type(action_type: str, allowlisted_action_types: set[str]) -> bool:
+    normalized = str(action_type or "").strip()
+    if not normalized:
+        return False
+    if normalized in allowlisted_action_types:
+        return True
+    return normalized.startswith("prepare_") and normalized.endswith("_draft")
 
 
 def _build_assistant_fallback_answer(*, query: str, language: str) -> str:
@@ -726,7 +742,10 @@ def _build_transition_policy_contract() -> dict[str, object]:
         "mode": "confirmation_guarded",
         "require_confirmation_token": True,
         "allow_partial_approval": True,
-        "max_approved_action_ids": 3,
+        "max_approved_action_ids": EXECUTION_PILOT_MAX_APPROVED_ACTION_IDS,
+        "allowlisted_action_types": list(EXECUTION_PILOT_ALLOWLISTED_ACTION_TYPES),
+        "allowlisted_action_pattern": EXECUTION_PILOT_ALLOWLISTED_ACTION_PATTERN,
+        "enforce_allowlisted_action_types": True,
         "allowed_decisions": ["approve", "cancel"],
     }
 
@@ -740,13 +759,20 @@ def _apply_handshake_transition_policy(
     normalized = dict(transition_input or {})
     decision = str(normalized.get("decision", "") or "")
     requested_action_ids = [str(x) for x in list(normalized.get("requested_action_ids") or []) if str(x)]
+    action_rows = [dict(row or {}) for row in list(draft_actions_bundle.get("actions") or [])]
     available_action_ids = [
-        str((row or {}).get("action_id", "") or "")
-        for row in list(draft_actions_bundle.get("actions") or [])
-        if str((row or {}).get("action_id", "") or "").strip()
+        str(row.get("action_id", "") or "")
+        for row in action_rows
+        if str(row.get("action_id", "") or "").strip()
     ]
+    action_type_by_id = {
+        str(row.get("action_id", "") or ""): str(row.get("action_type", "") or "")
+        for row in action_rows
+        if str(row.get("action_id", "") or "").strip()
+    }
     available_set = set(available_action_ids)
     policy_reasons: list[str] = []
+    blocked_non_allowlisted_action_ids: list[str] = []
     unknown_ids = [x for x in requested_action_ids if x not in available_set]
     if unknown_ids:
         policy_reasons.append("unknown_action_ids_blocked")
@@ -757,6 +783,25 @@ def _apply_handshake_transition_policy(
         policy_reasons.append("cancel_ignores_action_filter")
 
     max_ids = int(policy_contract.get("max_approved_action_ids", 3) or 3)
+    allowlisted_action_types = [
+        str(x).strip()
+        for x in list(policy_contract.get("allowlisted_action_types") or [])
+        if str(x or "").strip()
+    ]
+    allowlisted_set = set(allowlisted_action_types)
+    enforce_allowlisted_action_types = bool(policy_contract.get("enforce_allowlisted_action_types", False))
+    if decision == "approve" and enforce_allowlisted_action_types:
+        blocked_non_allowlisted_action_ids = [
+            aid
+            for aid in requested_action_ids
+            if not _is_allowlisted_pilot_action_type(
+                str(action_type_by_id.get(aid, "") or ""),
+                allowlisted_set,
+            )
+        ]
+        if blocked_non_allowlisted_action_ids:
+            requested_action_ids = [aid for aid in requested_action_ids if aid not in set(blocked_non_allowlisted_action_ids)]
+            policy_reasons.append("non_allowlisted_action_types_blocked")
     if decision == "approve" and len(requested_action_ids) > max_ids:
         requested_action_ids = requested_action_ids[:max_ids]
         policy_reasons.append("approval_limit_applied")
@@ -767,6 +812,7 @@ def _apply_handshake_transition_policy(
         "requested_action_ids_count": len(requested_action_ids),
         "available_action_ids_count": len(available_action_ids),
         "unknown_action_ids": unknown_ids,
+        "blocked_non_allowlisted_action_ids": blocked_non_allowlisted_action_ids,
         "applied_reason_codes": sorted(set(policy_reasons)),
     }
     return normalized, policy_eval
@@ -935,10 +981,7 @@ def _build_execution_pilot_bundle(
         for row in actions
         if str(row.get("action_id", "") or "").strip()
     }
-    allowed_action_types = [
-        "prepare_summary_draft",
-        "collect_context_draft",
-    ]
+    allowed_action_types = list(EXECUTION_PILOT_ALLOWLISTED_ACTION_TYPES)
     if not actions_enabled:
         return {
             "contract_version": EXECUTION_PILOT_CONTRACT_VERSION,
@@ -946,7 +989,7 @@ def _build_execution_pilot_bundle(
             "state": "disabled",
             "safe_mode": True,
             "execute_enabled": False,
-            "max_actions_per_run": 1,
+            "max_actions_per_run": EXECUTION_PILOT_MAX_APPROVED_ACTION_IDS,
             "allowed_action_types": allowed_action_types,
             "requested_action_ids": requested_action_ids,
             "eligible_action_ids": [],
@@ -954,10 +997,11 @@ def _build_execution_pilot_bundle(
             "reason_codes": ["assistant_actions_disabled"],
         }
 
+    allowlisted_set = set(allowed_action_types)
     eligible = [
         aid
         for aid in requested_action_ids
-        if str(action_type_by_id.get(aid, "") or "") in set(allowed_action_types)
+        if _is_allowlisted_pilot_action_type(str(action_type_by_id.get(aid, "") or ""), allowlisted_set)
     ]
     blocked = [aid for aid in requested_action_ids if aid not in set(eligible)]
     state = str(handshake.get("state", "idle") or "idle")
@@ -979,7 +1023,7 @@ def _build_execution_pilot_bundle(
         "state": pilot_state,
         "safe_mode": True,
         "execute_enabled": False,
-        "max_actions_per_run": 1,
+        "max_actions_per_run": EXECUTION_PILOT_MAX_APPROVED_ACTION_IDS,
         "allowed_action_types": allowed_action_types,
         "requested_action_ids": requested_action_ids,
         "eligible_action_ids": eligible[:1],

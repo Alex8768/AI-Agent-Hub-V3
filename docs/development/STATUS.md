@@ -14,14 +14,15 @@ A2.39 — Controlled Execution Pilot (Strict Safe Mode+)
 
 Current progress:
 - Patch 1 complete: Execution Pilot Contract Baseline.
-- Patch 2 pending: Allowlist + Policy Gate.
+- Patch 2 complete: Allowlist + Policy Gate.
 - Patch 3 pending: Receipt + Rollback Contract Enforcement.
 - Patch 4 pending: Pilot Runtime Wiring.
 - Patch 5 pending: Docs/CI Closure.
 
 Focus:
 - pilot contract baseline is in place and exposed in diagnostics
-- proceed with allowlist and policy gate hardening in patch 2
+- allowlist and policy gate are enforced for approval transitions
+- proceed with receipt and rollback contract hardening in patch 3
 - preserve strict micro-patch execution discipline
 
 Execution discipline:

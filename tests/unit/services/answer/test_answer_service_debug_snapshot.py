@@ -250,10 +250,14 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
         "require_confirmation_token",
         "allow_partial_approval",
         "max_approved_action_ids",
+        "allowlisted_action_types",
+        "allowlisted_action_pattern",
+        "enforce_allowlisted_action_types",
         "allowed_decisions",
         "requested_action_ids_count",
         "available_action_ids_count",
         "unknown_action_ids",
+        "blocked_non_allowlisted_action_ids",
         "applied_reason_codes",
     }
     idempotency = dict(diag.get("execution_idempotency") or {})
@@ -1266,6 +1270,29 @@ async def test_answer_service_handshake_transition_policy_blocks_unknown_action_
     assert "unknown_action_ids_blocked" in list(transition_policy.get("applied_reason_codes") or [])
     assert handshake.get("state") == "pending_confirmation"
     assert "no_matching_action_ids" in list(handshake.get("reason_codes") or [])
+
+
+def test_handshake_transition_policy_blocks_non_allowlisted_action_types():
+    import src.services.answer.answer_service as answer_service_module
+
+    policy = answer_service_module._build_transition_policy_contract()
+    normalized, eval_bundle = answer_service_module._apply_handshake_transition_policy(
+        transition_input={
+            "decision": "approve",
+            "requested_action_ids": ["draft_action:safe", "draft_action:risky"],
+        },
+        draft_actions_bundle={
+            "actions": [
+                {"action_id": "draft_action:safe", "action_type": "prepare_summary_draft"},
+                {"action_id": "draft_action:risky", "action_type": "send_email_draft"},
+            ]
+        },
+        policy_contract=policy,
+    )
+
+    assert normalized.get("requested_action_ids") == ["draft_action:safe"]
+    assert eval_bundle.get("blocked_non_allowlisted_action_ids") == ["draft_action:risky"]
+    assert "non_allowlisted_action_types_blocked" in list(eval_bundle.get("applied_reason_codes") or [])
 
 
 @pytest.mark.asyncio

@@ -47,7 +47,7 @@
 ## Current Work — A2.39 Controlled Execution Pilot (Strict Safe Mode+)
 
 - [x] Patch 1 — Execution Pilot Contract Baseline
-- [ ] Patch 2 — Allowlist + Policy Gate
+- [x] Patch 2 — Allowlist + Policy Gate
 - [ ] Patch 3 — Receipt + Rollback Contract Enforcement
 - [ ] Patch 4 — Pilot Runtime Wiring
 - [ ] Patch 5 — Docs/CI Closure

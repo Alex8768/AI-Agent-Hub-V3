@@ -182,10 +182,14 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
         "require_confirmation_token",
         "allow_partial_approval",
         "max_approved_action_ids",
+        "allowlisted_action_types",
+        "allowlisted_action_pattern",
+        "enforce_allowlisted_action_types",
         "allowed_decisions",
         "requested_action_ids_count",
         "available_action_ids_count",
         "unknown_action_ids",
+        "blocked_non_allowlisted_action_ids",
         "applied_reason_codes",
     }
     idempotency = dict(diag.get("execution_idempotency") or {})
