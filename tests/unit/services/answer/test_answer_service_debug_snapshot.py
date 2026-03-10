@@ -171,6 +171,7 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
         "assistant_intent",
         "assistant_plan",
         "assistant_llm_planner",
+        "llm_planner_policy",
         "planning_policy",
         "execution_handshake_contract_version",
         "assistant_execution_handshake",
@@ -235,6 +236,16 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
         "intent",
         "plan_id",
         "reason_codes",
+    }
+    llm_planner_policy = dict(diag.get("llm_planner_policy") or {})
+    assert set(llm_planner_policy.keys()) == {
+        "mode",
+        "allow_llm_source",
+        "allowed_intents",
+        "require_plan_id_prefix_match",
+        "fallback_on_policy_violation",
+        "violations",
+        "applied_reason_codes",
     }
     policy = dict(diag.get("planning_policy") or {})
     assert set(policy.keys()) == {
@@ -1124,6 +1135,75 @@ async def test_answer_service_uses_llm_planner_adapter_with_deterministic_plan_f
     assert "llm_planner_adapter_selected_intent" in list(planner.get("reason_codes") or [])
     assert str(plan.get("plan_id", "")).startswith("plan:start_project:")
     assert "deterministic_plan_built" in list(plan.get("reason_codes") or [])
+
+
+@pytest.mark.asyncio
+async def test_answer_service_llm_planner_policy_forces_fallback_on_violation(monkeypatch):
+    class _S:
+        feature_reasoning = True
+        feature_graphrag = True
+        feature_reasoning_llm_enabled = True
+        feature_assistant_mode = True
+        feature_assistant_proactive = False
+        feature_assistant_actions = False
+        llm_provider = "openai"
+        openai_model = "gpt-4o-mini"
+        ollama_model = ""
+
+    monkeypatch.setattr("src.core.config.get_settings", lambda: _S())
+    monkeypatch.setattr("src.observability.trace.make_trace_id", lambda **kwargs: "trace-123", raising=False)
+    monkeypatch.setattr(
+        "src.core.providers.get_reasoning_engine",
+        lambda *, retriever=None, llm=None, llm_timeout_s=None: _FakeReasoningEngine(retriever),
+    )
+
+    async def _fake_planner_with_violation(
+        *,
+        query,
+        intent_payload,
+        assistant_mode_enabled,
+        llm,
+        llm_enabled,
+        llm_model,
+        llm_error,
+    ):
+        return (
+            {"intent": "general_query", "source": "heuristic", "reason_codes": ["fallback_general_query"]},
+            {
+                "contract_version": "v1",
+                "plan_id": "plan:unknown_intent:abc123",
+                "status": "ready",
+                "deterministic": True,
+                "intent": "unknown_intent",
+                "steps": [],
+                "requires_confirmation": False,
+                "reason_codes": ["deterministic_plan_built"],
+            },
+            {
+                "contract_version": "v1",
+                "source": "llm",
+                "status": "ready",
+                "model": "gpt-4o-mini",
+                "intent": "unknown_intent",
+                "plan_id": "plan:unknown_intent:abc123",
+                "reason_codes": ["llm_planner_adapter_selected_intent"],
+            },
+        )
+
+    monkeypatch.setattr("src.services.answer.answer_service._build_planner_with_fallback", _fake_planner_with_violation)
+
+    http = _DummyHTTP(request_id="rid-plan-policy-fallback", rag_engine=object(), hybrid_retriever=_FakeHybrid())
+    req = AnswerRequest(query="unknown intent policy test", session_id="default")
+    resp = await AnswerService().handle(http, req, workspace_id="default")
+    diag = dict(getattr(resp, "diagnostics", {}) or {})
+    planner = dict(diag.get("assistant_llm_planner") or {})
+    policy = dict(diag.get("llm_planner_policy") or {})
+
+    assert planner.get("source") == "fallback"
+    assert planner.get("status") == "fallback"
+    assert "llm_planner_policy_forced_fallback" in list(planner.get("reason_codes") or [])
+    assert "llm_planner_intent_not_allowlisted" in list(policy.get("violations") or [])
+    assert "llm_planner_policy_forced_fallback" in list(policy.get("applied_reason_codes") or [])
 
 
 @pytest.mark.asyncio

@@ -109,6 +109,7 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
         "assistant_intent",
         "assistant_plan",
         "assistant_llm_planner",
+        "llm_planner_policy",
         "planning_policy",
         "execution_handshake_contract_version",
         "assistant_execution_handshake",
@@ -167,6 +168,16 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
         "intent",
         "plan_id",
         "reason_codes",
+    }
+    llm_planner_policy = dict(diag.get("llm_planner_policy") or {})
+    assert set(llm_planner_policy.keys()) == {
+        "mode",
+        "allow_llm_source",
+        "allowed_intents",
+        "require_plan_id_prefix_match",
+        "fallback_on_policy_violation",
+        "violations",
+        "applied_reason_codes",
     }
     policy = dict(diag.get("planning_policy") or {})
     assert set(policy.keys()) == {
