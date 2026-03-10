@@ -574,6 +574,42 @@ def _apply_llm_planner_policy_guards(
     return normalized_intent, normalized_plan, planner, policy_eval
 
 
+def _wire_planner_runtime_diagnostics(
+    *,
+    diagnostics: dict[str, object],
+) -> dict[str, object]:
+    diag = dict(diagnostics or {})
+    intent = dict(diag.get("assistant_intent") or {})
+    plan = dict(diag.get("assistant_plan") or {})
+    llm_planner = dict(diag.get("assistant_llm_planner") or {})
+    llm_planner_policy = dict(diag.get("llm_planner_policy") or {})
+
+    plan_id = str(plan.get("plan_id", "") or "")
+    plan_intent = str(plan.get("intent", "") or "")
+    intent_name = str(intent.get("intent", plan_intent or "general_query") or "general_query")
+    if not plan_intent:
+        plan["intent"] = intent_name
+    if not llm_planner.get("intent"):
+        llm_planner["intent"] = intent_name
+
+    reason_codes = [str(x) for x in list(llm_planner.get("reason_codes") or []) if str(x or "").strip()]
+    if str(llm_planner.get("plan_id", "") or "") != plan_id:
+        llm_planner["plan_id"] = plan_id
+        reason_codes.append("llm_planner_runtime_plan_id_synced")
+    llm_planner["reason_codes"] = sorted(set(reason_codes))
+
+    llm_policy_reasons = [str(x) for x in list(llm_planner_policy.get("applied_reason_codes") or []) if str(x or "").strip()]
+    if "llm_planner_runtime_wired" not in llm_policy_reasons:
+        llm_policy_reasons.append("llm_planner_runtime_wired")
+    llm_planner_policy["applied_reason_codes"] = sorted(set(llm_policy_reasons))
+    llm_planner_policy.setdefault("violations", [])
+
+    diag["assistant_plan"] = plan
+    diag["assistant_llm_planner"] = llm_planner
+    diag["llm_planner_policy"] = llm_planner_policy
+    return diag
+
+
 def _bridge_plan_to_draft_actions(
     *,
     plan_bundle: dict[str, object],
@@ -2095,6 +2131,7 @@ async def _apply_diagnostics(
         diag.setdefault("assistant_llm_planner", llm_planner)
         diag.setdefault("llm_planner_policy", llm_planner_policy_eval)
         diag.setdefault("planning_policy", dict(planning_policy))
+        diag = _wire_planner_runtime_diagnostics(diagnostics=diag)
         anticipatory = dict(diag.get("anticipatory") or {})
         draft_actions = dict(anticipatory.get("draft_actions") or {})
         handshake = _build_execution_handshake_bundle(
@@ -2611,6 +2648,7 @@ class AnswerService:
                     actions_enabled=assistant_actions_enabled,
                 )
                 diag = dict(getattr(resp, "diagnostics", None) or {})
+                diag = _wire_planner_runtime_diagnostics(diagnostics=diag)
                 anticipatory["draft_actions"] = _bridge_plan_to_draft_actions(
                     plan_bundle=dict(diag.get("assistant_plan") or {}),
                     draft_actions_bundle=dict(anticipatory.get("draft_actions") or {}),
@@ -2619,6 +2657,7 @@ class AnswerService:
                 )
                 resp.diagnostics = dict(getattr(resp, "diagnostics", None) or {})
                 resp.diagnostics["anticipatory"] = anticipatory
+                resp.diagnostics = _wire_planner_runtime_diagnostics(diagnostics=resp.diagnostics)
                 plan_bundle = dict(resp.diagnostics.get("assistant_plan") or {})
                 handshake = _build_execution_handshake_bundle(
                     plan_bundle=plan_bundle,
@@ -2756,6 +2795,7 @@ class AnswerService:
                     actions_enabled=False,
                 )
                 diag = dict(resp.diagnostics or {})
+                diag = _wire_planner_runtime_diagnostics(diagnostics=diag)
                 base["draft_actions"] = _bridge_plan_to_draft_actions(
                     plan_bundle=dict(diag.get("assistant_plan") or {}),
                     draft_actions_bundle=dict(base.get("draft_actions") or {}),
@@ -2763,6 +2803,7 @@ class AnswerService:
                     actions_enabled=assistant_actions_enabled,
                 )
                 resp.diagnostics["anticipatory"] = base
+                resp.diagnostics = _wire_planner_runtime_diagnostics(diagnostics=resp.diagnostics)
                 plan_bundle = dict(resp.diagnostics.get("assistant_plan") or {})
                 handshake = _build_execution_handshake_bundle(
                     plan_bundle=plan_bundle,

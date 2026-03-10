@@ -33,7 +33,7 @@ Planned modules:
 - [x] Patch 1 — LLM Planner Contract Baseline
 - [x] Patch 2 — Planner Adapter + Deterministic Fallback
 - [x] Patch 3 — Planner Policy Guardrails
-- [ ] Patch 4 — Runtime Wiring + Diagnostics Parity
+- [x] Patch 4 — Runtime Wiring + Diagnostics Parity
 - [ ] Patch 5 — Docs/CI Closure
 
 ### Out of Scope

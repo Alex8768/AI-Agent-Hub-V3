@@ -16,7 +16,7 @@ Current progress:
 - Patch 1 complete: LLM Planner Contract Baseline.
 - Patch 2 complete: Planner Adapter + Deterministic Fallback.
 - Patch 3 complete: Planner Policy Guardrails.
-- Patch 4 pending: Runtime Wiring + Diagnostics Parity.
+- Patch 4 complete: Runtime Wiring + Diagnostics Parity.
 - Patch 5 pending: Docs/CI Closure.
 
 Focus:
@@ -24,7 +24,8 @@ Focus:
 - keep deterministic safety guards while introducing LLM planning path
 - planner adapter wiring with deterministic fallback is active
 - planner policy guardrails are enforced with fallback on policy violations
-- proceed with runtime wiring and diagnostics parity in patch 4
+- planner runtime wiring keeps diagnostics parity across proactive/non-proactive paths
+- proceed with docs/ci closure in patch 5
 - preserve strict micro-patch execution discipline
 
 Execution discipline:

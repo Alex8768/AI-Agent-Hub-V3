@@ -1444,6 +1444,41 @@ def test_handshake_transition_policy_blocks_non_allowlisted_action_types():
     assert "non_allowlisted_action_types_blocked" in list(eval_bundle.get("applied_reason_codes") or [])
 
 
+def test_wire_planner_runtime_diagnostics_syncs_plan_id():
+    import src.services.answer.answer_service as answer_service_module
+
+    out = answer_service_module._wire_planner_runtime_diagnostics(
+        diagnostics={
+            "assistant_intent": {"intent": "start_project"},
+            "assistant_plan": {"plan_id": "plan:start_project:abc", "intent": "start_project"},
+            "assistant_llm_planner": {
+                "contract_version": "v1",
+                "source": "llm",
+                "status": "ready",
+                "model": "gpt-4o-mini",
+                "intent": "start_project",
+                "plan_id": "plan:start_project:old",
+                "reason_codes": ["llm_planner_adapter_selected_intent"],
+            },
+            "llm_planner_policy": {
+                "mode": "llm_planner_guarded",
+                "allow_llm_source": True,
+                "allowed_intents": ["start_project"],
+                "require_plan_id_prefix_match": True,
+                "fallback_on_policy_violation": True,
+                "violations": [],
+                "applied_reason_codes": [],
+            },
+        }
+    )
+
+    planner = dict(out.get("assistant_llm_planner") or {})
+    policy = dict(out.get("llm_planner_policy") or {})
+    assert planner.get("plan_id") == "plan:start_project:abc"
+    assert "llm_planner_runtime_plan_id_synced" in list(planner.get("reason_codes") or [])
+    assert "llm_planner_runtime_wired" in list(policy.get("applied_reason_codes") or [])
+
+
 @pytest.mark.asyncio
 async def test_answer_service_blocks_approval_when_rollback_plan_missing(monkeypatch):
     class _S:
