@@ -455,6 +455,21 @@ class Settings(BaseSettings):
         description="Enable /api/v1/answer endpoint (Pro risky surface)",
     )
 
+    feature_assistant_mode: bool = Field(
+        default=False,
+        description="Enable assistant-first response mode orchestration (A2.34)",
+    )
+
+    feature_assistant_proactive: bool = Field(
+        default=False,
+        description="Enable proactive assistant suggestions pipeline (A2.34)",
+    )
+
+    feature_assistant_actions: bool = Field(
+        default=False,
+        description="Enable assistant draft action planning/execution contracts (A2.34)",
+    )
+
 
 
     

@@ -97,6 +97,12 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
         "llm_provider",
         "llm_model",
         "llm_error",
+        "assistant_contract_version",
+        "response_mode",
+        "response_language",
+        "assistant_mode_enabled",
+        "assistant_proactive_enabled",
+        "assistant_actions_enabled",
         "retriever_stats",
         "session_memory_saved",
     }

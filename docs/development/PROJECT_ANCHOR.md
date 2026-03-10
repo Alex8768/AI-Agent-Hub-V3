@@ -2,37 +2,43 @@
 
 ## Active Anchor
 
-A2.34 — TBD
+A2.34 — Digital COO Runtime (Assistant + Draft Actions)
 
 ### Goal
 
-TBD.
+Evolve reasoning runtime into a user-facing assistant that can produce
+reviewable draft actions, proactive suggestions, and language-native responses.
 
 ### Architecture Position
 
 Planned modules:
 
-- TBD
+- `src/core/*`
+- `src/layers/pro/reasoning/*`
+- `src/services/answer/*`
+- `docs/development/*`
+- `docs/architecture/*`
 
 Planned files:
-- TBD
+- assistant contracts/flags/diagnostics surfaces
+- answer runtime orchestration and quality gates
 
 ### Patch Plan
 
 #### Patch plan
-- Patch 1 — TBD
-- Patch 2 — TBD
-- Patch 3 — TBD
-- Patch 4 — TBD
-- Patch 5 — TBD
+- Patch 1 — Assistant mode contracts, flags, and diagnostics baseline
+- Patch 2 — Language-native assistant fallback behavior
+- Patch 3 — Proactive suggestion ranking MVP
+- Patch 4 — Draft action runtime (review-before-execute)
+- Patch 5 — Docs/CI closure for assistant runtime
 
 ### Progress
 
-- [ ] Patch 1 — TBD
-- [ ] Patch 2 — TBD
-- [ ] Patch 3 — TBD
-- [ ] Patch 4 — TBD
-- [ ] Patch 5 — TBD
+- [x] Patch 1 — Assistant mode contracts, flags, and diagnostics baseline
+- [ ] Patch 2 — Language-native assistant fallback behavior
+- [ ] Patch 3 — Proactive suggestion ranking MVP
+- [ ] Patch 4 — Draft action runtime (review-before-execute)
+- [ ] Patch 5 — Docs/CI closure for assistant runtime
 
 ### Out of Scope
 
@@ -43,7 +49,10 @@ Do NOT modify during planning:
 ### Definition of Done
 
 A2.34 is complete when:
-- TBD
+- assistant-mode contracts and feature flags are stable and default-off
+- language-native fallback behavior is deterministic and test-covered
+- proactive suggestions and draft actions are reviewable before execution
+- docs and CI quality gates protect assistant runtime behavior
 
 ## Next Anchor
 

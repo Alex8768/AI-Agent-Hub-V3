@@ -14,6 +14,7 @@ VERIFY_SELF_CHECK_POLICY_MODE_REQUIRED = "warning_only"
 VERIFY_SELF_CHECK_REASONS_COUNT_MAX = 0
 SELF_CHECK_MINIMAL_COVERAGE_SCORE_MIN = 1.0
 SELF_CHECK_MISSING_MINIMAL_COUNT_MAX = 0
+ASSISTANT_CONTRACT_VERSION = "v1"
 
 
 class ProvenanceItem(BaseModel):
@@ -101,3 +102,50 @@ class AnswerResponse(BaseModel):
 
     # Diagnostics for clients/UI (explainability counters, flags, small metadata)
     diagnostics: dict[str, Any] = Field(default_factory=dict)
+
+
+AssistantResponseMode = Literal["strict_rag", "assistant_fallback", "draft_orchestration"]
+AssistantActionStatus = Literal["draft", "requires_confirmation", "approved", "executed", "cancelled"]
+
+
+class AssistantIntent(BaseModel):
+    """Normalized intent extracted from free-form user request."""
+
+    intent: str = Field(min_length=1)
+    confidence: float = Field(default=0.0, ge=0.0, le=1.0)
+    entities: dict[str, Any] = Field(default_factory=dict)
+    implicit_tasks: list[str] = Field(default_factory=list)
+
+
+class DraftAction(BaseModel):
+    """Safe draft action contract for assistant runtime planning."""
+
+    action_id: str = Field(min_length=1)
+    action_type: str = Field(min_length=1)
+    parameters: dict[str, Any] = Field(default_factory=dict)
+    status: AssistantActionStatus = Field(default="draft")
+    requires_confirmation: bool = Field(default=True)
+    estimated_impact: str = Field(default="")
+    preview: dict[str, Any] = Field(default_factory=dict)
+    rollback_plan: str = Field(default="")
+
+
+class AssistantSuggestion(BaseModel):
+    """User-facing proactive suggestion item."""
+
+    suggestion_id: str = Field(min_length=1)
+    title: str = Field(min_length=1)
+    rationale: str = Field(default="")
+    priority: int = Field(default=50, ge=0, le=100)
+    action_hint: str = Field(default="")
+
+
+class AssistantDigest(BaseModel):
+    """Assistant digest bundle for review-before-execute workflows."""
+
+    mode: AssistantResponseMode = Field(default="strict_rag")
+    language: str = Field(default="auto")
+    summary: str = Field(default="")
+    suggestions: list[AssistantSuggestion] = Field(default_factory=list)
+    draft_actions: list[DraftAction] = Field(default_factory=list)
+    requires_confirmation: bool = Field(default=False)

@@ -106,6 +106,9 @@ class TestFeatureFlags:
             feature_base_layer=True,
             feature_pro_layer=True,
             feature_graph_rag=True,
+            feature_assistant_mode=True,
+            feature_assistant_proactive=False,
+            feature_assistant_actions=True,
             feature_canvas=False,
             feature_semantic_memory=False,
             feature_multi_agent=False,
@@ -115,6 +118,9 @@ class TestFeatureFlags:
         assert settings.feature_pro_layer is True
         assert settings.feature_graphrag is True
         assert settings.feature_graph_rag is True
+        assert settings.feature_assistant_mode is True
+        assert settings.feature_assistant_proactive is False
+        assert settings.feature_assistant_actions is True
         assert settings.feature_canvas is False
         assert settings.feature_semantic_memory is False
         assert settings.feature_multi_agent is False

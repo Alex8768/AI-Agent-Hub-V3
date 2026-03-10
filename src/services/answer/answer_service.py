@@ -62,6 +62,9 @@ def _apply_diagnostics(
     llm_provider_name: str,
     llm_model: str,
     llm_error: str,
+    assistant_mode_enabled: bool,
+    assistant_proactive_enabled: bool,
+    assistant_actions_enabled: bool,
     session_memory_loaded: bool,
     session_memory_hit: bool,
 ) -> None:
@@ -478,6 +481,19 @@ def _apply_diagnostics(
         diag.setdefault("llm_provider", llm_provider_name)
         diag.setdefault("llm_model", llm_model)
         diag.setdefault("llm_error", llm_error)
+        diag.setdefault("assistant_contract_version", "v1")
+        diag.setdefault(
+            "response_mode",
+            (
+                "strict_rag"
+                if int(diag.get("retrieved_provenance_count", 0) or 0) > 0
+                else "assistant_fallback"
+            ),
+        )
+        diag.setdefault("response_language", "auto")
+        diag.setdefault("assistant_mode_enabled", bool(assistant_mode_enabled))
+        diag.setdefault("assistant_proactive_enabled", bool(assistant_proactive_enabled))
+        diag.setdefault("assistant_actions_enabled", bool(assistant_actions_enabled))
 
         # Memory evidence observability (A2.1)
         try:
@@ -788,6 +804,9 @@ class AnswerService:
         llm, llm_enabled, llm_provider_name, llm_model, llm_error = await _build_llm_adapter(
             settings=s
         )
+        assistant_mode_enabled = bool(getattr(s, "feature_assistant_mode", False))
+        assistant_proactive_enabled = bool(getattr(s, "feature_assistant_proactive", False))
+        assistant_actions_enabled = bool(getattr(s, "feature_assistant_actions", False))
         session_memory_loaded = False
         session_memory_hit = False
 
@@ -835,6 +854,9 @@ class AnswerService:
             llm_provider_name=llm_provider_name,
             llm_model=llm_model,
             llm_error=llm_error,
+            assistant_mode_enabled=assistant_mode_enabled,
+            assistant_proactive_enabled=assistant_proactive_enabled,
+            assistant_actions_enabled=assistant_actions_enabled,
             session_memory_loaded=session_memory_loaded,
             session_memory_hit=session_memory_hit,
         )

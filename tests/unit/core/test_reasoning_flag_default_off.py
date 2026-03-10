@@ -26,6 +26,6 @@ def _find_settings_like_class(mod):
 def test_reasoning_flag_default_off():
     cfg = importlib.import_module("src.core.config")
     SettingsCls = _find_settings_like_class(cfg)
-    s = SettingsCls()
+    s = SettingsCls(_env_file=None)
 
     assert s.feature_reasoning is False

@@ -3,6 +3,11 @@ from __future__ import annotations
 import pytest
 
 from src.layers.pro.reasoning.contracts import (
+    ASSISTANT_CONTRACT_VERSION,
+    AssistantDigest,
+    AssistantIntent,
+    AssistantSuggestion,
+    DraftAction,
     AnswerRequest,
     AnswerResponse,
     ProvenanceItem,
@@ -55,3 +60,45 @@ def test_provenance_item_origin_and_reliability_validation():
 
     with pytest.raises(Exception):
         ProvenanceItem(type="chunk", id="c2", reliability=1.2)
+
+
+def test_assistant_contract_models_defaults():
+    assert ASSISTANT_CONTRACT_VERSION == "v1"
+    intent = AssistantIntent(intent="start_project", confidence=0.7)
+    assert intent.intent == "start_project"
+    assert intent.entities == {}
+    assert intent.implicit_tasks == []
+
+    draft = DraftAction(action_id="a1", action_type="create_workspace")
+    assert draft.status == "draft"
+    assert draft.requires_confirmation is True
+    assert draft.parameters == {}
+    assert draft.preview == {}
+
+    suggestion = AssistantSuggestion(
+        suggestion_id="s1",
+        title="Prioritize action",
+        priority=80,
+    )
+    digest = AssistantDigest(
+        mode="draft_orchestration",
+        language="ru",
+        summary="Drafts ready",
+        suggestions=[suggestion],
+        draft_actions=[draft],
+        requires_confirmation=True,
+    )
+    assert digest.mode == "draft_orchestration"
+    assert digest.language == "ru"
+    assert digest.requires_confirmation is True
+    assert len(digest.suggestions) == 1
+    assert len(digest.draft_actions) == 1
+
+
+def test_assistant_suggestion_priority_validation():
+    with pytest.raises(Exception):
+        AssistantSuggestion(
+            suggestion_id="s2",
+            title="Out of range priority",
+            priority=101,
+        )

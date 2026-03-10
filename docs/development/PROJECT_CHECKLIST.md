@@ -39,13 +39,13 @@
 - [x] A2.32 Docs Topology Cleanup (root -> docs/architecture + docs/development)
 - [x] A2.33 API Docs & Feature-Flag Alignment
 
-## Current Work — A2.34 TBD
+## Current Work — A2.34 Digital COO Runtime (Assistant + Draft Actions)
 
-- [ ] Patch 1 — TBD
-- [ ] Patch 2 — TBD
-- [ ] Patch 3 — TBD
-- [ ] Patch 4 — TBD
-- [ ] Patch 5 — TBD
+- [x] Patch 1 — Assistant mode contracts, flags, and diagnostics baseline
+- [ ] Patch 2 — Language-native assistant fallback behavior
+- [ ] Patch 3 — Proactive suggestion ranking MVP
+- [ ] Patch 4 — Draft action runtime (review-before-execute)
+- [ ] Patch 5 — Docs/CI closure for assistant runtime
 
 ## Next
 
