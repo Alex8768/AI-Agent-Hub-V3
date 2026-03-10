@@ -5,14 +5,18 @@ import pytest
 from src.layers.pro.reasoning.contracts import (
     APPROVAL_SESSION_CONTRACT_VERSION,
     ASSISTANT_CONTRACT_VERSION,
+    DURABLE_APPROVAL_SESSION_CONTRACT_VERSION,
     EXECUTION_RECEIPT_CONTRACT_VERSION,
     HANDSHAKE_CONTRACT_VERSION,
+    IDEMPOTENCY_RECORD_CONTRACT_VERSION,
     INTENT_CONTRACT_VERSION,
     PLAN_CONTRACT_VERSION,
     AssistantApprovalSession,
+    AssistantDurableApprovalSessionRecord,
     AssistantDigest,
     AssistantExecutionReceipt,
     AssistantExecutionHandshake,
+    AssistantIdempotencyRecord,
     AssistantIntent,
     AssistantIntentResult,
     AssistantPlan,
@@ -80,6 +84,8 @@ def test_assistant_contract_models_defaults():
     assert HANDSHAKE_CONTRACT_VERSION == "v1"
     assert EXECUTION_RECEIPT_CONTRACT_VERSION == "v1"
     assert APPROVAL_SESSION_CONTRACT_VERSION == "v1"
+    assert DURABLE_APPROVAL_SESSION_CONTRACT_VERSION == "v1"
+    assert IDEMPOTENCY_RECORD_CONTRACT_VERSION == "v1"
     intent = AssistantIntent(intent="start_project", confidence=0.7)
     assert intent.intent == "start_project"
     assert intent.entities == {}
@@ -156,6 +162,28 @@ def test_assistant_contract_models_defaults():
     )
     assert approval_session.contract_version == "v1"
     assert approval_session.status == "open"
+
+    durable_record = AssistantDurableApprovalSessionRecord(
+        approval_id="approval:123",
+        workspace_id="default",
+        session_id="default",
+        plan_id="plan:start_project:abc123",
+        status="open",
+        confirmation_token="confirm:abc123",
+    )
+    assert durable_record.contract_version == "v1"
+    assert durable_record.status == "open"
+
+    idempotency_record = AssistantIdempotencyRecord(
+        idempotency_key="idem-1",
+        workspace_id="default",
+        plan_id="plan:start_project:abc123",
+        operation_fingerprint="abc123",
+        status="fresh",
+        decision="approve",
+    )
+    assert idempotency_record.contract_version == "v1"
+    assert idempotency_record.status == "fresh"
 
 
 def test_assistant_suggestion_priority_validation():

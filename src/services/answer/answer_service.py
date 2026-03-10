@@ -15,9 +15,11 @@ from src.layers.pro.reasoning.control.execution_policy import build_reasoning_ex
 from src.layers.pro.reasoning.contracts import (
     APPROVAL_SESSION_CONTRACT_VERSION,
     AnswerRequest,
+    DURABLE_APPROVAL_SESSION_CONTRACT_VERSION,
     EVIDENCE_CONTRACT_VERSION,
     EXECUTION_RECEIPT_CONTRACT_VERSION,
     HANDSHAKE_CONTRACT_VERSION,
+    IDEMPOTENCY_RECORD_CONTRACT_VERSION,
     INTENT_CONTRACT_VERSION,
     PLAN_CONTRACT_VERSION,
     SELF_CHECK_MINIMAL_COVERAGE_SCORE_MIN,
@@ -893,6 +895,48 @@ def _build_approval_session_bundle(
     }
 
 
+def _build_durable_approval_session_record(
+    *,
+    approval_session_bundle: dict[str, object],
+    session_id: str,
+    confirmation_token: str,
+) -> dict[str, object]:
+    approval = dict(approval_session_bundle or {})
+    return {
+        "contract_version": DURABLE_APPROVAL_SESSION_CONTRACT_VERSION,
+        "approval_id": str(approval.get("approval_id", "") or ""),
+        "workspace_id": str(approval.get("workspace_id", "") or ""),
+        "session_id": str(session_id or "default"),
+        "plan_id": str(approval.get("plan_id", "") or ""),
+        "status": str(approval.get("status", "idle") or "idle"),
+        "confirmation_token": str(confirmation_token or ""),
+        "token_expires_at": "",
+        "last_decision": "",
+        "reason_codes": ["durable_record_not_persisted_yet"],
+    }
+
+
+def _build_idempotency_record_snapshot(
+    *,
+    execution_idempotency_bundle: dict[str, object],
+    workspace_id: str,
+    plan_id: str,
+    transition_input: dict[str, object],
+) -> dict[str, object]:
+    idem = dict(execution_idempotency_bundle or {})
+    return {
+        "contract_version": IDEMPOTENCY_RECORD_CONTRACT_VERSION,
+        "idempotency_key": str(idem.get("idempotency_key", "") or ""),
+        "workspace_id": str(workspace_id or ""),
+        "plan_id": str(plan_id or ""),
+        "operation_fingerprint": str(idem.get("operation_fingerprint", "") or ""),
+        "status": str(idem.get("status", "none") or "none"),
+        "confirmation_token": str(transition_input.get("confirmation_token", "") or ""),
+        "decision": str(transition_input.get("decision", "") or ""),
+        "reason_codes": ["durable_record_not_persisted_yet"],
+    }
+
+
 def log_observability(http: Request, *, workspace_id: str, req: AnswerRequest) -> None:
     try:
         from loguru import logger
@@ -1425,6 +1469,17 @@ def _apply_diagnostics(
             workspace_id=str(workspace_id or ""),
             request_id=str(get_request_id(http) or ""),
         )
+        durable_approval_record = _build_durable_approval_session_record(
+            approval_session_bundle=approval_session,
+            session_id=str(getattr(req, "session_id", "") or "default"),
+            confirmation_token=str(handshake.get("confirmation_token", "") or ""),
+        )
+        idempotency_record = _build_idempotency_record_snapshot(
+            execution_idempotency_bundle=execution_idempotency,
+            workspace_id=str(workspace_id or ""),
+            plan_id=str(plan.get("plan_id", "") or ""),
+            transition_input=transition_input,
+        )
         diag.setdefault("execution_handshake_contract_version", HANDSHAKE_CONTRACT_VERSION)
         diag.setdefault("assistant_execution_handshake", handshake)
         diag.setdefault("execution_transition_policy", transition_policy_eval)
@@ -1440,6 +1495,10 @@ def _apply_diagnostics(
         diag.setdefault("assistant_execution_gateway", execution_gateway)
         diag.setdefault("approval_session_contract_version", APPROVAL_SESSION_CONTRACT_VERSION)
         diag.setdefault("assistant_approval_session", approval_session)
+        diag.setdefault("durable_approval_session_contract_version", DURABLE_APPROVAL_SESSION_CONTRACT_VERSION)
+        diag.setdefault("assistant_durable_approval_session", durable_approval_record)
+        diag.setdefault("idempotency_record_contract_version", IDEMPOTENCY_RECORD_CONTRACT_VERSION)
+        diag.setdefault("assistant_idempotency_record", idempotency_record)
         reason_codes = list(intent.get("reason_codes") or []) + list(plan.get("reason_codes") or [])
         reason_codes.extend(list(planning_policy.get("reason_codes") or []))
         reason_codes.extend(list(handshake.get("reason_codes") or []))
@@ -1447,6 +1506,8 @@ def _apply_diagnostics(
         reason_codes.extend(list(receipt.get("reason_codes") or []))
         reason_codes.extend(list(execution_gateway.get("reason_codes") or []))
         reason_codes.extend(list(approval_session.get("reason_codes") or []))
+        reason_codes.extend(list(durable_approval_record.get("reason_codes") or []))
+        reason_codes.extend(list(idempotency_record.get("reason_codes") or []))
         reason_codes = sorted(set([str(x) for x in reason_codes if str(x or "").strip()]))
         diag.setdefault("planning_reason_codes", reason_codes)
         diag.setdefault("plan_id", str(plan.get("plan_id", "") or ""))
@@ -1895,6 +1956,19 @@ class AnswerService:
                     workspace_id=str(workspace_id or ""),
                     request_id=str(get_request_id(http) or ""),
                 )
+                resp.diagnostics["durable_approval_session_contract_version"] = DURABLE_APPROVAL_SESSION_CONTRACT_VERSION
+                resp.diagnostics["assistant_durable_approval_session"] = _build_durable_approval_session_record(
+                    approval_session_bundle=dict(resp.diagnostics.get("assistant_approval_session") or {}),
+                    session_id=str(getattr(req, "session_id", "") or "default"),
+                    confirmation_token=str(handshake.get("confirmation_token", "") or ""),
+                )
+                resp.diagnostics["idempotency_record_contract_version"] = IDEMPOTENCY_RECORD_CONTRACT_VERSION
+                resp.diagnostics["assistant_idempotency_record"] = _build_idempotency_record_snapshot(
+                    execution_idempotency_bundle=execution_idempotency,
+                    workspace_id=str(workspace_id or ""),
+                    plan_id=str(plan_bundle.get("plan_id", "") or ""),
+                    transition_input=transition_input,
+                )
             else:
                 resp.diagnostics = dict(getattr(resp, "diagnostics", None) or {})
                 base = dict(resp.diagnostics.get("anticipatory") or {})
@@ -1968,6 +2042,19 @@ class AnswerService:
                     plan_bundle=plan_bundle,
                     workspace_id=str(workspace_id or ""),
                     request_id=str(get_request_id(http) or ""),
+                )
+                resp.diagnostics["durable_approval_session_contract_version"] = DURABLE_APPROVAL_SESSION_CONTRACT_VERSION
+                resp.diagnostics["assistant_durable_approval_session"] = _build_durable_approval_session_record(
+                    approval_session_bundle=dict(resp.diagnostics.get("assistant_approval_session") or {}),
+                    session_id=str(getattr(req, "session_id", "") or "default"),
+                    confirmation_token=str(handshake.get("confirmation_token", "") or ""),
+                )
+                resp.diagnostics["idempotency_record_contract_version"] = IDEMPOTENCY_RECORD_CONTRACT_VERSION
+                resp.diagnostics["assistant_idempotency_record"] = _build_idempotency_record_snapshot(
+                    execution_idempotency_bundle=execution_idempotency,
+                    workspace_id=str(workspace_id or ""),
+                    plan_id=str(plan_bundle.get("plan_id", "") or ""),
+                    transition_input=transition_input,
                 )
         except Exception:
             pass

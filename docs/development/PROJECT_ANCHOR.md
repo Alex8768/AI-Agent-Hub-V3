@@ -6,26 +6,36 @@ A2.38 — TBD
 
 ### Goal
 
-Define and start the next anchor scope after A2.37 closure.
+Establish durable approval/idempotency contract baselines for restart-safe COO
+confirmation flow, while preserving safe-mode and side-effect-free runtime.
 
 ### Architecture Position
 
 Planned modules:
 
-- TBD
+- durable approval session persistence-ready contracts
+- durable idempotency record persistence-ready contracts
+- diagnostics surface for durable contract snapshots (no persistence yet)
+
+Planned files:
+- `src/layers/pro/reasoning/contracts.py`
+- `src/services/answer/answer_service.py`
+- `tests/unit/layers/pro/test_reasoning_contracts.py`
+- `tests/unit/services/answer/test_answer_service_debug_snapshot.py`
+- `tests/unit/api/test_answer_endpoint_debug_snapshot.py`
 
 ### Patch Plan
 
 #### Patch plan
-- Patch 1 — TBD
-- Patch 2 — TBD
-- Patch 3 — TBD
-- Patch 4 — TBD
-- Patch 5 — TBD
+- Patch 1 — Durable Contracts Baseline
+- Patch 2 — Persistence Wiring for Approval/Idempotency Records
+- Patch 3 — Token TTL + One-Time Consumption Guards
+- Patch 4 — Restart Recovery + Deterministic Replay Outcomes
+- Patch 5 — Docs/CI Closure
 
 ### Progress
 
-- [ ] Patch 1 — TBD
+- [x] Patch 1 — Durable Contracts Baseline
 - [ ] Patch 2 — TBD
 - [ ] Patch 3 — TBD
 - [ ] Patch 4 — TBD
@@ -39,7 +49,12 @@ Do NOT modify during planning:
 
 ### Definition of Done
 
-A2.38 completion criteria are defined when patch 1 is formalized.
+A2.38 is complete when:
+- approval/idempotency records are persistence-ready and deterministic
+- runtime loads/saves approval/idempotency state via durable wiring
+- token ttl + one-time semantics are guard-enforced with diagnostics
+- replay outcomes are restart-safe and deterministic
+- docs and release-gate contracts cover A2.38 runtime
 
 ## Next Anchor
 

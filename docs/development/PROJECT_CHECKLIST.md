@@ -45,7 +45,7 @@
 
 ## Current Work — A2.38 TBD
 
-- [ ] Patch 1 — TBD
+- [x] Patch 1 — Durable Contracts Baseline
 - [ ] Patch 2 — TBD
 - [ ] Patch 3 — TBD
 - [ ] Patch 4 — TBD

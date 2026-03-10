@@ -118,6 +118,10 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
         "assistant_execution_gateway",
         "approval_session_contract_version",
         "assistant_approval_session",
+        "durable_approval_session_contract_version",
+        "assistant_durable_approval_session",
+        "idempotency_record_contract_version",
+        "assistant_idempotency_record",
         "planning_reason_codes",
         "plan_id",
         "retriever_stats",
@@ -228,6 +232,33 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
         "requires_confirmation",
         "one_time_token",
         "token_ttl_seconds",
+        "reason_codes",
+    }
+    assert diag.get("durable_approval_session_contract_version") == "v1"
+    durable_approval = dict(diag.get("assistant_durable_approval_session") or {})
+    assert set(durable_approval.keys()) == {
+        "contract_version",
+        "approval_id",
+        "workspace_id",
+        "session_id",
+        "plan_id",
+        "status",
+        "confirmation_token",
+        "token_expires_at",
+        "last_decision",
+        "reason_codes",
+    }
+    assert diag.get("idempotency_record_contract_version") == "v1"
+    idempotency_record = dict(diag.get("assistant_idempotency_record") or {})
+    assert set(idempotency_record.keys()) == {
+        "contract_version",
+        "idempotency_key",
+        "workspace_id",
+        "plan_id",
+        "operation_fingerprint",
+        "status",
+        "confirmation_token",
+        "decision",
         "reason_codes",
     }
     assert isinstance(diag.get("planning_reason_codes"), list)

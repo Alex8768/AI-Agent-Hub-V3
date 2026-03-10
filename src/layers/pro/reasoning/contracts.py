@@ -20,6 +20,8 @@ PLAN_CONTRACT_VERSION = "v1"
 HANDSHAKE_CONTRACT_VERSION = "v1"
 EXECUTION_RECEIPT_CONTRACT_VERSION = "v1"
 APPROVAL_SESSION_CONTRACT_VERSION = "v1"
+DURABLE_APPROVAL_SESSION_CONTRACT_VERSION = "v1"
+IDEMPOTENCY_RECORD_CONTRACT_VERSION = "v1"
 
 
 class ProvenanceItem(BaseModel):
@@ -196,6 +198,35 @@ class AssistantApprovalSession(BaseModel):
     requires_confirmation: bool = Field(default=False)
     one_time_token: str = Field(default="")
     token_ttl_seconds: int = Field(default=0, ge=0)
+    reason_codes: list[str] = Field(default_factory=list)
+
+
+class AssistantDurableApprovalSessionRecord(BaseModel):
+    """Durable approval session record contract (persistence-ready baseline)."""
+
+    contract_version: str = Field(default=DURABLE_APPROVAL_SESSION_CONTRACT_VERSION)
+    approval_id: str = Field(default="")
+    workspace_id: str = Field(default="")
+    session_id: str = Field(default="default")
+    plan_id: str = Field(default="")
+    status: Literal["idle", "open", "closed"] = Field(default="idle")
+    confirmation_token: str = Field(default="")
+    token_expires_at: str = Field(default="")
+    last_decision: Literal["", "approve", "cancel"] = Field(default="")
+    reason_codes: list[str] = Field(default_factory=list)
+
+
+class AssistantIdempotencyRecord(BaseModel):
+    """Durable idempotency record contract (persistence-ready baseline)."""
+
+    contract_version: str = Field(default=IDEMPOTENCY_RECORD_CONTRACT_VERSION)
+    idempotency_key: str = Field(default="")
+    workspace_id: str = Field(default="")
+    plan_id: str = Field(default="")
+    operation_fingerprint: str = Field(default="")
+    status: Literal["none", "fresh", "replayed", "conflict"] = Field(default="none")
+    confirmation_token: str = Field(default="")
+    decision: Literal["", "approve", "cancel"] = Field(default="")
     reason_codes: list[str] = Field(default_factory=list)
 
 
