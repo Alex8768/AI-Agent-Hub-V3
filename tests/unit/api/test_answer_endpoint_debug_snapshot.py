@@ -117,6 +117,7 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
         "feedback_policy",
         "adaptation_contract_version",
         "assistant_feedback_adaptation",
+        "adaptation_policy",
         "llm_planner_policy",
         "planning_policy",
         "execution_handshake_contract_version",
@@ -232,6 +233,18 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
         "boosted_intents",
         "suppressed_intents",
         "reason_codes",
+    }
+    adaptation_policy = dict(diag.get("adaptation_policy") or {})
+    assert set(adaptation_policy.keys()) == {
+        "mode",
+        "allowed_latest_signals",
+        "allowed_intents",
+        "max_boosted_intents",
+        "max_suppressed_intents",
+        "forbid_boost_suppress_overlap",
+        "fallback_on_policy_violation",
+        "violations",
+        "applied_reason_codes",
     }
     llm_planner_policy = dict(diag.get("llm_planner_policy") or {})
     assert set(llm_planner_policy.keys()) == {

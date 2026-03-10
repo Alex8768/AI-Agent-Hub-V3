@@ -179,6 +179,7 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
         "feedback_policy",
         "adaptation_contract_version",
         "assistant_feedback_adaptation",
+        "adaptation_policy",
         "llm_planner_policy",
         "planning_policy",
         "execution_handshake_contract_version",
@@ -300,6 +301,18 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
         "boosted_intents",
         "suppressed_intents",
         "reason_codes",
+    }
+    adaptation_policy = dict(diag.get("adaptation_policy") or {})
+    assert set(adaptation_policy.keys()) == {
+        "mode",
+        "allowed_latest_signals",
+        "allowed_intents",
+        "max_boosted_intents",
+        "max_suppressed_intents",
+        "forbid_boost_suppress_overlap",
+        "fallback_on_policy_violation",
+        "violations",
+        "applied_reason_codes",
     }
     llm_planner_policy = dict(diag.get("llm_planner_policy") or {})
     assert set(llm_planner_policy.keys()) == {
@@ -1435,6 +1448,58 @@ def test_build_feedback_adaptation_bundle_ranks_cancel_signal():
     assert out.get("boosted_intents") == ["general_query"]
     assert out.get("suppressed_intents") == ["start_project"]
     assert "feedback_adaptation_signal_to_plan_ranked" in list(out.get("reason_codes") or [])
+
+
+@pytest.mark.asyncio
+async def test_answer_service_adaptation_policy_forces_fallback_on_violation(monkeypatch):
+    class _S:
+        feature_reasoning = True
+        feature_graphrag = True
+        feature_reasoning_llm_enabled = False
+        feature_assistant_mode = True
+        feature_assistant_proactive = False
+        feature_assistant_actions = False
+        llm_provider = "ollama"
+        openai_model = ""
+        ollama_model = "llama3.2:latest"
+
+    monkeypatch.setattr("src.core.config.get_settings", lambda: _S())
+    monkeypatch.setattr("src.observability.trace.make_trace_id", lambda **kwargs: "trace-123", raising=False)
+    monkeypatch.setattr(
+        "src.core.providers.get_reasoning_engine",
+        lambda *, retriever=None, llm=None, llm_timeout_s=None: _FakeReasoningEngine(retriever),
+    )
+
+    def _invalid_adaptation_bundle(**kwargs):
+        _ = kwargs
+        return {
+            "contract_version": "v1",
+            "mode": "feedback_to_planning_adaptation",
+            "status": "ready",
+            "source": "deterministic",
+            "latest_signal": "unknown",
+            "boosted_intents": ["start_project", "prepare_meeting", "general_query"],
+            "suppressed_intents": ["start_project", "general_query"],
+            "reason_codes": ["feedback_adaptation_signal_to_plan_ranked"],
+        }
+
+    monkeypatch.setattr("src.services.answer.answer_service._build_feedback_adaptation_bundle", _invalid_adaptation_bundle)
+
+    http = _DummyHTTP(request_id="rid-adaptation-policy", rag_engine=object(), hybrid_retriever=_FakeHybrid())
+    req = AnswerRequest(query="adaptation policy test", session_id="default")
+    resp = await AnswerService().handle(http, req, workspace_id="default")
+    diag = dict(getattr(resp, "diagnostics", {}) or {})
+    adaptation = dict(diag.get("assistant_feedback_adaptation") or {})
+    policy = dict(diag.get("adaptation_policy") or {})
+
+    assert adaptation.get("latest_signal") == "none"
+    assert adaptation.get("boosted_intents") == ["start_project", "prepare_meeting"]
+    assert adaptation.get("suppressed_intents") == ["general_query"]
+    assert "feedback_adaptation_policy_forced_fallback" in list(adaptation.get("reason_codes") or [])
+    assert "feedback_adaptation_latest_signal_not_allowlisted" in list(policy.get("violations") or [])
+    assert "feedback_adaptation_boosted_intents_exceed_max" in list(policy.get("violations") or [])
+    assert "feedback_adaptation_suppressed_intents_exceed_max" in list(policy.get("violations") or [])
+    assert "feedback_adaptation_policy_forced_fallback" in list(policy.get("applied_reason_codes") or [])
 
 
 @pytest.mark.asyncio

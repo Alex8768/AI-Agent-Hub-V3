@@ -956,6 +956,98 @@ def _build_feedback_adaptation_bundle(
     }
 
 
+def _build_feedback_adaptation_policy_contract() -> dict[str, object]:
+    return {
+        "mode": "feedback_adaptation_guarded",
+        "allowed_latest_signals": ["none", "approve", "cancel", "edit"],
+        "allowed_intents": list(_LLM_PLANNER_ALLOWED_INTENTS),
+        "max_boosted_intents": 2,
+        "max_suppressed_intents": 1,
+        "forbid_boost_suppress_overlap": True,
+        "fallback_on_policy_violation": True,
+    }
+
+
+def _apply_feedback_adaptation_policy_guards(
+    *,
+    adaptation_bundle: dict[str, object],
+    policy_contract: dict[str, object],
+) -> tuple[dict[str, object], dict[str, object]]:
+    adaptation = dict(adaptation_bundle or {})
+    policy = dict(policy_contract or {})
+    allowed_signals = {str(x).strip() for x in list(policy.get("allowed_latest_signals") or []) if str(x).strip()}
+    allowed_intents = {str(x).strip() for x in list(policy.get("allowed_intents") or []) if str(x).strip()}
+    max_boosted = int(policy.get("max_boosted_intents", 2) or 2)
+    max_suppressed = int(policy.get("max_suppressed_intents", 1) or 1)
+    fallback_on_violation = bool(policy.get("fallback_on_policy_violation", True))
+    forbid_overlap = bool(policy.get("forbid_boost_suppress_overlap", True))
+
+    latest_signal = str(adaptation.get("latest_signal", "none") or "none").strip().lower()
+    boosted = [str(x).strip() for x in list(adaptation.get("boosted_intents") or []) if str(x).strip()]
+    suppressed = [str(x).strip() for x in list(adaptation.get("suppressed_intents") or []) if str(x).strip()]
+    violations: list[str] = []
+    applied_reason_codes: list[str] = []
+
+    if latest_signal not in allowed_signals:
+        violations.append("feedback_adaptation_latest_signal_not_allowlisted")
+    if any(intent not in allowed_intents for intent in boosted):
+        violations.append("feedback_adaptation_boosted_intent_not_allowlisted")
+    if any(intent not in allowed_intents for intent in suppressed):
+        violations.append("feedback_adaptation_suppressed_intent_not_allowlisted")
+    if len(boosted) > max_boosted:
+        violations.append("feedback_adaptation_boosted_intents_exceed_max")
+    if len(suppressed) > max_suppressed:
+        violations.append("feedback_adaptation_suppressed_intents_exceed_max")
+    if forbid_overlap and (set(boosted) & set(suppressed)):
+        violations.append("feedback_adaptation_overlap_detected")
+
+    if violations and fallback_on_violation:
+        normalized_boosted: list[str] = []
+        seen: set[str] = set()
+        for intent in boosted:
+            if intent not in allowed_intents or intent in seen:
+                continue
+            seen.add(intent)
+            normalized_boosted.append(intent)
+            if len(normalized_boosted) >= max_boosted:
+                break
+
+        normalized_suppressed: list[str] = []
+        seen_s: set[str] = set()
+        for intent in suppressed:
+            if intent not in allowed_intents or intent in seen_s:
+                continue
+            if forbid_overlap and intent in set(normalized_boosted):
+                continue
+            seen_s.add(intent)
+            normalized_suppressed.append(intent)
+            if len(normalized_suppressed) >= max_suppressed:
+                break
+
+        if latest_signal not in allowed_signals:
+            latest_signal = "none"
+        if latest_signal == "cancel":
+            if not normalized_boosted:
+                normalized_boosted = ["general_query"]
+            if normalized_suppressed and normalized_suppressed[0] == "general_query":
+                normalized_suppressed = []
+
+        adaptation["latest_signal"] = latest_signal
+        adaptation["boosted_intents"] = normalized_boosted
+        adaptation["suppressed_intents"] = normalized_suppressed
+        reason_codes = [str(x) for x in list(adaptation.get("reason_codes") or []) if str(x or "").strip()]
+        reason_codes.append("feedback_adaptation_policy_forced_fallback")
+        adaptation["reason_codes"] = sorted(set(reason_codes))
+        applied_reason_codes.append("feedback_adaptation_policy_forced_fallback")
+
+    policy_eval = {
+        **policy,
+        "violations": sorted(set(violations)),
+        "applied_reason_codes": sorted(set(applied_reason_codes)),
+    }
+    return adaptation, policy_eval
+
+
 def _build_tool_selection_bundle(
     *,
     plan_bundle: dict[str, object],
@@ -2694,6 +2786,11 @@ async def _apply_diagnostics(
             plan_bundle=plan,
             assistant_mode_enabled=assistant_mode_enabled,
         )
+        adaptation_policy = _build_feedback_adaptation_policy_contract()
+        feedback_adaptation, adaptation_policy_eval = _apply_feedback_adaptation_policy_guards(
+            adaptation_bundle=feedback_adaptation,
+            policy_contract=adaptation_policy,
+        )
         diag.setdefault("plan_contract_version", PLAN_CONTRACT_VERSION)
         diag.setdefault("assistant_plan", dict(plan))
         llm_planner["plan_id"] = str(plan.get("plan_id", "") or "")
@@ -2707,6 +2804,7 @@ async def _apply_diagnostics(
         diag.setdefault("feedback_policy", feedback_policy_eval)
         diag.setdefault("adaptation_contract_version", ADAPTATION_CONTRACT_VERSION)
         diag.setdefault("assistant_feedback_adaptation", feedback_adaptation)
+        diag.setdefault("adaptation_policy", adaptation_policy_eval)
         diag.setdefault("llm_planner_policy", llm_planner_policy_eval)
         diag.setdefault("planning_policy", dict(planning_policy))
         diag = _wire_runtime_diagnostics(diagnostics=diag)
@@ -2821,6 +2919,7 @@ async def _apply_diagnostics(
         reason_codes.extend(list(feedback_learning.get("reason_codes") or []))
         reason_codes.extend(list(feedback_policy_eval.get("applied_reason_codes") or []))
         reason_codes.extend(list(feedback_adaptation.get("reason_codes") or []))
+        reason_codes.extend(list(adaptation_policy_eval.get("applied_reason_codes") or []))
         reason_codes.extend(list(llm_planner_policy_eval.get("applied_reason_codes") or []))
         reason_codes.extend(list(planning_policy.get("reason_codes") or []))
         reason_codes.extend(list(handshake.get("reason_codes") or []))
