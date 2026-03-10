@@ -615,6 +615,7 @@ def _build_tool_selection_bundle(
     *,
     plan_bundle: dict[str, object],
     assistant_mode_enabled: bool,
+    mcp_tools: list[dict[str, object]] | None = None,
 ) -> dict[str, object]:
     if not assistant_mode_enabled:
         return {
@@ -640,24 +641,82 @@ def _build_tool_selection_bundle(
             "reason_codes": ["tool_selection_no_plan_steps"],
         }
 
-    selected_tools = [
-        {
-            "step_id": str(step.get("step_id", "") or ""),
-            "tool_name": "none",
-            "route": "diagnostics_only",
-            "reason": "tool_selection_baseline_no_mapping",
-        }
-        for step in steps
-    ]
+    def _tokens(value: object) -> set[str]:
+        text = str(value or "").strip().lower()
+        if not text:
+            return set()
+        normalized = "".join(ch if ch.isalnum() else " " for ch in text)
+        return {tok for tok in normalized.split() if tok}
+
+    tool_rows = [dict(row or {}) for row in list(mcp_tools or [])]
+    tool_rows = [row for row in tool_rows if str(row.get("tool_name", "") or "").strip()]
+    selected_tools: list[dict[str, object]] = []
+    used_mcp = False
+    for step in steps:
+        step_id = str(step.get("step_id", "") or "")
+        action = str(step.get("action", "") or "")
+        role = str(step.get("role", "") or "")
+        step_tokens = _tokens(f"{action} {role}")
+        best_name = "none"
+        best_score = 0
+        for tool in tool_rows:
+            tool_name = str(tool.get("tool_name", "") or "")
+            haystack = " ".join(
+                [
+                    tool_name,
+                    str(tool.get("description", "") or ""),
+                    " ".join(str(x) for x in list(tool.get("tags") or [])),
+                ]
+            )
+            score = len(step_tokens & _tokens(haystack))
+            if score > best_score:
+                best_score = score
+                best_name = tool_name
+        if best_score > 0 and best_name != "none":
+            used_mcp = True
+            selected_tools.append(
+                {
+                    "step_id": step_id,
+                    "tool_name": best_name,
+                    "route": "mcp_registry_match",
+                    "reason": "tool_selection_mcp_match",
+                }
+            )
+        else:
+            selected_tools.append(
+                {
+                    "step_id": step_id,
+                    "tool_name": "none",
+                    "route": "deterministic_fallback",
+                    "reason": "tool_selection_fallback_no_match",
+                }
+            )
+    source = "mcp" if used_mcp else "deterministic"
+    reasons = ["tool_selection_adapter_applied"] + (["tool_selection_mcp_matched"] if used_mcp else ["tool_selection_fallback_used"])
     return {
         "contract_version": TOOL_SELECTION_CONTRACT_VERSION,
         "mode": "mcp_aware_selector",
         "status": "ready",
-        "source": "deterministic",
+        "source": source,
         "selected_tools": selected_tools,
         "blocked_step_ids": [],
-        "reason_codes": ["tool_selection_baseline_built"],
+        "reason_codes": reasons,
     }
+
+
+def _load_mcp_tools_from_runtime(http: Request) -> list[dict[str, object]]:
+    state = getattr(getattr(http, "app", None), "state", None)
+    registry = getattr(state, "mcp_registry", None) if state is not None else None
+    if registry is None:
+        return []
+    try:
+        list_tools = getattr(registry, "list_tools", None)
+        if not callable(list_tools):
+            return []
+        rows = list(list_tools(enabled_only=True) or [])
+        return [dict(row or {}) for row in rows]
+    except Exception:
+        return []
 
 
 def _bridge_plan_to_draft_actions(
@@ -2174,9 +2233,11 @@ async def _apply_diagnostics(
             assistant_mode_enabled=assistant_mode_enabled,
         )
         plan, planning_policy = _apply_plan_policy_guards(plan_bundle=plan, max_steps=5)
+        mcp_tools = _load_mcp_tools_from_runtime(http)
         tool_selection = _build_tool_selection_bundle(
             plan_bundle=plan,
             assistant_mode_enabled=assistant_mode_enabled,
+            mcp_tools=mcp_tools,
         )
         diag.setdefault("plan_contract_version", PLAN_CONTRACT_VERSION)
         diag.setdefault("assistant_plan", dict(plan))

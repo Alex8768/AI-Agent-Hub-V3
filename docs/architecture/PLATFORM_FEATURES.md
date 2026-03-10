@@ -141,6 +141,7 @@ AI-Agent-Hub-V3 is a modular AI platform for production-grade agent systems with
 - [x] LLM planner runtime wiring and diagnostics parity (A2.40 patch 4)
 - [x] LLM planner runtime docs/CI closure (A2.40 patch 5)
 - [x] MCP-aware tool selection diagnostics contract baseline (A2.41 patch 1)
+- [x] MCP-aware selector adapter with deterministic fallback diagnostics (A2.41 patch 2)
 
 ### 7) Interface Layer
 

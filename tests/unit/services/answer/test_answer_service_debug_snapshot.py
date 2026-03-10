@@ -1151,6 +1151,54 @@ async def test_answer_service_uses_llm_planner_adapter_with_deterministic_plan_f
 
 
 @pytest.mark.asyncio
+async def test_answer_service_tool_selection_uses_mcp_registry_with_fallback(monkeypatch):
+    class _S:
+        feature_reasoning = True
+        feature_graphrag = True
+        feature_reasoning_llm_enabled = False
+        feature_assistant_mode = True
+        feature_assistant_proactive = False
+        feature_assistant_actions = False
+        llm_provider = "ollama"
+        openai_model = ""
+        ollama_model = "llama3.2:latest"
+
+    class _Registry:
+        def list_tools(self, *, enabled_only=False, server_name=None):
+            _ = enabled_only, server_name
+            return [
+                {
+                    "tool_name": "workspace_manager",
+                    "server_name": "filesystem",
+                    "description": "prepare project workspace draft",
+                    "tags": ["workspace", "project", "draft"],
+                    "enabled": True,
+                }
+            ]
+
+    monkeypatch.setattr("src.core.config.get_settings", lambda: _S())
+    monkeypatch.setattr("src.observability.trace.make_trace_id", lambda **kwargs: "trace-123", raising=False)
+    monkeypatch.setattr(
+        "src.core.providers.get_reasoning_engine",
+        lambda *, retriever=None, llm=None, llm_timeout_s=None: _FakeReasoningEngine(retriever),
+    )
+
+    http = _DummyHTTP(request_id="rid-tool-select-mcp", rag_engine=object(), hybrid_retriever=_FakeHybrid())
+    http.app.state.mcp_registry = _Registry()
+    req = AnswerRequest(query="new project planning", session_id="default")
+    resp = await AnswerService().handle(http, req, workspace_id="default")
+    diag = dict(getattr(resp, "diagnostics", {}) or {})
+    tool_selection = dict(diag.get("assistant_tool_selection") or {})
+    selected = list(tool_selection.get("selected_tools") or [])
+
+    assert tool_selection.get("status") == "ready"
+    assert tool_selection.get("source") == "mcp"
+    assert any(str((row or {}).get("tool_name", "")) == "workspace_manager" for row in selected)
+    assert "tool_selection_adapter_applied" in list(tool_selection.get("reason_codes") or [])
+    assert "tool_selection_mcp_matched" in list(tool_selection.get("reason_codes") or [])
+
+
+@pytest.mark.asyncio
 async def test_answer_service_llm_planner_policy_forces_fallback_on_violation(monkeypatch):
     class _S:
         feature_reasoning = True
