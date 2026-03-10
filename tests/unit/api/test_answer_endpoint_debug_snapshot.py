@@ -114,6 +114,7 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
         "tool_selection_policy",
         "feedback_contract_version",
         "assistant_feedback_learning",
+        "feedback_policy",
         "llm_planner_policy",
         "planning_policy",
         "execution_handshake_contract_version",
@@ -207,6 +208,16 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
         "latest_signal",
         "signal_counts",
         "reason_codes",
+    }
+    feedback_policy = dict(diag.get("feedback_policy") or {})
+    assert set(feedback_policy.keys()) == {
+        "mode",
+        "allowed_signals",
+        "max_signals_per_request",
+        "require_latest_in_signals",
+        "fallback_on_policy_violation",
+        "violations",
+        "applied_reason_codes",
     }
     llm_planner_policy = dict(diag.get("llm_planner_policy") or {})
     assert set(llm_planner_policy.keys()) == {

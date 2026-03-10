@@ -147,6 +147,7 @@ AI-Agent-Hub-V3 is a modular AI platform for production-grade agent systems with
 - [x] Dynamic tool selection docs/CI closure (A2.41 patch 5)
 - [x] Feedback-learning diagnostics contract baseline (A2.42 patch 1)
 - [x] Feedback capture adapter with deterministic signal normalization (A2.42 patch 2)
+- [x] Feedback policy guardrails with forced fallback diagnostics (A2.42 patch 3)
 
 ### 7) Interface Layer
 

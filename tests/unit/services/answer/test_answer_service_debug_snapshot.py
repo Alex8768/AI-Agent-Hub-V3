@@ -176,6 +176,7 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
         "tool_selection_policy",
         "feedback_contract_version",
         "assistant_feedback_learning",
+        "feedback_policy",
         "llm_planner_policy",
         "planning_policy",
         "execution_handshake_contract_version",
@@ -275,6 +276,16 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
         "latest_signal",
         "signal_counts",
         "reason_codes",
+    }
+    feedback_policy = dict(diag.get("feedback_policy") or {})
+    assert set(feedback_policy.keys()) == {
+        "mode",
+        "allowed_signals",
+        "max_signals_per_request",
+        "require_latest_in_signals",
+        "fallback_on_policy_violation",
+        "violations",
+        "applied_reason_codes",
     }
     llm_planner_policy = dict(diag.get("llm_planner_policy") or {})
     assert set(llm_planner_policy.keys()) == {
@@ -1319,6 +1330,55 @@ async def test_answer_service_feedback_capture_adapter_normalizes_signals(monkey
     assert feedback.get("signal_counts") == {"approve": 1, "cancel": 1, "edit": 1}
     assert "feedback_capture_adapter_normalized" in list(feedback.get("reason_codes") or [])
     assert "feedback_signal_detected:edit" in list(feedback.get("reason_codes") or [])
+
+
+@pytest.mark.asyncio
+async def test_answer_service_feedback_policy_forces_fallback_on_violation(monkeypatch):
+    class _S:
+        feature_reasoning = True
+        feature_graphrag = True
+        feature_reasoning_llm_enabled = False
+        feature_assistant_mode = True
+        feature_assistant_proactive = False
+        feature_assistant_actions = False
+        llm_provider = "ollama"
+        openai_model = ""
+        ollama_model = "llama3.2:latest"
+
+    monkeypatch.setattr("src.core.config.get_settings", lambda: _S())
+    monkeypatch.setattr("src.observability.trace.make_trace_id", lambda **kwargs: "trace-123", raising=False)
+    monkeypatch.setattr(
+        "src.core.providers.get_reasoning_engine",
+        lambda *, retriever=None, llm=None, llm_timeout_s=None: _FakeReasoningEngine(retriever),
+    )
+
+    def _invalid_feedback_bundle(**kwargs):
+        _ = kwargs
+        return {
+            "contract_version": "v1",
+            "mode": "approve_cancel_edit_feedback",
+            "status": "ready",
+            "signals": ["approve", "unknown", "cancel", "edit"],
+            "latest_signal": "unknown",
+            "signal_counts": {"approve": 1, "cancel": 1, "edit": 1},
+            "reason_codes": ["feedback_capture_adapter_normalized"],
+        }
+
+    monkeypatch.setattr("src.services.answer.answer_service._build_feedback_learning_bundle", _invalid_feedback_bundle)
+
+    http = _DummyHTTP(request_id="rid-feedback-policy", rag_engine=object(), hybrid_retriever=_FakeHybrid())
+    req = AnswerRequest(query="feedback policy test", session_id="default")
+    resp = await AnswerService().handle(http, req, workspace_id="default")
+    diag = dict(getattr(resp, "diagnostics", {}) or {})
+    feedback = dict(diag.get("assistant_feedback_learning") or {})
+    policy = dict(diag.get("feedback_policy") or {})
+
+    assert feedback.get("signals") == ["approve", "cancel", "edit"]
+    assert feedback.get("latest_signal") == "edit"
+    assert "feedback_policy_forced_fallback" in list(feedback.get("reason_codes") or [])
+    assert "feedback_signal_not_allowlisted" in list(policy.get("violations") or [])
+    assert "feedback_signals_exceed_max" in list(policy.get("violations") or [])
+    assert "feedback_policy_forced_fallback" in list(policy.get("applied_reason_codes") or [])
 
 
 @pytest.mark.asyncio

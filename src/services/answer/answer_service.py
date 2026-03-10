@@ -762,6 +762,73 @@ def _build_feedback_learning_bundle(
     }
 
 
+def _build_feedback_policy_contract() -> dict[str, object]:
+    return {
+        "mode": "feedback_learning_guarded",
+        "allowed_signals": ["approve", "cancel", "edit"],
+        "max_signals_per_request": 3,
+        "require_latest_in_signals": True,
+        "fallback_on_policy_violation": True,
+    }
+
+
+def _apply_feedback_policy_guards(
+    *,
+    feedback_bundle: dict[str, object],
+    policy_contract: dict[str, object],
+) -> tuple[dict[str, object], dict[str, object]]:
+    feedback = dict(feedback_bundle or {})
+    policy = dict(policy_contract or {})
+
+    allowed_signals = [str(x).strip() for x in list(policy.get("allowed_signals") or []) if str(x).strip()]
+    allowed_set = set(allowed_signals)
+    max_signals = int(policy.get("max_signals_per_request", 3) or 3)
+    require_latest_in_signals = bool(policy.get("require_latest_in_signals", True))
+    fallback_on_violation = bool(policy.get("fallback_on_policy_violation", True))
+
+    signals = [str(x).strip() for x in list(feedback.get("signals") or []) if str(x).strip()]
+    latest_signal = str(feedback.get("latest_signal", "none") or "none").strip()
+    violations: list[str] = []
+    applied_reason_codes: list[str] = []
+
+    if any(signal not in allowed_set for signal in signals):
+        violations.append("feedback_signal_not_allowlisted")
+    if len(signals) > max_signals:
+        violations.append("feedback_signals_exceed_max")
+    if require_latest_in_signals and latest_signal != "none" and latest_signal not in signals:
+        violations.append("feedback_latest_signal_mismatch")
+
+    if violations and fallback_on_violation:
+        normalized: list[str] = []
+        seen: set[str] = set()
+        for signal in signals:
+            if signal not in allowed_set or signal in seen:
+                continue
+            seen.add(signal)
+            normalized.append(signal)
+            if len(normalized) >= max_signals:
+                break
+        latest_signal = normalized[-1] if normalized else "none"
+        feedback["signals"] = normalized
+        feedback["latest_signal"] = latest_signal
+        feedback["signal_counts"] = {
+            "approve": int(1 if "approve" in normalized else 0),
+            "cancel": int(1 if "cancel" in normalized else 0),
+            "edit": int(1 if "edit" in normalized else 0),
+        }
+        reason_codes = [str(x) for x in list(feedback.get("reason_codes") or []) if str(x or "").strip()]
+        reason_codes.append("feedback_policy_forced_fallback")
+        feedback["reason_codes"] = sorted(set(reason_codes))
+        applied_reason_codes.append("feedback_policy_forced_fallback")
+
+    policy_eval = {
+        **policy,
+        "violations": sorted(set(violations)),
+        "applied_reason_codes": sorted(set(applied_reason_codes)),
+    }
+    return feedback, policy_eval
+
+
 def _build_tool_selection_bundle(
     *,
     plan_bundle: dict[str, object],
@@ -2489,6 +2556,11 @@ async def _apply_diagnostics(
             req=req,
             assistant_mode_enabled=assistant_mode_enabled,
         )
+        feedback_policy = _build_feedback_policy_contract()
+        feedback_learning, feedback_policy_eval = _apply_feedback_policy_guards(
+            feedback_bundle=feedback_learning,
+            policy_contract=feedback_policy,
+        )
         diag.setdefault("plan_contract_version", PLAN_CONTRACT_VERSION)
         diag.setdefault("assistant_plan", dict(plan))
         llm_planner["plan_id"] = str(plan.get("plan_id", "") or "")
@@ -2499,6 +2571,7 @@ async def _apply_diagnostics(
         diag.setdefault("tool_selection_policy", tool_selection_policy_eval)
         diag.setdefault("feedback_contract_version", FEEDBACK_CONTRACT_VERSION)
         diag.setdefault("assistant_feedback_learning", feedback_learning)
+        diag.setdefault("feedback_policy", feedback_policy_eval)
         diag.setdefault("llm_planner_policy", llm_planner_policy_eval)
         diag.setdefault("planning_policy", dict(planning_policy))
         diag = _wire_runtime_diagnostics(diagnostics=diag)
@@ -2611,6 +2684,7 @@ async def _apply_diagnostics(
         reason_codes.extend(list(tool_selection.get("reason_codes") or []))
         reason_codes.extend(list(tool_selection_policy_eval.get("applied_reason_codes") or []))
         reason_codes.extend(list(feedback_learning.get("reason_codes") or []))
+        reason_codes.extend(list(feedback_policy_eval.get("applied_reason_codes") or []))
         reason_codes.extend(list(llm_planner_policy_eval.get("applied_reason_codes") or []))
         reason_codes.extend(list(planning_policy.get("reason_codes") or []))
         reason_codes.extend(list(handshake.get("reason_codes") or []))
