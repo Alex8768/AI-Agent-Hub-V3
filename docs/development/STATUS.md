@@ -10,15 +10,18 @@ A2.43 — Feedback-to-Planning Adaptation (MVP)
 
 ## Current Active Anchor
 
-A2.44 — TBD (post-adaptation planning)
+A2.44 — Assistant Conversational Recovery (Low-Evidence UX)
 
 Current progress:
-- A2.43 is completed through patch 5 (docs/CI closure included).
-- A2.44 scope is not yet finalized.
+- Patch 1 complete: Conversational Recovery Baseline + Runtime Hook.
+- Patch 2 pending: Language-Native Recovery Adapter Hardening.
+- Patch 3 pending: Recovery Policy Guardrails.
+- Patch 4 pending: Runtime Wiring + Diagnostics Parity.
+- Patch 5 pending: Docs/CI Closure.
 
 Focus:
-- lock A2.43 as completed and stable in docs/CI
-- define A2.44 scope and patch sequence before implementation starts
+- remove generic fallback behavior for low-evidence conversational requests
+- preserve strict evidence policy for source-grounded/factual requests
 - preserve strict micro-patch execution discipline
 
 Execution discipline:
@@ -29,7 +32,7 @@ Execution discipline:
 A2.45 — TBD
 
 Planned focus:
-- finalize post-adaptation roadmap and select implementation scope
+- complete A2.44 conversational recovery flow from runtime hook to docs/CI closure
 
 ## CI Status
 

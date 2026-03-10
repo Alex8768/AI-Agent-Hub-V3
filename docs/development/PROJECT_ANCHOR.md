@@ -2,27 +2,39 @@
 
 ## Active Anchor
 
-A2.44 — TBD (post-adaptation planning)
+A2.44 — Assistant Conversational Recovery (Low-Evidence UX)
 
 ### Goal
 
-Define the next implementation anchor after feedback-to-planning adaptation
-stabilization and closure.
+Prevent assistant-mode generic "I don't know"/template outputs for low-evidence
+conversational queries while preserving strict safety for source-grounded flows.
 
 ### Architecture Position
 
 Planned modules:
 
-- TBD (post-adaptation planning)
+- conversational recovery contract baseline
+- low-evidence non-greeting recovery adapter
+- recovery policy guardrails
+- runtime wiring + diagnostics parity
+- docs + CI quality-gate closure
 
 ### Patch Plan
 
 #### Patch plan
-- Patch plan is intentionally deferred until A2.44 scope is approved.
+- Patch 1 — Conversational Recovery Baseline + Runtime Hook
+- Patch 2 — Language-Native Recovery Adapter Hardening
+- Patch 3 — Recovery Policy Guardrails
+- Patch 4 — Runtime Wiring + Diagnostics Parity
+- Patch 5 — Docs/CI Closure
 
 ### Progress
 
-- [ ] Patch 1 — TBD
+- [x] Patch 1 — Conversational Recovery Baseline + Runtime Hook
+- [ ] Patch 2 — Language-Native Recovery Adapter Hardening
+- [ ] Patch 3 — Recovery Policy Guardrails
+- [ ] Patch 4 — Runtime Wiring + Diagnostics Parity
+- [ ] Patch 5 — Docs/CI Closure
 
 ### Out of Scope
 
@@ -33,8 +45,8 @@ Do NOT modify during planning:
 ### Definition of Done
 
 A2.44 completion criteria:
-- scope, contracts, and patch plan are explicitly documented and approved.
-- selected implementation path preserves deterministic safety constraints.
+- low-evidence conversational queries avoid generic "I don't know" output.
+- source-grounded/factual safety gates remain intact and deterministic.
 - full unit suite and quality-gate coverage remain green.
 
 ## Next Anchor

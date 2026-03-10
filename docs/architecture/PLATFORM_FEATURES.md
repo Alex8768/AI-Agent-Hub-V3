@@ -155,6 +155,7 @@ AI-Agent-Hub-V3 is a modular AI platform for production-grade agent systems with
 - [x] Feedback adaptation policy guardrails with forced fallback diagnostics (A2.43 patch 3)
 - [x] Feedback adaptation runtime wiring and diagnostics parity (A2.43 patch 4)
 - [x] Feedback adaptation runtime docs/CI closure (A2.43 patch 5)
+- [x] Assistant low-evidence conversational recovery runtime hook (A2.44 patch 1)
 
 ### 7) Interface Layer
 

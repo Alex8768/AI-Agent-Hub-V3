@@ -1032,6 +1032,42 @@ async def test_answer_service_assistant_fallback_localizes_english(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_answer_service_applies_chat_recovery_for_low_evidence_non_greeting(monkeypatch):
+    class _S:
+        feature_reasoning = True
+        feature_graphrag = True
+        feature_reasoning_llm_enabled = False
+        feature_assistant_mode = True
+        feature_assistant_proactive = False
+        feature_assistant_actions = False
+        llm_provider = "ollama"
+        openai_model = ""
+        ollama_model = "llama3.2:latest"
+
+    monkeypatch.setattr("src.core.config.get_settings", lambda: _S())
+    monkeypatch.setattr("src.observability.trace.make_trace_id", lambda **kwargs: "trace-123", raising=False)
+    monkeypatch.setattr(
+        "src.core.providers.get_reasoning_engine",
+        lambda *, retriever=None, llm=None, llm_timeout_s=None: _FakeReasoningEngine(retriever),
+    )
+
+    async def _fake_chat_recovery(**kwargs):
+        _ = kwargs
+        return "Да, конечно. Я готова помогать."
+
+    monkeypatch.setattr("src.services.answer.answer_service._build_assistant_chat_recovery_answer", _fake_chat_recovery)
+
+    http = _DummyHTTP(request_id="rid-assistant-chat-recovery", rag_engine=object(), hybrid_retriever=_CaptureHybrid())
+    req = AnswerRequest(query="Ты готова мне помогать и обучаться?")
+    resp = await AnswerService().handle(http, req, workspace_id="default")
+    diag = dict(getattr(resp, "diagnostics", {}) or {})
+
+    assert "готова помогать" in str(getattr(resp, "answer", "")).lower()
+    assert diag.get("assistant_chat_recovery_applied") is True
+    assert "assistant_chat_recovery_applied" in list(diag.get("planning_reason_codes") or [])
+
+
+@pytest.mark.asyncio
 async def test_answer_service_proactive_ranking_mvp(monkeypatch):
     class _S:
         feature_reasoning = True

@@ -107,6 +107,78 @@ def _build_assistant_fallback_answer(*, query: str, language: str) -> str:
     )
 
 
+def _is_simple_greeting_query(query: str) -> bool:
+    lowered = str(query or "").strip().lower()
+    if not lowered:
+        return False
+    return (
+        "привет" in lowered
+        or lowered.startswith("hi")
+        or "hello" in lowered
+    )
+
+
+def _is_unknown_style_answer(answer: str) -> bool:
+    lowered = str(answer or "").strip().lower()
+    if not lowered:
+        return False
+    markers = [
+        "извините, я не знаю",
+        "я не знаю",
+        "i don't know",
+        "i do not know",
+        "sorry, i don't know",
+    ]
+    return any(marker in lowered for marker in markers)
+
+
+def _is_generic_assistant_fallback_answer(answer: str) -> bool:
+    lowered = str(answer or "").strip().lower()
+    if not lowered:
+        return False
+    return (
+        "готов помочь как ассистент" in lowered
+        or "i can help as an operations assistant" in lowered
+    )
+
+
+async def _build_assistant_chat_recovery_answer(
+    *,
+    query: str,
+    language: str,
+    llm: object | None,
+    current_answer: str,
+) -> str:
+    current = str(current_answer or "").strip()
+    if current and not _is_unknown_style_answer(current) and not _is_generic_assistant_fallback_answer(current):
+        return current
+
+    if llm is not None and hasattr(llm, "generate"):
+        prompt = (
+            "You are a helpful operations assistant. "
+            "The user asked a conversational question with low evidence context. "
+            "Answer naturally in the user's language in 1-3 short sentences. "
+            "Do not say you don't know. "
+            f"User query: {str(query or '').strip()}"
+        )
+        try:
+            candidate = str(await llm.generate(prompt)).strip()
+        except Exception:
+            candidate = ""
+        if candidate and not _is_unknown_style_answer(candidate):
+            return candidate
+
+    if language == "ru":
+        return (
+            "Да, конечно. Я готова помогать с задачами, обучаться на вашем фидбэке "
+            "и предлагать более точные следующие шаги в процессе работы."
+        )
+    return (
+        "Yes, absolutely. I can help with tasks, learn from your feedback, "
+        "and suggest more precise next steps as we work."
+    )
+
+
 def _rank_proactive_bundle(bundle: dict[str, object]) -> dict[str, object]:
     suggestions = [dict(row or {}) for row in list(bundle.get("suggestions") or [])]
     normalized: list[dict[str, object]] = []
@@ -3415,6 +3487,31 @@ class AnswerService:
             session_memory_loaded=session_memory_loaded,
             session_memory_hit=session_memory_hit,
         )
+        try:
+            diag = dict(getattr(resp, "diagnostics", None) or {})
+            has_evidence = int(diag.get("retrieved_provenance_count", 0) or 0) > 0
+            plan_intent = str((dict(diag.get("assistant_plan") or {})).get("intent", "general_query") or "general_query")
+            if (
+                assistant_mode_enabled
+                and not has_evidence
+                and plan_intent in {"general_chat", "general_query"}
+                and not _is_simple_greeting_query(str(getattr(req, "query", "") or ""))
+            ):
+                recovered = await _build_assistant_chat_recovery_answer(
+                    query=str(getattr(req, "query", "") or ""),
+                    language=str(assistant_response_language or "auto"),
+                    llm=llm,
+                    current_answer=str(getattr(resp, "answer", "") or ""),
+                )
+                if recovered and recovered.strip() != str(getattr(resp, "answer", "") or "").strip():
+                    resp.answer = recovered
+                    reason_codes = [str(x) for x in list(diag.get("planning_reason_codes") or []) if str(x or "").strip()]
+                    reason_codes.append("assistant_chat_recovery_applied")
+                    diag["planning_reason_codes"] = sorted(set(reason_codes))
+                    diag["assistant_chat_recovery_applied"] = True
+                    resp.diagnostics = diag
+        except Exception:
+            pass
         try:
             if assistant_proactive_enabled:
                 anticipatory = await _run_anticipatory_safe_mode(
