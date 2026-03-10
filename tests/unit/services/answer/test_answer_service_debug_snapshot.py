@@ -167,8 +167,10 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
         "assistant_actions_enabled",
         "intent_contract_version",
         "plan_contract_version",
+        "llm_planner_contract_version",
         "assistant_intent",
         "assistant_plan",
+        "assistant_llm_planner",
         "planning_policy",
         "execution_handshake_contract_version",
         "assistant_execution_handshake",
@@ -204,6 +206,7 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
     assert any(str(x).startswith("chunk:") for x in diag["top_evidence"])
     assert diag.get("intent_contract_version") == "v1"
     assert diag.get("plan_contract_version") == "v1"
+    assert diag.get("llm_planner_contract_version") == "v1"
     intent = dict(diag.get("assistant_intent") or {})
     assert set(intent.keys()) == {
         "intent",
@@ -221,6 +224,16 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
         "intent",
         "steps",
         "requires_confirmation",
+        "reason_codes",
+    }
+    llm_planner = dict(diag.get("assistant_llm_planner") or {})
+    assert set(llm_planner.keys()) == {
+        "contract_version",
+        "source",
+        "status",
+        "model",
+        "intent",
+        "plan_id",
         "reason_codes",
     }
     policy = dict(diag.get("planning_policy") or {})

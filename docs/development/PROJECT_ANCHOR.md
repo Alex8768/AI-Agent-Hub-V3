@@ -30,7 +30,7 @@ Planned modules:
 
 ### Progress
 
-- [ ] Patch 1 — LLM Planner Contract Baseline
+- [x] Patch 1 — LLM Planner Contract Baseline
 - [ ] Patch 2 — Planner Adapter + Deterministic Fallback
 - [ ] Patch 3 — Planner Policy Guardrails
 - [ ] Patch 4 — Runtime Wiring + Diagnostics Parity

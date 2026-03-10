@@ -17,6 +17,7 @@ SELF_CHECK_MISSING_MINIMAL_COUNT_MAX = 0
 ASSISTANT_CONTRACT_VERSION = "v1"
 INTENT_CONTRACT_VERSION = "v1"
 PLAN_CONTRACT_VERSION = "v1"
+LLM_PLANNER_CONTRACT_VERSION = "v1"
 HANDSHAKE_CONTRACT_VERSION = "v1"
 EXECUTION_RECEIPT_CONTRACT_VERSION = "v1"
 APPROVAL_SESSION_CONTRACT_VERSION = "v1"
@@ -154,6 +155,18 @@ class AssistantPlan(BaseModel):
     intent: str = Field(default="general_query")
     steps: list[AssistantPlanStep] = Field(default_factory=list)
     requires_confirmation: bool = Field(default=True)
+    reason_codes: list[str] = Field(default_factory=list)
+
+
+class AssistantLLMPlanner(BaseModel):
+    """LLM planner diagnostics contract (baseline)."""
+
+    contract_version: str = Field(default=LLM_PLANNER_CONTRACT_VERSION)
+    source: Literal["heuristic", "llm", "fallback"] = Field(default="heuristic")
+    status: Literal["idle", "disabled", "ready", "fallback"] = Field(default="idle")
+    model: str = Field(default="")
+    intent: str = Field(default="")
+    plan_id: str = Field(default="")
     reason_codes: list[str] = Field(default_factory=list)
 
 

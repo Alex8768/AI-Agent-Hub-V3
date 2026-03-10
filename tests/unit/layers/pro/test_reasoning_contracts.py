@@ -11,6 +11,7 @@ from src.layers.pro.reasoning.contracts import (
     HANDSHAKE_CONTRACT_VERSION,
     IDEMPOTENCY_RECORD_CONTRACT_VERSION,
     INTENT_CONTRACT_VERSION,
+    LLM_PLANNER_CONTRACT_VERSION,
     PLAN_CONTRACT_VERSION,
     AssistantApprovalSession,
     AssistantDurableApprovalSessionRecord,
@@ -21,6 +22,7 @@ from src.layers.pro.reasoning.contracts import (
     AssistantIdempotencyRecord,
     AssistantIntent,
     AssistantIntentResult,
+    AssistantLLMPlanner,
     AssistantPlan,
     AssistantPlanStep,
     AssistantSuggestion,
@@ -83,6 +85,7 @@ def test_assistant_contract_models_defaults():
     assert ASSISTANT_CONTRACT_VERSION == "v1"
     assert INTENT_CONTRACT_VERSION == "v1"
     assert PLAN_CONTRACT_VERSION == "v1"
+    assert LLM_PLANNER_CONTRACT_VERSION == "v1"
     assert HANDSHAKE_CONTRACT_VERSION == "v1"
     assert EXECUTION_RECEIPT_CONTRACT_VERSION == "v1"
     assert APPROVAL_SESSION_CONTRACT_VERSION == "v1"
@@ -135,6 +138,17 @@ def test_assistant_contract_models_defaults():
     assert plan.deterministic is True
     assert plan.requires_confirmation is True
     assert len(plan.steps) == 1
+
+    llm_planner = AssistantLLMPlanner(
+        source="fallback",
+        status="fallback",
+        model="gpt-4o-mini",
+        intent="start_project",
+        plan_id="plan:start_project:abc123",
+        reason_codes=["llm_planner_fallback_to_deterministic_plan"],
+    )
+    assert llm_planner.contract_version == "v1"
+    assert llm_planner.status == "fallback"
 
     handshake = AssistantExecutionHandshake(
         state="pending_confirmation",

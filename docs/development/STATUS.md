@@ -13,15 +13,16 @@ A2.39 — Controlled Execution Pilot (Strict Safe Mode+)
 A2.40 — Intent-based Planning Engine (LLM Planner)
 
 Current progress:
-- Patch 1 pending: LLM Planner Contract Baseline.
+- Patch 1 complete: LLM Planner Contract Baseline.
 - Patch 2 pending: Planner Adapter + Deterministic Fallback.
 - Patch 3 pending: Planner Policy Guardrails.
 - Patch 4 pending: Runtime Wiring + Diagnostics Parity.
 - Patch 5 pending: Docs/CI Closure.
 
 Focus:
-- formalize A2.40 planner contract and patch decomposition
+- LLM planner contract baseline is exposed in diagnostics
 - keep deterministic safety guards while introducing LLM planning path
+- proceed with planner adapter wiring and deterministic fallback in patch 2
 - preserve strict micro-patch execution discipline
 
 Execution discipline:

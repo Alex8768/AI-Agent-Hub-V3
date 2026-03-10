@@ -24,6 +24,7 @@ from src.layers.pro.reasoning.contracts import (
     HANDSHAKE_CONTRACT_VERSION,
     IDEMPOTENCY_RECORD_CONTRACT_VERSION,
     INTENT_CONTRACT_VERSION,
+    LLM_PLANNER_CONTRACT_VERSION,
     PLAN_CONTRACT_VERSION,
     SELF_CHECK_MINIMAL_COVERAGE_SCORE_MIN,
     SELF_CHECK_MISSING_MINIMAL_COUNT_MAX,
@@ -494,6 +495,36 @@ def _apply_plan_policy_guards(
         "reason_codes": reason_codes,
     }
     return guarded_plan, policy
+
+
+def _build_llm_planner_bundle(
+    *,
+    intent_payload: dict[str, object],
+    plan_bundle: dict[str, object],
+    llm_enabled: bool,
+    llm_model: str,
+) -> dict[str, object]:
+    intent_name = str(intent_payload.get("intent", "general_query") or "general_query")
+    plan_id = str(plan_bundle.get("plan_id", "") or "")
+    if not llm_enabled:
+        return {
+            "contract_version": LLM_PLANNER_CONTRACT_VERSION,
+            "source": "heuristic",
+            "status": "disabled",
+            "model": str(llm_model or ""),
+            "intent": intent_name,
+            "plan_id": plan_id,
+            "reason_codes": ["llm_planner_disabled"],
+        }
+    return {
+        "contract_version": LLM_PLANNER_CONTRACT_VERSION,
+        "source": "fallback",
+        "status": "fallback",
+        "model": str(llm_model or ""),
+        "intent": intent_name,
+        "plan_id": plan_id,
+        "reason_codes": ["llm_planner_fallback_to_deterministic_plan"],
+    }
 
 
 def _build_execution_handshake_bundle(
@@ -1879,6 +1910,14 @@ def _apply_diagnostics(
         plan, planning_policy = _apply_plan_policy_guards(plan_bundle=plan, max_steps=5)
         diag.setdefault("plan_contract_version", PLAN_CONTRACT_VERSION)
         diag.setdefault("assistant_plan", dict(plan))
+        llm_planner = _build_llm_planner_bundle(
+            intent_payload=intent,
+            plan_bundle=plan,
+            llm_enabled=bool(llm_enabled),
+            llm_model=str(llm_model or ""),
+        )
+        diag.setdefault("llm_planner_contract_version", LLM_PLANNER_CONTRACT_VERSION)
+        diag.setdefault("assistant_llm_planner", llm_planner)
         diag.setdefault("planning_policy", dict(planning_policy))
         anticipatory = dict(diag.get("anticipatory") or {})
         draft_actions = dict(anticipatory.get("draft_actions") or {})
@@ -1985,6 +2024,7 @@ def _apply_diagnostics(
         diag.setdefault("idempotency_record_contract_version", IDEMPOTENCY_RECORD_CONTRACT_VERSION)
         diag.setdefault("assistant_idempotency_record", idempotency_record)
         reason_codes = list(intent.get("reason_codes") or []) + list(plan.get("reason_codes") or [])
+        reason_codes.extend(list(llm_planner.get("reason_codes") or []))
         reason_codes.extend(list(planning_policy.get("reason_codes") or []))
         reason_codes.extend(list(handshake.get("reason_codes") or []))
         reason_codes.extend(list(execution_idempotency.get("reason_codes") or []))
