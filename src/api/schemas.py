@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Literal, Optional
 from pydantic import BaseModel, Field
 
 class LLMRequest(BaseModel):
@@ -88,4 +88,15 @@ class DocumentDetailOut(BaseModel):
     indexed_at: Optional[str] = None
     error_message: Optional[str] = None
     metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class AnswerConfirmRequest(BaseModel):
+    query: str = Field(min_length=1)
+    decision: Literal["approve", "cancel"] = Field(
+        description="Handshake decision for confirmation workflow"
+    )
+    confirmation_token: str = Field(min_length=1)
+    action_ids: List[str] = Field(default_factory=list)
+    session_id: str = Field(default="default", min_length=1, max_length=128)
+    filters: Dict[str, Any] = Field(default_factory=dict)
 

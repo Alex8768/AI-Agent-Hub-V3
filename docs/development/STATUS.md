@@ -14,10 +14,11 @@ A2.37 — Approval Session & Idempotent Execution Gateway (Safe Mode)
 
 Current progress:
 - Patch 1 completed: Approval Session Contract Baseline.
+- Patch 2 completed: Confirm/Cancel API Contract Surface.
 
 Focus:
 - explicit approval-session diagnostics contract in answer runtime
-- deterministic one-time token session state with no side effects
+- dedicated confirm/cancel API contract surface over handshake transitions
 
 Execution discipline:
 - keep work strictly inside the active anchor and move in micro-patches.
