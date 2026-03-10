@@ -1031,3 +1031,96 @@ async def test_answer_service_planning_policy_blocks_unsafe_steps(monkeypatch):
     assert plan.get("requires_confirmation") is False
     assert policy.get("blocked_steps_count") == 1
     assert "unsafe_steps_blocked" in list(policy.get("reason_codes") or [])
+
+
+@pytest.mark.asyncio
+async def test_answer_service_handshake_transition_approve(monkeypatch):
+    class _S:
+        feature_reasoning = True
+        feature_graphrag = True
+        feature_reasoning_llm_enabled = False
+        feature_assistant_mode = True
+        feature_assistant_proactive = False
+        feature_assistant_actions = True
+        llm_provider = "ollama"
+        openai_model = ""
+        ollama_model = "llama3.2:latest"
+
+    monkeypatch.setattr("src.core.config.get_settings", lambda: _S())
+    monkeypatch.setattr("src.observability.trace.make_trace_id", lambda **kwargs: "trace-123", raising=False)
+    monkeypatch.setattr(
+        "src.core.providers.get_reasoning_engine",
+        lambda *, retriever=None, llm=None, llm_timeout_s=None: _FakeReasoningEngine(retriever),
+    )
+
+    http = _DummyHTTP(request_id="rid-handshake-approve", rag_engine=object(), hybrid_retriever=_FakeHybrid())
+    base_req = AnswerRequest(query="new project planning", session_id="default")
+    base_resp = await AnswerService().handle(http, base_req, workspace_id="default")
+    base_diag = dict(getattr(base_resp, "diagnostics", {}) or {})
+    token = str((dict(base_diag.get("assistant_execution_handshake") or {})).get("confirmation_token", "") or "")
+    ant = dict(base_diag.get("anticipatory") or {})
+    draft_actions = dict(ant.get("draft_actions") or {})
+    first_action = dict((list(draft_actions.get("actions") or [{}])[0]) or {})
+    action_id = str(first_action.get("action_id", "") or "")
+
+    req = AnswerRequest(
+        query="new project planning",
+        session_id="default",
+        filters={
+            "handshake_decision": "approve",
+            "handshake_confirmation_token": token,
+            "handshake_action_ids": [action_id],
+        },
+    )
+    resp = await AnswerService().handle(http, req, workspace_id="default")
+    diag = dict(getattr(resp, "diagnostics", {}) or {})
+    handshake = dict(diag.get("assistant_execution_handshake") or {})
+
+    assert handshake.get("state") == "approved"
+    assert handshake.get("requires_confirmation") is False
+    assert handshake.get("approved_action_ids") == [action_id]
+    assert "user_approved" in list(handshake.get("reason_codes") or [])
+
+
+@pytest.mark.asyncio
+async def test_answer_service_handshake_transition_cancel(monkeypatch):
+    class _S:
+        feature_reasoning = True
+        feature_graphrag = True
+        feature_reasoning_llm_enabled = False
+        feature_assistant_mode = True
+        feature_assistant_proactive = False
+        feature_assistant_actions = True
+        llm_provider = "ollama"
+        openai_model = ""
+        ollama_model = "llama3.2:latest"
+
+    monkeypatch.setattr("src.core.config.get_settings", lambda: _S())
+    monkeypatch.setattr("src.observability.trace.make_trace_id", lambda **kwargs: "trace-123", raising=False)
+    monkeypatch.setattr(
+        "src.core.providers.get_reasoning_engine",
+        lambda *, retriever=None, llm=None, llm_timeout_s=None: _FakeReasoningEngine(retriever),
+    )
+
+    http = _DummyHTTP(request_id="rid-handshake-cancel", rag_engine=object(), hybrid_retriever=_FakeHybrid())
+    base_req = AnswerRequest(query="new project planning", session_id="default")
+    base_resp = await AnswerService().handle(http, base_req, workspace_id="default")
+    base_diag = dict(getattr(base_resp, "diagnostics", {}) or {})
+    token = str((dict(base_diag.get("assistant_execution_handshake") or {})).get("confirmation_token", "") or "")
+
+    req = AnswerRequest(
+        query="new project planning",
+        session_id="default",
+        filters={
+            "handshake_decision": "cancel",
+            "handshake_confirmation_token": token,
+        },
+    )
+    resp = await AnswerService().handle(http, req, workspace_id="default")
+    diag = dict(getattr(resp, "diagnostics", {}) or {})
+    handshake = dict(diag.get("assistant_execution_handshake") or {})
+
+    assert handshake.get("state") == "cancelled"
+    assert handshake.get("requires_confirmation") is False
+    assert isinstance(handshake.get("blocked_action_ids"), list)
+    assert "user_cancelled" in list(handshake.get("reason_codes") or [])

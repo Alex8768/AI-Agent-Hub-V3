@@ -514,6 +514,90 @@ def _build_execution_handshake_bundle(
     }
 
 
+def _extract_handshake_transition_input(req: AnswerRequest) -> dict[str, object]:
+    filters = dict(getattr(req, "filters", {}) or {})
+    decision_raw = str(filters.get("handshake_decision", "") or "").strip().lower()
+    if decision_raw not in {"approve", "cancel"}:
+        decision_raw = ""
+
+    token = str(filters.get("handshake_confirmation_token", "") or "").strip()
+    requested_action_ids_raw = list(filters.get("handshake_action_ids") or [])
+    requested_action_ids = [str(x).strip() for x in requested_action_ids_raw if str(x or "").strip()]
+    return {
+        "decision": decision_raw,
+        "confirmation_token": token,
+        "requested_action_ids": requested_action_ids,
+    }
+
+
+def _apply_handshake_transition(
+    *,
+    handshake_bundle: dict[str, object],
+    transition_input: dict[str, object],
+    draft_actions_bundle: dict[str, object],
+) -> dict[str, object]:
+    decision = str(transition_input.get("decision", "") or "")
+    provided_token = str(transition_input.get("confirmation_token", "") or "")
+    requested_action_ids = [str(x) for x in list(transition_input.get("requested_action_ids") or []) if str(x)]
+    if not decision:
+        return dict(handshake_bundle or {})
+
+    current = dict(handshake_bundle or {})
+    expected_token = str(current.get("confirmation_token", "") or "")
+    if not expected_token or provided_token != expected_token:
+        reasons = sorted(
+            set([str(x) for x in list(current.get("reason_codes") or []) if str(x or "").strip()])
+            | {"invalid_confirmation_token"}
+        )
+        return {
+            **current,
+            "state": "pending_confirmation",
+            "approved_action_ids": [],
+            "blocked_action_ids": [],
+            "receipt_id": "",
+            "reason_codes": reasons,
+        }
+
+    action_rows = [dict(row or {}) for row in list(draft_actions_bundle.get("actions") or [])]
+    available_action_ids = [
+        str(row.get("action_id", "") or "")
+        for row in action_rows
+        if str(row.get("action_id", "") or "").strip()
+    ]
+    if decision == "cancel":
+        reasons = sorted(
+            set([str(x) for x in list(current.get("reason_codes") or []) if str(x or "").strip()])
+            | {"user_cancelled"}
+        )
+        return {
+            **current,
+            "state": "cancelled",
+            "requires_confirmation": False,
+            "approved_action_ids": [],
+            "blocked_action_ids": available_action_ids,
+            "receipt_id": "",
+            "reason_codes": reasons,
+        }
+
+    requested_set = set(requested_action_ids or available_action_ids)
+    approved = [aid for aid in available_action_ids if aid in requested_set]
+    blocked = [aid for aid in available_action_ids if aid not in set(approved)]
+    state = "approved" if approved else "pending_confirmation"
+    reasons = sorted(
+        set([str(x) for x in list(current.get("reason_codes") or []) if str(x or "").strip()])
+        | ({"user_approved"} if approved else {"no_matching_action_ids"})
+    )
+    return {
+        **current,
+        "state": state,
+        "requires_confirmation": False if approved else True,
+        "approved_action_ids": approved,
+        "blocked_action_ids": blocked,
+        "receipt_id": "",
+        "reason_codes": reasons,
+    }
+
+
 def log_observability(http: Request, *, workspace_id: str, req: AnswerRequest) -> None:
     try:
         from loguru import logger
@@ -1016,6 +1100,11 @@ def _apply_diagnostics(
             assistant_mode_enabled=assistant_mode_enabled,
             actions_enabled=assistant_actions_enabled,
         )
+        handshake = _apply_handshake_transition(
+            handshake_bundle=handshake,
+            transition_input=_extract_handshake_transition_input(req),
+            draft_actions_bundle=draft_actions,
+        )
         diag.setdefault("execution_handshake_contract_version", HANDSHAKE_CONTRACT_VERSION)
         diag.setdefault("assistant_execution_handshake", handshake)
         reason_codes = list(intent.get("reason_codes") or []) + list(plan.get("reason_codes") or [])
@@ -1425,12 +1514,18 @@ class AnswerService:
                 resp.diagnostics = dict(getattr(resp, "diagnostics", None) or {})
                 resp.diagnostics["anticipatory"] = anticipatory
                 plan_bundle = dict(resp.diagnostics.get("assistant_plan") or {})
-                resp.diagnostics["assistant_execution_handshake"] = _build_execution_handshake_bundle(
+                handshake = _build_execution_handshake_bundle(
                     plan_bundle=plan_bundle,
                     draft_actions_bundle=dict(anticipatory.get("draft_actions") or {}),
                     assistant_mode_enabled=assistant_mode_enabled,
                     actions_enabled=assistant_actions_enabled,
                 )
+                handshake = _apply_handshake_transition(
+                    handshake_bundle=handshake,
+                    transition_input=_extract_handshake_transition_input(req),
+                    draft_actions_bundle=dict(anticipatory.get("draft_actions") or {}),
+                )
+                resp.diagnostics["assistant_execution_handshake"] = handshake
             else:
                 resp.diagnostics = dict(getattr(resp, "diagnostics", None) or {})
                 base = dict(resp.diagnostics.get("anticipatory") or {})
@@ -1461,12 +1556,18 @@ class AnswerService:
                 )
                 resp.diagnostics["anticipatory"] = base
                 plan_bundle = dict(resp.diagnostics.get("assistant_plan") or {})
-                resp.diagnostics["assistant_execution_handshake"] = _build_execution_handshake_bundle(
+                handshake = _build_execution_handshake_bundle(
                     plan_bundle=plan_bundle,
                     draft_actions_bundle=dict(base.get("draft_actions") or {}),
                     assistant_mode_enabled=assistant_mode_enabled,
                     actions_enabled=assistant_actions_enabled,
                 )
+                handshake = _apply_handshake_transition(
+                    handshake_bundle=handshake,
+                    transition_input=_extract_handshake_transition_input(req),
+                    draft_actions_bundle=dict(base.get("draft_actions") or {}),
+                )
+                resp.diagnostics["assistant_execution_handshake"] = handshake
         except Exception:
             pass
 

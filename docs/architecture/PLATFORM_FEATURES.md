@@ -116,6 +116,7 @@ AI-Agent-Hub-V3 is a modular AI platform for production-grade agent systems with
 - [x] Planning policy guards for review-only safety (A2.35 patch 4)
 - [x] Intent-to-plan orchestrator docs/CI closure (A2.35 patch 5)
 - [x] Confirmation-to-execution handshake diagnostics baseline (A2.36 patch 1)
+- [x] Confirmation transition model (approved/cancelled) diagnostics (A2.36 patch 2)
 
 ### 7) Interface Layer
 

@@ -44,7 +44,7 @@
 ## Current Work — A2.36 Confirmation-to-Execution Handshake (MVP)
 
 - [x] Patch 1 — Handshake Contract Baseline
-- [ ] Patch 2 — Confirmation Transition Model (Approved/Cancelled)
+- [x] Patch 2 — Confirmation Transition Model (Approved/Cancelled)
 - [ ] Patch 3 — Execution Receipt Stub Integration
 - [ ] Patch 4 — Transition Policy Guards
 - [ ] Patch 5 — Docs/CI Closure
