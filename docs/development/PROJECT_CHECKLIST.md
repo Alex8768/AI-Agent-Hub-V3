@@ -47,18 +47,15 @@
 - [x] A2.40 Intent-based Planning Engine (LLM Planner)
 - [x] A2.41 Dynamic Tool Selection (MCP-aware)
 - [x] A2.42 Learning from Feedback (Approve/Cancel/Edit)
+- [x] A2.43 Feedback-to-Planning Adaptation (MVP)
 
-## Current Work — A2.43 Feedback-to-Planning Adaptation (MVP)
+## Current Work — A2.44 TBD (post-adaptation planning)
 
-- [x] Patch 1 — Adaptation Contract Baseline
-- [x] Patch 2 — Signal-to-Plan Adapter + Deterministic Ranking
-- [x] Patch 3 — Adaptation Policy Guardrails
-- [x] Patch 4 — Runtime Wiring + Diagnostics Parity
-- [ ] Patch 5 — Docs/CI Closure
+- [ ] Define anchor scope and patch plan
 
 ## Next
 
-- [ ] Start A2.43 patch 1 implementation
+- [ ] Start A2.44 patch implementation after scope approval
 
 ## Later
 

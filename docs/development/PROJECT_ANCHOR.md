@@ -2,39 +2,27 @@
 
 ## Active Anchor
 
-A2.43 — Feedback-to-Planning Adaptation (MVP)
+A2.44 — TBD (post-adaptation planning)
 
 ### Goal
 
-Use captured approve/cancel/edit feedback to deterministically adapt
-plan/action relevance diagnostics while preserving safe-mode constraints.
+Define the next implementation anchor after feedback-to-planning adaptation
+stabilization and closure.
 
 ### Architecture Position
 
 Planned modules:
 
-- adaptation diagnostics contract baseline
-- signal-to-plan deterministic adapter
-- adaptation policy guardrails
-- runtime wiring + diagnostics parity
-- docs + CI quality-gate closure
+- TBD (post-adaptation planning)
 
 ### Patch Plan
 
 #### Patch plan
-- Patch 1 — Adaptation Contract Baseline
-- Patch 2 — Signal-to-Plan Adapter + Deterministic Ranking
-- Patch 3 — Adaptation Policy Guardrails
-- Patch 4 — Runtime Wiring + Diagnostics Parity
-- Patch 5 — Docs/CI Closure
+- Patch plan is intentionally deferred until A2.44 scope is approved.
 
 ### Progress
 
-- [x] Patch 1 — Adaptation Contract Baseline
-- [x] Patch 2 — Signal-to-Plan Adapter + Deterministic Ranking
-- [x] Patch 3 — Adaptation Policy Guardrails
-- [x] Patch 4 — Runtime Wiring + Diagnostics Parity
-- [ ] Patch 5 — Docs/CI Closure
+- [ ] Patch 1 — TBD
 
 ### Out of Scope
 
@@ -44,14 +32,14 @@ Do NOT modify during planning:
 
 ### Definition of Done
 
-A2.43 completion criteria:
-- feedback signals influence planning diagnostics deterministically.
-- adaptation remains policy-guarded and review-safe by default.
+A2.44 completion criteria:
+- scope, contracts, and patch plan are explicitly documented and approved.
+- selected implementation path preserves deterministic safety constraints.
 - full unit suite and quality-gate coverage remain green.
 
 ## Next Anchor
 
-A2.44 — TBD
+A2.45 — TBD
 
 ### Discipline
 
@@ -63,11 +51,11 @@ Work order is strict:
 
 ### Last Completed Anchor
 
-A2.42 — Learning from Feedback (Approve/Cancel/Edit)
+A2.43 — Feedback-to-Planning Adaptation (MVP)
 
 Completed via patches:
-- Patch 1 — Feedback Contract Baseline
-- Patch 2 — Feedback Capture Adapter + Deterministic Normalization
-- Patch 3 — Feedback Policy Guardrails
+- Patch 1 — Adaptation Contract Baseline
+- Patch 2 — Signal-to-Plan Adapter + Deterministic Ranking
+- Patch 3 — Adaptation Policy Guardrails
 - Patch 4 — Runtime Wiring + Diagnostics Parity
 - Patch 5 — Docs/CI Closure

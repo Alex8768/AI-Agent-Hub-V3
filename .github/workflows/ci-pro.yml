@@ -40,6 +40,7 @@ jobs:
             tests/unit/docs/test_llm_planner_runtime_quality_gate.py \
             tests/unit/docs/test_dynamic_tool_selection_runtime_quality_gate.py \
             tests/unit/docs/test_feedback_learning_runtime_quality_gate.py \
+            tests/unit/docs/test_feedback_adaptation_runtime_quality_gate.py \
             tests/unit/layers/pro/test_reasoning_enterprise_required_checks_matrix.py \
             tests/unit/layers/pro/test_reasoning_enterprise_required_checks_normalizer.py \
             tests/unit/layers/pro/test_reasoning_enterprise_required_checks_consolidation_quality_gate.py \

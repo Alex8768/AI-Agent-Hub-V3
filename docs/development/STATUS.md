@@ -6,26 +6,19 @@ Pro Layer Development — Reasoning Stabilization
 
 ## Last Completed Anchor
 
-A2.42 — Learning from Feedback (Approve/Cancel/Edit)
+A2.43 — Feedback-to-Planning Adaptation (MVP)
 
 ## Current Active Anchor
 
-A2.43 — Feedback-to-Planning Adaptation (MVP)
+A2.44 — TBD (post-adaptation planning)
 
 Current progress:
-- Patch 1 complete: Adaptation Contract Baseline.
-- Patch 2 complete: Signal-to-Plan Adapter + Deterministic Ranking.
-- Patch 3 complete: Adaptation Policy Guardrails.
-- Patch 4 complete: Runtime Wiring + Diagnostics Parity.
-- Patch 5 pending: Docs/CI Closure.
+- A2.43 is completed through patch 5 (docs/CI closure included).
+- A2.44 scope is not yet finalized.
 
 Focus:
-- adaptation contract baseline is exposed in diagnostics
-- signal-to-plan adapter ranks intent relevance deterministically from feedback
-- adaptation policy guardrails enforce deterministic safe fallback on violations
-- runtime wiring keeps adaptation diagnostics parity across runtime branches
-- keep adaptation deterministic and policy-guarded
-- preserve review-safe behavior and existing execution boundaries
+- lock A2.43 as completed and stable in docs/CI
+- define A2.44 scope and patch sequence before implementation starts
 - preserve strict micro-patch execution discipline
 
 Execution discipline:
@@ -33,10 +26,10 @@ Execution discipline:
 
 ## Next Anchor
 
-A2.44 — TBD
+A2.45 — TBD
 
 Planned focus:
-- complete A2.43 adaptation flow from contract to docs/CI closure
+- finalize post-adaptation roadmap and select implementation scope
 
 ## CI Status
 
@@ -46,5 +39,5 @@ The noop tracing span compatibility fix is completed and treated as closed work.
 
 ## Upcoming Anchors
 
-- A2.43 — Feedback-to-Planning Adaptation (MVP)
-- A2.44 — TBD
+- A2.44 — TBD (post-adaptation planning)
+- A2.45 — TBD
