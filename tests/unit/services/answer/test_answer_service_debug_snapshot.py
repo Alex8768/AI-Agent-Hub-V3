@@ -2093,6 +2093,41 @@ def test_wire_feedback_adaptation_runtime_diagnostics_syncs_feedback_and_plan():
     assert "feedback_adaptation_runtime_unknown_intent_removed" in list(policy.get("violations") or [])
 
 
+def test_wire_assistant_recovery_runtime_diagnostics_normalizes_policy():
+    import src.services.answer.answer_service as answer_service_module
+
+    out = answer_service_module._wire_assistant_recovery_runtime_diagnostics(
+        diagnostics={
+            "response_language": "AUTO",
+            "query": "Привет",
+            "assistant_chat_recovery_applied": True,
+            "planning_reason_codes": ["deterministic_plan_built"],
+            "assistant_recovery_policy": {
+                "mode": "assistant_chat_recovery_guarded",
+                "allow_low_evidence_only": True,
+                "allowed_intents": ["general_chat", "unknown"],
+                "block_greeting_queries": True,
+                "allowed_languages": ["ru", "es"],
+                "require_assistant_mode": True,
+                "fallback_on_policy_violation": True,
+                "target_language": "auto",
+                "violations": ["assistant_chat_recovery_greeting_blocked", "unknown_violation"],
+                "applied_reason_codes": [],
+            },
+        }
+    )
+
+    policy = dict(out.get("assistant_recovery_policy") or {})
+    assert policy.get("target_language") == "ru"
+    assert policy.get("allowed_intents") == ["general_chat"]
+    assert policy.get("allowed_languages") == ["ru"]
+    assert policy.get("violations") == ["assistant_chat_recovery_greeting_blocked"]
+    assert "assistant_chat_recovery_policy_forced_fallback" in list(policy.get("applied_reason_codes") or [])
+    assert "assistant_chat_recovery_runtime_unknown_violation_removed" in list(policy.get("applied_reason_codes") or [])
+    assert "assistant_chat_recovery_runtime_applied_flag_reset" in list(policy.get("applied_reason_codes") or [])
+    assert out.get("assistant_chat_recovery_applied") is False
+
+
 @pytest.mark.asyncio
 async def test_answer_service_blocks_approval_when_rollback_plan_missing(monkeypatch):
     class _S:

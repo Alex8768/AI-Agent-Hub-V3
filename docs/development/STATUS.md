@@ -16,13 +16,14 @@ Current progress:
 - Patch 1 complete: Conversational Recovery Baseline + Runtime Hook.
 - Patch 2 complete: Language-Native Recovery Adapter Hardening.
 - Patch 3 complete: Recovery Policy Guardrails.
-- Patch 4 pending: Runtime Wiring + Diagnostics Parity.
+- Patch 4 complete: Runtime Wiring + Diagnostics Parity.
 - Patch 5 pending: Docs/CI Closure.
 
 Focus:
 - remove generic fallback behavior for low-evidence conversational requests
 - keep recovery answers language-native to the user query
 - recovery policy guardrails block unsafe/invalid recovery paths deterministically
+- runtime wiring keeps recovery diagnostics deterministic and parity-safe
 - preserve strict evidence policy for source-grounded/factual requests
 - preserve strict micro-patch execution discipline
 

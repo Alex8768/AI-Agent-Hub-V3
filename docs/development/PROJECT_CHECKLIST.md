@@ -54,12 +54,12 @@
 - [x] Patch 1 — Conversational Recovery Baseline + Runtime Hook
 - [x] Patch 2 — Language-Native Recovery Adapter Hardening
 - [x] Patch 3 — Recovery Policy Guardrails
-- [ ] Patch 4 — Runtime Wiring + Diagnostics Parity
+- [x] Patch 4 — Runtime Wiring + Diagnostics Parity
 - [ ] Patch 5 — Docs/CI Closure
 
 ## Next
 
-- [ ] Start A2.44 patch 2 implementation
+- [ ] Start A2.44 patch 5 implementation
 
 ## Later
 

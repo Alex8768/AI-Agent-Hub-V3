@@ -994,6 +994,67 @@ def _wire_feedback_adaptation_runtime_diagnostics(
     return diag
 
 
+def _wire_assistant_recovery_runtime_diagnostics(
+    *,
+    diagnostics: dict[str, object],
+) -> dict[str, object]:
+    diag = dict(diagnostics or {})
+    response_language = str(diag.get("response_language", "auto") or "auto")
+    query_text = str(diag.get("query", "") or "")
+    target_language = _normalize_language_tag(response_language, query=query_text)
+
+    policy = dict(diag.get("assistant_recovery_policy") or _build_assistant_recovery_policy_contract())
+    policy.setdefault("mode", "assistant_chat_recovery_guarded")
+    policy["allow_low_evidence_only"] = bool(policy.get("allow_low_evidence_only", True))
+    policy["block_greeting_queries"] = bool(policy.get("block_greeting_queries", True))
+    policy["require_assistant_mode"] = bool(policy.get("require_assistant_mode", True))
+    policy["fallback_on_policy_violation"] = bool(policy.get("fallback_on_policy_violation", True))
+    policy["allowed_intents"] = [
+        intent
+        for intent in [str(x).strip() for x in list(policy.get("allowed_intents") or []) if str(x or "").strip()]
+        if intent in {"general_chat", "general_query"}
+    ] or ["general_chat", "general_query"]
+    policy["allowed_languages"] = [
+        language
+        for language in [str(x).strip().lower() for x in list(policy.get("allowed_languages") or []) if str(x or "").strip()]
+        if language in {"ru", "en"}
+    ] or ["ru", "en"]
+    policy["target_language"] = target_language
+
+    known_violations = {
+        "assistant_chat_recovery_assistant_mode_disabled",
+        "assistant_chat_recovery_requires_low_evidence",
+        "assistant_chat_recovery_intent_not_allowlisted",
+        "assistant_chat_recovery_greeting_blocked",
+        "assistant_chat_recovery_language_not_allowlisted",
+    }
+    raw_violations = [str(x).strip() for x in list(policy.get("violations") or []) if str(x or "").strip()]
+    violations = [code for code in raw_violations if code in known_violations]
+    policy_reasons = [str(x) for x in list(policy.get("applied_reason_codes") or []) if str(x or "").strip()]
+
+    if len(violations) != len(raw_violations):
+        policy_reasons.append("assistant_chat_recovery_runtime_unknown_violation_removed")
+    if violations and "assistant_chat_recovery_policy_forced_fallback" not in policy_reasons:
+        policy_reasons.append("assistant_chat_recovery_policy_forced_fallback")
+    policy_reasons.append("assistant_chat_recovery_runtime_wired")
+
+    recovery_applied = bool(diag.get("assistant_chat_recovery_applied", False))
+    if recovery_applied and violations:
+        diag["assistant_chat_recovery_applied"] = False
+        policy_reasons.append("assistant_chat_recovery_runtime_applied_flag_reset")
+
+    planning_reasons = [str(x) for x in list(diag.get("planning_reason_codes") or []) if str(x or "").strip()]
+    planning_reasons.extend(policy_reasons)
+    if bool(diag.get("assistant_chat_recovery_applied", False)):
+        planning_reasons.append("assistant_chat_recovery_applied")
+    diag["planning_reason_codes"] = sorted(set(planning_reasons))
+
+    policy["violations"] = sorted(set(violations))
+    policy["applied_reason_codes"] = sorted(set(policy_reasons))
+    diag["assistant_recovery_policy"] = policy
+    return diag
+
+
 def _wire_runtime_diagnostics(
     *,
     diagnostics: dict[str, object],
@@ -1002,6 +1063,7 @@ def _wire_runtime_diagnostics(
     diag = _wire_tool_selection_runtime_diagnostics(diagnostics=diag)
     diag = _wire_feedback_runtime_diagnostics(diagnostics=diag)
     diag = _wire_feedback_adaptation_runtime_diagnostics(diagnostics=diag)
+    diag = _wire_assistant_recovery_runtime_diagnostics(diagnostics=diag)
     return diag
 
 
