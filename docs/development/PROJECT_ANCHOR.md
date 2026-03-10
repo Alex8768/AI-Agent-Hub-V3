@@ -53,7 +53,7 @@ A2.47 preserves the A2.46 topology and dependency constraints.
 ### Progress
 
 - [x] Patch 1 — debt closure inventory + scope lock
-- [ ] Patch 2 — AnswerService orchestration extraction seam
+- [x] Patch 2 — AnswerService orchestration extraction seam
 - [ ] Patch 3 — memory consistency strategy contract (outbox/compensation decision)
 - [ ] Patch 4 — runtime entrypoint cleanup decision (`run_utf8.py`)
 - [ ] Patch 5 — debt registry/docs/CI closure for A2.47

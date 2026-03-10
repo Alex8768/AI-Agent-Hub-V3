@@ -14,7 +14,7 @@ A2.47 — Debt Resolution Track (Runtime Clarity + Reliability)
 
 Current progress:
 - Patch 1 complete: debt closure inventory + scope lock.
-- Patch 2 pending: AnswerService orchestration extraction seam.
+- Patch 2 complete: AnswerService orchestration extraction seam.
 - Patch 3 pending: memory consistency strategy contract.
 - Patch 4 pending: runtime entrypoint cleanup decision.
 - Patch 5 pending: debt registry/docs/CI closure.
@@ -37,7 +37,7 @@ Execution discipline:
 A2.48 — TBD
 
 Planned focus:
-- execute A2.47 patch 2 AnswerService orchestration extraction seam
+- execute A2.47 patch 3 memory consistency strategy contract
 
 ## CI Status
 

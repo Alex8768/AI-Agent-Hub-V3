@@ -55,14 +55,14 @@
 ## Current Work — A2.47 Debt Resolution Track (Runtime Clarity + Reliability)
 
 - [x] Patch 1 — debt closure inventory + scope lock
-- [ ] Patch 2 — AnswerService orchestration extraction seam
+- [x] Patch 2 — AnswerService orchestration extraction seam
 - [ ] Patch 3 — memory consistency strategy contract
 - [ ] Patch 4 — runtime entrypoint cleanup decision
 - [ ] Patch 5 — debt registry/docs/CI closure
 
 ## Next
 
-- [ ] Start A2.47 patch 2 implementation
+- [ ] Start A2.47 patch 3 implementation
 
 ## Later
 
