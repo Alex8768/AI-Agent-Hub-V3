@@ -43,6 +43,7 @@
 - [x] A2.48 Planner Decoupling Track
 - [x] A2.49 Conversational Reliability Track (Human-Friendly Safe UX)
 - [x] A2.50 Planner Residual Decoupling (Composition Boundary Closure)
+- [x] A2.51 Answer Orchestration Decomposition
 
 ## Current Work — A2.51 Answer Orchestration Decomposition
 
@@ -50,11 +51,11 @@
 - [x] Patch 2 — orchestrator seam extraction
 - [x] Patch 3 — response assembly extraction
 - [x] Patch 4 — interface contract cleanup
-- [ ] Patch 5 — dependency / parity / quality gates
+- [x] Patch 5 — dependency / parity / quality gates
 
 ## Next
 
-- [ ] Start A2.51 patch 5 implementation
+- [ ] Post-A2.51 anchor planning
 
 ## Later
 

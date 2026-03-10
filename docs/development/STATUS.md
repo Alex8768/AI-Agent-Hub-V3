@@ -2,32 +2,31 @@
 
 ## Current Phase
 
-Platform Hardening — Answer Path Structural Decomposition
+Anchor Transition — Post-A2.51 planning
 
 ## Last Completed Anchor
 
-A2.50 — Planner Residual Decoupling (Composition Boundary Closure)
+A2.51 — Answer Orchestration Decomposition
 
-Planner/composition boundary closure completed with:
-- normalized composition boundary
-- composition resolver extraction
-- dependency/parity/fallback guardrails
+Answer-path decomposition completed with:
+- orchestrator seam extraction and facade thinning
+- response assembly extraction for recovery/friendliness/parity shaping
+- endpoint-facing interface contract cleanup
+- dependency/parity quality gates for layering guardrails
 
 ## Current Active Anchor
 
-A2.51 — Answer Orchestration Decomposition
+TBD — Post-A2.51 planning
 
 Current focus:
-- split answer-path ownership into facade / orchestrator / response assembly
-- reduce `AnswerService` to thin facade responsibilities
-- preserve answer/debug output parity while improving internal structure
+- define and scope the next anchor after A2.51 closure
+- keep answer-path layering guardrails active
+- preserve answer/debug output parity baselines
 
 Current progress:
-- Patch 1 complete: answer path inventory + scope lock.
-- Patch 2 complete: orchestrator seam extraction.
-- Patch 3 complete: response assembly extraction.
-- Patch 4 complete: interface contract cleanup.
-- Patch 5 pending: dependency / parity / quality gates.
+- A2.51 patch set complete (patches 1-5).
+- dependency and parity quality gates are in place.
+- CI/release-gate coverage includes answer orchestration quality gate.
 
 Execution discipline:
 - no net-new intelligence features

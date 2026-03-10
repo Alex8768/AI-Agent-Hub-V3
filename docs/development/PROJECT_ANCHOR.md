@@ -91,7 +91,7 @@ Exact filenames may vary if existing structure suggests a cleaner fit.
 - [x] Patch 2 — orchestrator seam extraction
 - [x] Patch 3 — response assembly extraction
 - [x] Patch 4 — interface contract cleanup
-- [ ] Patch 5 — dependency / parity / quality gates
+- [x] Patch 5 — dependency / parity / quality gates
 
 ### Non-Negotiable Rules
 
