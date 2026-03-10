@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-Pro Layer Development — Reasoning Stabilization
+Platform Hardening — Architectural Topology Stabilization
 
 ## Last Completed Anchor
 
@@ -10,25 +10,36 @@ A2.45 — Architecture Hardening Track (COO Runtime Reliability)
 
 ## Current Active Anchor
 
-A2.46 — TBD
+A2.46 — Kernel / Extensions / Execution Plane Hardening
 
 Current progress:
-- A2.46 scope is pending formalization.
+- Patch 1 complete: architecture zoning inventory + scope lock.
+- Patch 2 pending: kernel boundary formalization.
+- Patch 3 pending: governance subcore extraction.
+- Patch 4 pending: execution request boundary + execution plane isolation.
+- Patch 5 pending: dependency quality gates + docs closure.
 
 Focus:
-- finalize A2.45 closure consistency across docs/CI
-- formalize A2.46 scope and micro-patch plan
+- formalize architectural homes for all major capability clusters
+- minimize the reasoning kernel
+- isolate governance as trusted execution subcore
+- establish explicit boundary between reasoning and acting
+- add dependency-quality gates to prevent drift
 - preserve strict micro-patch execution discipline
 
 Execution discipline:
 - keep work strictly inside the active anchor and move in micro-patches.
+- topology first
+- preserve runtime parity
+- no net-new intelligence features during A2.46
+- one patch = one reason
 
 ## Next Anchor
 
 A2.47 — TBD
 
 Planned focus:
-- define and start A2.46
+- execute A2.46 patch 2 kernel boundary formalization
 
 ## CI Status
 
@@ -38,4 +49,4 @@ The noop tracing span compatibility fix is completed and treated as closed work.
 
 ## Upcoming Anchors
 
-- A2.46 — TBD
+- A2.46 — Kernel / Extensions / Execution Plane Hardening

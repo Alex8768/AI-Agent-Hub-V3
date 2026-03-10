@@ -2,37 +2,117 @@
 
 ## Active Anchor
 
-A2.46 — TBD
+A2.46 — Kernel / Extensions / Execution Plane Hardening
 
 ### Goal
 
-To be defined after A2.45 closure.
+Formalize strict architectural zoning and prevent reasoning-core overpacking.
+
+This anchor introduces a canonical topology with three primary rings:
+
+- Reasoning Kernel
+- Governance Subcore / Reasoning Extensions
+- Execution / Coordination Plane
+
+Runtime parity must be preserved while ownership boundaries become explicit and enforceable.
+
+### Why Now
+
+Capability coverage is already broad across reasoning, governance, coordination,
+tool safety, evaluation, OCR, MCP, and release policy.
+
+The primary risk is center-of-gravity overpacking in reasoning core paths.
+A2.46 addresses this by defining canonical architectural homes and dependency rules.
 
 ### Architecture Position
 
 Planned modules:
 
-- TBD
+- `kernel/`
+- `governance/`
+- `extensions/`
+- `execution_plane/`
+- `knowledge_plane/`
+- `platform_ops/`
+- `interface/`
+
+Target conceptual mapping:
+
+- Reasoning Kernel: planner, step executor, execution control, policy application, minimal contracts
+- Governance Subcore: receipts, trace, replay, timeline
+- Reasoning Extensions: meta-cognition, anticipatory, optimization, benchmark enrichments
+- Execution / Coordination Plane: handoff, arbitration, tool safety, execution request handling
 
 ### Patch Plan
 
 #### Patch plan
-- Pending formalization
+- Patch 1 — architecture zoning inventory + scope lock
+- Patch 2 — kernel boundary formalization
+- Patch 3 — governance subcore extraction
+- Patch 4 — execution request boundary + execution plane isolation
+- Patch 5 — dependency quality gates + docs closure
 
 ### Progress
 
-- [ ] Formalize A2.46 scope and patch plan
+- [x] Patch 1 — architecture zoning inventory + scope lock
+- [ ] Patch 2 — kernel boundary formalization
+- [ ] Patch 3 — governance subcore extraction
+- [ ] Patch 4 — execution request boundary + execution plane isolation
+- [ ] Patch 5 — dependency quality gates + docs closure
+
+### Patch 1 Outputs
+
+Inventory by target home:
+
+- `kernel/`: `src/layers/pro/reasoning/planner.py`, `step_executor.py`, `execution_policy.py`, `step_controller.py`, `contracts.py`
+- `governance/`: `execution_receipt_*`, `trace_*`, `timeline_*`, replay serializers
+- `extensions/`: `meta_cognition/*`, `anticipatory/*`, optimization and benchmark helpers
+- `execution_plane/`: `multi_agent_*`, tool safety stack, execution handoff/orchestration bridges
+- `knowledge_plane/`: retriever/memory integrations and knowledge shaping boundaries
+- `platform_ops/`: release-gate policy/matrix/decision stack + CI alignment docs
+- `interface/`: API endpoint adapters + UI-facing diagnostics contracts
+
+Current cross-layer leaks to address in A2.46:
+
+- reasoning-path orchestration ownership concentrated in `AnswerService`
+- direct runtime coupling between planning and acting surfaces
+- governance signals mixed into extension-heavy diagnostics paths
+
+Allowed dependency directions:
+
+- `interface -> execution_plane -> kernel`
+- `execution_plane -> governance`
+- `extensions -> kernel`
+- `platform_ops -> governance`
+- `knowledge_plane -> kernel`
+
+Forbidden dependency directions:
+
+- `kernel -> execution_plane`
+- `kernel -> interface`
+- `governance -> interface`
+- `extensions -> execution side-effects`
 
 ### Out of Scope
 
 Do NOT modify during planning:
-- existing stable contracts without explicit patch scope
-- unrelated subsystems outside next selected anchor
+- new model/provider integrations
+- net-new intelligence capabilities
+- OCR redesign
+- major retrieval redesign
+- UI feature expansion beyond topology/documentation scope
+- new MCP ecosystem features
+- new enterprise rollout capabilities beyond topology support
 
 ### Definition of Done
 
 A2.46 completion criteria:
-- TBD
+- every major subsystem has a canonical architectural home;
+- kernel boundary is minimal and explicit;
+- governance is represented as a distinct trusted subcore;
+- reasoning-to-execution boundary is explicit and normalized;
+- forbidden dependency directions are enforced by tests/gates;
+- docs and topology reflect actual platform structure.
 
 ## Next Anchor
 

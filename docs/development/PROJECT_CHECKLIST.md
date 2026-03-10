@@ -51,13 +51,17 @@
 - [x] A2.44 Assistant Conversational Recovery (Low-Evidence UX)
 - [x] A2.45 Architecture Hardening Track (COO Runtime Reliability)
 
-## Current Work — A2.46 TBD
+## Current Work — A2.46 Kernel / Extensions / Execution Plane Hardening
 
-- [ ] Formalize A2.46 patch plan
+- [x] Patch 1 — architecture zoning inventory + scope lock
+- [ ] Patch 2 — kernel boundary formalization
+- [ ] Patch 3 — governance subcore extraction
+- [ ] Patch 4 — execution request boundary + execution plane isolation
+- [ ] Patch 5 — dependency quality gates + docs closure
 
 ## Next
 
-- [ ] Start A2.46 implementation after formalization
+- [ ] Post-A2.46 anchor planning
 
 ## Later
 
@@ -68,7 +72,11 @@
 - No opportunistic refactors outside the current patch
 - Validate locally before commit
 - Commit only files relevant to the active task
+- Topology first, code movement second
+- Preserve runtime parity during extraction
 
 ## Roadmap Policy
 
 - [x] MCP expansion is deferred until reasoning stabilization and OCR milestone are complete
+- [x] Large capability expansion is paused during topology hardening
+- [x] No new intelligence modules should be introduced during A2.46
