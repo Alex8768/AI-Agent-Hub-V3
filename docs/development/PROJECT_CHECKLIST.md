@@ -46,15 +46,15 @@
 
 ## Current Work — A2.51 Answer Orchestration Decomposition
 
-- [ ] Patch 1 — answer path inventory + scope lock
-- [ ] Patch 2 — orchestrator seam extraction
+- [x] Patch 1 — answer path inventory + scope lock
+- [x] Patch 2 — orchestrator seam extraction
 - [ ] Patch 3 — response assembly extraction
 - [ ] Patch 4 — interface contract cleanup
 - [ ] Patch 5 — dependency / parity / quality gates
 
 ## Next
 
-- [ ] Post-A2.51 anchor planning
+- [ ] Start A2.51 patch 3 implementation
 
 ## Later
 

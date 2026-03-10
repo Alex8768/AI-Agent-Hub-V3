@@ -87,8 +87,8 @@ Exact filenames may vary if existing structure suggests a cleaner fit.
 
 ### Progress
 
-- [ ] Patch 1 — answer path inventory + scope lock
-- [ ] Patch 2 — orchestrator seam extraction
+- [x] Patch 1 — answer path inventory + scope lock
+- [x] Patch 2 — orchestrator seam extraction
 - [ ] Patch 3 — response assembly extraction
 - [ ] Patch 4 — interface contract cleanup
 - [ ] Patch 5 — dependency / parity / quality gates

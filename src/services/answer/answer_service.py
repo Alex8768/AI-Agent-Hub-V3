@@ -43,6 +43,7 @@ from src.layers.pro.reasoning.contracts import (
     VERIFY_SELF_CHECK_STATUS_REQUIRED,
 )
 from src.observability.request_context import get_request_id
+from src.services.answer.orchestrator import run_answer_orchestration_core
 
 SESSION_MEMORY_MAX_CHARS = 4000
 EXECUTION_IDEMPOTENCY_CONTRACT_VERSION = "v1"
@@ -3722,84 +3723,33 @@ class AnswerService:
             from fastapi import HTTPException
             raise HTTPException(status_code=503, detail="Reasoning stack not initialized")
 
-        llm, llm_enabled, llm_provider_name, llm_model, llm_error = await _build_llm_adapter(
-            settings=s
-        )
-        assistant_mode_enabled = bool(runtime_context.get("assistant_mode_enabled", False))
-        assistant_proactive_enabled = bool(runtime_context.get("assistant_proactive_enabled", False))
-        assistant_actions_enabled = bool(runtime_context.get("assistant_actions_enabled", False))
-        assistant_response_language = str(runtime_context.get("assistant_response_language", "auto") or "auto")
-        session_memory_loaded = False
-        session_memory_hit = False
-
-        session_memory_loaded, session_memory_hit = await _load_session_memory(
-            req=req,
-            workspace_id=workspace_id,
-            get_memory_store=get_memory_store,
-        )
-        loaded_durable_approval, loaded_durable_idempotency = await _load_durable_records(
-            req=req,
-            workspace_id=workspace_id,
-            get_memory_store=get_memory_store,
-        )
-
-        retriever = RetrieverAdapter(engine=engine, hybrid=hybrid, workspace_id=workspace_id)
-        reasoning = _build_reasoning_runtime_adapter(
-            reasoning_factory=get_reasoning_engine,
-            retriever=retriever,
-            llm=llm,
-        )
-        if reasoning is None:
-            from fastapi import HTTPException
-            raise HTTPException(status_code=404, detail="Not Found")
-
-        t0 = perf_counter()
-        resp = await reasoning.synthesize(req)
-        total_ms = (perf_counter() - t0) * 1000.0
-        if assistant_mode_enabled and not list(getattr(resp, "provenance", []) or []):
-            assistant_response_language = _detect_response_language(str(getattr(req, "query", "") or ""))
-            resp.answer = _build_assistant_fallback_answer(
-                query=str(getattr(req, "query", "") or ""),
-                language=assistant_response_language,
-            )
-
-        # correlation/timing
-        try:
-            resp.request_id = get_request_id(http) or ""
-        except Exception:
-            resp.request_id = ""
-        try:
-            resp.workspace_id = workspace_id or ""
-        except Exception:
-            resp.workspace_id = ""
-
-        try:
-            resp.timings = dict(resp.timings or {})
-            resp.timings.setdefault("total_ms", float(total_ms))
-        except Exception:
-            pass
-
-        # base diagnostics + trace
-        await _apply_diagnostics(
-            resp=resp,
-            req=req,
+        orchestration = await run_answer_orchestration_core(
             http=http,
+            req=req,
             workspace_id=workspace_id,
-            retriever=retriever,
-            llm=llm,
-            llm_enabled=llm_enabled,
-            llm_provider_name=llm_provider_name,
-            llm_model=llm_model,
-            llm_error=llm_error,
-            assistant_mode_enabled=assistant_mode_enabled,
-            assistant_proactive_enabled=assistant_proactive_enabled,
-            assistant_actions_enabled=assistant_actions_enabled,
-            assistant_response_language=assistant_response_language,
-            session_memory_loaded=session_memory_loaded,
-            session_memory_hit=session_memory_hit,
-            durable_approval_record_loaded=bool(loaded_durable_approval),
-            durable_idempotency_record_loaded=bool(loaded_durable_idempotency),
+            settings=s,
+            engine=engine,
+            hybrid=hybrid,
+            runtime_context=runtime_context,
+            get_reasoning_engine=get_reasoning_engine,
+            get_memory_store=get_memory_store,
+            build_llm_adapter=_build_llm_adapter,
+            load_session_memory=_load_session_memory,
+            load_durable_records=_load_durable_records,
+            retriever_adapter_cls=RetrieverAdapter,
+            build_reasoning_runtime_adapter=_build_reasoning_runtime_adapter,
+            detect_response_language=_detect_response_language,
+            build_assistant_fallback_answer=_build_assistant_fallback_answer,
+            apply_diagnostics=_apply_diagnostics,
         )
+        resp = orchestration.resp
+        llm = orchestration.llm
+        assistant_mode_enabled = bool(orchestration.assistant_mode_enabled)
+        assistant_proactive_enabled = bool(orchestration.assistant_proactive_enabled)
+        assistant_actions_enabled = bool(orchestration.assistant_actions_enabled)
+        assistant_response_language = str(orchestration.assistant_response_language or "auto")
+        loaded_durable_approval = dict(orchestration.loaded_durable_approval or {})
+        loaded_durable_idempotency = dict(orchestration.loaded_durable_idempotency or {})
         try:
             diag = dict(getattr(resp, "diagnostics", None) or {})
             has_evidence = int(diag.get("retrieved_provenance_count", 0) or 0) > 0
