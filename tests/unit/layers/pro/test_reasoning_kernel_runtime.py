@@ -24,3 +24,11 @@ def test_build_reasoning_planner_runtime_exposes_callables():
     assert callable(out["create_plan"])
     assert callable(out["execute_steps"])
     assert callable(out["build_prompt"])
+
+
+def test_normalize_reasoning_query_input_supports_request_and_string():
+    from src.layers.pro.reasoning.contracts import AnswerRequest
+    from src.layers.pro.reasoning.kernel import normalize_reasoning_query_input
+
+    assert normalize_reasoning_query_input("  q  ") == "q"
+    assert normalize_reasoning_query_input(AnswerRequest(query="  q  ")) == "q"

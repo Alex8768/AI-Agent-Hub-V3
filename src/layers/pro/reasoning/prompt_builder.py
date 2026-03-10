@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 from src.layers.pro.reasoning.contracts import AnswerRequest, ProvenanceItem
+from src.layers.pro.reasoning.kernel import normalize_reasoning_query_input
 
 
 _SYSTEM_RULES = """You are a careful assistant.
 Use ONLY the provided context.
-If the context is insufficient, say you don't know.
+Always respond in the same language as the user's question.
+If the context is insufficient, say you don't know in the same language as the user's question.
 Cite evidence by referencing source_refs when available.
 Be concise and precise.
 """
@@ -24,11 +26,7 @@ def build_reasoning_prompt(
         provenance: list of provenance items
         instruction: optional custom instruction (for agent nodes)
     """
-    # Извлекаем query
-    if isinstance(query, AnswerRequest):
-        query_text = query.query
-    else:
-        query_text = query
+    query_text = normalize_reasoning_query_input(query)
 
     prov_lines: list[str] = []
     if provenance:

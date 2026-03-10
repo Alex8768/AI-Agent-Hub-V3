@@ -4,6 +4,8 @@ import re
 
 from src.layers.pro.composition.composer import build_composed_agent_graph_spec, validate_composed_agent_graph_spec
 from src.layers.pro.composition.registry import AgentRegistry
+from src.layers.pro.reasoning.contracts import AnswerRequest
+from src.layers.pro.reasoning.kernel import normalize_reasoning_query_input
 from src.layers.pro.reasoning.planner.plan_model import (
     ReasoningPlan,
     build_reasoning_composition_plan,
@@ -53,7 +55,7 @@ def _build_composition_graph(*, query: str, registry: AgentRegistry | None) -> d
 
 def create_reasoning_plan(
     *,
-    query: str,
+    query: str | AnswerRequest,
     composition_mode: bool = False,
     composition_registry: AgentRegistry | None = None,
 ) -> ReasoningPlan:
@@ -64,7 +66,7 @@ def create_reasoning_plan(
     - query with split hints (and/then/after/before) -> 2-step plan
     - otherwise -> single-step plan
     """
-    normalized = str(query or "").strip()
+    normalized = normalize_reasoning_query_input(query)
     if not normalized:
         if composition_mode:
             return build_reasoning_composition_plan(

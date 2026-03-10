@@ -15,7 +15,7 @@ A2.48 — Planner Decoupling Track (Kernel Composition Independence)
 Current progress:
 - Patch 1 complete: planner decoupling inventory + scope lock.
 - Patch 2 complete: planner composition seam extraction.
-- Patch 3 pending: prompt/planner boundary normalization.
+- Patch 3 complete: prompt/planner boundary normalization.
 - Patch 4 pending: planner diagnostics/runtime parity guardrails.
 - Patch 5 pending: debt registry/docs/CI closure.
 
@@ -36,7 +36,7 @@ Execution discipline:
 A2.49 — TBD
 
 Planned focus:
-- execute A2.48 patch 3 prompt/planner boundary normalization
+- execute A2.48 patch 4 planner diagnostics/runtime parity guardrails
 
 ## CI Status
 

@@ -19,3 +19,16 @@ def test_prompt_builder_includes_provenance_when_present():
     prompt = build_reasoning_prompt(req, context_preview="CTX", provenance=prov)
     assert "Provenance:" in prompt
     assert "- chunk:c1 -> doc:A#1, doc:A#2" in prompt
+
+
+def test_prompt_builder_enforces_reply_language_to_match_question():
+    req = AnswerRequest(query="Привет, что это?")
+    prompt = build_reasoning_prompt(req, context_preview="CTX")
+    assert "Always respond in the same language as the user's question." in prompt
+    assert "If the context is insufficient, say you don't know in the same language as the user's question." in prompt
+
+
+def test_prompt_builder_normalizes_query_input_consistently():
+    req_prompt = build_reasoning_prompt(AnswerRequest(query="  What is X?  "), context_preview="CTX")
+    str_prompt = build_reasoning_prompt("What is X?", context_preview="CTX")
+    assert req_prompt == str_prompt

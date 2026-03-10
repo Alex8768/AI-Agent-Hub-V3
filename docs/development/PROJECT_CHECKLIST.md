@@ -57,13 +57,13 @@
 
 - [x] Patch 1 — planner decoupling inventory + scope lock
 - [x] Patch 2 — planner composition seam extraction
-- [ ] Patch 3 — prompt/planner boundary normalization
+- [x] Patch 3 — prompt/planner boundary normalization
 - [ ] Patch 4 — planner diagnostics/runtime parity guardrails
 - [ ] Patch 5 — debt registry/docs/CI closure
 
 ## Next
 
-- [ ] Start A2.48 patch 3 implementation
+- [ ] Start A2.48 patch 4 implementation
 
 ## Later
 

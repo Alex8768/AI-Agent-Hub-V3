@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from src.layers.pro.composition.registry import AgentRegistry
+from src.layers.pro.reasoning.contracts import AnswerRequest
 from src.layers.pro.reasoning.planner.planner import create_reasoning_plan
 
 
@@ -29,6 +30,15 @@ def test_create_reasoning_plan_two_steps_when_split_hints_present():
                     "Find capital of France and confirm country relation"
                 )
             },
+        ]
+    }
+
+
+def test_create_reasoning_plan_accepts_answer_request_query_input():
+    plan = create_reasoning_plan(query=AnswerRequest(query="  What is RAG? "))
+    assert plan == {
+        "steps": [
+            {"description": "Answer query using verified evidence: What is RAG"},
         ]
     }
 
