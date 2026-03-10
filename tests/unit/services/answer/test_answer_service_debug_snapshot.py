@@ -169,6 +169,8 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
         "assistant_intent",
         "assistant_plan",
         "planning_policy",
+        "execution_handshake_contract_version",
+        "assistant_execution_handshake",
         "planning_reason_codes",
         "plan_id",
         "retriever_stats",
@@ -213,6 +215,18 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
         "blocked_steps_count",
         "truncated",
         "allowed_action_pattern",
+        "reason_codes",
+    }
+    assert diag.get("execution_handshake_contract_version") == "v1"
+    handshake = dict(diag.get("assistant_execution_handshake") or {})
+    assert set(handshake.keys()) == {
+        "contract_version",
+        "state",
+        "requires_confirmation",
+        "confirmation_token",
+        "approved_action_ids",
+        "blocked_action_ids",
+        "receipt_id",
         "reason_codes",
     }
     assert isinstance(diag.get("planning_reason_codes"), list)
@@ -956,6 +970,11 @@ async def test_answer_service_bridges_plan_to_draft_actions_when_proactive_off(m
     assert len(rows) >= 1
     assert str((rows[0] or {}).get("action_id", "")).startswith("draft_action:plan:start_project:")
     assert "draft_actions_from_plan_bridge" in list(actions.get("reason_codes") or [])
+    handshake = dict(diag.get("assistant_execution_handshake") or {})
+    assert handshake.get("state") == "pending_confirmation"
+    assert handshake.get("requires_confirmation") is True
+    assert str(handshake.get("confirmation_token", "")).startswith("confirm:")
+    assert "awaiting_user_confirmation" in list(handshake.get("reason_codes") or [])
 
 
 @pytest.mark.asyncio

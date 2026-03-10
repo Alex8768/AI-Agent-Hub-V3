@@ -17,6 +17,7 @@ SELF_CHECK_MISSING_MINIMAL_COUNT_MAX = 0
 ASSISTANT_CONTRACT_VERSION = "v1"
 INTENT_CONTRACT_VERSION = "v1"
 PLAN_CONTRACT_VERSION = "v1"
+HANDSHAKE_CONTRACT_VERSION = "v1"
 
 
 class ProvenanceItem(BaseModel):
@@ -148,6 +149,21 @@ class AssistantPlan(BaseModel):
     intent: str = Field(default="general_query")
     steps: list[AssistantPlanStep] = Field(default_factory=list)
     requires_confirmation: bool = Field(default=True)
+    reason_codes: list[str] = Field(default_factory=list)
+
+
+class AssistantExecutionHandshake(BaseModel):
+    """Confirmation-to-execution handshake state (diagnostics contract)."""
+
+    contract_version: str = Field(default=HANDSHAKE_CONTRACT_VERSION)
+    state: Literal["idle", "pending_confirmation", "approved", "executed", "cancelled"] = Field(
+        default="idle"
+    )
+    requires_confirmation: bool = Field(default=False)
+    confirmation_token: str = Field(default="")
+    approved_action_ids: list[str] = Field(default_factory=list)
+    blocked_action_ids: list[str] = Field(default_factory=list)
+    receipt_id: str = Field(default="")
     reason_codes: list[str] = Field(default_factory=list)
 
 

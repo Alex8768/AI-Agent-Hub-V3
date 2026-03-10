@@ -2,37 +2,43 @@
 
 ## Active Anchor
 
-A2.36 — TBD
+A2.36 — Confirmation-to-Execution Handshake (MVP)
 
 ### Goal
 
-TBD.
+Introduce explicit confirmation-to-execution handshake contracts and diagnostics
+for draft actions, while preserving strict no-side-effects behavior in runtime.
 
 ### Architecture Position
 
 Planned modules:
 
-- TBD
+- handshake contract baseline under reasoning contracts
+- answer diagnostics handshake state wiring
+- policy-first transition skeleton for future approval/execute phases
 
 Planned files:
-- TBD
+- `src/layers/pro/reasoning/contracts.py`
+- `src/services/answer/answer_service.py`
+- `tests/unit/services/answer/test_answer_service_debug_snapshot.py`
+- `tests/unit/api/test_answer_endpoint_debug_snapshot.py`
 
 ### Patch Plan
 
 #### Patch plan
-- Patch 1 — TBD
-- Patch 2 — TBD
-- Patch 3 — TBD
-- Patch 4 — TBD
-- Patch 5 — TBD
+- Patch 1 — Handshake Contract Baseline
+- Patch 2 — Confirmation Transition Model (Approved/Cancelled)
+- Patch 3 — Execution Receipt Stub Integration
+- Patch 4 — Transition Policy Guards
+- Patch 5 — Docs/CI Closure
 
 ### Progress
 
-- [ ] Patch 1 — TBD
-- [ ] Patch 2 — TBD
-- [ ] Patch 3 — TBD
-- [ ] Patch 4 — TBD
-- [ ] Patch 5 — TBD
+- [x] Patch 1 — Handshake Contract Baseline
+- [ ] Patch 2 — Confirmation Transition Model (Approved/Cancelled)
+- [ ] Patch 3 — Execution Receipt Stub Integration
+- [ ] Patch 4 — Transition Policy Guards
+- [ ] Patch 5 — Docs/CI Closure
 
 ### Out of Scope
 
@@ -43,7 +49,10 @@ Do NOT modify during planning:
 ### Definition of Done
 
 A2.36 is complete when:
-- TBD
+- handshake contracts and diagnostics are explicit and deterministic
+- confirmation transitions are modeled and policy-guarded
+- execution receipt baseline is wired without side effects
+- release-gate docs/tests cover new handshake contracts
 
 ## Next Anchor
 

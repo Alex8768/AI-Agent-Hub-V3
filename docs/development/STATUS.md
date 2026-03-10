@@ -8,19 +8,16 @@ Pro Layer Development — Reasoning Stabilization
 
 A2.35 — Intent-to-Plan Orchestrator (COO MVP)
 
-Intent-to-plan orchestrator completed with deterministic intent diagnostics,
-deterministic review-only plan builder, plan-to-draft-actions bridge, and policy
-guards for safe planning.
-
 ## Current Active Anchor
 
-A2.36 — TBD
+A2.36 — Confirmation-to-Execution Handshake (MVP)
 
 Current progress:
-- Patch plan TBD.
+- Patch 1 completed: Handshake Contract Baseline.
 
 Focus:
-- TBD
+- explicit handshake diagnostics contract for draft action lifecycle
+- confirmation-first state surface, no side effects
 
 Execution discipline:
 - keep work strictly inside the active anchor and move in micro-patches.
@@ -40,5 +37,5 @@ The noop tracing span compatibility fix is completed and treated as closed work.
 
 ## Upcoming Anchors
 
-- A2.36 — TBD
+- A2.36 — Confirmation-to-Execution Handshake (MVP)
 - A2.37 — TBD

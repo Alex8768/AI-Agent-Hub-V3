@@ -4,9 +4,11 @@ import pytest
 
 from src.layers.pro.reasoning.contracts import (
     ASSISTANT_CONTRACT_VERSION,
+    HANDSHAKE_CONTRACT_VERSION,
     INTENT_CONTRACT_VERSION,
     PLAN_CONTRACT_VERSION,
     AssistantDigest,
+    AssistantExecutionHandshake,
     AssistantIntent,
     AssistantIntentResult,
     AssistantPlan,
@@ -71,6 +73,7 @@ def test_assistant_contract_models_defaults():
     assert ASSISTANT_CONTRACT_VERSION == "v1"
     assert INTENT_CONTRACT_VERSION == "v1"
     assert PLAN_CONTRACT_VERSION == "v1"
+    assert HANDSHAKE_CONTRACT_VERSION == "v1"
     intent = AssistantIntent(intent="start_project", confidence=0.7)
     assert intent.intent == "start_project"
     assert intent.entities == {}
@@ -117,6 +120,15 @@ def test_assistant_contract_models_defaults():
     assert plan.deterministic is True
     assert plan.requires_confirmation is True
     assert len(plan.steps) == 1
+
+    handshake = AssistantExecutionHandshake(
+        state="pending_confirmation",
+        requires_confirmation=True,
+        confirmation_token="confirm:abc123",
+    )
+    assert handshake.contract_version == "v1"
+    assert handshake.state == "pending_confirmation"
+    assert handshake.requires_confirmation is True
 
 
 def test_assistant_suggestion_priority_validation():

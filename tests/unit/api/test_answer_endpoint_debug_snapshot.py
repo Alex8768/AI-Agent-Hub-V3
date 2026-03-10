@@ -108,6 +108,8 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
         "assistant_intent",
         "assistant_plan",
         "planning_policy",
+        "execution_handshake_contract_version",
+        "assistant_execution_handshake",
         "planning_reason_codes",
         "plan_id",
         "retriever_stats",
@@ -146,6 +148,18 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
         "blocked_steps_count",
         "truncated",
         "allowed_action_pattern",
+        "reason_codes",
+    }
+    assert diag.get("execution_handshake_contract_version") == "v1"
+    handshake = dict(diag.get("assistant_execution_handshake") or {})
+    assert set(handshake.keys()) == {
+        "contract_version",
+        "state",
+        "requires_confirmation",
+        "confirmation_token",
+        "approved_action_ids",
+        "blocked_action_ids",
+        "receipt_id",
         "reason_codes",
     }
     assert isinstance(diag.get("planning_reason_codes"), list)

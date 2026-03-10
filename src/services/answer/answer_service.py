@@ -15,6 +15,7 @@ from src.layers.pro.reasoning.control.execution_policy import build_reasoning_ex
 from src.layers.pro.reasoning.contracts import (
     AnswerRequest,
     EVIDENCE_CONTRACT_VERSION,
+    HANDSHAKE_CONTRACT_VERSION,
     INTENT_CONTRACT_VERSION,
     PLAN_CONTRACT_VERSION,
     SELF_CHECK_MINIMAL_COVERAGE_SCORE_MIN,
@@ -454,6 +455,63 @@ def _apply_plan_policy_guards(
         "reason_codes": reason_codes,
     }
     return guarded_plan, policy
+
+
+def _build_execution_handshake_bundle(
+    *,
+    plan_bundle: dict[str, object],
+    draft_actions_bundle: dict[str, object],
+    assistant_mode_enabled: bool,
+    actions_enabled: bool,
+) -> dict[str, object]:
+    if not assistant_mode_enabled:
+        return {
+            "contract_version": HANDSHAKE_CONTRACT_VERSION,
+            "state": "idle",
+            "requires_confirmation": False,
+            "confirmation_token": "",
+            "approved_action_ids": [],
+            "blocked_action_ids": [],
+            "receipt_id": "",
+            "reason_codes": ["assistant_mode_disabled"],
+        }
+    if not actions_enabled:
+        return {
+            "contract_version": HANDSHAKE_CONTRACT_VERSION,
+            "state": "idle",
+            "requires_confirmation": False,
+            "confirmation_token": "",
+            "approved_action_ids": [],
+            "blocked_action_ids": [],
+            "receipt_id": "",
+            "reason_codes": ["assistant_actions_disabled"],
+        }
+
+    actions = [dict(row or {}) for row in list(draft_actions_bundle.get("actions") or [])]
+    if not actions:
+        return {
+            "contract_version": HANDSHAKE_CONTRACT_VERSION,
+            "state": "idle",
+            "requires_confirmation": False,
+            "confirmation_token": "",
+            "approved_action_ids": [],
+            "blocked_action_ids": [],
+            "receipt_id": "",
+            "reason_codes": ["no_draft_actions_available"],
+        }
+    plan_id = str(plan_bundle.get("plan_id", "") or "")
+    seed = f"{plan_id}|{len(actions)}"
+    token = f"confirm:{hashlib.sha1(seed.encode('utf-8')).hexdigest()[:12]}"
+    return {
+        "contract_version": HANDSHAKE_CONTRACT_VERSION,
+        "state": "pending_confirmation",
+        "requires_confirmation": True,
+        "confirmation_token": token,
+        "approved_action_ids": [],
+        "blocked_action_ids": [],
+        "receipt_id": "",
+        "reason_codes": ["awaiting_user_confirmation"],
+    }
 
 
 def log_observability(http: Request, *, workspace_id: str, req: AnswerRequest) -> None:
@@ -950,8 +1008,19 @@ def _apply_diagnostics(
         diag.setdefault("plan_contract_version", PLAN_CONTRACT_VERSION)
         diag.setdefault("assistant_plan", dict(plan))
         diag.setdefault("planning_policy", dict(planning_policy))
+        anticipatory = dict(diag.get("anticipatory") or {})
+        draft_actions = dict(anticipatory.get("draft_actions") or {})
+        handshake = _build_execution_handshake_bundle(
+            plan_bundle=plan,
+            draft_actions_bundle=draft_actions,
+            assistant_mode_enabled=assistant_mode_enabled,
+            actions_enabled=assistant_actions_enabled,
+        )
+        diag.setdefault("execution_handshake_contract_version", HANDSHAKE_CONTRACT_VERSION)
+        diag.setdefault("assistant_execution_handshake", handshake)
         reason_codes = list(intent.get("reason_codes") or []) + list(plan.get("reason_codes") or [])
         reason_codes.extend(list(planning_policy.get("reason_codes") or []))
+        reason_codes.extend(list(handshake.get("reason_codes") or []))
         reason_codes = sorted(set([str(x) for x in reason_codes if str(x or "").strip()]))
         diag.setdefault("planning_reason_codes", reason_codes)
         diag.setdefault("plan_id", str(plan.get("plan_id", "") or ""))
@@ -1355,6 +1424,13 @@ class AnswerService:
                 )
                 resp.diagnostics = dict(getattr(resp, "diagnostics", None) or {})
                 resp.diagnostics["anticipatory"] = anticipatory
+                plan_bundle = dict(resp.diagnostics.get("assistant_plan") or {})
+                resp.diagnostics["assistant_execution_handshake"] = _build_execution_handshake_bundle(
+                    plan_bundle=plan_bundle,
+                    draft_actions_bundle=dict(anticipatory.get("draft_actions") or {}),
+                    assistant_mode_enabled=assistant_mode_enabled,
+                    actions_enabled=assistant_actions_enabled,
+                )
             else:
                 resp.diagnostics = dict(getattr(resp, "diagnostics", None) or {})
                 base = dict(resp.diagnostics.get("anticipatory") or {})
@@ -1384,6 +1460,13 @@ class AnswerService:
                     actions_enabled=assistant_actions_enabled,
                 )
                 resp.diagnostics["anticipatory"] = base
+                plan_bundle = dict(resp.diagnostics.get("assistant_plan") or {})
+                resp.diagnostics["assistant_execution_handshake"] = _build_execution_handshake_bundle(
+                    plan_bundle=plan_bundle,
+                    draft_actions_bundle=dict(base.get("draft_actions") or {}),
+                    assistant_mode_enabled=assistant_mode_enabled,
+                    actions_enabled=assistant_actions_enabled,
+                )
         except Exception:
             pass
 

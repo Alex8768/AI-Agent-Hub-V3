@@ -41,13 +41,13 @@
 - [x] A2.34 Digital COO Runtime (Assistant + Draft Actions)
 - [x] A2.35 Intent-to-Plan Orchestrator (COO MVP)
 
-## Current Work — A2.36 TBD
+## Current Work — A2.36 Confirmation-to-Execution Handshake (MVP)
 
-- [ ] Patch 1 — TBD
-- [ ] Patch 2 — TBD
-- [ ] Patch 3 — TBD
-- [ ] Patch 4 — TBD
-- [ ] Patch 5 — TBD
+- [x] Patch 1 — Handshake Contract Baseline
+- [ ] Patch 2 — Confirmation Transition Model (Approved/Cancelled)
+- [ ] Patch 3 — Execution Receipt Stub Integration
+- [ ] Patch 4 — Transition Policy Guards
+- [ ] Patch 5 — Docs/CI Closure
 
 ## Next
 
