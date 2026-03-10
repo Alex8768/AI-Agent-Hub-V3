@@ -174,6 +174,8 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
         "execution_transition_policy",
         "execution_receipt_contract_version",
         "assistant_execution_receipt",
+        "approval_session_contract_version",
+        "assistant_approval_session",
         "planning_reason_codes",
         "plan_id",
         "retriever_stats",
@@ -255,6 +257,19 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
         "approved_action_ids",
         "blocked_action_ids",
         "executed_action_ids",
+        "reason_codes",
+    }
+    assert diag.get("approval_session_contract_version") == "v1"
+    approval = dict(diag.get("assistant_approval_session") or {})
+    assert set(approval.keys()) == {
+        "contract_version",
+        "approval_id",
+        "workspace_id",
+        "plan_id",
+        "status",
+        "requires_confirmation",
+        "one_time_token",
+        "token_ttl_seconds",
         "reason_codes",
     }
     assert isinstance(diag.get("planning_reason_codes"), list)
@@ -1006,6 +1021,10 @@ async def test_answer_service_bridges_plan_to_draft_actions_when_proactive_off(m
     receipt = dict(diag.get("assistant_execution_receipt") or {})
     assert receipt.get("status") == "awaiting_confirmation"
     assert receipt.get("handshake_state") == "pending_confirmation"
+    approval = dict(diag.get("assistant_approval_session") or {})
+    assert approval.get("status") == "open"
+    assert approval.get("requires_confirmation") is True
+    assert str(approval.get("approval_id", "")).startswith("approval:")
 
 
 @pytest.mark.asyncio

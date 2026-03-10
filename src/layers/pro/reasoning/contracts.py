@@ -19,6 +19,7 @@ INTENT_CONTRACT_VERSION = "v1"
 PLAN_CONTRACT_VERSION = "v1"
 HANDSHAKE_CONTRACT_VERSION = "v1"
 EXECUTION_RECEIPT_CONTRACT_VERSION = "v1"
+APPROVAL_SESSION_CONTRACT_VERSION = "v1"
 
 
 class ProvenanceItem(BaseModel):
@@ -181,6 +182,20 @@ class AssistantExecutionReceipt(BaseModel):
     approved_action_ids: list[str] = Field(default_factory=list)
     blocked_action_ids: list[str] = Field(default_factory=list)
     executed_action_ids: list[str] = Field(default_factory=list)
+    reason_codes: list[str] = Field(default_factory=list)
+
+
+class AssistantApprovalSession(BaseModel):
+    """Approval session contract for confirmation workflow orchestration."""
+
+    contract_version: str = Field(default=APPROVAL_SESSION_CONTRACT_VERSION)
+    approval_id: str = Field(default="")
+    workspace_id: str = Field(default="")
+    plan_id: str = Field(default="")
+    status: Literal["idle", "open", "closed"] = Field(default="idle")
+    requires_confirmation: bool = Field(default=False)
+    one_time_token: str = Field(default="")
+    token_ttl_seconds: int = Field(default=0, ge=0)
     reason_codes: list[str] = Field(default_factory=list)
 
 

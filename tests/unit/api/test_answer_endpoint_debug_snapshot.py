@@ -113,6 +113,8 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
         "execution_transition_policy",
         "execution_receipt_contract_version",
         "assistant_execution_receipt",
+        "approval_session_contract_version",
+        "assistant_approval_session",
         "planning_reason_codes",
         "plan_id",
         "retriever_stats",
@@ -188,6 +190,19 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
         "approved_action_ids",
         "blocked_action_ids",
         "executed_action_ids",
+        "reason_codes",
+    }
+    assert diag.get("approval_session_contract_version") == "v1"
+    approval = dict(diag.get("assistant_approval_session") or {})
+    assert set(approval.keys()) == {
+        "contract_version",
+        "approval_id",
+        "workspace_id",
+        "plan_id",
+        "status",
+        "requires_confirmation",
+        "one_time_token",
+        "token_ttl_seconds",
         "reason_codes",
     }
     assert isinstance(diag.get("planning_reason_codes"), list)

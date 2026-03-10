@@ -13,6 +13,7 @@ from src.layers.pro.anticipatory import (
 )
 from src.layers.pro.reasoning.control.execution_policy import build_reasoning_execution_policy
 from src.layers.pro.reasoning.contracts import (
+    APPROVAL_SESSION_CONTRACT_VERSION,
     AnswerRequest,
     EVIDENCE_CONTRACT_VERSION,
     EXECUTION_RECEIPT_CONTRACT_VERSION,
@@ -702,6 +703,56 @@ def _build_execution_receipt_stub(
     }
 
 
+def _build_approval_session_bundle(
+    *,
+    handshake_bundle: dict[str, object],
+    plan_bundle: dict[str, object],
+    workspace_id: str,
+    request_id: str,
+) -> dict[str, object]:
+    handshake = dict(handshake_bundle or {})
+    state = str(handshake.get("state", "idle") or "idle")
+    plan_id = str(plan_bundle.get("plan_id", "") or "")
+    if state == "pending_confirmation":
+        seed = f"{workspace_id}|{request_id}|{plan_id}|pending"
+        approval_id = f"approval:{hashlib.sha1(seed.encode('utf-8')).hexdigest()[:12]}"
+        token = str(handshake.get("confirmation_token", "") or "")
+        return {
+            "contract_version": APPROVAL_SESSION_CONTRACT_VERSION,
+            "approval_id": approval_id,
+            "workspace_id": str(workspace_id or ""),
+            "plan_id": plan_id,
+            "status": "open",
+            "requires_confirmation": True,
+            "one_time_token": token,
+            "token_ttl_seconds": 900,
+            "reason_codes": ["approval_session_opened"],
+        }
+    if state in {"approved", "cancelled", "executed"}:
+        return {
+            "contract_version": APPROVAL_SESSION_CONTRACT_VERSION,
+            "approval_id": "",
+            "workspace_id": str(workspace_id or ""),
+            "plan_id": plan_id,
+            "status": "closed",
+            "requires_confirmation": False,
+            "one_time_token": "",
+            "token_ttl_seconds": 0,
+            "reason_codes": ["approval_session_closed"],
+        }
+    return {
+        "contract_version": APPROVAL_SESSION_CONTRACT_VERSION,
+        "approval_id": "",
+        "workspace_id": str(workspace_id or ""),
+        "plan_id": plan_id,
+        "status": "idle",
+        "requires_confirmation": False,
+        "one_time_token": "",
+        "token_ttl_seconds": 0,
+        "reason_codes": ["approval_session_idle"],
+    }
+
+
 def log_observability(http: Request, *, workspace_id: str, req: AnswerRequest) -> None:
     try:
         from loguru import logger
@@ -1222,15 +1273,24 @@ def _apply_diagnostics(
             workspace_id=str(workspace_id or ""),
             request_id=str(get_request_id(http) or ""),
         )
+        approval_session = _build_approval_session_bundle(
+            handshake_bundle=handshake,
+            plan_bundle=plan,
+            workspace_id=str(workspace_id or ""),
+            request_id=str(get_request_id(http) or ""),
+        )
         diag.setdefault("execution_handshake_contract_version", HANDSHAKE_CONTRACT_VERSION)
         diag.setdefault("assistant_execution_handshake", handshake)
         diag.setdefault("execution_transition_policy", transition_policy_eval)
         diag.setdefault("execution_receipt_contract_version", EXECUTION_RECEIPT_CONTRACT_VERSION)
         diag.setdefault("assistant_execution_receipt", receipt)
+        diag.setdefault("approval_session_contract_version", APPROVAL_SESSION_CONTRACT_VERSION)
+        diag.setdefault("assistant_approval_session", approval_session)
         reason_codes = list(intent.get("reason_codes") or []) + list(plan.get("reason_codes") or [])
         reason_codes.extend(list(planning_policy.get("reason_codes") or []))
         reason_codes.extend(list(handshake.get("reason_codes") or []))
         reason_codes.extend(list(receipt.get("reason_codes") or []))
+        reason_codes.extend(list(approval_session.get("reason_codes") or []))
         reason_codes = sorted(set([str(x) for x in reason_codes if str(x or "").strip()]))
         diag.setdefault("planning_reason_codes", reason_codes)
         diag.setdefault("plan_id", str(plan.get("plan_id", "") or ""))
@@ -1661,6 +1721,12 @@ class AnswerService:
                     workspace_id=str(workspace_id or ""),
                     request_id=str(get_request_id(http) or ""),
                 )
+                resp.diagnostics["assistant_approval_session"] = _build_approval_session_bundle(
+                    handshake_bundle=handshake,
+                    plan_bundle=plan_bundle,
+                    workspace_id=str(workspace_id or ""),
+                    request_id=str(get_request_id(http) or ""),
+                )
             else:
                 resp.diagnostics = dict(getattr(resp, "diagnostics", None) or {})
                 base = dict(resp.diagnostics.get("anticipatory") or {})
@@ -1714,6 +1780,12 @@ class AnswerService:
                     handshake_bundle=handshake,
                     plan_bundle=plan_bundle,
                     draft_actions_bundle=dict(base.get("draft_actions") or {}),
+                    workspace_id=str(workspace_id or ""),
+                    request_id=str(get_request_id(http) or ""),
+                )
+                resp.diagnostics["assistant_approval_session"] = _build_approval_session_bundle(
+                    handshake_bundle=handshake,
+                    plan_bundle=plan_bundle,
                     workspace_id=str(workspace_id or ""),
                     request_id=str(get_request_id(http) or ""),
                 )

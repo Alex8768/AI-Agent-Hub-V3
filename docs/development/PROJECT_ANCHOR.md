@@ -2,37 +2,43 @@
 
 ## Active Anchor
 
-A2.37 — TBD
+A2.37 — Approval Session & Idempotent Execution Gateway (Safe Mode)
 
 ### Goal
 
-TBD.
+Add deterministic approval-session runtime contracts and diagnostics as the first
+step to an idempotent execution gateway, while keeping runtime side-effect free.
 
 ### Architecture Position
 
 Planned modules:
 
-- TBD
+- approval-session contract baseline for confirmation workflows
+- diagnostics wiring for approval session state in answer runtime
+- idempotent execution gateway skeleton for next patches
 
 Planned files:
-- TBD
+- `src/layers/pro/reasoning/contracts.py`
+- `src/services/answer/answer_service.py`
+- `tests/unit/services/answer/test_answer_service_debug_snapshot.py`
+- `tests/unit/api/test_answer_endpoint_debug_snapshot.py`
 
 ### Patch Plan
 
 #### Patch plan
-- Patch 1 — TBD
-- Patch 2 — TBD
-- Patch 3 — TBD
-- Patch 4 — TBD
-- Patch 5 — TBD
+- Patch 1 — Approval Session Contract Baseline
+- Patch 2 — Confirm/Cancel API Contract Surface
+- Patch 3 — Idempotency Key + Replay Guard
+- Patch 4 — Safe-Mode Execution Gateway
+- Patch 5 — Docs/CI Closure
 
 ### Progress
 
-- [ ] Patch 1 — TBD
-- [ ] Patch 2 — TBD
-- [ ] Patch 3 — TBD
-- [ ] Patch 4 — TBD
-- [ ] Patch 5 — TBD
+- [x] Patch 1 — Approval Session Contract Baseline
+- [ ] Patch 2 — Confirm/Cancel API Contract Surface
+- [ ] Patch 3 — Idempotency Key + Replay Guard
+- [ ] Patch 4 — Safe-Mode Execution Gateway
+- [ ] Patch 5 — Docs/CI Closure
 
 ### Out of Scope
 
@@ -43,7 +49,11 @@ Do NOT modify during planning:
 ### Definition of Done
 
 A2.37 is complete when:
-- TBD
+- approval session contracts are explicit and deterministic
+- confirm/cancel flows use dedicated contract surface
+- idempotency and replay protection are diagnostics-backed
+- execution gateway remains safe-mode and side-effect free
+- docs and release-gate contracts cover A2.37 runtime
 
 ## Next Anchor
 

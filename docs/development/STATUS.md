@@ -10,13 +10,14 @@ A2.36 — Confirmation-to-Execution Handshake (MVP)
 
 ## Current Active Anchor
 
-A2.37 — TBD
+A2.37 — Approval Session & Idempotent Execution Gateway (Safe Mode)
 
 Current progress:
-- Patch plan TBD.
+- Patch 1 completed: Approval Session Contract Baseline.
 
 Focus:
-- TBD
+- explicit approval-session diagnostics contract in answer runtime
+- deterministic one-time token session state with no side effects
 
 Execution discipline:
 - keep work strictly inside the active anchor and move in micro-patches.
@@ -36,5 +37,5 @@ The noop tracing span compatibility fix is completed and treated as closed work.
 
 ## Upcoming Anchors
 
-- A2.37 — TBD
+- A2.37 — Approval Session & Idempotent Execution Gateway (Safe Mode)
 - A2.38 — TBD

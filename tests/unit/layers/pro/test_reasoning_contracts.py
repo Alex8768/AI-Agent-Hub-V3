@@ -3,11 +3,13 @@ from __future__ import annotations
 import pytest
 
 from src.layers.pro.reasoning.contracts import (
+    APPROVAL_SESSION_CONTRACT_VERSION,
     ASSISTANT_CONTRACT_VERSION,
     EXECUTION_RECEIPT_CONTRACT_VERSION,
     HANDSHAKE_CONTRACT_VERSION,
     INTENT_CONTRACT_VERSION,
     PLAN_CONTRACT_VERSION,
+    AssistantApprovalSession,
     AssistantDigest,
     AssistantExecutionReceipt,
     AssistantExecutionHandshake,
@@ -77,6 +79,7 @@ def test_assistant_contract_models_defaults():
     assert PLAN_CONTRACT_VERSION == "v1"
     assert HANDSHAKE_CONTRACT_VERSION == "v1"
     assert EXECUTION_RECEIPT_CONTRACT_VERSION == "v1"
+    assert APPROVAL_SESSION_CONTRACT_VERSION == "v1"
     intent = AssistantIntent(intent="start_project", confidence=0.7)
     assert intent.intent == "start_project"
     assert intent.entities == {}
@@ -141,6 +144,18 @@ def test_assistant_contract_models_defaults():
     assert receipt.contract_version == "v1"
     assert receipt.status == "awaiting_confirmation"
     assert receipt.handshake_state == "pending_confirmation"
+
+    approval_session = AssistantApprovalSession(
+        approval_id="approval:123",
+        workspace_id="default",
+        plan_id="plan:start_project:abc123",
+        status="open",
+        requires_confirmation=True,
+        one_time_token="confirm:abc123",
+        token_ttl_seconds=900,
+    )
+    assert approval_session.contract_version == "v1"
+    assert approval_session.status == "open"
 
 
 def test_assistant_suggestion_priority_validation():
