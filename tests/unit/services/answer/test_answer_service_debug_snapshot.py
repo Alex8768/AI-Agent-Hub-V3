@@ -675,3 +675,65 @@ async def test_answer_service_verify_warns_when_self_check_reasons_not_empty(mon
 
     warnings = list(getattr(resp, "warnings", []) or [])
     assert "verify_warning" in warnings
+
+
+@pytest.mark.asyncio
+async def test_answer_service_assistant_fallback_localizes_russian(monkeypatch):
+    class _S:
+        feature_reasoning = True
+        feature_graphrag = True
+        feature_reasoning_llm_enabled = False
+        feature_assistant_mode = True
+        feature_assistant_proactive = False
+        feature_assistant_actions = False
+        llm_provider = "ollama"
+        openai_model = ""
+        ollama_model = "llama3.2:latest"
+
+    monkeypatch.setattr("src.core.config.get_settings", lambda: _S())
+    monkeypatch.setattr("src.observability.trace.make_trace_id", lambda **kwargs: "trace-123", raising=False)
+    monkeypatch.setattr(
+        "src.core.providers.get_reasoning_engine",
+        lambda *, retriever=None, llm=None, llm_timeout_s=None: _FakeReasoningEngine(retriever),
+    )
+
+    http = _DummyHTTP(request_id="rid-assistant-ru", rag_engine=object(), hybrid_retriever=_FakeHybrid())
+    req = AnswerRequest(query="Привет, кто ты?")
+    resp = await AnswerService().handle(http, req, workspace_id="default")
+    diag = dict(getattr(resp, "diagnostics", {}) or {})
+
+    assert "Привет!" in str(getattr(resp, "answer", ""))
+    assert diag.get("response_mode") == "assistant_fallback"
+    assert diag.get("response_language") == "ru"
+    assert diag.get("assistant_mode_enabled") is True
+
+
+@pytest.mark.asyncio
+async def test_answer_service_assistant_fallback_localizes_english(monkeypatch):
+    class _S:
+        feature_reasoning = True
+        feature_graphrag = True
+        feature_reasoning_llm_enabled = False
+        feature_assistant_mode = True
+        feature_assistant_proactive = False
+        feature_assistant_actions = False
+        llm_provider = "ollama"
+        openai_model = ""
+        ollama_model = "llama3.2:latest"
+
+    monkeypatch.setattr("src.core.config.get_settings", lambda: _S())
+    monkeypatch.setattr("src.observability.trace.make_trace_id", lambda **kwargs: "trace-123", raising=False)
+    monkeypatch.setattr(
+        "src.core.providers.get_reasoning_engine",
+        lambda *, retriever=None, llm=None, llm_timeout_s=None: _FakeReasoningEngine(retriever),
+    )
+
+    http = _DummyHTTP(request_id="rid-assistant-en", rag_engine=object(), hybrid_retriever=_FakeHybrid())
+    req = AnswerRequest(query="Hi, who are you?")
+    resp = await AnswerService().handle(http, req, workspace_id="default")
+    diag = dict(getattr(resp, "diagnostics", {}) or {})
+
+    assert "Hi!" in str(getattr(resp, "answer", ""))
+    assert diag.get("response_mode") == "assistant_fallback"
+    assert diag.get("response_language") == "en"
+    assert diag.get("assistant_mode_enabled") is True

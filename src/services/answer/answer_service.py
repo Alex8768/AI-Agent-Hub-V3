@@ -33,6 +33,27 @@ def _clip_text(value: object, *, max_chars: int = SESSION_MEMORY_MAX_CHARS) -> s
     return text[:max_chars]
 
 
+def _detect_response_language(query: str) -> str:
+    text = str(query or "")
+    if any("\u0400" <= ch <= "\u04FF" for ch in text):
+        return "ru"
+    return "en"
+
+
+def _build_assistant_fallback_answer(*, query: str, language: str) -> str:
+    if language == "ru":
+        return (
+            "Привет! Я готов помочь как ассистент по рабочим задачам. "
+            "Могу подготовить план, черновики и следующие шаги по вашему запросу. "
+            "Если хотите точный ответ по внутренним данным, загрузите документы или уточните контекст."
+        )
+    return (
+        "Hi! I can help as an operations assistant. "
+        "I can prepare a plan, drafts, and next steps for your request. "
+        "If you need a source-grounded answer from internal data, upload documents or provide more context."
+    )
+
+
 def log_observability(http: Request, *, workspace_id: str, req: AnswerRequest) -> None:
     try:
         from loguru import logger
@@ -65,6 +86,7 @@ def _apply_diagnostics(
     assistant_mode_enabled: bool,
     assistant_proactive_enabled: bool,
     assistant_actions_enabled: bool,
+    assistant_response_language: str,
     session_memory_loaded: bool,
     session_memory_hit: bool,
 ) -> None:
@@ -490,7 +512,7 @@ def _apply_diagnostics(
                 else "assistant_fallback"
             ),
         )
-        diag.setdefault("response_language", "auto")
+        diag.setdefault("response_language", str(assistant_response_language or "auto"))
         diag.setdefault("assistant_mode_enabled", bool(assistant_mode_enabled))
         diag.setdefault("assistant_proactive_enabled", bool(assistant_proactive_enabled))
         diag.setdefault("assistant_actions_enabled", bool(assistant_actions_enabled))
@@ -807,6 +829,7 @@ class AnswerService:
         assistant_mode_enabled = bool(getattr(s, "feature_assistant_mode", False))
         assistant_proactive_enabled = bool(getattr(s, "feature_assistant_proactive", False))
         assistant_actions_enabled = bool(getattr(s, "feature_assistant_actions", False))
+        assistant_response_language = "auto"
         session_memory_loaded = False
         session_memory_hit = False
 
@@ -825,6 +848,12 @@ class AnswerService:
         t0 = perf_counter()
         resp = await reasoning.synthesize(req)
         total_ms = (perf_counter() - t0) * 1000.0
+        if assistant_mode_enabled and not list(getattr(resp, "provenance", []) or []):
+            assistant_response_language = _detect_response_language(str(getattr(req, "query", "") or ""))
+            resp.answer = _build_assistant_fallback_answer(
+                query=str(getattr(req, "query", "") or ""),
+                language=assistant_response_language,
+            )
 
         # correlation/timing
         try:
@@ -857,6 +886,7 @@ class AnswerService:
             assistant_mode_enabled=assistant_mode_enabled,
             assistant_proactive_enabled=assistant_proactive_enabled,
             assistant_actions_enabled=assistant_actions_enabled,
+            assistant_response_language=assistant_response_language,
             session_memory_loaded=session_memory_loaded,
             session_memory_hit=session_memory_hit,
         )
