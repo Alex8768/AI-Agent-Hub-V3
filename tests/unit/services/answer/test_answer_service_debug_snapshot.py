@@ -911,3 +911,38 @@ async def test_answer_service_builds_deterministic_plan_for_project_intent(monke
     assert len(steps) >= 2
     assert [str((row or {}).get("step_id", "")) for row in steps][:2] == ["step:1", "step:2"]
     assert "deterministic_plan_built" in list(plan.get("reason_codes") or [])
+
+
+@pytest.mark.asyncio
+async def test_answer_service_bridges_plan_to_draft_actions_when_proactive_off(monkeypatch):
+    class _S:
+        feature_reasoning = True
+        feature_graphrag = True
+        feature_reasoning_llm_enabled = False
+        feature_assistant_mode = True
+        feature_assistant_proactive = False
+        feature_assistant_actions = True
+        llm_provider = "ollama"
+        openai_model = ""
+        ollama_model = "llama3.2:latest"
+
+    monkeypatch.setattr("src.core.config.get_settings", lambda: _S())
+    monkeypatch.setattr("src.observability.trace.make_trace_id", lambda **kwargs: "trace-123", raising=False)
+    monkeypatch.setattr(
+        "src.core.providers.get_reasoning_engine",
+        lambda *, retriever=None, llm=None, llm_timeout_s=None: _FakeReasoningEngine(retriever),
+    )
+
+    http = _DummyHTTP(request_id="rid-plan-bridge", rag_engine=object(), hybrid_retriever=_FakeHybrid())
+    req = AnswerRequest(query="new project planning", session_id="default")
+    resp = await AnswerService().handle(http, req, workspace_id="default")
+    diag = dict(getattr(resp, "diagnostics", {}) or {})
+
+    ant = dict(diag.get("anticipatory") or {})
+    actions = dict(ant.get("draft_actions") or {})
+    rows = list(actions.get("actions") or [])
+    assert actions.get("status") == "ready"
+    assert actions.get("requires_confirmation") is True
+    assert len(rows) >= 1
+    assert str((rows[0] or {}).get("action_id", "")).startswith("draft_action:plan:start_project:")
+    assert "draft_actions_from_plan_bridge" in list(actions.get("reason_codes") or [])
