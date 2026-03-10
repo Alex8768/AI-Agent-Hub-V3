@@ -737,3 +737,84 @@ async def test_answer_service_assistant_fallback_localizes_english(monkeypatch):
     assert diag.get("response_mode") == "assistant_fallback"
     assert diag.get("response_language") == "en"
     assert diag.get("assistant_mode_enabled") is True
+
+
+@pytest.mark.asyncio
+async def test_answer_service_proactive_ranking_mvp(monkeypatch):
+    class _S:
+        feature_reasoning = True
+        feature_graphrag = True
+        feature_reasoning_llm_enabled = False
+        feature_assistant_mode = True
+        feature_assistant_proactive = True
+        feature_assistant_actions = False
+        llm_provider = "ollama"
+        openai_model = ""
+        ollama_model = "llama3.2:latest"
+
+    monkeypatch.setattr("src.core.config.get_settings", lambda: _S())
+    monkeypatch.setattr("src.observability.trace.make_trace_id", lambda **kwargs: "trace-123", raising=False)
+    monkeypatch.setattr(
+        "src.core.providers.get_reasoning_engine",
+        lambda *, retriever=None, llm=None, llm_timeout_s=None: _FakeReasoningEngine(retriever),
+    )
+
+    async def _fake_anticipatory(**kwargs):
+        return {
+            "whisper_receipt": {"status": "ok"},
+            "opportunity_scan": {"status": "active"},
+            "proactive_suggestions": {
+                "status": "active",
+                "suggestions": [
+                    {"suggestion_id": "s-low", "suggestion_type": "follow_up", "confidence": 0.2},
+                    {"suggestion_id": "s-high", "suggestion_type": "automation", "confidence": 0.9},
+                    {"suggestion_id": "s-mid", "suggestion_type": "summarization", "confidence": 0.6},
+                ],
+                "top_suggestion_id": "s-low",
+                "reason_codes": ["suggestions_available"],
+                "warnings": [],
+            },
+        }
+
+    monkeypatch.setattr("src.services.answer.answer_service._run_anticipatory_safe_mode", _fake_anticipatory)
+
+    http = _DummyHTTP(request_id="rid-assistant-rank", rag_engine=object(), hybrid_retriever=_FakeHybrid())
+    req = AnswerRequest(query="prepare project", session_id="default")
+    resp = await AnswerService().handle(http, req, workspace_id="default")
+    diag = dict(getattr(resp, "diagnostics", {}) or {})
+    proactive = dict((dict(diag.get("anticipatory") or {})).get("proactive_suggestions") or {})
+    rows = list(proactive.get("suggestions") or [])
+
+    assert [str((row or {}).get("suggestion_id", "")) for row in rows] == ["s-high", "s-mid", "s-low"]
+    assert [int((row or {}).get("rank", 0) or 0) for row in rows] == [1, 2, 3]
+    assert [int((row or {}).get("priority", -1) or -1) for row in rows] == [90, 60, 20]
+    assert proactive.get("top_suggestion_id") == "s-high"
+    assert "ranked_by_priority" in list(proactive.get("reason_codes") or [])
+
+
+@pytest.mark.asyncio
+async def test_answer_service_proactive_disabled_adds_reason_code(monkeypatch):
+    class _S:
+        feature_reasoning = True
+        feature_graphrag = True
+        feature_reasoning_llm_enabled = False
+        feature_assistant_mode = True
+        feature_assistant_proactive = False
+        feature_assistant_actions = False
+        llm_provider = "ollama"
+        openai_model = ""
+        ollama_model = "llama3.2:latest"
+
+    monkeypatch.setattr("src.core.config.get_settings", lambda: _S())
+    monkeypatch.setattr("src.observability.trace.make_trace_id", lambda **kwargs: "trace-123", raising=False)
+    monkeypatch.setattr(
+        "src.core.providers.get_reasoning_engine",
+        lambda *, retriever=None, llm=None, llm_timeout_s=None: _FakeReasoningEngine(retriever),
+    )
+
+    http = _DummyHTTP(request_id="rid-assistant-proactive-off", rag_engine=object(), hybrid_retriever=_FakeHybrid())
+    req = AnswerRequest(query="prepare project", session_id="default")
+    resp = await AnswerService().handle(http, req, workspace_id="default")
+    diag = dict(getattr(resp, "diagnostics", {}) or {})
+    proactive = dict((dict(diag.get("anticipatory") or {})).get("proactive_suggestions") or {})
+    assert "assistant_proactive_disabled" in list(proactive.get("reason_codes") or [])

@@ -54,6 +54,60 @@ def _build_assistant_fallback_answer(*, query: str, language: str) -> str:
     )
 
 
+def _rank_proactive_bundle(bundle: dict[str, object]) -> dict[str, object]:
+    suggestions = [dict(row or {}) for row in list(bundle.get("suggestions") or [])]
+    normalized: list[dict[str, object]] = []
+    for row in suggestions:
+        try:
+            confidence = float(row.get("confidence", 0.0) or 0.0)
+        except (TypeError, ValueError):
+            confidence = 0.0
+        confidence = max(0.0, min(1.0, confidence))
+        priority = int(round(confidence * 100))
+        normalized.append(
+            {
+                **row,
+                "priority": priority,
+            }
+        )
+
+    normalized.sort(
+        key=lambda x: (
+            -int(x.get("priority", 0) or 0),
+            str(x.get("suggestion_type", "") or ""),
+            str(x.get("suggestion_id", "") or ""),
+        )
+    )
+    ranked: list[dict[str, object]] = []
+    for idx, row in enumerate(normalized, start=1):
+        ranked.append(
+            {
+                **row,
+                "rank": idx,
+            }
+        )
+
+    reason_codes = sorted(
+        set(
+            [
+                str(x)
+                for x in list(bundle.get("reason_codes") or [])
+                if str(x or "").strip()
+            ]
+            + (["ranked_by_priority"] if ranked else [])
+        )
+    )
+    top_suggestion_id = str((ranked[0] or {}).get("suggestion_id", "") or "") if ranked else ""
+    status = "active" if ranked else str(bundle.get("status", "idle") or "idle")
+    return {
+        "status": status,
+        "suggestions": ranked,
+        "top_suggestion_id": top_suggestion_id,
+        "reason_codes": reason_codes,
+        "warnings": list(bundle.get("warnings") or []),
+    }
+
+
 def log_observability(http: Request, *, workspace_id: str, req: AnswerRequest) -> None:
     try:
         from loguru import logger
@@ -891,14 +945,36 @@ class AnswerService:
             session_memory_hit=session_memory_hit,
         )
         try:
-            anticipatory = await _run_anticipatory_safe_mode(
-                req=req,
-                resp=resp,
-                workspace_id=workspace_id,
-                get_memory_store=get_memory_store,
-            )
-            resp.diagnostics = dict(getattr(resp, "diagnostics", None) or {})
-            resp.diagnostics["anticipatory"] = anticipatory
+            if assistant_proactive_enabled:
+                anticipatory = await _run_anticipatory_safe_mode(
+                    req=req,
+                    resp=resp,
+                    workspace_id=workspace_id,
+                    get_memory_store=get_memory_store,
+                )
+                anticipatory = dict(anticipatory or {})
+                anticipatory["proactive_suggestions"] = _rank_proactive_bundle(
+                    dict(anticipatory.get("proactive_suggestions") or {})
+                )
+                resp.diagnostics = dict(getattr(resp, "diagnostics", None) or {})
+                resp.diagnostics["anticipatory"] = anticipatory
+            else:
+                resp.diagnostics = dict(getattr(resp, "diagnostics", None) or {})
+                base = dict(resp.diagnostics.get("anticipatory") or {})
+                proactive = dict(base.get("proactive_suggestions") or {})
+                reason_codes = sorted(
+                    set(
+                        [
+                            str(x)
+                            for x in list(proactive.get("reason_codes") or [])
+                            if str(x or "").strip()
+                        ]
+                        + ["assistant_proactive_disabled"]
+                    )
+                )
+                proactive["reason_codes"] = reason_codes
+                base["proactive_suggestions"] = proactive
+                resp.diagnostics["anticipatory"] = base
         except Exception:
             pass
 
