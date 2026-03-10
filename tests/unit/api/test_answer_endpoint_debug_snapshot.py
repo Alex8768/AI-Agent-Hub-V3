@@ -88,6 +88,7 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
         "anticipatory",
         "reasoning_timeline",
         "verify",
+        "planner_runtime_parity",
         "session_memory_loaded",
         "session_memory_hit",
         "memory_consistency",
@@ -182,6 +183,15 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
         "timeline_status",
         "receipt_status",
         "replay_status",
+        "reason_codes",
+    }
+    planner_parity = dict(diag.get("planner_runtime_parity") or {})
+    assert set(planner_parity.keys()) == {
+        "contract_version",
+        "mode",
+        "status",
+        "inputs",
+        "thresholds",
         "reason_codes",
     }
     intent = dict(diag.get("assistant_intent") or {})

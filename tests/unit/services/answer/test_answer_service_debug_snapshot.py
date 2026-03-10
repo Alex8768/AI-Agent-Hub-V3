@@ -150,6 +150,7 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
         "anticipatory",
         "reasoning_timeline",
         "verify",
+        "planner_runtime_parity",
         "session_memory_loaded",
         "session_memory_hit",
         "memory_consistency",
@@ -540,6 +541,17 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
     }
     assert sc_inputs.get("evidence_contract_valid_minimal") is False
     assert sc_inputs.get("evidence_contract_missing_minimal_count") == 0
+    planner_parity = dict(diag.get("planner_runtime_parity") or {})
+    assert set(planner_parity.keys()) == {
+        "contract_version",
+        "mode",
+        "status",
+        "inputs",
+        "thresholds",
+        "reason_codes",
+    }
+    assert planner_parity.get("contract_version") == "v1"
+    assert planner_parity.get("mode") == "planner_runtime_parity_guarded"
     assert sc_inputs.get("evidence_contract_minimal_coverage_score") == 0.0
     sc_thresholds = dict(sc.get("thresholds") or {})
     assert sc_thresholds.get("minimal_coverage_score_min") == 1.0

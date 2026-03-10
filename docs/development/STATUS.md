@@ -16,7 +16,7 @@ Current progress:
 - Patch 1 complete: planner decoupling inventory + scope lock.
 - Patch 2 complete: planner composition seam extraction.
 - Patch 3 complete: prompt/planner boundary normalization.
-- Patch 4 pending: planner diagnostics/runtime parity guardrails.
+- Patch 4 complete: planner diagnostics/runtime parity guardrails.
 - Patch 5 pending: debt registry/docs/CI closure.
 
 Focus:
@@ -36,7 +36,7 @@ Execution discipline:
 A2.49 — TBD
 
 Planned focus:
-- execute A2.48 patch 4 planner diagnostics/runtime parity guardrails
+- execute A2.48 patch 5 debt registry/docs/CI closure
 
 ## CI Status
 

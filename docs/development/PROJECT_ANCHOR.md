@@ -50,7 +50,7 @@ A2.48 preserves A2.46 topology constraints and A2.47 runtime decisions.
 - [x] Patch 1 — planner decoupling inventory + scope lock
 - [x] Patch 2 — planner composition seam extraction
 - [x] Patch 3 — prompt/planner boundary normalization
-- [ ] Patch 4 — planner diagnostics/runtime parity guardrails
+- [x] Patch 4 — planner diagnostics/runtime parity guardrails
 - [ ] Patch 5 — debt registry/docs/CI closure for A2.48
 
 ### Patch 1 Outputs

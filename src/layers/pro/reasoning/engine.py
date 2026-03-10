@@ -229,6 +229,51 @@ class ReasoningEngine:
         }
 
     @staticmethod
+    def _build_planner_runtime_parity_diagnostics(
+        *,
+        planner_path_used: bool,
+        planner_step_count: int,
+        observed_action: str,
+        observed_step: int,
+    ) -> dict[str, object]:
+        reasons: list[str] = ["planner_runtime_parity_evaluated"]
+        status = "pass"
+        action = str(observed_action or "").strip()
+        step_idx = int(observed_step or 0)
+        max_step_index = max(int(planner_step_count) - 1, 0)
+        if not action:
+            status = "warn"
+            reasons.append("planner_runtime_action_missing")
+        else:
+            reasons.append("planner_runtime_action_present")
+        if step_idx < 0 or (int(planner_step_count) > 0 and step_idx > max_step_index):
+            status = "warn"
+            reasons.append("planner_runtime_step_out_of_bounds")
+        else:
+            reasons.append("planner_runtime_step_in_bounds")
+        if planner_path_used:
+            reasons.append("planner_runtime_graph_path")
+        else:
+            reasons.append("planner_runtime_fallback_path")
+        return {
+            "contract_version": "v1",
+            "mode": "planner_runtime_parity_guarded",
+            "status": status,
+            "inputs": {
+                "planner_path_used": bool(planner_path_used),
+                "planner_step_count": int(planner_step_count),
+                "observed_action": action,
+                "observed_step": int(step_idx),
+            },
+            "thresholds": {
+                "action_required": True,
+                "step_index_min": 0,
+                "step_index_max": int(max_step_index),
+            },
+            "reason_codes": sorted(set(reasons)),
+        }
+
+    @staticmethod
     def _reasoning_quality_diagnostics(
         *,
         answer_text: str,
@@ -821,6 +866,12 @@ class ReasoningEngine:
             )
             verify = dict(diag.get("verify") or {})
             planner_actions = [str(x or "") for x in list(getattr(final_state, "plan", []) or [])]
+            diag["planner_runtime_parity"] = self._build_planner_runtime_parity_diagnostics(
+                planner_path_used=True,
+                planner_step_count=int(len(planner_actions)),
+                observed_action=str(diag.get("agent_current_action", "") or ""),
+                observed_step=int(diag.get("agent_current_step", 0) or 0),
+            )
             per_step_results: list[dict[str, object]] = []
             for idx, description in enumerate(planner_actions):
                 step_output = answer_text if idx == len(planner_actions) - 1 else description
@@ -1008,6 +1059,15 @@ class ReasoningEngine:
                 str((row or {}).get("step_description", "") or "")
                 for row in list(planner_step_results or [])
             ]
+            diag.setdefault(
+                "planner_runtime_parity",
+                self._build_planner_runtime_parity_diagnostics(
+                    planner_path_used=False,
+                    planner_step_count=int(len(fallback_plan_steps)),
+                    observed_action=str(diag.get("agent_current_action", "") or ""),
+                    observed_step=int(diag.get("agent_current_step", 0) or 0),
+                ),
+            )
             diag.setdefault(
                 "reasoning_trace",
                 self._build_reasoning_trace_diagnostics(

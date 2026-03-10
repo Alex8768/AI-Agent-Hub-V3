@@ -179,6 +179,47 @@ def _build_memory_consistency_strategy_contract() -> dict[str, object]:
     }
 
 
+def _build_planner_runtime_parity_fallback_bundle(*, diagnostics: dict[str, object]) -> dict[str, object]:
+    diag = dict(diagnostics or {})
+    planner_path_used = bool(diag.get("planner_path_used", False))
+    action = str(diag.get("agent_current_action", "") or "").strip()
+    step_idx = int(diag.get("agent_current_step", 0) or 0)
+    trace = dict(diag.get("reasoning_trace") or {})
+    plan_rows = list(trace.get("plan") or [])
+    step_count = int(len(plan_rows))
+    max_step_index = max(step_count - 1, 0)
+    reason_codes: list[str] = ["planner_runtime_parity_evaluated"]
+    status = "pass"
+    if action:
+        reason_codes.append("planner_runtime_action_present")
+    else:
+        status = "warn"
+        reason_codes.append("planner_runtime_action_missing")
+    if step_idx < 0 or (step_count > 0 and step_idx > max_step_index):
+        status = "warn"
+        reason_codes.append("planner_runtime_step_out_of_bounds")
+    else:
+        reason_codes.append("planner_runtime_step_in_bounds")
+    reason_codes.append("planner_runtime_graph_path" if planner_path_used else "planner_runtime_fallback_path")
+    return {
+        "contract_version": "v1",
+        "mode": "planner_runtime_parity_guarded",
+        "status": status,
+        "inputs": {
+            "planner_path_used": planner_path_used,
+            "planner_step_count": step_count,
+            "observed_action": action,
+            "observed_step": step_idx,
+        },
+        "thresholds": {
+            "action_required": True,
+            "step_index_min": 0,
+            "step_index_max": int(max_step_index),
+        },
+        "reason_codes": sorted(set(reason_codes)),
+    }
+
+
 def _is_allowlisted_pilot_action_type(action_type: str, allowlisted_action_types: set[str]) -> bool:
     normalized = str(action_type or "").strip()
     if not normalized:
@@ -3190,8 +3231,10 @@ async def _apply_diagnostics(
             durable_idempotency_record_loaded=bool(durable_idempotency_record_loaded),
         )
         memory_consistency_strategy = _build_memory_consistency_strategy_contract()
+        planner_runtime_parity = _build_planner_runtime_parity_fallback_bundle(diagnostics=diag)
         diag.setdefault("memory_consistency", memory_consistency)
         diag.setdefault("memory_consistency_strategy", memory_consistency_strategy)
+        diag.setdefault("planner_runtime_parity", planner_runtime_parity)
         diag.setdefault("evidence_type_counts", {})
         # top_evidence: prefer retriever snapshot; fallback to response used_chunks
         try:
@@ -3389,6 +3432,7 @@ async def _apply_diagnostics(
         reason_codes.extend(list(governance_subcore.get("reason_codes") or []))
         reason_codes.extend(list(memory_consistency.get("reason_codes") or []))
         reason_codes.extend(list(memory_consistency_strategy.get("reason_codes") or []))
+        reason_codes.extend(list(planner_runtime_parity.get("reason_codes") or []))
         reason_codes = sorted(set([str(x) for x in reason_codes if str(x or "").strip()]))
         diag.setdefault("planning_reason_codes", reason_codes)
         diag.setdefault("plan_id", str(plan.get("plan_id", "") or ""))
