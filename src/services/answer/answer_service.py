@@ -892,6 +892,8 @@ def _apply_feedback_policy_guards(
 def _build_feedback_adaptation_bundle(
     *,
     feedback_bundle: dict[str, object],
+    intent_bundle: dict[str, object],
+    plan_bundle: dict[str, object],
     assistant_mode_enabled: bool,
 ) -> dict[str, object]:
     if not assistant_mode_enabled:
@@ -907,15 +909,40 @@ def _build_feedback_adaptation_bundle(
         }
 
     feedback = dict(feedback_bundle or {})
+    intent = dict(intent_bundle or {})
+    plan = dict(plan_bundle or {})
     latest = str(feedback.get("latest_signal", "none") or "none").strip().lower()
     if latest not in {"approve", "cancel", "edit"}:
         latest = "none"
 
     reason_codes = ["feedback_adaptation_contract_baseline_built"]
     status = "ready"
+    current_intent = str(intent.get("intent", "") or plan.get("intent", "") or "general_query").strip()
+    if not current_intent:
+        current_intent = "general_query"
+    if current_intent not in _LLM_PLANNER_ALLOWED_INTENTS:
+        current_intent = "general_query"
+    boosted_intents: list[str] = []
+    suppressed_intents: list[str] = []
     if latest == "none":
         status = "idle"
         reason_codes = ["feedback_adaptation_no_signal"]
+    elif latest == "approve":
+        boosted_intents = [current_intent]
+        reason_codes = ["feedback_adaptation_signal_to_plan_ranked", f"feedback_adaptation_boosted:{current_intent}"]
+    elif latest == "cancel":
+        boosted_intents = ["general_query"]
+        if current_intent != "general_query":
+            suppressed_intents = [current_intent]
+        reason_codes = ["feedback_adaptation_signal_to_plan_ranked", "feedback_adaptation_boosted:general_query"]
+        if suppressed_intents:
+            reason_codes.append(f"feedback_adaptation_suppressed:{suppressed_intents[0]}")
+    elif latest == "edit":
+        boosted_intents = [current_intent]
+        if current_intent != "prepare_meeting":
+            boosted_intents.append("prepare_meeting")
+        reason_codes = ["feedback_adaptation_signal_to_plan_ranked"]
+        reason_codes.extend([f"feedback_adaptation_boosted:{x}" for x in boosted_intents])
 
     return {
         "contract_version": ADAPTATION_CONTRACT_VERSION,
@@ -923,8 +950,8 @@ def _build_feedback_adaptation_bundle(
         "status": status,
         "source": "deterministic",
         "latest_signal": latest,
-        "boosted_intents": [],
-        "suppressed_intents": [],
+        "boosted_intents": boosted_intents,
+        "suppressed_intents": suppressed_intents,
         "reason_codes": reason_codes,
     }
 
@@ -2663,6 +2690,8 @@ async def _apply_diagnostics(
         )
         feedback_adaptation = _build_feedback_adaptation_bundle(
             feedback_bundle=feedback_learning,
+            intent_bundle=intent,
+            plan_bundle=plan,
             assistant_mode_enabled=assistant_mode_enabled,
         )
         diag.setdefault("plan_contract_version", PLAN_CONTRACT_VERSION)

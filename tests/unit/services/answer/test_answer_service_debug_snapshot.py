@@ -1404,6 +1404,8 @@ def test_build_feedback_adaptation_bundle_baseline():
             "signals": ["approve"],
             "reason_codes": ["feedback_capture_adapter_normalized"],
         },
+        intent_bundle={"intent": "start_project"},
+        plan_bundle={"intent": "start_project", "steps": []},
         assistant_mode_enabled=True,
     )
     assert out.get("contract_version") == "v1"
@@ -1411,9 +1413,28 @@ def test_build_feedback_adaptation_bundle_baseline():
     assert out.get("status") == "ready"
     assert out.get("source") == "deterministic"
     assert out.get("latest_signal") == "approve"
-    assert out.get("boosted_intents") == []
+    assert out.get("boosted_intents") == ["start_project"]
     assert out.get("suppressed_intents") == []
-    assert "feedback_adaptation_contract_baseline_built" in list(out.get("reason_codes") or [])
+    assert "feedback_adaptation_signal_to_plan_ranked" in list(out.get("reason_codes") or [])
+
+
+def test_build_feedback_adaptation_bundle_ranks_cancel_signal():
+    import src.services.answer.answer_service as answer_service_module
+
+    out = answer_service_module._build_feedback_adaptation_bundle(
+        feedback_bundle={
+            "latest_signal": "cancel",
+            "signals": ["cancel"],
+            "reason_codes": ["feedback_capture_adapter_normalized"],
+        },
+        intent_bundle={"intent": "start_project"},
+        plan_bundle={"intent": "start_project", "steps": []},
+        assistant_mode_enabled=True,
+    )
+    assert out.get("latest_signal") == "cancel"
+    assert out.get("boosted_intents") == ["general_query"]
+    assert out.get("suppressed_intents") == ["start_project"]
+    assert "feedback_adaptation_signal_to_plan_ranked" in list(out.get("reason_codes") or [])
 
 
 @pytest.mark.asyncio
