@@ -99,6 +99,7 @@ Alias compatibility:
 - Topology hardening runtime docs quality gate in release-gate contracts (A2.46)
 - Debt resolution runtime docs quality gate in release-gate contracts (A2.47)
 - Planner decoupling runtime docs quality gate in release-gate contracts (A2.48)
+- Conversational reliability runtime docs quality gate in release-gate contracts (A2.49)
 
 ---
 

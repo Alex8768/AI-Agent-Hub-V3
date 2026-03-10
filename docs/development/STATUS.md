@@ -6,21 +6,17 @@ Platform Hardening — Architectural Topology Stabilization
 
 ## Last Completed Anchor
 
-A2.48 — Planner Decoupling Track (Kernel Composition Independence)
+A2.49 — Conversational Reliability Track (Human-Friendly Safe UX)
 
 ## Current Active Anchor
 
-A2.49 — Conversational Reliability Track (Human-Friendly Safe UX)
+A2.50 — TBD
 
 Current progress:
-- Patch 1 complete: conversational reliability inventory + scope lock.
-- Patch 2 complete: response-style boundary seam extraction.
-- Patch 3 complete: low-evidence friendliness normalization.
-- Patch 4 complete: conversational diagnostics/runtime parity guardrails.
-- Patch 5 pending: docs/CI closure.
+- Patch 1 pending: scope lock and inventory definition.
 
 Focus:
-- improve user-facing conversational reliability without behavior expansion
+- define next stabilization scope with strict non-expansion constraints
 - keep topology/dependency quality gates active
 - preserve strict micro-patch execution discipline
 
@@ -36,7 +32,7 @@ Execution discipline:
 A2.50 — TBD
 
 Planned focus:
-- execute A2.49 patch 5 docs/CI closure
+- define and start A2.50 patch 1 scope lock
 
 ## CI Status
 
@@ -46,4 +42,4 @@ The noop tracing span compatibility fix is completed and treated as closed work.
 
 ## Upcoming Anchors
 
-- A2.49 — Conversational Reliability Track (Human-Friendly Safe UX)
+- A2.50 — TBD

@@ -53,18 +53,15 @@
 - [x] A2.46 Kernel / Extensions / Execution Plane Hardening
 - [x] A2.47 Debt Resolution Track (Runtime Clarity + Reliability)
 - [x] A2.48 Planner Decoupling Track (Kernel Composition Independence)
+- [x] A2.49 Conversational Reliability Track (Human-Friendly Safe UX)
 
-## Current Work — A2.49 Conversational Reliability Track (Human-Friendly Safe UX)
+## Current Work — A2.50 TBD
 
-- [x] Patch 1 — conversational reliability inventory + scope lock
-- [x] Patch 2 — response-style boundary seam extraction
-- [x] Patch 3 — low-evidence friendliness normalization
-- [x] Patch 4 — conversational diagnostics/runtime parity guardrails
-- [ ] Patch 5 — docs/CI closure
+- [ ] Patch 1 — scope lock and inventory definition
 
 ## Next
 
-- [ ] Start A2.49 patch 5 implementation
+- [ ] Start A2.50 patch 1 implementation
 
 ## Later
 
@@ -82,4 +79,4 @@
 
 - [x] MCP expansion is deferred until reasoning stabilization and OCR milestone are complete
 - [x] Large capability expansion is paused during debt-closure anchors
-- [x] No new intelligence modules should be introduced during A2.48
+- [x] No new intelligence modules should be introduced during stabilization anchors

@@ -52,7 +52,7 @@ A2.49 preserves A2.46 topology constraints, A2.47 debt decisions, and A2.48 plan
 - [x] Patch 2 — response-style boundary seam extraction
 - [x] Patch 3 — low-evidence friendliness normalization
 - [x] Patch 4 — conversational diagnostics/runtime parity guardrails
-- [ ] Patch 5 — docs/CI closure for A2.49
+- [x] Patch 5 — docs/CI closure for A2.49
 
 ### Patch 1 Outputs
 
@@ -101,11 +101,11 @@ Work order is strict:
 
 ### Last Completed Anchor
 
-A2.48 — Planner Decoupling Track (Kernel Composition Independence)
+A2.49 — Conversational Reliability Track (Human-Friendly Safe UX)
 
 Completed via patches:
-- Patch 1 — planner decoupling inventory + scope lock
-- Patch 2 — planner composition seam extraction
-- Patch 3 — prompt/planner boundary normalization
-- Patch 4 — planner diagnostics/runtime parity guardrails
-- Patch 5 — debt registry/docs/CI closure for A2.48
+- Patch 1 — conversational reliability inventory + scope lock
+- Patch 2 — response-style boundary seam extraction
+- Patch 3 — low-evidence friendliness normalization
+- Patch 4 — conversational diagnostics/runtime parity guardrails
+- Patch 5 — docs/CI closure for A2.49

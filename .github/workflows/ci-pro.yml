@@ -46,6 +46,7 @@ jobs:
             tests/unit/docs/test_topology_hardening_runtime_quality_gate.py \
             tests/unit/docs/test_debt_resolution_runtime_quality_gate.py \
             tests/unit/docs/test_planner_decoupling_runtime_quality_gate.py \
+            tests/unit/docs/test_conversational_reliability_runtime_quality_gate.py \
             tests/unit/layers/pro/test_reasoning_enterprise_required_checks_matrix.py \
             tests/unit/layers/pro/test_reasoning_enterprise_required_checks_normalizer.py \
             tests/unit/layers/pro/test_reasoning_enterprise_required_checks_consolidation_quality_gate.py \
