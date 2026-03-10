@@ -2,98 +2,139 @@
 
 ## Active Anchor
 
-A2.50 — Planner Residual Decoupling (Composition Boundary Closure)
+A2.51 — Answer Orchestration Decomposition
 
 ### Goal
 
-Finalize residual planner/composition decoupling so planner callers and internals
-share a strict composition boundary, while preserving runtime parity.
+Decompose the current answer path into explicit orchestration layers so that `AnswerService`
+becomes a thin facade rather than a concentration point for interface shaping,
+runtime orchestration, diagnostics formatting, and response assembly.
 
-This anchor targets residual debt:
-
-- normalized composition boundary contract (`CompositionRequest -> CompositionResolution`)
-- extraction of composition resolution from planner internals to dedicated adapter/resolver
-- deterministic dependency/parity/fallback guardrails for planner/composition boundary
+The intent of this anchor is structural:
+- keep runtime behavior stable,
+- preserve current answer/debug contracts,
+- make ownership inside the answer path explicit and testable.
 
 ### Why Now
 
-`A2.48` decoupled planner callers, but planner internals still own composition
-assembly details (registry lookup, graph build/validate, fallback decisioning).
+The platform has already completed:
 
-Residual cleanup is required to fully close planner/composition coupling debt.
+- kernel / extensions / execution-plane topology hardening
+- planner / composition residual decoupling
+- governance and execution boundary formalization
+
+The next highest-complexity concentration point is the answer path.
+
+A2.51 addresses that by separating:
+- request normalization / facade concerns
+- orchestration flow
+- response shaping / diagnostics exposure
 
 ### Architecture Position
 
-Primary closure zones:
+Target answer-path topology:
 
-- `layers/pro/reasoning/planner` boundary contract + planner consumption path
-- dedicated composition resolver/adapter seam
-- dependency and parity guardrails for deterministic fallback behavior
+- **Answer Facade**
+  - accepts request DTO
+  - performs minimal validation / normalization
+  - delegates to orchestrator
+  - returns normalized response DTO
 
-A2.50 preserves A2.46-A2.49 constraints and decisions, with no behavior expansion.
+- **Answer Orchestrator**
+  - coordinates knowledge / reasoning / execution-plane flow
+  - does not own API formatting concerns
+  - produces normalized answer outcome
+
+- **Answer Response Assembly**
+  - confidence shaping
+  - warnings shaping
+  - diagnostics/debug snapshot shaping
+  - response DTO mapping
+
+Planned files/modules (conceptual):
+- `src/services/answer/answer_service.py` (thin facade target)
+- `src/services/answer/orchestrator.py`
+- `src/services/answer/response_assembly.py`
+
+Exact filenames may vary if existing structure suggests a cleaner fit.
 
 ### Patch Plan
 
-#### Patch plan
-- Patch 1 — composition boundary contract + scope lock
-- Patch 2 — composition resolver/adapter extraction
-- Patch 3 — dependency/parity/fallback guardrails
+#### Patch 1 — Answer path inventory + scope lock
+- Create an inventory of current answer-path responsibilities.
+- Assign each current responsibility to target home:
+  - facade
+  - orchestrator
+  - response assembly
+- Define allowed / forbidden dependencies for the answer path.
+
+#### Patch 2 — Orchestrator seam extraction
+- Extract runtime orchestration flow into an explicit orchestrator component.
+- Ensure the facade no longer owns flow coordination details.
+
+#### Patch 3 — Response assembly extraction
+- Extract confidence / warnings / diagnostics shaping into response-assembly logic.
+- Keep API/debug output parity stable.
+
+#### Patch 4 — Interface contract cleanup
+- Ensure endpoint/service boundary depends only on stable request/response contracts.
+- Remove accidental runtime-detail leakage into API-facing layer.
+
+#### Patch 5 — Dependency / parity / quality gates
+- Add deterministic guardrails for answer-path layering.
+- Add parity tests to ensure no behavioral drift in answer/debug outputs.
+- Close docs/checklist/status for A2.51.
 
 ### Progress
 
-- [x] Patch 1 — composition boundary contract + scope lock
-- [x] Patch 2 — composition resolver/adapter extraction
-- [x] Patch 3 — dependency/parity/fallback guardrails
+- [ ] Patch 1 — answer path inventory + scope lock
+- [ ] Patch 2 — orchestrator seam extraction
+- [ ] Patch 3 — response assembly extraction
+- [ ] Patch 4 — interface contract cleanup
+- [ ] Patch 5 — dependency / parity / quality gates
 
-### Patch 1 Outputs
+### Non-Negotiable Rules
 
-Residual debt mapped to A2.50:
-
-- planner imports registry/builder/validator directly;
-- planner still owns composition fallback decision path.
-
-Scope lock:
-
-- preserve runtime behavior, outputs, and diagnostics contracts
-- no net-new model/provider/intelligence capabilities
-- no policy-threshold changes
-- one patch = one reason; no opportunistic refactors
+- No net-new intelligence features during A2.51
+- Preserve answer/debug output parity
+- Keep `AnswerService` thin
+- Orchestrator coordinates but does not format API/debug output
+- Response assembly shapes output but does not own runtime flow
+- One patch = one reason
 
 ### Out of Scope
 
-Do NOT modify during A2.50:
-- new model/provider integrations
-- net-new intelligence capabilities
+Do NOT modify during A2.51:
+
+- planner/kernel topology
+- new tool safety capabilities
+- new multi-agent capabilities
 - OCR redesign
-- major retrieval redesign
-- UI feature expansion beyond topology/documentation scope
-- new MCP ecosystem features
-- new enterprise rollout capabilities beyond topology support
+- MCP ecosystem expansion
+- UI feature expansion unrelated to answer-path structure
+- product/marketing README work
 
 ### Definition of Done
 
-A2.50 completion criteria:
-- planner consumes normalized `CompositionResolution` only;
-- composition resolution logic is extracted from planner internals;
-- dependency/parity/fallback guardrails are test-backed and deterministic.
+A2.51 is complete when:
+
+- answer-path responsibilities are explicitly zoned
+- `AnswerService` is reduced to thin facade responsibilities
+- orchestration flow is isolated in explicit orchestrator logic
+- response shaping / diagnostics shaping are isolated from runtime flow
+- endpoint-facing layer depends only on stable contracts
+- dependency and parity tests protect the decomposition from regression
 
 ## Next Anchor
 
-A2.51 — TBD
+TBD — Post-A2.51 planning
 
 ### Discipline
 
 Work order is strict:
-- A2.16 -> A2.17 -> A2.18 -> A2.19 -> A2.20 -> A2.21 -> A2.22 -> A2.23 -> A2.24 -> A2.25
-- OCR is explicitly deferred to A2.21
-- MCP expansion is deferred until post-A2.21 stabilization and later-anchor gates
-- Do not mix implementation across these anchors.
 
-### Last Completed Anchor
-
-A2.50 — Planner Residual Decoupling (Composition Boundary Closure)
-
-Completed via patches:
-- Patch 1 — composition boundary contract + scope lock
-- Patch 2 — composition resolver/adapter extraction
-- Patch 3 — dependency/parity/fallback guardrails
+- inventory first
+- extraction second
+- guardrails immediately after each seam move
+- preserve runtime parity
+- no opportunistic feature work

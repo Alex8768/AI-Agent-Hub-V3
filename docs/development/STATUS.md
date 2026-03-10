@@ -2,44 +2,42 @@
 
 ## Current Phase
 
-Platform Hardening — Architectural Topology Stabilization
+Platform Hardening — Answer Path Structural Decomposition
 
 ## Last Completed Anchor
 
 A2.50 — Planner Residual Decoupling (Composition Boundary Closure)
 
+Planner/composition boundary closure completed with:
+- normalized composition boundary
+- composition resolver extraction
+- dependency/parity/fallback guardrails
+
 ## Current Active Anchor
 
-A2.51 — TBD
+A2.51 — Answer Orchestration Decomposition
 
-Current progress:
-- Patch 1 pending: scope lock and inventory definition.
-
-Focus:
-- define next stabilization scope with strict non-expansion constraints
-- keep topology/dependency quality gates active
-- preserve strict micro-patch execution discipline
+Current focus:
+- split answer-path ownership into facade / orchestrator / response assembly
+- reduce `AnswerService` to thin facade responsibilities
+- preserve answer/debug output parity while improving internal structure
 
 Execution discipline:
-- keep work strictly inside the active anchor and move in micro-patches.
-- topology first
+- no net-new intelligence features
 - preserve runtime parity
-- no opportunistic capability expansion
 - one patch = one reason
+- inventory first, extraction second
 
 ## Next Anchor
 
-A2.51 — TBD
-
-Planned focus:
-- define and start A2.51 patch 1 scope lock
+TBD — Post-A2.51 planning
 
 ## CI Status
 
 CI pipelines are green.
 
-The noop tracing span compatibility fix is completed and treated as closed work.
-
-## Upcoming Anchors
-
-- A2.51 — TBD
+Answer-path decomposition must preserve:
+- answer endpoint behavior
+- debug snapshot behavior
+- diagnostics parity
+- contract stability

@@ -33,36 +33,28 @@
 - [x] A2.26 Release Gates & CI Policy Hardening
 - [x] A2.27 Architecture & Readiness Audit
 - [x] A2.28 Interface Foundation (MVP)
-- [x] A2.29 Service Contract Boundary Cleanup (Search)
-- [x] A2.30 Coverage Enforcement in Release Gate
+- [x] A2.29 Search Boundary / Policy Alignment
+- [x] A2.30 Coverage Release Gate Enforcement
 - [x] A2.31 CI Workflow Consolidation & Required Checks Matrix
 - [x] A2.32 Docs Topology Cleanup (root -> docs/architecture + docs/development)
 - [x] A2.33 API Docs & Feature-Flag Alignment
-- [x] A2.34 Digital COO Runtime (Assistant + Draft Actions)
-- [x] A2.35 Intent-to-Plan Orchestrator (COO MVP)
-- [x] A2.36 Confirmation-to-Execution Handshake (MVP)
-- [x] A2.37 Approval Session & Idempotent Execution Gateway (Safe Mode)
-- [x] A2.38 Durable Approval Recovery Runtime (Safe Mode)
-- [x] A2.39 Controlled Execution Pilot (Strict Safe Mode+)
-- [x] A2.40 Intent-based Planning Engine (LLM Planner)
-- [x] A2.41 Dynamic Tool Selection (MCP-aware)
-- [x] A2.42 Learning from Feedback (Approve/Cancel/Edit)
-- [x] A2.43 Feedback-to-Planning Adaptation (MVP)
-- [x] A2.44 Assistant Conversational Recovery (Low-Evidence UX)
-- [x] A2.45 Architecture Hardening Track (COO Runtime Reliability)
 - [x] A2.46 Kernel / Extensions / Execution Plane Hardening
-- [x] A2.47 Debt Resolution Track (Runtime Clarity + Reliability)
-- [x] A2.48 Planner Decoupling Track (Kernel Composition Independence)
+- [x] A2.47 Debt Resolution Track
+- [x] A2.48 Planner Decoupling Track
 - [x] A2.49 Conversational Reliability Track (Human-Friendly Safe UX)
 - [x] A2.50 Planner Residual Decoupling (Composition Boundary Closure)
 
-## Current Work — A2.51 TBD
+## Current Work — A2.51 Answer Orchestration Decomposition
 
-- [ ] Patch 1 — scope lock and inventory definition
+- [ ] Patch 1 — answer path inventory + scope lock
+- [ ] Patch 2 — orchestrator seam extraction
+- [ ] Patch 3 — response assembly extraction
+- [ ] Patch 4 — interface contract cleanup
+- [ ] Patch 5 — dependency / parity / quality gates
 
 ## Next
 
-- [ ] Start A2.51 patch 1 implementation
+- [ ] Post-A2.51 anchor planning
 
 ## Later
 
@@ -73,8 +65,8 @@
 - No opportunistic refactors outside the current patch
 - Validate locally before commit
 - Commit only files relevant to the active task
-- Topology first, code movement second
-- Preserve runtime parity during extraction
+- Preserve runtime parity during decomposition
+- No net-new intelligence features during A2.51
 
 ## Roadmap Policy
 
