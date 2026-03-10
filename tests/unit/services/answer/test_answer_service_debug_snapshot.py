@@ -1068,6 +1068,25 @@ async def test_answer_service_applies_chat_recovery_for_low_evidence_non_greetin
 
 
 @pytest.mark.asyncio
+async def test_build_assistant_chat_recovery_answer_keeps_user_language(monkeypatch):
+    import src.services.answer.answer_service as answer_service_module
+
+    class _LLM:
+        async def generate(self, prompt):
+            _ = prompt
+            # Wrong language on purpose (English for Russian query).
+            return "Yes, I can help with that."
+
+    out = await answer_service_module._build_assistant_chat_recovery_answer(
+        query="Ты готова помогать?",
+        language="ru",
+        llm=_LLM(),
+        current_answer="Извините, я не знаю.",
+    )
+    assert "Да, конечно" in out
+
+
+@pytest.mark.asyncio
 async def test_answer_service_proactive_ranking_mvp(monkeypatch):
     class _S:
         feature_reasoning = True

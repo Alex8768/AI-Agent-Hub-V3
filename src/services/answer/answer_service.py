@@ -84,6 +84,20 @@ def _detect_response_language(query: str) -> str:
     return "en"
 
 
+def _normalize_language_tag(language: str, *, query: str = "") -> str:
+    value = str(language or "").strip().lower()
+    if value in {"ru", "en"}:
+        return value
+    return _detect_response_language(query)
+
+
+def _answer_language(answer: str) -> str:
+    text = str(answer or "")
+    if any("\u0400" <= ch <= "\u04FF" for ch in text):
+        return "ru"
+    return "en"
+
+
 def _is_allowlisted_pilot_action_type(action_type: str, allowlisted_action_types: set[str]) -> bool:
     normalized = str(action_type or "").strip()
     if not normalized:
@@ -149,8 +163,14 @@ async def _build_assistant_chat_recovery_answer(
     llm: object | None,
     current_answer: str,
 ) -> str:
+    target_language = _normalize_language_tag(language, query=query)
     current = str(current_answer or "").strip()
-    if current and not _is_unknown_style_answer(current) and not _is_generic_assistant_fallback_answer(current):
+    if (
+        current
+        and not _is_unknown_style_answer(current)
+        and not _is_generic_assistant_fallback_answer(current)
+        and _answer_language(current) == target_language
+    ):
         return current
 
     if llm is not None and hasattr(llm, "generate"):
@@ -165,17 +185,21 @@ async def _build_assistant_chat_recovery_answer(
             candidate = str(await llm.generate(prompt)).strip()
         except Exception:
             candidate = ""
-        if candidate and not _is_unknown_style_answer(candidate):
+        if (
+            candidate
+            and not _is_unknown_style_answer(candidate)
+            and _answer_language(candidate) == target_language
+        ):
             return candidate
 
-    if language == "ru":
+    if target_language == "ru":
         return (
-            "Да, конечно. Я готова помогать с задачами, обучаться на вашем фидбэке "
-            "и предлагать более точные следующие шаги в процессе работы."
+            "Да, конечно. Я рядом и готова помогать по задачам шаг за шагом: "
+            "разобрать запрос, предложить понятный план и аккуратно довести до результата."
         )
     return (
-        "Yes, absolutely. I can help with tasks, learn from your feedback, "
-        "and suggest more precise next steps as we work."
+        "Absolutely. I am here to help step by step: "
+        "clarify your request, propose a clear plan, and move it forward safely."
     )
 
 

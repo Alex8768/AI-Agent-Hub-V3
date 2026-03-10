@@ -31,7 +31,7 @@ Planned modules:
 ### Progress
 
 - [x] Patch 1 — Conversational Recovery Baseline + Runtime Hook
-- [ ] Patch 2 — Language-Native Recovery Adapter Hardening
+- [x] Patch 2 — Language-Native Recovery Adapter Hardening
 - [ ] Patch 3 — Recovery Policy Guardrails
 - [ ] Patch 4 — Runtime Wiring + Diagnostics Parity
 - [ ] Patch 5 — Docs/CI Closure
