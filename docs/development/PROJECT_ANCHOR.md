@@ -2,43 +2,37 @@
 
 ## Active Anchor
 
-A2.34 — Digital COO Runtime (Assistant + Draft Actions)
+A2.35 — TBD
 
 ### Goal
 
-Evolve reasoning runtime into a user-facing assistant that can produce
-reviewable draft actions, proactive suggestions, and language-native responses.
+TBD.
 
 ### Architecture Position
 
 Planned modules:
 
-- `src/core/*`
-- `src/layers/pro/reasoning/*`
-- `src/services/answer/*`
-- `docs/development/*`
-- `docs/architecture/*`
+- TBD
 
 Planned files:
-- assistant contracts/flags/diagnostics surfaces
-- answer runtime orchestration and quality gates
+- TBD
 
 ### Patch Plan
 
 #### Patch plan
-- Patch 1 — Assistant mode contracts, flags, and diagnostics baseline
-- Patch 2 — Language-native assistant fallback behavior
-- Patch 3 — Proactive suggestion ranking MVP
-- Patch 4 — Draft action runtime (review-before-execute)
-- Patch 5 — Docs/CI closure for assistant runtime
+- Patch 1 — TBD
+- Patch 2 — TBD
+- Patch 3 — TBD
+- Patch 4 — TBD
+- Patch 5 — TBD
 
 ### Progress
 
-- [x] Patch 1 — Assistant mode contracts, flags, and diagnostics baseline
-- [x] Patch 2 — Language-native assistant fallback behavior
-- [x] Patch 3 — Proactive suggestion ranking MVP
-- [x] Patch 4 — Draft action runtime (review-before-execute)
-- [ ] Patch 5 — Docs/CI closure for assistant runtime
+- [ ] Patch 1 — TBD
+- [ ] Patch 2 — TBD
+- [ ] Patch 3 — TBD
+- [ ] Patch 4 — TBD
+- [ ] Patch 5 — TBD
 
 ### Out of Scope
 
@@ -48,15 +42,12 @@ Do NOT modify during planning:
 
 ### Definition of Done
 
-A2.34 is complete when:
-- assistant-mode contracts and feature flags are stable and default-off
-- language-native fallback behavior is deterministic and test-covered
-- proactive suggestions and draft actions are reviewable before execution
-- docs and CI quality gates protect assistant runtime behavior
+A2.35 is complete when:
+- TBD
 
 ## Next Anchor
 
-A2.35 — TBD
+A2.36 — TBD
 
 ### Discipline
 
@@ -68,11 +59,11 @@ Work order is strict:
 
 ### Last Completed Anchor
 
-A2.33 — API Docs & Feature-Flag Alignment
+A2.34 — Digital COO Runtime (Assistant + Draft Actions)
 
 Completed via patches:
-- Patch 1 — Audit API docs vs runtime contracts
-- Patch 2 — Update API docs for request/response parity
-- Patch 3 — Align feature-flag docs with default behavior
-- Patch 4 — Add deterministic API docs quality gate
-- Patch 5 — Docs closure and roadmap sync
+- Patch 1 — Assistant mode contracts, flags, and diagnostics baseline
+- Patch 2 — Language-native assistant fallback behavior
+- Patch 3 — Proactive suggestion ranking MVP
+- Patch 4 — Draft action runtime (review-before-execute)
+- Patch 5 — Docs/CI closure for assistant runtime

@@ -38,18 +38,19 @@
 - [x] A2.31 CI Workflow Consolidation & Required Checks Matrix
 - [x] A2.32 Docs Topology Cleanup (root -> docs/architecture + docs/development)
 - [x] A2.33 API Docs & Feature-Flag Alignment
+- [x] A2.34 Digital COO Runtime (Assistant + Draft Actions)
 
-## Current Work — A2.34 Digital COO Runtime (Assistant + Draft Actions)
+## Current Work — A2.35 TBD
 
-- [x] Patch 1 — Assistant mode contracts, flags, and diagnostics baseline
-- [x] Patch 2 — Language-native assistant fallback behavior
-- [x] Patch 3 — Proactive suggestion ranking MVP
-- [x] Patch 4 — Draft action runtime (review-before-execute)
-- [ ] Patch 5 — Docs/CI closure for assistant runtime
+- [ ] Patch 1 — TBD
+- [ ] Patch 2 — TBD
+- [ ] Patch 3 — TBD
+- [ ] Patch 4 — TBD
+- [ ] Patch 5 — TBD
 
 ## Next
 
-- [ ] Start A2.35 Patch 1 (TBD)
+- [ ] Start A2.36 Patch 1 (TBD)
 
 ## Later
 

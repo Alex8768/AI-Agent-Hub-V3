@@ -27,6 +27,9 @@ Base поведение не меняется при выключенных фл
 | feature_hybrid_search_api | `/api/v1/search-hybrid` API surface | ✅ MVP (default OFF) |
 | feature_reasoning_llm_enabled | Real LLM calls in reasoning pipeline | ✅ MVP (default OFF) |
 | feature_reasoning_llm_dry_run | Deterministic dry-run reasoning LLM mode | ✅ MVP (default OFF) |
+| feature_assistant_mode | Assistant-native fallback/runtime mode | ✅ MVP (default OFF) |
+| feature_assistant_proactive | Proactive suggestion ranking runtime | ✅ MVP (default OFF) |
+| feature_assistant_actions | Review-before-execute draft actions | ✅ MVP (default OFF) |
 
 Alias compatibility:
 - `feature_graph_rag` is deprecated alias for `feature_graphrag` and should not be used as canonical config.
@@ -81,6 +84,7 @@ Alias compatibility:
 - Integration tests gated by env flag
 - Required-checks matrix consolidation for release-gate policy (A2.31)
 - API docs deterministic quality gate in release-gate contracts (A2.33)
+- Assistant runtime docs quality gate in release-gate contracts (A2.34)
 
 ---
 

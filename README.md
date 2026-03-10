@@ -285,6 +285,7 @@ Main project documentation:
 
 - `docs/architecture/ARCHITECTURE_V3.md`
 - `docs/architecture/REQUIRED_CHECKS_MATRIX.md`
+- `docs/architecture/ASSISTANT_RUNTIME.md`
 - `docs/development/DOCS_TOPOLOGY_POLICY.md`
 - `docs/api/README.md`
 - `docs/api/A2.33_PATCH1_API_RUNTIME_AUDIT.md`

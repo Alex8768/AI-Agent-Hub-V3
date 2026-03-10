@@ -6,32 +6,28 @@ Pro Layer Development — Reasoning Stabilization
 
 ## Last Completed Anchor
 
-A2.33 — API Docs & Feature-Flag Alignment
+A2.34 — Digital COO Runtime (Assistant + Draft Actions)
 
-API docs alignment completed with runtime parity updates, feature-flag default
-behavior closure, and deterministic API docs quality-gate coverage in CI.
+Assistant runtime completed with contracts/flags baseline, language-native
+fallback behavior, deterministic proactive ranking, and review-before-execute
+draft action diagnostics.
 
 ## Current Active Anchor
 
-A2.34 — Digital COO Runtime (Assistant + Draft Actions)
+A2.35 — TBD
 
 Current progress:
-- Patch 1 complete: assistant mode contracts/flags baseline and diagnostics shape added.
-- Patch 2 complete: language-native assistant fallback behavior added for zero-evidence responses.
-- Patch 3 complete: proactive suggestion ranking MVP added with deterministic priority/rank ordering.
-- Patch 4 complete: draft action runtime added with review-before-execute bundle and confirmation requirement.
-- Patch 5 next: docs/CI closure for assistant runtime.
+- Patch plan TBD.
 
 Focus:
-- establish assistant runtime contracts before behavioral expansion
-- keep assistant capabilities default-off and policy-gated
+- TBD
 
 Execution discipline:
 - keep work strictly inside the active anchor and move in micro-patches.
 
 ## Next Anchor
 
-A2.35 — TBD
+A2.36 — TBD
 
 Planned focus:
 - TBD
@@ -44,5 +40,5 @@ The noop tracing span compatibility fix is completed and treated as closed work.
 
 ## Upcoming Anchors
 
-- A2.34 — TBD
 - A2.35 — TBD
+- A2.36 — TBD
