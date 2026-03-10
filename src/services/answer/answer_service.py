@@ -109,6 +109,22 @@ def _build_answer_service_runtime_context(*, settings: object) -> dict[str, obje
     }
 
 
+def _build_reasoning_runtime_adapter(
+    *,
+    reasoning_factory: object,
+    retriever: object,
+    llm: object | None,
+) -> object | None:
+    if not callable(reasoning_factory):
+        return None
+    adapter = reasoning_factory(retriever=retriever, llm=llm)
+    if adapter is None:
+        return None
+    if not hasattr(adapter, "synthesize"):
+        return None
+    return adapter
+
+
 def _is_allowlisted_pilot_action_type(action_type: str, allowlisted_action_types: set[str]) -> bool:
     normalized = str(action_type or "").strip()
     if not normalized:
@@ -3594,7 +3610,11 @@ class AnswerService:
         )
 
         retriever = RetrieverAdapter(engine=engine, hybrid=hybrid, workspace_id=workspace_id)
-        reasoning = get_reasoning_engine(retriever=retriever, llm=llm)
+        reasoning = _build_reasoning_runtime_adapter(
+            reasoning_factory=get_reasoning_engine,
+            retriever=retriever,
+            llm=llm,
+        )
         if reasoning is None:
             from fastapi import HTTPException
             raise HTTPException(status_code=404, detail="Not Found")

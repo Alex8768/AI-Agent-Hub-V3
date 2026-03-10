@@ -15,13 +15,14 @@ A2.45 — Architecture Hardening Track (COO Runtime Reliability)
 Current progress:
 - Patch 1 complete: Anchor Formalization + Scope Lock.
 - Patch 2 complete: AnswerService Boundary Hardening Baseline.
-- Patch 3 pending: Planner Coupling Guardrail (Abstraction Seam).
+- Patch 3 complete: Planner Coupling Guardrail (Abstraction Seam).
 - Patch 4 pending: Memory Consistency Diagnostics Guardrails.
 - Patch 5 pending: Docs/CI Closure + Technical-Debt Registry.
 
 Focus:
 - reduce architectural coupling without changing runtime behavior
 - stabilize AnswerService runtime-context boundary as baseline seam
+- enforce planner adapter boundary via guarded runtime abstraction seam
 - establish deterministic hardening diagnostics contracts
 - keep technical debt visible and explicitly tracked
 - preserve strict micro-patch execution discipline
@@ -34,7 +35,7 @@ Execution discipline:
 A2.46 — TBD
 
 Planned focus:
-- execute A2.45 patch 3 planner coupling guardrail
+- execute A2.45 patch 4 memory consistency diagnostics guardrails
 
 ## CI Status
 

@@ -1973,6 +1973,38 @@ def test_build_answer_service_runtime_context_normalizes_flags():
     }
 
 
+def test_build_reasoning_runtime_adapter_requires_synthesize():
+    import src.services.answer.answer_service as answer_service_module
+
+    class _Bad:
+        pass
+
+    class _Good:
+        async def synthesize(self, req):
+            _ = req
+            return _FakeResp()
+
+    out_bad = answer_service_module._build_reasoning_runtime_adapter(
+        reasoning_factory=lambda **kwargs: _Bad(),
+        retriever=object(),
+        llm=None,
+    )
+    out_good = answer_service_module._build_reasoning_runtime_adapter(
+        reasoning_factory=lambda **kwargs: _Good(),
+        retriever=object(),
+        llm=None,
+    )
+    out_none = answer_service_module._build_reasoning_runtime_adapter(
+        reasoning_factory=lambda **kwargs: None,
+        retriever=object(),
+        llm=None,
+    )
+
+    assert out_bad is None
+    assert out_none is None
+    assert out_good is not None
+
+
 def test_wire_tool_selection_runtime_diagnostics_syncs_plan_steps():
     import src.services.answer.answer_service as answer_service_module
 
