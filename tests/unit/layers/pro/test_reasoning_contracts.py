@@ -153,6 +153,7 @@ def test_assistant_contract_models_defaults():
     assert receipt.contract_version == "v1"
     assert receipt.status == "awaiting_confirmation"
     assert receipt.handshake_state == "pending_confirmation"
+    assert receipt.rollback_status == "not_applicable"
 
     approval_session = AssistantApprovalSession(
         approval_id="approval:123",

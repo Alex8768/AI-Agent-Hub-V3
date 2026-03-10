@@ -258,6 +258,8 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
         "available_action_ids_count",
         "unknown_action_ids",
         "blocked_non_allowlisted_action_ids",
+        "rollback_contract_status",
+        "rollback_missing_action_ids",
         "applied_reason_codes",
     }
     idempotency = dict(diag.get("execution_idempotency") or {})
@@ -280,6 +282,10 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
         "approved_action_ids",
         "blocked_action_ids",
         "executed_action_ids",
+        "rollback_status",
+        "rollback_required_action_ids",
+        "rollback_ready_action_ids",
+        "rollback_missing_action_ids",
         "reason_codes",
     }
     assert diag.get("execution_gateway_contract_version") == "v1"
@@ -1293,6 +1299,82 @@ def test_handshake_transition_policy_blocks_non_allowlisted_action_types():
     assert normalized.get("requested_action_ids") == ["draft_action:safe"]
     assert eval_bundle.get("blocked_non_allowlisted_action_ids") == ["draft_action:risky"]
     assert "non_allowlisted_action_types_blocked" in list(eval_bundle.get("applied_reason_codes") or [])
+
+
+@pytest.mark.asyncio
+async def test_answer_service_blocks_approval_when_rollback_plan_missing(monkeypatch):
+    class _S:
+        feature_reasoning = True
+        feature_graphrag = True
+        feature_reasoning_llm_enabled = False
+        feature_assistant_mode = True
+        feature_assistant_proactive = False
+        feature_assistant_actions = True
+        llm_provider = "ollama"
+        openai_model = ""
+        ollama_model = "llama3.2:latest"
+
+    monkeypatch.setattr("src.core.config.get_settings", lambda: _S())
+    monkeypatch.setattr("src.observability.trace.make_trace_id", lambda **kwargs: "trace-123", raising=False)
+    monkeypatch.setattr(
+        "src.core.providers.get_reasoning_engine",
+        lambda *, retriever=None, llm=None, llm_timeout_s=None: _FakeReasoningEngine(retriever),
+    )
+
+    def _bridge_with_missing_rollback(*, plan_bundle, draft_actions_bundle, language, actions_enabled):
+        return {
+            "status": "ready",
+            "actions": [
+                {
+                    "action_id": "draft_action:plan:missing_rollback",
+                    "action_type": "prepare_summary_draft",
+                    "status": "draft",
+                    "requires_confirmation": True,
+                    "estimated_impact": "low",
+                    "parameters": {},
+                    "preview": {"title": "x", "summary": "x", "rank": 1},
+                    "rollback_plan": "",
+                }
+            ],
+            "top_action_id": "draft_action:plan:missing_rollback",
+            "requires_confirmation": True,
+            "reason_codes": ["draft_actions_from_plan_bridge"],
+            "warnings": [],
+        }
+
+    monkeypatch.setattr("src.services.answer.answer_service._bridge_plan_to_draft_actions", _bridge_with_missing_rollback)
+
+    import src.services.answer.answer_service as answer_service_module
+
+    answer_service_module._EXECUTION_IDEMPOTENCY_SEEN.clear()
+
+    http = _DummyHTTP(request_id="rid-rollback-missing", rag_engine=object(), hybrid_retriever=_FakeHybrid())
+    base = await AnswerService().handle(http, AnswerRequest(query="new project planning", session_id="default"), workspace_id="default")
+    base_diag = dict(getattr(base, "diagnostics", {}) or {})
+    token = str((dict(base_diag.get("assistant_execution_handshake") or {})).get("confirmation_token", "") or "")
+
+    req = AnswerRequest(
+        query="new project planning",
+        session_id="default",
+        filters={
+            "handshake_decision": "approve",
+            "handshake_confirmation_token": token,
+            "handshake_action_ids": ["draft_action:plan:missing_rollback"],
+            "handshake_idempotency_key": "idem-rollback-missing-1",
+        },
+    )
+    resp = await AnswerService().handle(http, req, workspace_id="default")
+    diag = dict(getattr(resp, "diagnostics", {}) or {})
+    handshake = dict(diag.get("assistant_execution_handshake") or {})
+    transition_policy = dict(diag.get("execution_transition_policy") or {})
+    receipt = dict(diag.get("assistant_execution_receipt") or {})
+
+    assert handshake.get("state") == "pending_confirmation"
+    assert "rollback_contract_missing_for_approved_actions" in list(handshake.get("reason_codes") or [])
+    assert transition_policy.get("rollback_contract_status") == "blocked_missing_rollback_plan"
+    assert transition_policy.get("rollback_missing_action_ids") == ["draft_action:plan:missing_rollback"]
+    assert receipt.get("status") == "awaiting_confirmation"
+    assert receipt.get("rollback_status") == "not_applicable"
 
 
 @pytest.mark.asyncio

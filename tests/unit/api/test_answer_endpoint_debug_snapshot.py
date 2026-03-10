@@ -190,6 +190,8 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
         "available_action_ids_count",
         "unknown_action_ids",
         "blocked_non_allowlisted_action_ids",
+        "rollback_contract_status",
+        "rollback_missing_action_ids",
         "applied_reason_codes",
     }
     idempotency = dict(diag.get("execution_idempotency") or {})
@@ -212,6 +214,10 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
         "approved_action_ids",
         "blocked_action_ids",
         "executed_action_ids",
+        "rollback_status",
+        "rollback_required_action_ids",
+        "rollback_ready_action_ids",
+        "rollback_missing_action_ids",
         "reason_codes",
     }
     assert diag.get("execution_gateway_contract_version") == "v1"

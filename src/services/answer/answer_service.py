@@ -813,6 +813,8 @@ def _apply_handshake_transition_policy(
         "available_action_ids_count": len(available_action_ids),
         "unknown_action_ids": unknown_ids,
         "blocked_non_allowlisted_action_ids": blocked_non_allowlisted_action_ids,
+        "rollback_contract_status": "not_evaluated",
+        "rollback_missing_action_ids": [],
         "applied_reason_codes": sorted(set(policy_reasons)),
     }
     return normalized, policy_eval
@@ -853,6 +855,66 @@ def _apply_durable_confirmation_token_guards(
     return normalized, sorted(set(reasons))
 
 
+def _apply_rollback_contract_guard(
+    *,
+    handshake_bundle: dict[str, object],
+    draft_actions_bundle: dict[str, object],
+) -> tuple[dict[str, object], dict[str, object]]:
+    handshake = dict(handshake_bundle or {})
+    state = str(handshake.get("state", "idle") or "idle")
+    approved_action_ids = [str(x) for x in list(handshake.get("approved_action_ids") or []) if str(x)]
+    action_rows = [dict(row or {}) for row in list(draft_actions_bundle.get("actions") or [])]
+    rollback_by_action_id = {
+        str(row.get("action_id", "") or ""): str(row.get("rollback_plan", "") or "")
+        for row in action_rows
+        if str(row.get("action_id", "") or "").strip()
+    }
+
+    if state != "approved":
+        return handshake, {
+            "status": "not_applicable",
+            "rollback_required_action_ids": [],
+            "rollback_ready_action_ids": [],
+            "rollback_missing_action_ids": [],
+            "reason_codes": [],
+        }
+
+    rollback_ready_action_ids = [
+        aid
+        for aid in approved_action_ids
+        if str(rollback_by_action_id.get(aid, "") or "").strip()
+    ]
+    rollback_missing_action_ids = [aid for aid in approved_action_ids if aid not in set(rollback_ready_action_ids)]
+    if not rollback_missing_action_ids:
+        return handshake, {
+            "status": "ready",
+            "rollback_required_action_ids": approved_action_ids,
+            "rollback_ready_action_ids": rollback_ready_action_ids,
+            "rollback_missing_action_ids": [],
+            "reason_codes": ["rollback_contract_validated"],
+        }
+
+    prior_reasons = [str(x) for x in list(handshake.get("reason_codes") or []) if str(x or "").strip()]
+    guarded_handshake = {
+        **handshake,
+        "state": "pending_confirmation",
+        "requires_confirmation": True,
+        "approved_action_ids": [],
+        "blocked_action_ids": sorted(
+            set([str(x) for x in list(handshake.get("blocked_action_ids") or []) if str(x)] + rollback_missing_action_ids)
+        ),
+        "receipt_id": "",
+        "reason_codes": sorted(set(prior_reasons + ["rollback_contract_missing_for_approved_actions"])),
+    }
+    return guarded_handshake, {
+        "status": "blocked_missing_rollback_plan",
+        "rollback_required_action_ids": approved_action_ids,
+        "rollback_ready_action_ids": rollback_ready_action_ids,
+        "rollback_missing_action_ids": rollback_missing_action_ids,
+        "reason_codes": ["rollback_contract_missing_for_approved_actions"],
+    }
+
+
 def _build_execution_receipt_stub(
     *,
     handshake_bundle: dict[str, object],
@@ -866,6 +928,23 @@ def _build_execution_receipt_stub(
     state = str(handshake.get("state", "idle") or "idle")
     approved = [str(x) for x in list(handshake.get("approved_action_ids") or []) if str(x)]
     blocked = [str(x) for x in list(handshake.get("blocked_action_ids") or []) if str(x)]
+    rollback_by_action_id = {
+        str((row or {}).get("action_id", "") or ""): str((row or {}).get("rollback_plan", "") or "")
+        for row in list(draft_actions_bundle.get("actions") or [])
+        if str((row or {}).get("action_id", "") or "").strip()
+    }
+    rollback_required_action_ids = approved if state == "approved" else []
+    rollback_ready_action_ids = [
+        aid for aid in rollback_required_action_ids if str(rollback_by_action_id.get(aid, "") or "").strip()
+    ]
+    rollback_missing_action_ids = [
+        aid for aid in rollback_required_action_ids if aid not in set(rollback_ready_action_ids)
+    ]
+    rollback_status = (
+        "ready"
+        if state == "approved" and not rollback_missing_action_ids
+        else ("blocked_missing_rollback_plan" if state == "approved" else "not_applicable")
+    )
     if not blocked:
         blocked = [
             str((row or {}).get("action_id", "") or "")
@@ -897,6 +976,10 @@ def _build_execution_receipt_stub(
         "approved_action_ids": approved,
         "blocked_action_ids": blocked,
         "executed_action_ids": [],
+        "rollback_status": rollback_status,
+        "rollback_required_action_ids": rollback_required_action_ids,
+        "rollback_ready_action_ids": rollback_ready_action_ids,
+        "rollback_missing_action_ids": rollback_missing_action_ids,
         "reason_codes": reason_codes,
     }
 
@@ -1757,6 +1840,20 @@ def _apply_diagnostics(
             transition_input=transition_input,
             draft_actions_bundle=draft_actions,
         )
+        handshake, rollback_contract_eval = _apply_rollback_contract_guard(
+            handshake_bundle=handshake,
+            draft_actions_bundle=draft_actions,
+        )
+        transition_policy_eval["rollback_contract_status"] = str(rollback_contract_eval.get("status", "not_evaluated") or "not_evaluated")
+        transition_policy_eval["rollback_missing_action_ids"] = [
+            str(x) for x in list(rollback_contract_eval.get("rollback_missing_action_ids") or []) if str(x)
+        ]
+        transition_policy_eval["applied_reason_codes"] = sorted(
+            set(
+                [str(x) for x in list(transition_policy_eval.get("applied_reason_codes") or []) if str(x)]
+                + [str(x) for x in list(rollback_contract_eval.get("reason_codes") or []) if str(x)]
+            )
+        )
         receipt = _build_execution_receipt_stub(
             handshake_bundle=handshake,
             plan_bundle=plan,
@@ -2261,6 +2358,22 @@ class AnswerService:
                     transition_input=transition_input,
                     draft_actions_bundle=dict(anticipatory.get("draft_actions") or {}),
                 )
+                handshake, rollback_contract_eval = _apply_rollback_contract_guard(
+                    handshake_bundle=handshake,
+                    draft_actions_bundle=dict(anticipatory.get("draft_actions") or {}),
+                )
+                transition_policy_eval["rollback_contract_status"] = str(
+                    rollback_contract_eval.get("status", "not_evaluated") or "not_evaluated"
+                )
+                transition_policy_eval["rollback_missing_action_ids"] = [
+                    str(x) for x in list(rollback_contract_eval.get("rollback_missing_action_ids") or []) if str(x)
+                ]
+                transition_policy_eval["applied_reason_codes"] = sorted(
+                    set(
+                        [str(x) for x in list(transition_policy_eval.get("applied_reason_codes") or []) if str(x)]
+                        + [str(x) for x in list(rollback_contract_eval.get("reason_codes") or []) if str(x)]
+                    )
+                )
                 resp.diagnostics["assistant_execution_handshake"] = handshake
                 resp.diagnostics["execution_transition_policy"] = transition_policy_eval
                 resp.diagnostics["execution_idempotency"] = execution_idempotency
@@ -2366,6 +2479,22 @@ class AnswerService:
                     handshake_bundle=handshake,
                     transition_input=transition_input,
                     draft_actions_bundle=dict(base.get("draft_actions") or {}),
+                )
+                handshake, rollback_contract_eval = _apply_rollback_contract_guard(
+                    handshake_bundle=handshake,
+                    draft_actions_bundle=dict(base.get("draft_actions") or {}),
+                )
+                transition_policy_eval["rollback_contract_status"] = str(
+                    rollback_contract_eval.get("status", "not_evaluated") or "not_evaluated"
+                )
+                transition_policy_eval["rollback_missing_action_ids"] = [
+                    str(x) for x in list(rollback_contract_eval.get("rollback_missing_action_ids") or []) if str(x)
+                ]
+                transition_policy_eval["applied_reason_codes"] = sorted(
+                    set(
+                        [str(x) for x in list(transition_policy_eval.get("applied_reason_codes") or []) if str(x)]
+                        + [str(x) for x in list(rollback_contract_eval.get("reason_codes") or []) if str(x)]
+                    )
                 )
                 resp.diagnostics["assistant_execution_handshake"] = handshake
                 resp.diagnostics["execution_transition_policy"] = transition_policy_eval

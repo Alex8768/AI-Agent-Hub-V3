@@ -177,7 +177,7 @@ class AssistantExecutionReceipt(BaseModel):
 
     contract_version: str = Field(default=EXECUTION_RECEIPT_CONTRACT_VERSION)
     receipt_id: str = Field(default="")
-    status: Literal["idle", "awaiting_confirmation", "recorded"] = Field(default="idle")
+    status: Literal["idle", "awaiting_confirmation", "recorded", "blocked"] = Field(default="idle")
     handshake_state: Literal["idle", "pending_confirmation", "approved", "executed", "cancelled"] = Field(
         default="idle"
     )
@@ -185,6 +185,12 @@ class AssistantExecutionReceipt(BaseModel):
     approved_action_ids: list[str] = Field(default_factory=list)
     blocked_action_ids: list[str] = Field(default_factory=list)
     executed_action_ids: list[str] = Field(default_factory=list)
+    rollback_status: Literal["not_applicable", "ready", "blocked_missing_rollback_plan"] = Field(
+        default="not_applicable"
+    )
+    rollback_required_action_ids: list[str] = Field(default_factory=list)
+    rollback_ready_action_ids: list[str] = Field(default_factory=list)
+    rollback_missing_action_ids: list[str] = Field(default_factory=list)
     reason_codes: list[str] = Field(default_factory=list)
 
 

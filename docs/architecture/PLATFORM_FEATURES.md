@@ -132,6 +132,7 @@ AI-Agent-Hub-V3 is a modular AI platform for production-grade agent systems with
 - [x] Durable approval recovery docs/CI closure (A2.38 patch 5)
 - [x] Controlled execution pilot contract baseline diagnostics (A2.39 patch 1)
 - [x] Controlled execution allowlist and transition policy gate (A2.39 patch 2)
+- [x] Execution receipt rollback contract enforcement for approvals (A2.39 patch 3)
 
 ### 7) Interface Layer
 
