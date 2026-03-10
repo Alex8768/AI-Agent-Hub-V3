@@ -704,6 +704,95 @@ def _build_tool_selection_bundle(
     }
 
 
+def _build_tool_selection_policy_contract() -> dict[str, object]:
+    return {
+        "mode": "tool_selection_guarded",
+        "allow_mcp_source": True,
+        "allow_deterministic_fallback": True,
+        "allowed_routes": ["mcp_registry_match", "deterministic_fallback", "diagnostics_only"],
+        "require_plan_step_binding": True,
+        "max_selected_tools": 5,
+        "fallback_on_policy_violation": True,
+    }
+
+
+def _apply_tool_selection_policy_guards(
+    *,
+    tool_selection_bundle: dict[str, object],
+    policy_contract: dict[str, object],
+    plan_bundle: dict[str, object],
+) -> tuple[dict[str, object], dict[str, object]]:
+    selection = dict(tool_selection_bundle or {})
+    policy = dict(policy_contract or {})
+    selected = [dict(x or {}) for x in list(selection.get("selected_tools") or [])]
+    plan_steps = [dict(x or {}) for x in list(dict(plan_bundle or {}).get("steps") or [])]
+    valid_step_ids = {str(x.get("step_id", "") or "") for x in plan_steps if str(x.get("step_id", "") or "")}
+    allowed_routes = {str(x).strip() for x in list(policy.get("allowed_routes") or []) if str(x).strip()}
+    max_selected_tools = int(policy.get("max_selected_tools", 5) or 5)
+    fallback_on_violation = bool(policy.get("fallback_on_policy_violation", True))
+    require_step_binding = bool(policy.get("require_plan_step_binding", True))
+    allow_mcp_source = bool(policy.get("allow_mcp_source", True))
+    allow_deterministic_fallback = bool(policy.get("allow_deterministic_fallback", True))
+    source = str(selection.get("source", "none") or "none")
+
+    violations: list[str] = []
+    sanitized: list[dict[str, object]] = []
+    blocked_step_ids: list[str] = [str(x) for x in list(selection.get("blocked_step_ids") or []) if str(x)]
+    for row in selected:
+        step_id = str(row.get("step_id", "") or "")
+        route = str(row.get("route", "") or "")
+        if require_step_binding and step_id and step_id not in valid_step_ids:
+            violations.append("tool_selection_step_not_in_plan")
+            blocked_step_ids.append(step_id)
+            continue
+        if route not in allowed_routes:
+            violations.append("tool_selection_route_not_allowlisted")
+            if step_id:
+                blocked_step_ids.append(step_id)
+            continue
+        sanitized.append(row)
+
+    if source == "mcp" and not allow_mcp_source:
+        violations.append("tool_selection_mcp_source_not_allowed")
+    if source == "deterministic" and not allow_deterministic_fallback:
+        violations.append("tool_selection_fallback_source_not_allowed")
+    if len(sanitized) > max_selected_tools:
+        violations.append("tool_selection_max_selected_tools_exceeded")
+        sanitized = sanitized[:max_selected_tools]
+
+    applied_reason_codes: list[str] = []
+    if violations and fallback_on_violation:
+        fallback_selected = []
+        for step in plan_steps[:max_selected_tools]:
+            step_id = str(step.get("step_id", "") or "")
+            if not step_id:
+                continue
+            fallback_selected.append(
+                {
+                    "step_id": step_id,
+                    "tool_name": "none",
+                    "route": "deterministic_fallback",
+                    "reason": "tool_selection_policy_fallback",
+                }
+            )
+        source = "deterministic"
+        sanitized = fallback_selected
+        applied_reason_codes.append("tool_selection_policy_forced_fallback")
+
+    reason_codes = [str(x) for x in list(selection.get("reason_codes") or []) if str(x).strip()]
+    reason_codes.extend(applied_reason_codes)
+    selection["source"] = source
+    selection["selected_tools"] = sanitized
+    selection["blocked_step_ids"] = sorted(set(blocked_step_ids))
+    selection["reason_codes"] = sorted(set(reason_codes))
+    policy_eval = {
+        **policy,
+        "violations": sorted(set(violations)),
+        "applied_reason_codes": sorted(set(applied_reason_codes)),
+    }
+    return selection, policy_eval
+
+
 def _load_mcp_tools_from_runtime(http: Request) -> list[dict[str, object]]:
     state = getattr(getattr(http, "app", None), "state", None)
     registry = getattr(state, "mcp_registry", None) if state is not None else None
@@ -2239,6 +2328,12 @@ async def _apply_diagnostics(
             assistant_mode_enabled=assistant_mode_enabled,
             mcp_tools=mcp_tools,
         )
+        tool_selection_policy = _build_tool_selection_policy_contract()
+        tool_selection, tool_selection_policy_eval = _apply_tool_selection_policy_guards(
+            tool_selection_bundle=tool_selection,
+            policy_contract=tool_selection_policy,
+            plan_bundle=plan,
+        )
         diag.setdefault("plan_contract_version", PLAN_CONTRACT_VERSION)
         diag.setdefault("assistant_plan", dict(plan))
         llm_planner["plan_id"] = str(plan.get("plan_id", "") or "")
@@ -2246,6 +2341,7 @@ async def _apply_diagnostics(
         diag.setdefault("assistant_llm_planner", llm_planner)
         diag.setdefault("tool_selection_contract_version", TOOL_SELECTION_CONTRACT_VERSION)
         diag.setdefault("assistant_tool_selection", tool_selection)
+        diag.setdefault("tool_selection_policy", tool_selection_policy_eval)
         diag.setdefault("llm_planner_policy", llm_planner_policy_eval)
         diag.setdefault("planning_policy", dict(planning_policy))
         diag = _wire_planner_runtime_diagnostics(diagnostics=diag)
@@ -2356,6 +2452,7 @@ async def _apply_diagnostics(
         reason_codes = list(intent.get("reason_codes") or []) + list(plan.get("reason_codes") or [])
         reason_codes.extend(list(llm_planner.get("reason_codes") or []))
         reason_codes.extend(list(tool_selection.get("reason_codes") or []))
+        reason_codes.extend(list(tool_selection_policy_eval.get("applied_reason_codes") or []))
         reason_codes.extend(list(llm_planner_policy_eval.get("applied_reason_codes") or []))
         reason_codes.extend(list(planning_policy.get("reason_codes") or []))
         reason_codes.extend(list(handshake.get("reason_codes") or []))

@@ -15,13 +15,14 @@ A2.41 — Dynamic Tool Selection (MCP-aware)
 Current progress:
 - Patch 1 complete: Tool Selection Contract Baseline.
 - Patch 2 complete: MCP-aware Selector Adapter + Fallback.
-- Patch 3 pending: Tool Selection Policy Guardrails.
+- Patch 3 complete: Tool Selection Policy Guardrails.
 - Patch 4 pending: Runtime Wiring + Diagnostics Parity.
 - Patch 5 pending: Docs/CI Closure.
 
 Focus:
 - tool-selection contract baseline is exposed in diagnostics
 - mcp-aware selector adapter applies deterministic fallback when no tool match
+- tool-selection policy guardrails enforce allowlisted routing with forced fallback
 - keep policy sandboxing and deterministic fallback during MCP-aware routing
 - preserve strict micro-patch execution discipline
 

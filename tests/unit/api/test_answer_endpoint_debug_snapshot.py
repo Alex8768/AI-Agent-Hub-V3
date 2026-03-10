@@ -111,6 +111,7 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
         "assistant_plan",
         "assistant_llm_planner",
         "assistant_tool_selection",
+        "tool_selection_policy",
         "llm_planner_policy",
         "planning_policy",
         "execution_handshake_contract_version",
@@ -181,6 +182,18 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
         "selected_tools",
         "blocked_step_ids",
         "reason_codes",
+    }
+    tool_selection_policy = dict(diag.get("tool_selection_policy") or {})
+    assert set(tool_selection_policy.keys()) == {
+        "mode",
+        "allow_mcp_source",
+        "allow_deterministic_fallback",
+        "allowed_routes",
+        "require_plan_step_binding",
+        "max_selected_tools",
+        "fallback_on_policy_violation",
+        "violations",
+        "applied_reason_codes",
     }
     llm_planner_policy = dict(diag.get("llm_planner_policy") or {})
     assert set(llm_planner_policy.keys()) == {

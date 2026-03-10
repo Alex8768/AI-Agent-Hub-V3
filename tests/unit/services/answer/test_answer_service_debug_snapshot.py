@@ -173,6 +173,7 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
         "assistant_plan",
         "assistant_llm_planner",
         "assistant_tool_selection",
+        "tool_selection_policy",
         "llm_planner_policy",
         "planning_policy",
         "execution_handshake_contract_version",
@@ -249,6 +250,18 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
         "selected_tools",
         "blocked_step_ids",
         "reason_codes",
+    }
+    tool_selection_policy = dict(diag.get("tool_selection_policy") or {})
+    assert set(tool_selection_policy.keys()) == {
+        "mode",
+        "allow_mcp_source",
+        "allow_deterministic_fallback",
+        "allowed_routes",
+        "require_plan_step_binding",
+        "max_selected_tools",
+        "fallback_on_policy_violation",
+        "violations",
+        "applied_reason_codes",
     }
     llm_planner_policy = dict(diag.get("llm_planner_policy") or {})
     assert set(llm_planner_policy.keys()) == {
@@ -1196,6 +1209,60 @@ async def test_answer_service_tool_selection_uses_mcp_registry_with_fallback(mon
     assert any(str((row or {}).get("tool_name", "")) == "workspace_manager" for row in selected)
     assert "tool_selection_adapter_applied" in list(tool_selection.get("reason_codes") or [])
     assert "tool_selection_mcp_matched" in list(tool_selection.get("reason_codes") or [])
+
+
+@pytest.mark.asyncio
+async def test_answer_service_tool_selection_policy_forces_fallback_on_violation(monkeypatch):
+    class _S:
+        feature_reasoning = True
+        feature_graphrag = True
+        feature_reasoning_llm_enabled = False
+        feature_assistant_mode = True
+        feature_assistant_proactive = False
+        feature_assistant_actions = False
+        llm_provider = "ollama"
+        openai_model = ""
+        ollama_model = "llama3.2:latest"
+
+    monkeypatch.setattr("src.core.config.get_settings", lambda: _S())
+    monkeypatch.setattr("src.observability.trace.make_trace_id", lambda **kwargs: "trace-123", raising=False)
+    monkeypatch.setattr(
+        "src.core.providers.get_reasoning_engine",
+        lambda *, retriever=None, llm=None, llm_timeout_s=None: _FakeReasoningEngine(retriever),
+    )
+
+    def _invalid_tool_selection(**kwargs):
+        _ = kwargs
+        return {
+            "contract_version": "v1",
+            "mode": "mcp_aware_selector",
+            "status": "ready",
+            "source": "mcp",
+            "selected_tools": [
+                {
+                    "step_id": "step:unknown",
+                    "tool_name": "danger_tool",
+                    "route": "unknown_route",
+                    "reason": "invalid_for_policy_test",
+                }
+            ],
+            "blocked_step_ids": [],
+            "reason_codes": ["tool_selection_adapter_applied"],
+        }
+
+    monkeypatch.setattr("src.services.answer.answer_service._build_tool_selection_bundle", _invalid_tool_selection)
+
+    http = _DummyHTTP(request_id="rid-tool-select-policy", rag_engine=object(), hybrid_retriever=_FakeHybrid())
+    req = AnswerRequest(query="new project planning", session_id="default")
+    resp = await AnswerService().handle(http, req, workspace_id="default")
+    diag = dict(getattr(resp, "diagnostics", {}) or {})
+    selection = dict(diag.get("assistant_tool_selection") or {})
+    policy = dict(diag.get("tool_selection_policy") or {})
+
+    assert selection.get("source") == "deterministic"
+    assert "tool_selection_policy_forced_fallback" in list(selection.get("reason_codes") or [])
+    assert "tool_selection_step_not_in_plan" in list(policy.get("violations") or [])
+    assert "tool_selection_policy_forced_fallback" in list(policy.get("applied_reason_codes") or [])
 
 
 @pytest.mark.asyncio
