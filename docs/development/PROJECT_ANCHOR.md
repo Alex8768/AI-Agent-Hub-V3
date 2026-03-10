@@ -2,75 +2,69 @@
 
 ## Active Anchor
 
-A2.47 — Debt Resolution Track (Runtime Clarity + Reliability)
+A2.48 — Planner Decoupling Track (Kernel Composition Independence)
 
 ### Goal
 
-Resolve post-A2.46 technical debt with strict runtime parity and zero capability expansion.
+Close remaining planner-coupling debt by separating planner composition paths from
+concrete provider/runtime assembly, while preserving strict runtime parity.
 
-This anchor closes explicitly tracked debt around:
+This anchor targets:
 
-- `AnswerService` orchestration overpacking
-- cross-store memory consistency strategy
-- runtime entrypoint ambiguity (`run_utf8.py`)
-- dependency gate coverage continuity
-
-The objective is to reduce operational and architectural risk while preserving behavior.
+- planner runtime dependency decoupling
+- prompt/planner boundary normalization
+- deterministic planner diagnostics parity
+- CI/documentation enforcement for planner boundary drift
 
 ### Why Now
 
-A2.46 stabilized topology and dependency directions.
+A2.47 closed the major runtime/debt items and left one tracked architectural item:
 
-The next risk concentration is unresolved debt with known owners and accepted deferrals:
+- `TD-A2.45-002`
 
-- `TD-A2.45-001`
-- `TD-A2.45-003`
-- `TD-A2.45-004`
-
-Closing these items improves maintainability and production safety without adding new
-intelligence surfaces.
+Planner behavior is guarded, but runtime composition is still more coupled than desired.
+Decoupling this path is the next low-risk/high-value stabilization step.
 
 ### Architecture Position
 
-Primary debt closure zones:
+Primary closure zones:
 
-- `services/answer` (orchestration decomposition seams)
-- `layers/pro` + memory integration boundaries (consistency strategy contract)
-- runtime entrypoint docs/policy (`src.api.main:app` vs legacy runner)
-- platform quality gates and debt registry alignment
+- `layers/pro/reasoning/kernel` planner-facing contracts
+- `core/providers_parts` runtime composition seams
+- `services/answer` planner adapter wiring (no behavior expansion)
+- planner boundary quality-gate tests and docs
 
-A2.47 preserves the A2.46 topology and dependency constraints.
+A2.48 preserves A2.46 topology constraints and A2.47 runtime decisions.
 
 ### Patch Plan
 
 #### Patch plan
-- Patch 1 — debt closure inventory + scope lock
-- Patch 2 — AnswerService orchestration extraction seam
-- Patch 3 — memory consistency strategy contract (outbox/compensation decision)
-- Patch 4 — runtime entrypoint cleanup decision (`run_utf8.py`)
-- Patch 5 — debt registry/docs/CI closure for A2.47
+- Patch 1 — planner decoupling inventory + scope lock
+- Patch 2 — planner composition seam extraction
+- Patch 3 — prompt/planner boundary normalization
+- Patch 4 — planner diagnostics/runtime parity guardrails
+- Patch 5 — debt registry/docs/CI closure for A2.48
 
 ### Progress
 
-- [x] Patch 1 — debt closure inventory + scope lock
-- [x] Patch 2 — AnswerService orchestration extraction seam
-- [x] Patch 3 — memory consistency strategy contract (outbox/compensation decision)
-- [x] Patch 4 — runtime entrypoint cleanup decision (`run_utf8.py`)
-- [x] Patch 5 — debt registry/docs/CI closure for A2.47
+- [x] Patch 1 — planner decoupling inventory + scope lock
+- [ ] Patch 2 — planner composition seam extraction
+- [ ] Patch 3 — prompt/planner boundary normalization
+- [ ] Patch 4 — planner diagnostics/runtime parity guardrails
+- [ ] Patch 5 — debt registry/docs/CI closure for A2.48
 
 ### Patch 1 Outputs
 
-Debt inventory mapped to A2.47:
+Debt inventory mapped to A2.48:
 
-- `TD-A2.45-001`: `AnswerService` remains oversized and couples many orchestration concerns.
-- `TD-A2.45-003`: memory writes are cross-store best-effort and need explicit strategy.
-- `TD-A2.45-004`: `run_utf8.py` legacy path needs keep/remove decision.
+- `TD-A2.45-002`: planner wiring still depends on concrete runtime/provider composition paths.
 
 Scope lock:
 
-- preserve runtime behavior and diagnostics contracts unless patch explicitly states otherwise
+- preserve planner behavior, outputs, and diagnostics contracts
 - no net-new model/provider/intelligence capabilities
-- keep dependency gates from A2.46 active while debt is extracted
+- no planner quality-threshold policy changes
+- keep topology/dependency gates from A2.46 and debt gates from A2.47 active
 
 ### Out of Scope
 
@@ -85,16 +79,16 @@ Do NOT modify during planning:
 
 ### Definition of Done
 
-A2.47 completion criteria:
-- targeted debt items (`TD-A2.45-001/003/004`) have explicit closure outcomes;
-- `AnswerService` orchestration boundaries are clearer with preserved runtime parity;
-- memory consistency strategy is documented/contracted and test-covered;
-- runtime entrypoint ambiguity is resolved and documented;
-- docs/checklist/status/features and CI quality gates reflect actual closure state.
+A2.48 completion criteria:
+- `TD-A2.45-002` has explicit closure outcome in debt registry;
+- planner composition path is decoupled from concrete provider assembly seams;
+- prompt/planner boundaries are normalized without behavior drift;
+- planner diagnostics/runtime parity is preserved and test-covered;
+- docs/checklist/status/features and CI quality gates reflect closure state.
 
 ## Next Anchor
 
-A2.48 — TBD
+A2.49 — TBD
 
 ### Discipline
 

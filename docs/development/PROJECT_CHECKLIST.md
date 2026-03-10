@@ -53,13 +53,17 @@
 - [x] A2.46 Kernel / Extensions / Execution Plane Hardening
 - [x] A2.47 Debt Resolution Track (Runtime Clarity + Reliability)
 
-## Current Work — A2.48 TBD
+## Current Work — A2.48 Planner Decoupling Track (Kernel Composition Independence)
 
-- [ ] Patch 1 — scope lock (pending)
+- [x] Patch 1 — planner decoupling inventory + scope lock
+- [ ] Patch 2 — planner composition seam extraction
+- [ ] Patch 3 — prompt/planner boundary normalization
+- [ ] Patch 4 — planner diagnostics/runtime parity guardrails
+- [ ] Patch 5 — debt registry/docs/CI closure
 
 ## Next
 
-- [ ] Start A2.48 scope lock
+- [ ] Start A2.48 patch 2 implementation
 
 ## Later
 
@@ -77,4 +81,4 @@
 
 - [x] MCP expansion is deferred until reasoning stabilization and OCR milestone are complete
 - [x] Large capability expansion is paused during debt-closure anchors
-- [x] No new intelligence modules should be introduced during A2.47
+- [x] No new intelligence modules should be introduced during A2.48

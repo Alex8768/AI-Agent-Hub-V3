@@ -33,10 +33,10 @@ Required fields per entry:
 - area: `reasoning/planner`
 - description: `Planner wiring still depends on concrete runtime provider composition paths.`
 - risk_level: `medium`
-- decision_status: `mitigated_with_guardrail`
+- decision_status: `active_targeted_for_a2_48`
 - owner: `architecture-track`
-- target_anchor: `A2.46`
-- notes: `A2.45 added guarded adapter seam; deeper decoupling deferred.`
+- target_anchor: `A2.48`
+- notes: `A2.45 added guarded adapter seam; A2.48 is dedicated to planner composition decoupling closure.`
 
 ### debt_id: `TD-A2.45-003`
 

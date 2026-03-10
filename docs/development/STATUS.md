@@ -10,13 +10,17 @@ A2.47 — Debt Resolution Track (Runtime Clarity + Reliability)
 
 ## Current Active Anchor
 
-A2.48 — TBD
+A2.48 — Planner Decoupling Track (Kernel Composition Independence)
 
 Current progress:
-- scope definition pending.
+- Patch 1 complete: planner decoupling inventory + scope lock.
+- Patch 2 pending: planner composition seam extraction.
+- Patch 3 pending: prompt/planner boundary normalization.
+- Patch 4 pending: planner diagnostics/runtime parity guardrails.
+- Patch 5 pending: debt registry/docs/CI closure.
 
 Focus:
-- define post-A2.47 priorities
+- close remaining planner-coupling debt without behavior expansion
 - keep topology/dependency quality gates active
 - preserve strict micro-patch execution discipline
 
@@ -29,10 +33,10 @@ Execution discipline:
 
 ## Next Anchor
 
-A2.48 — TBD
+A2.49 — TBD
 
 Planned focus:
-- finalize A2.48 scope lock
+- execute A2.48 patch 2 planner composition seam extraction
 
 ## CI Status
 
@@ -42,4 +46,4 @@ The noop tracing span compatibility fix is completed and treated as closed work.
 
 ## Upcoming Anchors
 
-- A2.48 — TBD
+- A2.48 — Planner Decoupling Track (Kernel Composition Independence)

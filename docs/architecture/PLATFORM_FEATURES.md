@@ -175,6 +175,7 @@ AI-Agent-Hub-V3 is a modular AI platform for production-grade agent systems with
 - [x] Memory consistency strategy contract for best-effort dual-store with deferred outbox/compensation (A2.47 patch 3)
 - [x] Runtime entrypoint cleanup decision via `run_utf8.py` compatibility wrapper to `src.api.main:app` (A2.47 patch 4)
 - [x] Debt registry/docs/CI closure with dedicated runtime quality gate (A2.47 patch 5)
+- [x] Planner decoupling inventory and scope lock for kernel composition independence (A2.48 patch 1)
 
 ### 7) Interface Layer
 
