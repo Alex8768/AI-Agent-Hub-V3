@@ -539,7 +539,8 @@ def _apply_handshake_transition(
 ) -> dict[str, object]:
     decision = str(transition_input.get("decision", "") or "")
     provided_token = str(transition_input.get("confirmation_token", "") or "")
-    requested_action_ids = [str(x) for x in list(transition_input.get("requested_action_ids") or []) if str(x)]
+    requested_raw = transition_input.get("requested_action_ids", None)
+    requested_action_ids = [str(x) for x in list(requested_raw or []) if str(x)]
     if not decision:
         return dict(handshake_bundle or {})
 
@@ -580,7 +581,10 @@ def _apply_handshake_transition(
             "reason_codes": reasons,
         }
 
-    requested_set = set(requested_action_ids or available_action_ids)
+    if requested_raw is None:
+        requested_set = set(available_action_ids)
+    else:
+        requested_set = set(requested_action_ids)
     approved = [aid for aid in available_action_ids if aid in requested_set]
     blocked = [aid for aid in available_action_ids if aid not in set(approved)]
     state = "approved" if approved else "pending_confirmation"
@@ -597,6 +601,57 @@ def _apply_handshake_transition(
         "receipt_id": "",
         "reason_codes": reasons,
     }
+
+
+def _build_transition_policy_contract() -> dict[str, object]:
+    return {
+        "mode": "confirmation_guarded",
+        "require_confirmation_token": True,
+        "allow_partial_approval": True,
+        "max_approved_action_ids": 3,
+        "allowed_decisions": ["approve", "cancel"],
+    }
+
+
+def _apply_handshake_transition_policy(
+    *,
+    transition_input: dict[str, object],
+    draft_actions_bundle: dict[str, object],
+    policy_contract: dict[str, object],
+) -> tuple[dict[str, object], dict[str, object]]:
+    normalized = dict(transition_input or {})
+    decision = str(normalized.get("decision", "") or "")
+    requested_action_ids = [str(x) for x in list(normalized.get("requested_action_ids") or []) if str(x)]
+    available_action_ids = [
+        str((row or {}).get("action_id", "") or "")
+        for row in list(draft_actions_bundle.get("actions") or [])
+        if str((row or {}).get("action_id", "") or "").strip()
+    ]
+    available_set = set(available_action_ids)
+    policy_reasons: list[str] = []
+    unknown_ids = [x for x in requested_action_ids if x not in available_set]
+    if unknown_ids:
+        policy_reasons.append("unknown_action_ids_blocked")
+    requested_action_ids = [x for x in requested_action_ids if x in available_set]
+
+    if decision == "cancel" and requested_action_ids:
+        requested_action_ids = []
+        policy_reasons.append("cancel_ignores_action_filter")
+
+    max_ids = int(policy_contract.get("max_approved_action_ids", 3) or 3)
+    if decision == "approve" and len(requested_action_ids) > max_ids:
+        requested_action_ids = requested_action_ids[:max_ids]
+        policy_reasons.append("approval_limit_applied")
+
+    normalized["requested_action_ids"] = requested_action_ids
+    policy_eval = {
+        **dict(policy_contract or {}),
+        "requested_action_ids_count": len(requested_action_ids),
+        "available_action_ids_count": len(available_action_ids),
+        "unknown_action_ids": unknown_ids,
+        "applied_reason_codes": sorted(set(policy_reasons)),
+    }
+    return normalized, policy_eval
 
 
 def _build_execution_receipt_stub(
@@ -1149,9 +1204,15 @@ def _apply_diagnostics(
             assistant_mode_enabled=assistant_mode_enabled,
             actions_enabled=assistant_actions_enabled,
         )
+        transition_policy = _build_transition_policy_contract()
+        transition_input, transition_policy_eval = _apply_handshake_transition_policy(
+            transition_input=_extract_handshake_transition_input(req),
+            draft_actions_bundle=draft_actions,
+            policy_contract=transition_policy,
+        )
         handshake = _apply_handshake_transition(
             handshake_bundle=handshake,
-            transition_input=_extract_handshake_transition_input(req),
+            transition_input=transition_input,
             draft_actions_bundle=draft_actions,
         )
         receipt = _build_execution_receipt_stub(
@@ -1163,6 +1224,7 @@ def _apply_diagnostics(
         )
         diag.setdefault("execution_handshake_contract_version", HANDSHAKE_CONTRACT_VERSION)
         diag.setdefault("assistant_execution_handshake", handshake)
+        diag.setdefault("execution_transition_policy", transition_policy_eval)
         diag.setdefault("execution_receipt_contract_version", EXECUTION_RECEIPT_CONTRACT_VERSION)
         diag.setdefault("assistant_execution_receipt", receipt)
         reason_codes = list(intent.get("reason_codes") or []) + list(plan.get("reason_codes") or [])
@@ -1579,12 +1641,19 @@ class AnswerService:
                     assistant_mode_enabled=assistant_mode_enabled,
                     actions_enabled=assistant_actions_enabled,
                 )
+                transition_policy = _build_transition_policy_contract()
+                transition_input, transition_policy_eval = _apply_handshake_transition_policy(
+                    transition_input=_extract_handshake_transition_input(req),
+                    draft_actions_bundle=dict(anticipatory.get("draft_actions") or {}),
+                    policy_contract=transition_policy,
+                )
                 handshake = _apply_handshake_transition(
                     handshake_bundle=handshake,
-                    transition_input=_extract_handshake_transition_input(req),
+                    transition_input=transition_input,
                     draft_actions_bundle=dict(anticipatory.get("draft_actions") or {}),
                 )
                 resp.diagnostics["assistant_execution_handshake"] = handshake
+                resp.diagnostics["execution_transition_policy"] = transition_policy_eval
                 resp.diagnostics["assistant_execution_receipt"] = _build_execution_receipt_stub(
                     handshake_bundle=handshake,
                     plan_bundle=plan_bundle,
@@ -1628,12 +1697,19 @@ class AnswerService:
                     assistant_mode_enabled=assistant_mode_enabled,
                     actions_enabled=assistant_actions_enabled,
                 )
+                transition_policy = _build_transition_policy_contract()
+                transition_input, transition_policy_eval = _apply_handshake_transition_policy(
+                    transition_input=_extract_handshake_transition_input(req),
+                    draft_actions_bundle=dict(base.get("draft_actions") or {}),
+                    policy_contract=transition_policy,
+                )
                 handshake = _apply_handshake_transition(
                     handshake_bundle=handshake,
-                    transition_input=_extract_handshake_transition_input(req),
+                    transition_input=transition_input,
                     draft_actions_bundle=dict(base.get("draft_actions") or {}),
                 )
                 resp.diagnostics["assistant_execution_handshake"] = handshake
+                resp.diagnostics["execution_transition_policy"] = transition_policy_eval
                 resp.diagnostics["assistant_execution_receipt"] = _build_execution_receipt_stub(
                     handshake_bundle=handshake,
                     plan_bundle=plan_bundle,

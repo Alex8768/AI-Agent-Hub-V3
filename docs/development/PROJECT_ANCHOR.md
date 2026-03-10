@@ -37,7 +37,7 @@ Planned files:
 - [x] Patch 1 — Handshake Contract Baseline
 - [x] Patch 2 — Confirmation Transition Model (Approved/Cancelled)
 - [x] Patch 3 — Execution Receipt Stub Integration
-- [ ] Patch 4 — Transition Policy Guards
+- [x] Patch 4 — Transition Policy Guards
 - [ ] Patch 5 — Docs/CI Closure
 
 ### Out of Scope

@@ -110,6 +110,7 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
         "planning_policy",
         "execution_handshake_contract_version",
         "assistant_execution_handshake",
+        "execution_transition_policy",
         "execution_receipt_contract_version",
         "assistant_execution_receipt",
         "planning_reason_codes",
@@ -163,6 +164,18 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
         "blocked_action_ids",
         "receipt_id",
         "reason_codes",
+    }
+    transition_policy = dict(diag.get("execution_transition_policy") or {})
+    assert set(transition_policy.keys()) == {
+        "mode",
+        "require_confirmation_token",
+        "allow_partial_approval",
+        "max_approved_action_ids",
+        "allowed_decisions",
+        "requested_action_ids_count",
+        "available_action_ids_count",
+        "unknown_action_ids",
+        "applied_reason_codes",
     }
     assert diag.get("execution_receipt_contract_version") == "v1"
     receipt = dict(diag.get("assistant_execution_receipt") or {})

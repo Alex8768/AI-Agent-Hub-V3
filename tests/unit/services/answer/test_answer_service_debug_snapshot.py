@@ -171,6 +171,7 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
         "planning_policy",
         "execution_handshake_contract_version",
         "assistant_execution_handshake",
+        "execution_transition_policy",
         "execution_receipt_contract_version",
         "assistant_execution_receipt",
         "planning_reason_codes",
@@ -230,6 +231,18 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
         "blocked_action_ids",
         "receipt_id",
         "reason_codes",
+    }
+    transition_policy = dict(diag.get("execution_transition_policy") or {})
+    assert set(transition_policy.keys()) == {
+        "mode",
+        "require_confirmation_token",
+        "allow_partial_approval",
+        "max_approved_action_ids",
+        "allowed_decisions",
+        "requested_action_ids_count",
+        "available_action_ids_count",
+        "unknown_action_ids",
+        "applied_reason_codes",
     }
     assert diag.get("execution_receipt_contract_version") == "v1"
     receipt = dict(diag.get("assistant_execution_receipt") or {})
@@ -1102,6 +1115,51 @@ async def test_answer_service_handshake_transition_approve(monkeypatch):
     assert receipt.get("status") == "recorded"
     assert receipt.get("handshake_state") == "approved"
     assert str(receipt.get("receipt_id", "")).startswith("receipt:")
+
+
+@pytest.mark.asyncio
+async def test_answer_service_handshake_transition_policy_blocks_unknown_action_ids(monkeypatch):
+    class _S:
+        feature_reasoning = True
+        feature_graphrag = True
+        feature_reasoning_llm_enabled = False
+        feature_assistant_mode = True
+        feature_assistant_proactive = False
+        feature_assistant_actions = True
+        llm_provider = "ollama"
+        openai_model = ""
+        ollama_model = "llama3.2:latest"
+
+    monkeypatch.setattr("src.core.config.get_settings", lambda: _S())
+    monkeypatch.setattr("src.observability.trace.make_trace_id", lambda **kwargs: "trace-123", raising=False)
+    monkeypatch.setattr(
+        "src.core.providers.get_reasoning_engine",
+        lambda *, retriever=None, llm=None, llm_timeout_s=None: _FakeReasoningEngine(retriever),
+    )
+
+    http = _DummyHTTP(request_id="rid-handshake-policy-unknown", rag_engine=object(), hybrid_retriever=_FakeHybrid())
+    base_req = AnswerRequest(query="new project planning", session_id="default")
+    base_resp = await AnswerService().handle(http, base_req, workspace_id="default")
+    base_diag = dict(getattr(base_resp, "diagnostics", {}) or {})
+    token = str((dict(base_diag.get("assistant_execution_handshake") or {})).get("confirmation_token", "") or "")
+
+    req = AnswerRequest(
+        query="new project planning",
+        session_id="default",
+        filters={
+            "handshake_decision": "approve",
+            "handshake_confirmation_token": token,
+            "handshake_action_ids": ["draft_action:unknown"],
+        },
+    )
+    resp = await AnswerService().handle(http, req, workspace_id="default")
+    diag = dict(getattr(resp, "diagnostics", {}) or {})
+    transition_policy = dict(diag.get("execution_transition_policy") or {})
+    handshake = dict(diag.get("assistant_execution_handshake") or {})
+
+    assert "unknown_action_ids_blocked" in list(transition_policy.get("applied_reason_codes") or [])
+    assert handshake.get("state") == "pending_confirmation"
+    assert "no_matching_action_ids" in list(handshake.get("reason_codes") or [])
 
 
 @pytest.mark.asyncio

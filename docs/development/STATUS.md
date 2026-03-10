@@ -16,10 +16,11 @@ Current progress:
 - Patch 1 completed: Handshake Contract Baseline.
 - Patch 2 completed: Confirmation Transition Model (Approved/Cancelled).
 - Patch 3 completed: Execution Receipt Stub Integration.
+- Patch 4 completed: Transition Policy Guards.
 
 Focus:
 - explicit handshake diagnostics contract for draft action lifecycle
-- deterministic execution receipt stub wiring for handshake transitions
+- deterministic transition policy guards for approve/cancel decisions
 
 Execution discipline:
 - keep work strictly inside the active anchor and move in micro-patches.
