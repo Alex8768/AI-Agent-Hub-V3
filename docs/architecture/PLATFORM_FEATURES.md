@@ -130,6 +130,7 @@ AI-Agent-Hub-V3 is a modular AI platform for production-grade agent systems with
 - [x] Token ttl and one-time confirmation guards (A2.38 patch 3)
 - [x] Restart recovery deterministic replay outcomes (A2.38 patch 4)
 - [x] Durable approval recovery docs/CI closure (A2.38 patch 5)
+- [x] Controlled execution pilot contract baseline diagnostics (A2.39 patch 1)
 
 ### 7) Interface Layer
 
@@ -165,9 +166,9 @@ AI-Agent-Hub-V3 is a modular AI platform for production-grade agent systems with
 - `A2.35` Intent-to-Plan Orchestrator (COO MVP)
 - `A2.36` Confirmation-to-Execution Handshake (MVP)
 - `A2.37` Approval Session & Idempotent Execution Gateway (Safe Mode)
-- `A2.38` TBD
-- `A2.39` TBD
-- `A2.39` TBD
+- `A2.38` Durable Approval Recovery Runtime (Safe Mode)
+- `A2.39` Controlled Execution Pilot (Strict Safe Mode+)
+- `A2.40` Intent-based Planning Engine (LLM Planner)
 
 Roadmap order:
 

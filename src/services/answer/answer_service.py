@@ -19,6 +19,7 @@ from src.layers.pro.reasoning.contracts import (
     AnswerRequest,
     DURABLE_APPROVAL_SESSION_CONTRACT_VERSION,
     EVIDENCE_CONTRACT_VERSION,
+    EXECUTION_PILOT_CONTRACT_VERSION,
     EXECUTION_RECEIPT_CONTRACT_VERSION,
     HANDSHAKE_CONTRACT_VERSION,
     IDEMPOTENCY_RECORD_CONTRACT_VERSION,
@@ -920,6 +921,73 @@ def _build_safe_mode_execution_gateway(
     }
 
 
+def _build_execution_pilot_bundle(
+    *,
+    handshake_bundle: dict[str, object],
+    draft_actions_bundle: dict[str, object],
+    actions_enabled: bool,
+) -> dict[str, object]:
+    handshake = dict(handshake_bundle or {})
+    requested_action_ids = [str(x) for x in list(handshake.get("approved_action_ids") or []) if str(x)]
+    actions = [dict(row or {}) for row in list(draft_actions_bundle.get("actions") or [])]
+    action_type_by_id = {
+        str(row.get("action_id", "") or ""): str(row.get("action_type", "") or "")
+        for row in actions
+        if str(row.get("action_id", "") or "").strip()
+    }
+    allowed_action_types = [
+        "prepare_summary_draft",
+        "collect_context_draft",
+    ]
+    if not actions_enabled:
+        return {
+            "contract_version": EXECUTION_PILOT_CONTRACT_VERSION,
+            "mode": "controlled_pilot",
+            "state": "disabled",
+            "safe_mode": True,
+            "execute_enabled": False,
+            "max_actions_per_run": 1,
+            "allowed_action_types": allowed_action_types,
+            "requested_action_ids": requested_action_ids,
+            "eligible_action_ids": [],
+            "blocked_action_ids": [],
+            "reason_codes": ["assistant_actions_disabled"],
+        }
+
+    eligible = [
+        aid
+        for aid in requested_action_ids
+        if str(action_type_by_id.get(aid, "") or "") in set(allowed_action_types)
+    ]
+    blocked = [aid for aid in requested_action_ids if aid not in set(eligible)]
+    state = str(handshake.get("state", "idle") or "idle")
+    if state == "pending_confirmation":
+        pilot_state = "awaiting_confirmation"
+        reasons = ["pilot_waiting_confirmation"]
+    elif eligible:
+        pilot_state = "ready"
+        reasons = ["pilot_candidates_ready"]
+    elif requested_action_ids:
+        pilot_state = "blocked"
+        reasons = ["pilot_action_type_not_allowlisted"]
+    else:
+        pilot_state = "idle"
+        reasons = ["pilot_no_approved_actions"]
+    return {
+        "contract_version": EXECUTION_PILOT_CONTRACT_VERSION,
+        "mode": "controlled_pilot",
+        "state": pilot_state,
+        "safe_mode": True,
+        "execute_enabled": False,
+        "max_actions_per_run": 1,
+        "allowed_action_types": allowed_action_types,
+        "requested_action_ids": requested_action_ids,
+        "eligible_action_ids": eligible[:1],
+        "blocked_action_ids": blocked,
+        "reason_codes": reasons,
+    }
+
+
 def _build_approval_session_bundle(
     *,
     handshake_bundle: dict[str, object],
@@ -1682,8 +1750,15 @@ def _apply_diagnostics(
             receipt_bundle=receipt,
             actions_enabled=assistant_actions_enabled,
         )
+        execution_pilot = _build_execution_pilot_bundle(
+            handshake_bundle=handshake,
+            draft_actions_bundle=draft_actions,
+            actions_enabled=assistant_actions_enabled,
+        )
         diag.setdefault("execution_gateway_contract_version", EXECUTION_GATEWAY_CONTRACT_VERSION)
         diag.setdefault("assistant_execution_gateway", execution_gateway)
+        diag.setdefault("execution_pilot_contract_version", EXECUTION_PILOT_CONTRACT_VERSION)
+        diag.setdefault("assistant_execution_pilot", execution_pilot)
         diag.setdefault("approval_session_contract_version", APPROVAL_SESSION_CONTRACT_VERSION)
         diag.setdefault("assistant_approval_session", approval_session)
         diag.setdefault("durable_approval_session_contract_version", DURABLE_APPROVAL_SESSION_CONTRACT_VERSION)
@@ -1696,6 +1771,7 @@ def _apply_diagnostics(
         reason_codes.extend(list(execution_idempotency.get("reason_codes") or []))
         reason_codes.extend(list(receipt.get("reason_codes") or []))
         reason_codes.extend(list(execution_gateway.get("reason_codes") or []))
+        reason_codes.extend(list(execution_pilot.get("reason_codes") or []))
         reason_codes.extend(list(approval_session.get("reason_codes") or []))
         reason_codes.extend(list(durable_approval_record.get("reason_codes") or []))
         reason_codes.extend(list(idempotency_record.get("reason_codes") or []))
@@ -2157,6 +2233,12 @@ class AnswerService:
                     receipt_bundle=dict(resp.diagnostics.get("assistant_execution_receipt") or {}),
                     actions_enabled=assistant_actions_enabled,
                 )
+                resp.diagnostics["execution_pilot_contract_version"] = EXECUTION_PILOT_CONTRACT_VERSION
+                resp.diagnostics["assistant_execution_pilot"] = _build_execution_pilot_bundle(
+                    handshake_bundle=handshake,
+                    draft_actions_bundle=dict(anticipatory.get("draft_actions") or {}),
+                    actions_enabled=assistant_actions_enabled,
+                )
                 resp.diagnostics["assistant_approval_session"] = _build_approval_session_bundle(
                     handshake_bundle=handshake,
                     plan_bundle=plan_bundle,
@@ -2255,6 +2337,12 @@ class AnswerService:
                 resp.diagnostics["assistant_execution_gateway"] = _build_safe_mode_execution_gateway(
                     handshake_bundle=handshake,
                     receipt_bundle=dict(resp.diagnostics.get("assistant_execution_receipt") or {}),
+                    actions_enabled=assistant_actions_enabled,
+                )
+                resp.diagnostics["execution_pilot_contract_version"] = EXECUTION_PILOT_CONTRACT_VERSION
+                resp.diagnostics["assistant_execution_pilot"] = _build_execution_pilot_bundle(
+                    handshake_bundle=handshake,
+                    draft_actions_bundle=dict(base.get("draft_actions") or {}),
                     actions_enabled=assistant_actions_enabled,
                 )
                 resp.diagnostics["assistant_approval_session"] = _build_approval_session_bundle(

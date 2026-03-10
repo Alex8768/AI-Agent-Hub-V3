@@ -22,6 +22,7 @@ EXECUTION_RECEIPT_CONTRACT_VERSION = "v1"
 APPROVAL_SESSION_CONTRACT_VERSION = "v1"
 DURABLE_APPROVAL_SESSION_CONTRACT_VERSION = "v1"
 IDEMPOTENCY_RECORD_CONTRACT_VERSION = "v1"
+EXECUTION_PILOT_CONTRACT_VERSION = "v1"
 
 
 class ProvenanceItem(BaseModel):
@@ -227,6 +228,22 @@ class AssistantIdempotencyRecord(BaseModel):
     status: Literal["none", "fresh", "replayed", "conflict"] = Field(default="none")
     confirmation_token: str = Field(default="")
     decision: Literal["", "approve", "cancel"] = Field(default="")
+    reason_codes: list[str] = Field(default_factory=list)
+
+
+class AssistantExecutionPilot(BaseModel):
+    """Controlled execution pilot diagnostics contract (baseline)."""
+
+    contract_version: str = Field(default=EXECUTION_PILOT_CONTRACT_VERSION)
+    mode: Literal["controlled_pilot"] = Field(default="controlled_pilot")
+    state: Literal["idle", "disabled", "awaiting_confirmation", "ready", "blocked"] = Field(default="idle")
+    safe_mode: bool = Field(default=True)
+    execute_enabled: bool = Field(default=False)
+    max_actions_per_run: int = Field(default=1, ge=0)
+    allowed_action_types: list[str] = Field(default_factory=list)
+    requested_action_ids: list[str] = Field(default_factory=list)
+    eligible_action_ids: list[str] = Field(default_factory=list)
+    blocked_action_ids: list[str] = Field(default_factory=list)
     reason_codes: list[str] = Field(default_factory=list)
 
 

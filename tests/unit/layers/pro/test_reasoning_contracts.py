@@ -6,6 +6,7 @@ from src.layers.pro.reasoning.contracts import (
     APPROVAL_SESSION_CONTRACT_VERSION,
     ASSISTANT_CONTRACT_VERSION,
     DURABLE_APPROVAL_SESSION_CONTRACT_VERSION,
+    EXECUTION_PILOT_CONTRACT_VERSION,
     EXECUTION_RECEIPT_CONTRACT_VERSION,
     HANDSHAKE_CONTRACT_VERSION,
     IDEMPOTENCY_RECORD_CONTRACT_VERSION,
@@ -15,6 +16,7 @@ from src.layers.pro.reasoning.contracts import (
     AssistantDurableApprovalSessionRecord,
     AssistantDigest,
     AssistantExecutionReceipt,
+    AssistantExecutionPilot,
     AssistantExecutionHandshake,
     AssistantIdempotencyRecord,
     AssistantIntent,
@@ -86,6 +88,7 @@ def test_assistant_contract_models_defaults():
     assert APPROVAL_SESSION_CONTRACT_VERSION == "v1"
     assert DURABLE_APPROVAL_SESSION_CONTRACT_VERSION == "v1"
     assert IDEMPOTENCY_RECORD_CONTRACT_VERSION == "v1"
+    assert EXECUTION_PILOT_CONTRACT_VERSION == "v1"
     intent = AssistantIntent(intent="start_project", confidence=0.7)
     assert intent.intent == "start_project"
     assert intent.entities == {}
@@ -184,6 +187,19 @@ def test_assistant_contract_models_defaults():
     )
     assert idempotency_record.contract_version == "v1"
     assert idempotency_record.status == "fresh"
+
+    execution_pilot = AssistantExecutionPilot(
+        state="ready",
+        safe_mode=True,
+        execute_enabled=False,
+        allowed_action_types=["prepare_summary_draft"],
+        requested_action_ids=["draft_action:1"],
+        eligible_action_ids=["draft_action:1"],
+        blocked_action_ids=[],
+    )
+    assert execution_pilot.contract_version == "v1"
+    assert execution_pilot.mode == "controlled_pilot"
+    assert execution_pilot.state == "ready"
 
 
 def test_assistant_suggestion_priority_validation():

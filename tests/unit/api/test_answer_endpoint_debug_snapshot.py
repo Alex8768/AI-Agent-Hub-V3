@@ -116,6 +116,8 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
         "assistant_execution_receipt",
         "execution_gateway_contract_version",
         "assistant_execution_gateway",
+        "execution_pilot_contract_version",
+        "assistant_execution_pilot",
         "approval_session_contract_version",
         "assistant_approval_session",
         "durable_approval_session_contract_version",
@@ -219,6 +221,21 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
         "blocked_action_ids",
         "executed_action_ids",
         "dry_run_action_ids",
+        "reason_codes",
+    }
+    assert diag.get("execution_pilot_contract_version") == "v1"
+    pilot = dict(diag.get("assistant_execution_pilot") or {})
+    assert set(pilot.keys()) == {
+        "contract_version",
+        "mode",
+        "state",
+        "safe_mode",
+        "execute_enabled",
+        "max_actions_per_run",
+        "allowed_action_types",
+        "requested_action_ids",
+        "eligible_action_ids",
+        "blocked_action_ids",
         "reason_codes",
     }
     assert diag.get("approval_session_contract_version") == "v1"

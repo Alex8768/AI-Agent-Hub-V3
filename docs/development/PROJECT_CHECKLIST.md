@@ -44,17 +44,17 @@
 - [x] A2.37 Approval Session & Idempotent Execution Gateway (Safe Mode)
 - [x] A2.38 Durable Approval Recovery Runtime (Safe Mode)
 
-## Current Work — A2.39 TBD
+## Current Work — A2.39 Controlled Execution Pilot (Strict Safe Mode+)
 
-- [ ] Patch 1 — TBD
-- [ ] Patch 2 — TBD
-- [ ] Patch 3 — TBD
-- [ ] Patch 4 — TBD
-- [ ] Patch 5 — TBD
+- [x] Patch 1 — Execution Pilot Contract Baseline
+- [ ] Patch 2 — Allowlist + Policy Gate
+- [ ] Patch 3 — Receipt + Rollback Contract Enforcement
+- [ ] Patch 4 — Pilot Runtime Wiring
+- [ ] Patch 5 — Docs/CI Closure
 
 ## Next
 
-- [ ] Start A2.40 Patch 1 (TBD)
+- [ ] Start A2.40 Patch 1 (Intent-based Planning Engine baseline)
 
 ## Later
 
