@@ -42,7 +42,7 @@ A2.50 preserves A2.46-A2.49 constraints and decisions, with no behavior expansio
 ### Progress
 
 - [x] Patch 1 — composition boundary contract + scope lock
-- [ ] Patch 2 — composition resolver/adapter extraction
+- [x] Patch 2 — composition resolver/adapter extraction
 - [ ] Patch 3 — dependency/parity/fallback guardrails
 
 ### Patch 1 Outputs

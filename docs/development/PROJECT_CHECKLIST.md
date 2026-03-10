@@ -58,12 +58,12 @@
 ## Current Work — A2.50 Planner Residual Decoupling (Composition Boundary Closure)
 
 - [x] Patch 1 — composition boundary contract + scope lock
-- [ ] Patch 2 — composition resolver/adapter extraction
+- [x] Patch 2 — composition resolver/adapter extraction
 - [ ] Patch 3 — dependency/parity/fallback guardrails
 
 ## Next
 
-- [ ] Start A2.50 patch 2 implementation
+- [ ] Start A2.50 patch 3 implementation
 
 ## Later
 

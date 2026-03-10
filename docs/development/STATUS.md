@@ -14,7 +14,7 @@ A2.50 — Planner Residual Decoupling (Composition Boundary Closure)
 
 Current progress:
 - Patch 1 complete: composition boundary contract + scope lock.
-- Patch 2 pending: composition resolver/adapter extraction.
+- Patch 2 complete: composition resolver/adapter extraction.
 - Patch 3 pending: dependency/parity/fallback guardrails.
 
 Focus:
@@ -34,7 +34,7 @@ Execution discipline:
 A2.51 — TBD
 
 Planned focus:
-- execute A2.50 patch 2 composition resolver/adapter extraction
+- execute A2.50 patch 3 dependency/parity/fallback guardrails
 
 ## CI Status
 
