@@ -50,6 +50,7 @@
 - [x] A2.43 Feedback-to-Planning Adaptation (MVP)
 - [x] A2.44 Assistant Conversational Recovery (Low-Evidence UX)
 - [x] A2.45 Architecture Hardening Track (COO Runtime Reliability)
+- [x] A2.46 Kernel / Extensions / Execution Plane Hardening
 
 ## Current Work — A2.46 Kernel / Extensions / Execution Plane Hardening
 
@@ -57,11 +58,11 @@
 - [x] Patch 2 — kernel boundary formalization
 - [x] Patch 3 — governance subcore extraction
 - [x] Patch 4 — execution request boundary + execution plane isolation
-- [ ] Patch 5 — dependency quality gates + docs closure
+- [x] Patch 5 — dependency quality gates + docs closure
 
 ## Next
 
-- [ ] Start A2.46 patch 5 implementation
+- [ ] Start A2.47 scope lock
 
 ## Later
 

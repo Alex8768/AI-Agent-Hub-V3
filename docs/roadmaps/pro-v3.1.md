@@ -96,6 +96,7 @@ Alias compatibility:
 - Feedback adaptation runtime docs quality gate in release-gate contracts (A2.43)
 - Conversational recovery runtime docs quality gate in release-gate contracts (A2.44)
 - Architecture hardening runtime docs quality gate in release-gate contracts (A2.45)
+- Topology hardening runtime docs quality gate in release-gate contracts (A2.46)
 
 ---
 

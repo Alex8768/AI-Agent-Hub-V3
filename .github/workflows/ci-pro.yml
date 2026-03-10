@@ -43,6 +43,7 @@ jobs:
             tests/unit/docs/test_feedback_adaptation_runtime_quality_gate.py \
             tests/unit/docs/test_assistant_conversational_recovery_runtime_quality_gate.py \
             tests/unit/docs/test_architecture_hardening_runtime_quality_gate.py \
+            tests/unit/docs/test_topology_hardening_runtime_quality_gate.py \
             tests/unit/layers/pro/test_reasoning_enterprise_required_checks_matrix.py \
             tests/unit/layers/pro/test_reasoning_enterprise_required_checks_normalizer.py \
             tests/unit/layers/pro/test_reasoning_enterprise_required_checks_consolidation_quality_gate.py \
@@ -50,7 +51,8 @@ jobs:
             tests/unit/layers/pro/test_reasoning_enterprise_release_gate_aggregator.py \
             tests/unit/layers/pro/test_reasoning_enterprise_release_gate_decision.py \
             tests/unit/layers/pro/test_reasoning_enterprise_release_gate_coverage_quality_gate.py \
-            tests/unit/layers/pro/test_reasoning_enterprise_productization_quality_gate.py
+            tests/unit/layers/pro/test_reasoning_enterprise_productization_quality_gate.py \
+            tests/unit/layers/pro/test_reasoning_topology_dependency_quality_gate.py
 
       - name: Build release-gate report artifact
         shell: bash

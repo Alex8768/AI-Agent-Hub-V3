@@ -58,7 +58,7 @@ Target conceptual mapping:
 - [x] Patch 2 — kernel boundary formalization
 - [x] Patch 3 — governance subcore extraction
 - [x] Patch 4 — execution request boundary + execution plane isolation
-- [ ] Patch 5 — dependency quality gates + docs closure
+- [x] Patch 5 — dependency quality gates + docs closure
 
 ### Patch 1 Outputs
 
@@ -128,11 +128,11 @@ Work order is strict:
 
 ### Last Completed Anchor
 
-A2.45 — Architecture Hardening Track (COO Runtime Reliability)
+A2.46 — Kernel / Extensions / Execution Plane Hardening
 
 Completed via patches:
-- Patch 1 — Anchor Formalization + Scope Lock
-- Patch 2 — AnswerService Boundary Hardening Baseline
-- Patch 3 — Planner Coupling Guardrail (Abstraction Seam)
-- Patch 4 — Memory Consistency Diagnostics Guardrails
-- Patch 5 — Docs/CI Closure + Technical-Debt Registry
+- Patch 1 — architecture zoning inventory + scope lock
+- Patch 2 — kernel boundary formalization
+- Patch 3 — governance subcore extraction
+- Patch 4 — execution request boundary + execution plane isolation
+- Patch 5 — dependency quality gates + docs closure
