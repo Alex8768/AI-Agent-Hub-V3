@@ -40,18 +40,19 @@
 - [x] A2.33 API Docs & Feature-Flag Alignment
 - [x] A2.34 Digital COO Runtime (Assistant + Draft Actions)
 - [x] A2.35 Intent-to-Plan Orchestrator (COO MVP)
+- [x] A2.36 Confirmation-to-Execution Handshake (MVP)
 
-## Current Work — A2.36 Confirmation-to-Execution Handshake (MVP)
+## Current Work — A2.37 TBD
 
-- [x] Patch 1 — Handshake Contract Baseline
-- [x] Patch 2 — Confirmation Transition Model (Approved/Cancelled)
-- [x] Patch 3 — Execution Receipt Stub Integration
-- [x] Patch 4 — Transition Policy Guards
-- [ ] Patch 5 — Docs/CI Closure
+- [ ] Patch 1 — TBD
+- [ ] Patch 2 — TBD
+- [ ] Patch 3 — TBD
+- [ ] Patch 4 — TBD
+- [ ] Patch 5 — TBD
 
 ## Next
 
-- [ ] Start A2.37 Patch 1 (TBD)
+- [ ] Start A2.38 Patch 1 (TBD)
 
 ## Later
 

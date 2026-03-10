@@ -6,28 +6,24 @@ Pro Layer Development — Reasoning Stabilization
 
 ## Last Completed Anchor
 
-A2.35 — Intent-to-Plan Orchestrator (COO MVP)
+A2.36 — Confirmation-to-Execution Handshake (MVP)
 
 ## Current Active Anchor
 
-A2.36 — Confirmation-to-Execution Handshake (MVP)
+A2.37 — TBD
 
 Current progress:
-- Patch 1 completed: Handshake Contract Baseline.
-- Patch 2 completed: Confirmation Transition Model (Approved/Cancelled).
-- Patch 3 completed: Execution Receipt Stub Integration.
-- Patch 4 completed: Transition Policy Guards.
+- Patch plan TBD.
 
 Focus:
-- explicit handshake diagnostics contract for draft action lifecycle
-- deterministic transition policy guards for approve/cancel decisions
+- TBD
 
 Execution discipline:
 - keep work strictly inside the active anchor and move in micro-patches.
 
 ## Next Anchor
 
-A2.37 — TBD
+A2.38 — TBD
 
 Planned focus:
 - TBD
@@ -40,5 +36,5 @@ The noop tracing span compatibility fix is completed and treated as closed work.
 
 ## Upcoming Anchors
 
-- A2.36 — Confirmation-to-Execution Handshake (MVP)
 - A2.37 — TBD
+- A2.38 — TBD
