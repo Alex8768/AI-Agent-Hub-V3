@@ -1494,7 +1494,7 @@ async def test_answer_service_adaptation_policy_forces_fallback_on_violation(mon
 
     assert adaptation.get("latest_signal") == "none"
     assert adaptation.get("boosted_intents") == ["start_project", "prepare_meeting"]
-    assert adaptation.get("suppressed_intents") == ["general_query"]
+    assert adaptation.get("suppressed_intents") == []
     assert "feedback_adaptation_policy_forced_fallback" in list(adaptation.get("reason_codes") or [])
     assert "feedback_adaptation_latest_signal_not_allowlisted" in list(policy.get("violations") or [])
     assert "feedback_adaptation_boosted_intents_exceed_max" in list(policy.get("violations") or [])
@@ -1938,6 +1938,51 @@ def test_wire_feedback_runtime_diagnostics_normalizes_signals():
     assert "feedback_runtime_unknown_signals_removed" in list(feedback.get("reason_codes") or [])
     assert "feedback_runtime_wired" in list(feedback.get("reason_codes") or [])
     assert "feedback_runtime_wired" in list(policy.get("applied_reason_codes") or [])
+
+
+def test_wire_feedback_adaptation_runtime_diagnostics_syncs_feedback_and_plan():
+    import src.services.answer.answer_service as answer_service_module
+
+    out = answer_service_module._wire_feedback_adaptation_runtime_diagnostics(
+        diagnostics={
+            "assistant_plan": {"intent": "start_project"},
+            "assistant_feedback_learning": {
+                "latest_signal": "edit",
+                "signals": ["edit"],
+            },
+            "assistant_feedback_adaptation": {
+                "contract_version": "v1",
+                "mode": "feedback_to_planning_adaptation",
+                "status": "ready",
+                "source": "deterministic",
+                "latest_signal": "approve",
+                "boosted_intents": [],
+                "suppressed_intents": ["start_project", "unknown_intent"],
+                "reason_codes": ["feedback_adaptation_signal_to_plan_ranked"],
+            },
+            "adaptation_policy": {
+                "mode": "feedback_adaptation_guarded",
+                "allowed_latest_signals": ["none", "approve", "cancel", "edit"],
+                "allowed_intents": ["start_project", "prepare_meeting", "general_query"],
+                "max_boosted_intents": 2,
+                "max_suppressed_intents": 1,
+                "forbid_boost_suppress_overlap": True,
+                "fallback_on_policy_violation": True,
+                "violations": [],
+                "applied_reason_codes": [],
+            },
+        }
+    )
+
+    adaptation = dict(out.get("assistant_feedback_adaptation") or {})
+    policy = dict(out.get("adaptation_policy") or {})
+    assert adaptation.get("latest_signal") == "edit"
+    assert adaptation.get("boosted_intents") == ["start_project"]
+    assert adaptation.get("suppressed_intents") == []
+    assert "feedback_adaptation_runtime_wired" in list(adaptation.get("reason_codes") or [])
+    assert "feedback_adaptation_runtime_backfilled" in list(adaptation.get("reason_codes") or [])
+    assert "feedback_adaptation_runtime_wired" in list(policy.get("applied_reason_codes") or [])
+    assert "feedback_adaptation_runtime_unknown_intent_removed" in list(policy.get("violations") or [])
 
 
 @pytest.mark.asyncio

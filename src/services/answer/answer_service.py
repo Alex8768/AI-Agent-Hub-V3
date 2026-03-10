@@ -737,6 +737,108 @@ def _wire_feedback_runtime_diagnostics(
     return diag
 
 
+def _wire_feedback_adaptation_runtime_diagnostics(
+    *,
+    diagnostics: dict[str, object],
+) -> dict[str, object]:
+    diag = dict(diagnostics or {})
+    plan = dict(diag.get("assistant_plan") or {})
+    feedback = dict(diag.get("assistant_feedback_learning") or {})
+    adaptation = dict(diag.get("assistant_feedback_adaptation") or {})
+    adaptation_policy = dict(diag.get("adaptation_policy") or {})
+
+    allowed_signals = {"none", "approve", "cancel", "edit"}
+    allowed_intents = set(_LLM_PLANNER_ALLOWED_INTENTS)
+    latest = str(adaptation.get("latest_signal", "none") or "none").strip().lower()
+    feedback_latest = str(feedback.get("latest_signal", "none") or "none").strip().lower()
+    current_intent = str(plan.get("intent", "") or "general_query").strip() or "general_query"
+    if current_intent not in allowed_intents:
+        current_intent = "general_query"
+
+    boosted_raw = [str(x).strip() for x in list(adaptation.get("boosted_intents") or []) if str(x).strip()]
+    suppressed_raw = [str(x).strip() for x in list(adaptation.get("suppressed_intents") or []) if str(x).strip()]
+    boosted: list[str] = []
+    suppressed: list[str] = []
+    seen_b: set[str] = set()
+    seen_s: set[str] = set()
+    dropped_unknown = False
+    removed_overlap = False
+    backfilled = False
+
+    if latest not in allowed_signals:
+        latest = "none"
+        dropped_unknown = True
+    if feedback_latest in allowed_signals and feedback_latest != latest:
+        latest = feedback_latest
+
+    for intent in boosted_raw:
+        if intent not in allowed_intents:
+            dropped_unknown = True
+            continue
+        if intent in seen_b:
+            continue
+        seen_b.add(intent)
+        boosted.append(intent)
+
+    for intent in suppressed_raw:
+        if intent not in allowed_intents:
+            dropped_unknown = True
+            continue
+        if intent in seen_s:
+            continue
+        seen_s.add(intent)
+        suppressed.append(intent)
+
+    if latest in {"approve", "edit"} and not boosted:
+        boosted = [current_intent]
+        backfilled = True
+    if latest == "cancel" and not boosted:
+        boosted = ["general_query"]
+        backfilled = True
+    if latest == "none":
+        suppressed = []
+
+    overlap = set(boosted) & set(suppressed)
+    if overlap:
+        suppressed = [intent for intent in suppressed if intent not in overlap]
+        removed_overlap = True
+
+    max_boosted = int(adaptation_policy.get("max_boosted_intents", 2) or 2)
+    max_suppressed = int(adaptation_policy.get("max_suppressed_intents", 1) or 1)
+    if len(boosted) > max_boosted:
+        boosted = boosted[:max_boosted]
+    if len(suppressed) > max_suppressed:
+        suppressed = suppressed[:max_suppressed]
+
+    reason_codes = [str(x) for x in list(adaptation.get("reason_codes") or []) if str(x or "").strip()]
+    reason_codes.append("feedback_adaptation_runtime_wired")
+    if backfilled:
+        reason_codes.append("feedback_adaptation_runtime_backfilled")
+    if dropped_unknown:
+        reason_codes.append("feedback_adaptation_runtime_unknown_intent_removed")
+    if removed_overlap:
+        reason_codes.append("feedback_adaptation_runtime_overlap_removed")
+
+    policy_reasons = [str(x) for x in list(adaptation_policy.get("applied_reason_codes") or []) if str(x or "").strip()]
+    policy_reasons.append("feedback_adaptation_runtime_wired")
+    policy_violations = [str(x) for x in list(adaptation_policy.get("violations") or []) if str(x or "").strip()]
+    if removed_overlap:
+        policy_violations.append("feedback_adaptation_runtime_overlap_removed")
+    if dropped_unknown:
+        policy_violations.append("feedback_adaptation_runtime_unknown_intent_removed")
+
+    adaptation["latest_signal"] = latest
+    adaptation["boosted_intents"] = boosted
+    adaptation["suppressed_intents"] = suppressed
+    adaptation["reason_codes"] = sorted(set(reason_codes))
+    adaptation_policy["applied_reason_codes"] = sorted(set(policy_reasons))
+    adaptation_policy["violations"] = sorted(set(policy_violations))
+
+    diag["assistant_feedback_adaptation"] = adaptation
+    diag["adaptation_policy"] = adaptation_policy
+    return diag
+
+
 def _wire_runtime_diagnostics(
     *,
     diagnostics: dict[str, object],
@@ -744,6 +846,7 @@ def _wire_runtime_diagnostics(
     diag = _wire_planner_runtime_diagnostics(diagnostics=diagnostics)
     diag = _wire_tool_selection_runtime_diagnostics(diagnostics=diag)
     diag = _wire_feedback_runtime_diagnostics(diagnostics=diag)
+    diag = _wire_feedback_adaptation_runtime_diagnostics(diagnostics=diag)
     return diag
 
 

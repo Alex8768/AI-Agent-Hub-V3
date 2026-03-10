@@ -16,13 +16,14 @@ Current progress:
 - Patch 1 complete: Adaptation Contract Baseline.
 - Patch 2 complete: Signal-to-Plan Adapter + Deterministic Ranking.
 - Patch 3 complete: Adaptation Policy Guardrails.
-- Patch 4 pending: Runtime Wiring + Diagnostics Parity.
+- Patch 4 complete: Runtime Wiring + Diagnostics Parity.
 - Patch 5 pending: Docs/CI Closure.
 
 Focus:
 - adaptation contract baseline is exposed in diagnostics
 - signal-to-plan adapter ranks intent relevance deterministically from feedback
 - adaptation policy guardrails enforce deterministic safe fallback on violations
+- runtime wiring keeps adaptation diagnostics parity across runtime branches
 - keep adaptation deterministic and policy-guarded
 - preserve review-safe behavior and existing execution boundaries
 - preserve strict micro-patch execution discipline

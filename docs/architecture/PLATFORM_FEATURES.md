@@ -153,6 +153,7 @@ AI-Agent-Hub-V3 is a modular AI platform for production-grade agent systems with
 - [x] Feedback-to-planning adaptation diagnostics contract baseline (A2.43 patch 1)
 - [x] Feedback signal-to-plan deterministic adaptation ranking (A2.43 patch 2)
 - [x] Feedback adaptation policy guardrails with forced fallback diagnostics (A2.43 patch 3)
+- [x] Feedback adaptation runtime wiring and diagnostics parity (A2.43 patch 4)
 
 ### 7) Interface Layer
 

@@ -33,7 +33,7 @@ Planned modules:
 - [x] Patch 1 — Adaptation Contract Baseline
 - [x] Patch 2 — Signal-to-Plan Adapter + Deterministic Ranking
 - [x] Patch 3 — Adaptation Policy Guardrails
-- [ ] Patch 4 — Runtime Wiring + Diagnostics Parity
+- [x] Patch 4 — Runtime Wiring + Diagnostics Parity
 - [ ] Patch 5 — Docs/CI Closure
 
 ### Out of Scope
