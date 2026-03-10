@@ -8,6 +8,7 @@ from src.layers.pro.reasoning.contracts import (
     DURABLE_APPROVAL_SESSION_CONTRACT_VERSION,
     EXECUTION_PILOT_CONTRACT_VERSION,
     EXECUTION_RECEIPT_CONTRACT_VERSION,
+    FEEDBACK_CONTRACT_VERSION,
     HANDSHAKE_CONTRACT_VERSION,
     IDEMPOTENCY_RECORD_CONTRACT_VERSION,
     INTENT_CONTRACT_VERSION,
@@ -20,6 +21,7 @@ from src.layers.pro.reasoning.contracts import (
     AssistantExecutionReceipt,
     AssistantExecutionPilot,
     AssistantExecutionHandshake,
+    AssistantFeedbackLearning,
     AssistantIdempotencyRecord,
     AssistantIntent,
     AssistantIntentResult,
@@ -90,6 +92,7 @@ def test_assistant_contract_models_defaults():
     assert PLAN_CONTRACT_VERSION == "v1"
     assert LLM_PLANNER_CONTRACT_VERSION == "v1"
     assert TOOL_SELECTION_CONTRACT_VERSION == "v1"
+    assert FEEDBACK_CONTRACT_VERSION == "v1"
     assert HANDSHAKE_CONTRACT_VERSION == "v1"
     assert EXECUTION_RECEIPT_CONTRACT_VERSION == "v1"
     assert APPROVAL_SESSION_CONTRACT_VERSION == "v1"
@@ -170,6 +173,17 @@ def test_assistant_contract_models_defaults():
     assert tool_selection.contract_version == "v1"
     assert tool_selection.mode == "mcp_aware_selector"
     assert tool_selection.status == "ready"
+
+    feedback = AssistantFeedbackLearning(
+        status="ready",
+        signals=["approve", "edit"],
+        latest_signal="edit",
+        signal_counts={"approve": 1, "cancel": 0, "edit": 1},
+        reason_codes=["feedback_contract_baseline_built"],
+    )
+    assert feedback.contract_version == "v1"
+    assert feedback.mode == "approve_cancel_edit_feedback"
+    assert feedback.status == "ready"
 
     handshake = AssistantExecutionHandshake(
         state="pending_confirmation",

@@ -13,14 +13,14 @@ A2.41 — Dynamic Tool Selection (MCP-aware)
 A2.42 — Learning from Feedback (Approve/Cancel/Edit)
 
 Current progress:
-- Patch 1 pending: Feedback Contract Baseline.
+- Patch 1 complete: Feedback Contract Baseline.
 - Patch 2 pending: Feedback Capture Adapter + Deterministic Normalization.
 - Patch 3 pending: Feedback Policy Guardrails.
 - Patch 4 pending: Runtime Wiring + Diagnostics Parity.
 - Patch 5 pending: Docs/CI Closure.
 
 Focus:
-- formalize approve/cancel/edit feedback contracts for reasoning runtime
+- feedback contract baseline is exposed in diagnostics
 - keep deterministic normalization and policy-guarded safety in feedback flow
 - preserve strict micro-patch execution discipline
 

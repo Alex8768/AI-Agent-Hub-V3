@@ -21,6 +21,7 @@ from src.layers.pro.reasoning.contracts import (
     EVIDENCE_CONTRACT_VERSION,
     EXECUTION_PILOT_CONTRACT_VERSION,
     EXECUTION_RECEIPT_CONTRACT_VERSION,
+    FEEDBACK_CONTRACT_VERSION,
     HANDSHAKE_CONTRACT_VERSION,
     IDEMPOTENCY_RECORD_CONTRACT_VERSION,
     INTENT_CONTRACT_VERSION,
@@ -684,6 +685,54 @@ def _wire_runtime_diagnostics(
     diag = _wire_planner_runtime_diagnostics(diagnostics=diagnostics)
     diag = _wire_tool_selection_runtime_diagnostics(diagnostics=diag)
     return diag
+
+
+def _build_feedback_learning_bundle(
+    *,
+    req: AnswerRequest,
+    assistant_mode_enabled: bool,
+) -> dict[str, object]:
+    if not assistant_mode_enabled:
+        return {
+            "contract_version": FEEDBACK_CONTRACT_VERSION,
+            "mode": "approve_cancel_edit_feedback",
+            "status": "disabled",
+            "signals": [],
+            "latest_signal": "none",
+            "signal_counts": {"approve": 0, "cancel": 0, "edit": 0},
+            "reason_codes": ["assistant_mode_disabled"],
+        }
+
+    filters = dict(getattr(req, "filters", {}) or {})
+    decision = str(filters.get("handshake_decision", "") or "").strip().lower()
+    explicit_signal = str(filters.get("feedback_signal", "") or "").strip().lower()
+    has_edit_payload = bool(filters.get("feedback_edit_payload") or filters.get("handshake_edit_payload"))
+    signal = "none"
+    if explicit_signal in {"approve", "cancel", "edit"}:
+        signal = explicit_signal
+    elif decision in {"approve", "cancel", "edit"}:
+        signal = decision
+    elif has_edit_payload:
+        signal = "edit"
+
+    signals = [signal] if signal in {"approve", "cancel", "edit"} else []
+    counts = {
+        "approve": int(1 if signal == "approve" else 0),
+        "cancel": int(1 if signal == "cancel" else 0),
+        "edit": int(1 if signal == "edit" else 0),
+    }
+    reasons = ["feedback_contract_baseline_built"]
+    if signal != "none":
+        reasons.append(f"feedback_signal_detected:{signal}")
+    return {
+        "contract_version": FEEDBACK_CONTRACT_VERSION,
+        "mode": "approve_cancel_edit_feedback",
+        "status": "ready",
+        "signals": signals,
+        "latest_signal": signal,
+        "signal_counts": counts,
+        "reason_codes": reasons,
+    }
 
 
 def _build_tool_selection_bundle(
@@ -2409,6 +2458,10 @@ async def _apply_diagnostics(
             policy_contract=tool_selection_policy,
             plan_bundle=plan,
         )
+        feedback_learning = _build_feedback_learning_bundle(
+            req=req,
+            assistant_mode_enabled=assistant_mode_enabled,
+        )
         diag.setdefault("plan_contract_version", PLAN_CONTRACT_VERSION)
         diag.setdefault("assistant_plan", dict(plan))
         llm_planner["plan_id"] = str(plan.get("plan_id", "") or "")
@@ -2417,6 +2470,8 @@ async def _apply_diagnostics(
         diag.setdefault("tool_selection_contract_version", TOOL_SELECTION_CONTRACT_VERSION)
         diag.setdefault("assistant_tool_selection", tool_selection)
         diag.setdefault("tool_selection_policy", tool_selection_policy_eval)
+        diag.setdefault("feedback_contract_version", FEEDBACK_CONTRACT_VERSION)
+        diag.setdefault("assistant_feedback_learning", feedback_learning)
         diag.setdefault("llm_planner_policy", llm_planner_policy_eval)
         diag.setdefault("planning_policy", dict(planning_policy))
         diag = _wire_runtime_diagnostics(diagnostics=diag)
@@ -2528,6 +2583,7 @@ async def _apply_diagnostics(
         reason_codes.extend(list(llm_planner.get("reason_codes") or []))
         reason_codes.extend(list(tool_selection.get("reason_codes") or []))
         reason_codes.extend(list(tool_selection_policy_eval.get("applied_reason_codes") or []))
+        reason_codes.extend(list(feedback_learning.get("reason_codes") or []))
         reason_codes.extend(list(llm_planner_policy_eval.get("applied_reason_codes") or []))
         reason_codes.extend(list(planning_policy.get("reason_codes") or []))
         reason_codes.extend(list(handshake.get("reason_codes") or []))

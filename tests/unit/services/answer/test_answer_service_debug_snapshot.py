@@ -174,6 +174,8 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
         "assistant_llm_planner",
         "assistant_tool_selection",
         "tool_selection_policy",
+        "feedback_contract_version",
+        "assistant_feedback_learning",
         "llm_planner_policy",
         "planning_policy",
         "execution_handshake_contract_version",
@@ -262,6 +264,17 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
         "fallback_on_policy_violation",
         "violations",
         "applied_reason_codes",
+    }
+    assert diag.get("feedback_contract_version") == "v1"
+    feedback_learning = dict(diag.get("assistant_feedback_learning") or {})
+    assert set(feedback_learning.keys()) == {
+        "contract_version",
+        "mode",
+        "status",
+        "signals",
+        "latest_signal",
+        "signal_counts",
+        "reason_codes",
     }
     llm_planner_policy = dict(diag.get("llm_planner_policy") or {})
     assert set(llm_planner_policy.keys()) == {

@@ -19,6 +19,7 @@ INTENT_CONTRACT_VERSION = "v1"
 PLAN_CONTRACT_VERSION = "v1"
 LLM_PLANNER_CONTRACT_VERSION = "v1"
 TOOL_SELECTION_CONTRACT_VERSION = "v1"
+FEEDBACK_CONTRACT_VERSION = "v1"
 HANDSHAKE_CONTRACT_VERSION = "v1"
 EXECUTION_RECEIPT_CONTRACT_VERSION = "v1"
 APPROVAL_SESSION_CONTRACT_VERSION = "v1"
@@ -189,6 +190,18 @@ class AssistantToolSelection(BaseModel):
     source: Literal["none", "deterministic", "mcp"] = Field(default="none")
     selected_tools: list[AssistantToolSelectionItem] = Field(default_factory=list)
     blocked_step_ids: list[str] = Field(default_factory=list)
+    reason_codes: list[str] = Field(default_factory=list)
+
+
+class AssistantFeedbackLearning(BaseModel):
+    """Feedback-learning diagnostics contract (baseline)."""
+
+    contract_version: str = Field(default=FEEDBACK_CONTRACT_VERSION)
+    mode: Literal["approve_cancel_edit_feedback"] = Field(default="approve_cancel_edit_feedback")
+    status: Literal["idle", "disabled", "ready"] = Field(default="idle")
+    signals: list[str] = Field(default_factory=list)
+    latest_signal: Literal["none", "approve", "cancel", "edit"] = Field(default="none")
+    signal_counts: dict[str, int] = Field(default_factory=dict)
     reason_codes: list[str] = Field(default_factory=list)
 
 
