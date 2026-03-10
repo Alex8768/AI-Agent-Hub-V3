@@ -18,6 +18,7 @@ ASSISTANT_CONTRACT_VERSION = "v1"
 INTENT_CONTRACT_VERSION = "v1"
 PLAN_CONTRACT_VERSION = "v1"
 LLM_PLANNER_CONTRACT_VERSION = "v1"
+TOOL_SELECTION_CONTRACT_VERSION = "v1"
 HANDSHAKE_CONTRACT_VERSION = "v1"
 EXECUTION_RECEIPT_CONTRACT_VERSION = "v1"
 APPROVAL_SESSION_CONTRACT_VERSION = "v1"
@@ -167,6 +168,27 @@ class AssistantLLMPlanner(BaseModel):
     model: str = Field(default="")
     intent: str = Field(default="")
     plan_id: str = Field(default="")
+    reason_codes: list[str] = Field(default_factory=list)
+
+
+class AssistantToolSelectionItem(BaseModel):
+    """Per-step tool selection record for MCP-aware selector diagnostics."""
+
+    step_id: str = Field(default="")
+    tool_name: str = Field(default="")
+    route: str = Field(default="")
+    reason: str = Field(default="")
+
+
+class AssistantToolSelection(BaseModel):
+    """Tool selection diagnostics contract (baseline)."""
+
+    contract_version: str = Field(default=TOOL_SELECTION_CONTRACT_VERSION)
+    mode: Literal["mcp_aware_selector"] = Field(default="mcp_aware_selector")
+    status: Literal["idle", "disabled", "ready"] = Field(default="idle")
+    source: Literal["none", "deterministic", "mcp"] = Field(default="none")
+    selected_tools: list[AssistantToolSelectionItem] = Field(default_factory=list)
+    blocked_step_ids: list[str] = Field(default_factory=list)
     reason_codes: list[str] = Field(default_factory=list)
 
 

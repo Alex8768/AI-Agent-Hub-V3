@@ -13,14 +13,14 @@ A2.40 — Intent-based Planning Engine (LLM Planner)
 A2.41 — Dynamic Tool Selection (MCP-aware)
 
 Current progress:
-- Patch 1 pending: Tool Selection Contract Baseline.
+- Patch 1 complete: Tool Selection Contract Baseline.
 - Patch 2 pending: MCP-aware Selector Adapter + Fallback.
 - Patch 3 pending: Tool Selection Policy Guardrails.
 - Patch 4 pending: Runtime Wiring + Diagnostics Parity.
 - Patch 5 pending: Docs/CI Closure.
 
 Focus:
-- formalize A2.41 tool-selection contract and patch decomposition
+- tool-selection contract baseline is exposed in diagnostics
 - keep policy sandboxing and deterministic fallback during MCP-aware routing
 - preserve strict micro-patch execution discipline
 

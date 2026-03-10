@@ -13,6 +13,7 @@ from src.layers.pro.reasoning.contracts import (
     INTENT_CONTRACT_VERSION,
     LLM_PLANNER_CONTRACT_VERSION,
     PLAN_CONTRACT_VERSION,
+    TOOL_SELECTION_CONTRACT_VERSION,
     AssistantApprovalSession,
     AssistantDurableApprovalSessionRecord,
     AssistantDigest,
@@ -25,6 +26,8 @@ from src.layers.pro.reasoning.contracts import (
     AssistantLLMPlanner,
     AssistantPlan,
     AssistantPlanStep,
+    AssistantToolSelection,
+    AssistantToolSelectionItem,
     AssistantSuggestion,
     DraftAction,
     AnswerRequest,
@@ -86,6 +89,7 @@ def test_assistant_contract_models_defaults():
     assert INTENT_CONTRACT_VERSION == "v1"
     assert PLAN_CONTRACT_VERSION == "v1"
     assert LLM_PLANNER_CONTRACT_VERSION == "v1"
+    assert TOOL_SELECTION_CONTRACT_VERSION == "v1"
     assert HANDSHAKE_CONTRACT_VERSION == "v1"
     assert EXECUTION_RECEIPT_CONTRACT_VERSION == "v1"
     assert APPROVAL_SESSION_CONTRACT_VERSION == "v1"
@@ -149,6 +153,23 @@ def test_assistant_contract_models_defaults():
     )
     assert llm_planner.contract_version == "v1"
     assert llm_planner.status == "fallback"
+
+    tool_selection = AssistantToolSelection(
+        status="ready",
+        source="deterministic",
+        selected_tools=[
+            AssistantToolSelectionItem(
+                step_id="step:1",
+                tool_name="none",
+                route="diagnostics_only",
+                reason="tool_selection_baseline_no_mapping",
+            )
+        ],
+        reason_codes=["tool_selection_baseline_built"],
+    )
+    assert tool_selection.contract_version == "v1"
+    assert tool_selection.mode == "mcp_aware_selector"
+    assert tool_selection.status == "ready"
 
     handshake = AssistantExecutionHandshake(
         state="pending_confirmation",

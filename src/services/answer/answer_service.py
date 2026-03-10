@@ -26,6 +26,7 @@ from src.layers.pro.reasoning.contracts import (
     INTENT_CONTRACT_VERSION,
     LLM_PLANNER_CONTRACT_VERSION,
     PLAN_CONTRACT_VERSION,
+    TOOL_SELECTION_CONTRACT_VERSION,
     SELF_CHECK_MINIMAL_COVERAGE_SCORE_MIN,
     SELF_CHECK_MISSING_MINIMAL_COUNT_MAX,
     VERIFY_DIAGNOSTICS_VERSION,
@@ -608,6 +609,55 @@ def _wire_planner_runtime_diagnostics(
     diag["assistant_llm_planner"] = llm_planner
     diag["llm_planner_policy"] = llm_planner_policy
     return diag
+
+
+def _build_tool_selection_bundle(
+    *,
+    plan_bundle: dict[str, object],
+    assistant_mode_enabled: bool,
+) -> dict[str, object]:
+    if not assistant_mode_enabled:
+        return {
+            "contract_version": TOOL_SELECTION_CONTRACT_VERSION,
+            "mode": "mcp_aware_selector",
+            "status": "disabled",
+            "source": "none",
+            "selected_tools": [],
+            "blocked_step_ids": [],
+            "reason_codes": ["assistant_mode_disabled"],
+        }
+
+    plan = dict(plan_bundle or {})
+    steps = [dict(step or {}) for step in list(plan.get("steps") or [])]
+    if not steps:
+        return {
+            "contract_version": TOOL_SELECTION_CONTRACT_VERSION,
+            "mode": "mcp_aware_selector",
+            "status": "idle",
+            "source": "deterministic",
+            "selected_tools": [],
+            "blocked_step_ids": [],
+            "reason_codes": ["tool_selection_no_plan_steps"],
+        }
+
+    selected_tools = [
+        {
+            "step_id": str(step.get("step_id", "") or ""),
+            "tool_name": "none",
+            "route": "diagnostics_only",
+            "reason": "tool_selection_baseline_no_mapping",
+        }
+        for step in steps
+    ]
+    return {
+        "contract_version": TOOL_SELECTION_CONTRACT_VERSION,
+        "mode": "mcp_aware_selector",
+        "status": "ready",
+        "source": "deterministic",
+        "selected_tools": selected_tools,
+        "blocked_step_ids": [],
+        "reason_codes": ["tool_selection_baseline_built"],
+    }
 
 
 def _bridge_plan_to_draft_actions(
@@ -2124,11 +2174,17 @@ async def _apply_diagnostics(
             assistant_mode_enabled=assistant_mode_enabled,
         )
         plan, planning_policy = _apply_plan_policy_guards(plan_bundle=plan, max_steps=5)
+        tool_selection = _build_tool_selection_bundle(
+            plan_bundle=plan,
+            assistant_mode_enabled=assistant_mode_enabled,
+        )
         diag.setdefault("plan_contract_version", PLAN_CONTRACT_VERSION)
         diag.setdefault("assistant_plan", dict(plan))
         llm_planner["plan_id"] = str(plan.get("plan_id", "") or "")
         diag.setdefault("llm_planner_contract_version", LLM_PLANNER_CONTRACT_VERSION)
         diag.setdefault("assistant_llm_planner", llm_planner)
+        diag.setdefault("tool_selection_contract_version", TOOL_SELECTION_CONTRACT_VERSION)
+        diag.setdefault("assistant_tool_selection", tool_selection)
         diag.setdefault("llm_planner_policy", llm_planner_policy_eval)
         diag.setdefault("planning_policy", dict(planning_policy))
         diag = _wire_planner_runtime_diagnostics(diagnostics=diag)
@@ -2238,6 +2294,7 @@ async def _apply_diagnostics(
         diag.setdefault("assistant_idempotency_record", idempotency_record)
         reason_codes = list(intent.get("reason_codes") or []) + list(plan.get("reason_codes") or [])
         reason_codes.extend(list(llm_planner.get("reason_codes") or []))
+        reason_codes.extend(list(tool_selection.get("reason_codes") or []))
         reason_codes.extend(list(llm_planner_policy_eval.get("applied_reason_codes") or []))
         reason_codes.extend(list(planning_policy.get("reason_codes") or []))
         reason_codes.extend(list(handshake.get("reason_codes") or []))

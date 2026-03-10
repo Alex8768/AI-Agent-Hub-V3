@@ -48,7 +48,7 @@
 
 ## Current Work — A2.41 Dynamic Tool Selection (MCP-aware)
 
-- [ ] Patch 1 — Tool Selection Contract Baseline
+- [x] Patch 1 — Tool Selection Contract Baseline
 - [ ] Patch 2 — MCP-aware Selector Adapter + Fallback
 - [ ] Patch 3 — Tool Selection Policy Guardrails
 - [ ] Patch 4 — Runtime Wiring + Diagnostics Parity

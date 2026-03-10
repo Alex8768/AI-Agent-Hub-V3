@@ -168,9 +168,11 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
         "intent_contract_version",
         "plan_contract_version",
         "llm_planner_contract_version",
+        "tool_selection_contract_version",
         "assistant_intent",
         "assistant_plan",
         "assistant_llm_planner",
+        "assistant_tool_selection",
         "llm_planner_policy",
         "planning_policy",
         "execution_handshake_contract_version",
@@ -208,6 +210,7 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
     assert diag.get("intent_contract_version") == "v1"
     assert diag.get("plan_contract_version") == "v1"
     assert diag.get("llm_planner_contract_version") == "v1"
+    assert diag.get("tool_selection_contract_version") == "v1"
     intent = dict(diag.get("assistant_intent") or {})
     assert set(intent.keys()) == {
         "intent",
@@ -235,6 +238,16 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
         "model",
         "intent",
         "plan_id",
+        "reason_codes",
+    }
+    tool_selection = dict(diag.get("assistant_tool_selection") or {})
+    assert set(tool_selection.keys()) == {
+        "contract_version",
+        "mode",
+        "status",
+        "source",
+        "selected_tools",
+        "blocked_step_ids",
         "reason_codes",
     }
     llm_planner_policy = dict(diag.get("llm_planner_policy") or {})
