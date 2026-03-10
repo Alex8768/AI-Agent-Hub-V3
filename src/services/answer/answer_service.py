@@ -15,6 +15,7 @@ from src.layers.pro.reasoning.control.execution_policy import build_reasoning_ex
 from src.layers.pro.reasoning.contracts import (
     AnswerRequest,
     EVIDENCE_CONTRACT_VERSION,
+    EXECUTION_RECEIPT_CONTRACT_VERSION,
     HANDSHAKE_CONTRACT_VERSION,
     INTENT_CONTRACT_VERSION,
     PLAN_CONTRACT_VERSION,
@@ -598,6 +599,54 @@ def _apply_handshake_transition(
     }
 
 
+def _build_execution_receipt_stub(
+    *,
+    handshake_bundle: dict[str, object],
+    plan_bundle: dict[str, object],
+    draft_actions_bundle: dict[str, object],
+    workspace_id: str,
+    request_id: str,
+) -> dict[str, object]:
+    handshake = dict(handshake_bundle or {})
+    plan_id = str(plan_bundle.get("plan_id", "") or "")
+    state = str(handshake.get("state", "idle") or "idle")
+    approved = [str(x) for x in list(handshake.get("approved_action_ids") or []) if str(x)]
+    blocked = [str(x) for x in list(handshake.get("blocked_action_ids") or []) if str(x)]
+    if not blocked:
+        blocked = [
+            str((row or {}).get("action_id", "") or "")
+            for row in list(draft_actions_bundle.get("actions") or [])
+            if str((row or {}).get("action_id", "") or "").strip()
+            and str((row or {}).get("action_id", "") or "") not in set(approved)
+        ]
+
+    if state in {"approved", "cancelled"}:
+        seed = f"{workspace_id}|{request_id}|{plan_id}|{state}|{','.join(sorted(approved))}|{','.join(sorted(blocked))}"
+        receipt_id = f"receipt:{hashlib.sha1(seed.encode('utf-8')).hexdigest()[:12]}"
+        status = "recorded"
+        reason_codes = ["execution_receipt_stub_recorded"]
+    elif state == "pending_confirmation":
+        receipt_id = ""
+        status = "awaiting_confirmation"
+        reason_codes = ["execution_receipt_pending_confirmation"]
+    else:
+        receipt_id = ""
+        status = "idle"
+        reason_codes = ["execution_receipt_not_ready"]
+
+    return {
+        "contract_version": EXECUTION_RECEIPT_CONTRACT_VERSION,
+        "receipt_id": receipt_id,
+        "status": status,
+        "handshake_state": state,
+        "plan_id": plan_id,
+        "approved_action_ids": approved,
+        "blocked_action_ids": blocked,
+        "executed_action_ids": [],
+        "reason_codes": reason_codes,
+    }
+
+
 def log_observability(http: Request, *, workspace_id: str, req: AnswerRequest) -> None:
     try:
         from loguru import logger
@@ -1105,11 +1154,21 @@ def _apply_diagnostics(
             transition_input=_extract_handshake_transition_input(req),
             draft_actions_bundle=draft_actions,
         )
+        receipt = _build_execution_receipt_stub(
+            handshake_bundle=handshake,
+            plan_bundle=plan,
+            draft_actions_bundle=draft_actions,
+            workspace_id=str(workspace_id or ""),
+            request_id=str(get_request_id(http) or ""),
+        )
         diag.setdefault("execution_handshake_contract_version", HANDSHAKE_CONTRACT_VERSION)
         diag.setdefault("assistant_execution_handshake", handshake)
+        diag.setdefault("execution_receipt_contract_version", EXECUTION_RECEIPT_CONTRACT_VERSION)
+        diag.setdefault("assistant_execution_receipt", receipt)
         reason_codes = list(intent.get("reason_codes") or []) + list(plan.get("reason_codes") or [])
         reason_codes.extend(list(planning_policy.get("reason_codes") or []))
         reason_codes.extend(list(handshake.get("reason_codes") or []))
+        reason_codes.extend(list(receipt.get("reason_codes") or []))
         reason_codes = sorted(set([str(x) for x in reason_codes if str(x or "").strip()]))
         diag.setdefault("planning_reason_codes", reason_codes)
         diag.setdefault("plan_id", str(plan.get("plan_id", "") or ""))
@@ -1526,6 +1585,13 @@ class AnswerService:
                     draft_actions_bundle=dict(anticipatory.get("draft_actions") or {}),
                 )
                 resp.diagnostics["assistant_execution_handshake"] = handshake
+                resp.diagnostics["assistant_execution_receipt"] = _build_execution_receipt_stub(
+                    handshake_bundle=handshake,
+                    plan_bundle=plan_bundle,
+                    draft_actions_bundle=dict(anticipatory.get("draft_actions") or {}),
+                    workspace_id=str(workspace_id or ""),
+                    request_id=str(get_request_id(http) or ""),
+                )
             else:
                 resp.diagnostics = dict(getattr(resp, "diagnostics", None) or {})
                 base = dict(resp.diagnostics.get("anticipatory") or {})
@@ -1568,6 +1634,13 @@ class AnswerService:
                     draft_actions_bundle=dict(base.get("draft_actions") or {}),
                 )
                 resp.diagnostics["assistant_execution_handshake"] = handshake
+                resp.diagnostics["assistant_execution_receipt"] = _build_execution_receipt_stub(
+                    handshake_bundle=handshake,
+                    plan_bundle=plan_bundle,
+                    draft_actions_bundle=dict(base.get("draft_actions") or {}),
+                    workspace_id=str(workspace_id or ""),
+                    request_id=str(get_request_id(http) or ""),
+                )
         except Exception:
             pass
 

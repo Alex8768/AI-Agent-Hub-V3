@@ -4,10 +4,12 @@ import pytest
 
 from src.layers.pro.reasoning.contracts import (
     ASSISTANT_CONTRACT_VERSION,
+    EXECUTION_RECEIPT_CONTRACT_VERSION,
     HANDSHAKE_CONTRACT_VERSION,
     INTENT_CONTRACT_VERSION,
     PLAN_CONTRACT_VERSION,
     AssistantDigest,
+    AssistantExecutionReceipt,
     AssistantExecutionHandshake,
     AssistantIntent,
     AssistantIntentResult,
@@ -74,6 +76,7 @@ def test_assistant_contract_models_defaults():
     assert INTENT_CONTRACT_VERSION == "v1"
     assert PLAN_CONTRACT_VERSION == "v1"
     assert HANDSHAKE_CONTRACT_VERSION == "v1"
+    assert EXECUTION_RECEIPT_CONTRACT_VERSION == "v1"
     intent = AssistantIntent(intent="start_project", confidence=0.7)
     assert intent.intent == "start_project"
     assert intent.entities == {}
@@ -129,6 +132,15 @@ def test_assistant_contract_models_defaults():
     assert handshake.contract_version == "v1"
     assert handshake.state == "pending_confirmation"
     assert handshake.requires_confirmation is True
+
+    receipt = AssistantExecutionReceipt(
+        status="awaiting_confirmation",
+        handshake_state="pending_confirmation",
+        plan_id="plan:start_project:abc123",
+    )
+    assert receipt.contract_version == "v1"
+    assert receipt.status == "awaiting_confirmation"
+    assert receipt.handshake_state == "pending_confirmation"
 
 
 def test_assistant_suggestion_priority_validation():

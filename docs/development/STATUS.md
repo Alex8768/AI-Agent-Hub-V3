@@ -15,10 +15,11 @@ A2.36 — Confirmation-to-Execution Handshake (MVP)
 Current progress:
 - Patch 1 completed: Handshake Contract Baseline.
 - Patch 2 completed: Confirmation Transition Model (Approved/Cancelled).
+- Patch 3 completed: Execution Receipt Stub Integration.
 
 Focus:
 - explicit handshake diagnostics contract for draft action lifecycle
-- confirmation transition model (`approved`/`cancelled`) with token validation
+- deterministic execution receipt stub wiring for handshake transitions
 
 Execution discipline:
 - keep work strictly inside the active anchor and move in micro-patches.

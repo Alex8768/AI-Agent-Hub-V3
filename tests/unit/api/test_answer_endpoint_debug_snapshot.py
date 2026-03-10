@@ -110,6 +110,8 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
         "planning_policy",
         "execution_handshake_contract_version",
         "assistant_execution_handshake",
+        "execution_receipt_contract_version",
+        "assistant_execution_receipt",
         "planning_reason_codes",
         "plan_id",
         "retriever_stats",
@@ -160,6 +162,19 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
         "approved_action_ids",
         "blocked_action_ids",
         "receipt_id",
+        "reason_codes",
+    }
+    assert diag.get("execution_receipt_contract_version") == "v1"
+    receipt = dict(diag.get("assistant_execution_receipt") or {})
+    assert set(receipt.keys()) == {
+        "contract_version",
+        "receipt_id",
+        "status",
+        "handshake_state",
+        "plan_id",
+        "approved_action_ids",
+        "blocked_action_ids",
+        "executed_action_ids",
         "reason_codes",
     }
     assert isinstance(diag.get("planning_reason_codes"), list)

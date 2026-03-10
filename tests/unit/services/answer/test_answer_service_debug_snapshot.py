@@ -171,6 +171,8 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
         "planning_policy",
         "execution_handshake_contract_version",
         "assistant_execution_handshake",
+        "execution_receipt_contract_version",
+        "assistant_execution_receipt",
         "planning_reason_codes",
         "plan_id",
         "retriever_stats",
@@ -227,6 +229,19 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
         "approved_action_ids",
         "blocked_action_ids",
         "receipt_id",
+        "reason_codes",
+    }
+    assert diag.get("execution_receipt_contract_version") == "v1"
+    receipt = dict(diag.get("assistant_execution_receipt") or {})
+    assert set(receipt.keys()) == {
+        "contract_version",
+        "receipt_id",
+        "status",
+        "handshake_state",
+        "plan_id",
+        "approved_action_ids",
+        "blocked_action_ids",
+        "executed_action_ids",
         "reason_codes",
     }
     assert isinstance(diag.get("planning_reason_codes"), list)
@@ -975,6 +990,9 @@ async def test_answer_service_bridges_plan_to_draft_actions_when_proactive_off(m
     assert handshake.get("requires_confirmation") is True
     assert str(handshake.get("confirmation_token", "")).startswith("confirm:")
     assert "awaiting_user_confirmation" in list(handshake.get("reason_codes") or [])
+    receipt = dict(diag.get("assistant_execution_receipt") or {})
+    assert receipt.get("status") == "awaiting_confirmation"
+    assert receipt.get("handshake_state") == "pending_confirmation"
 
 
 @pytest.mark.asyncio
@@ -1080,6 +1098,10 @@ async def test_answer_service_handshake_transition_approve(monkeypatch):
     assert handshake.get("requires_confirmation") is False
     assert handshake.get("approved_action_ids") == [action_id]
     assert "user_approved" in list(handshake.get("reason_codes") or [])
+    receipt = dict(diag.get("assistant_execution_receipt") or {})
+    assert receipt.get("status") == "recorded"
+    assert receipt.get("handshake_state") == "approved"
+    assert str(receipt.get("receipt_id", "")).startswith("receipt:")
 
 
 @pytest.mark.asyncio
@@ -1124,3 +1146,7 @@ async def test_answer_service_handshake_transition_cancel(monkeypatch):
     assert handshake.get("requires_confirmation") is False
     assert isinstance(handshake.get("blocked_action_ids"), list)
     assert "user_cancelled" in list(handshake.get("reason_codes") or [])
+    receipt = dict(diag.get("assistant_execution_receipt") or {})
+    assert receipt.get("status") == "recorded"
+    assert receipt.get("handshake_state") == "cancelled"
+    assert str(receipt.get("receipt_id", "")).startswith("receipt:")

@@ -18,6 +18,7 @@ ASSISTANT_CONTRACT_VERSION = "v1"
 INTENT_CONTRACT_VERSION = "v1"
 PLAN_CONTRACT_VERSION = "v1"
 HANDSHAKE_CONTRACT_VERSION = "v1"
+EXECUTION_RECEIPT_CONTRACT_VERSION = "v1"
 
 
 class ProvenanceItem(BaseModel):
@@ -164,6 +165,22 @@ class AssistantExecutionHandshake(BaseModel):
     approved_action_ids: list[str] = Field(default_factory=list)
     blocked_action_ids: list[str] = Field(default_factory=list)
     receipt_id: str = Field(default="")
+    reason_codes: list[str] = Field(default_factory=list)
+
+
+class AssistantExecutionReceipt(BaseModel):
+    """Execution receipt stub contract for confirmation lifecycle tracking."""
+
+    contract_version: str = Field(default=EXECUTION_RECEIPT_CONTRACT_VERSION)
+    receipt_id: str = Field(default="")
+    status: Literal["idle", "awaiting_confirmation", "recorded"] = Field(default="idle")
+    handshake_state: Literal["idle", "pending_confirmation", "approved", "executed", "cancelled"] = Field(
+        default="idle"
+    )
+    plan_id: str = Field(default="")
+    approved_action_ids: list[str] = Field(default_factory=list)
+    blocked_action_ids: list[str] = Field(default_factory=list)
+    executed_action_ids: list[str] = Field(default_factory=list)
     reason_codes: list[str] = Field(default_factory=list)
 
 
