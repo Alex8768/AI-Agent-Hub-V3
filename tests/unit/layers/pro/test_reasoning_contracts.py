@@ -5,9 +5,12 @@ import pytest
 from src.layers.pro.reasoning.contracts import (
     ASSISTANT_CONTRACT_VERSION,
     INTENT_CONTRACT_VERSION,
+    PLAN_CONTRACT_VERSION,
     AssistantDigest,
     AssistantIntent,
     AssistantIntentResult,
+    AssistantPlan,
+    AssistantPlanStep,
     AssistantSuggestion,
     DraftAction,
     AnswerRequest,
@@ -67,6 +70,7 @@ def test_provenance_item_origin_and_reliability_validation():
 def test_assistant_contract_models_defaults():
     assert ASSISTANT_CONTRACT_VERSION == "v1"
     assert INTENT_CONTRACT_VERSION == "v1"
+    assert PLAN_CONTRACT_VERSION == "v1"
     intent = AssistantIntent(intent="start_project", confidence=0.7)
     assert intent.intent == "start_project"
     assert intent.entities == {}
@@ -102,6 +106,17 @@ def test_assistant_contract_models_defaults():
     assert intent_result.source == "heuristic"
     assert intent_result.intent.intent == "start_project"
     assert intent_result.reason_codes == ["keyword_project"]
+
+    step = AssistantPlanStep(
+        step_id="step:1",
+        role="workspace_manager",
+        action="prepare_project_workspace_draft",
+    )
+    plan = AssistantPlan(plan_id="plan:start_project:abc123", status="ready", steps=[step])
+    assert plan.contract_version == "v1"
+    assert plan.deterministic is True
+    assert plan.requires_confirmation is True
+    assert len(plan.steps) == 1
 
 
 def test_assistant_suggestion_priority_validation():

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 from time import perf_counter
 from typing import Any
 
@@ -15,6 +16,7 @@ from src.layers.pro.reasoning.contracts import (
     AnswerRequest,
     EVIDENCE_CONTRACT_VERSION,
     INTENT_CONTRACT_VERSION,
+    PLAN_CONTRACT_VERSION,
     SELF_CHECK_MINIMAL_COVERAGE_SCORE_MIN,
     SELF_CHECK_MISSING_MINIMAL_COUNT_MAX,
     VERIFY_DIAGNOSTICS_VERSION,
@@ -232,6 +234,105 @@ def _infer_assistant_intent(*, query: str, assistant_mode_enabled: bool) -> dict
         "implicit_tasks": [],
         "source": "heuristic",
         "reason_codes": ["fallback_general_query"],
+    }
+
+
+def _build_deterministic_plan(
+    *,
+    query: str,
+    intent_payload: dict[str, object],
+    assistant_mode_enabled: bool,
+) -> dict[str, object]:
+    if not assistant_mode_enabled:
+        return {
+            "contract_version": PLAN_CONTRACT_VERSION,
+            "plan_id": "",
+            "status": "disabled",
+            "deterministic": True,
+            "intent": "disabled",
+            "steps": [],
+            "requires_confirmation": False,
+            "reason_codes": ["assistant_mode_disabled"],
+        }
+
+    intent = str(intent_payload.get("intent", "general_query") or "general_query")
+    normalized_query = str(query or "").strip().lower()
+    seed = f"{intent}|{normalized_query}"
+    digest = hashlib.sha1(seed.encode("utf-8")).hexdigest()[:12]
+    plan_id = f"plan:{intent}:{digest}"
+    steps: list[dict[str, object]]
+
+    if intent == "start_project":
+        steps = [
+            {
+                "step_id": "step:1",
+                "role": "workspace_manager",
+                "action": "prepare_project_workspace_draft",
+                "parameters": {"template": "default_project"},
+                "depends_on": [],
+            },
+            {
+                "step_id": "step:2",
+                "role": "planning_assistant",
+                "action": "prepare_timeline_draft",
+                "parameters": {"horizon_days": 30},
+                "depends_on": ["step:1"],
+            },
+            {
+                "step_id": "step:3",
+                "role": "research_assistant",
+                "action": "prepare_contacts_research_draft",
+                "parameters": {"max_contacts": 5},
+                "depends_on": [],
+            },
+        ]
+    elif intent == "prepare_meeting":
+        steps = [
+            {
+                "step_id": "step:1",
+                "role": "meeting_assistant",
+                "action": "prepare_agenda_draft",
+                "parameters": {"sections": 4},
+                "depends_on": [],
+            },
+            {
+                "step_id": "step:2",
+                "role": "context_assistant",
+                "action": "prepare_context_summary_draft",
+                "parameters": {"max_items": 8},
+                "depends_on": [],
+            },
+        ]
+    elif intent == "general_chat":
+        steps = [
+            {
+                "step_id": "step:1",
+                "role": "assistant",
+                "action": "prepare_friendly_reply",
+                "parameters": {},
+                "depends_on": [],
+            }
+        ]
+    else:
+        steps = [
+            {
+                "step_id": "step:1",
+                "role": "assistant",
+                "action": "prepare_clarification_prompt",
+                "parameters": {},
+                "depends_on": [],
+            }
+        ]
+
+    return {
+        "contract_version": PLAN_CONTRACT_VERSION,
+        "plan_id": plan_id,
+        "status": "ready" if steps else "idle",
+        "deterministic": True,
+        "intent": intent,
+        "steps": steps,
+        "requires_confirmation": bool(steps),
+        "reason_codes": ["deterministic_plan_built"],
     }
 
 
@@ -720,8 +821,16 @@ def _apply_diagnostics(
                 "source": str(intent.get("source", "heuristic") or "heuristic"),
             },
         )
-        diag.setdefault("planning_reason_codes", list(intent.get("reason_codes") or []))
-        diag.setdefault("plan_id", "")
+        plan = _build_deterministic_plan(
+            query=str(getattr(req, "query", "") or ""),
+            intent_payload=intent,
+            assistant_mode_enabled=assistant_mode_enabled,
+        )
+        diag.setdefault("plan_contract_version", PLAN_CONTRACT_VERSION)
+        diag.setdefault("assistant_plan", dict(plan))
+        reason_codes = list(intent.get("reason_codes") or []) + list(plan.get("reason_codes") or [])
+        diag.setdefault("planning_reason_codes", reason_codes)
+        diag.setdefault("plan_id", str(plan.get("plan_id", "") or ""))
 
         # Memory evidence observability (A2.1)
         try:

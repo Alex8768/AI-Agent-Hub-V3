@@ -165,7 +165,9 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
         "assistant_proactive_enabled",
         "assistant_actions_enabled",
         "intent_contract_version",
+        "plan_contract_version",
         "assistant_intent",
+        "assistant_plan",
         "planning_reason_codes",
         "plan_id",
         "retriever_stats",
@@ -183,6 +185,7 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
     assert isinstance(diag["top_evidence"], list)
     assert any(str(x).startswith("chunk:") for x in diag["top_evidence"])
     assert diag.get("intent_contract_version") == "v1"
+    assert diag.get("plan_contract_version") == "v1"
     intent = dict(diag.get("assistant_intent") or {})
     assert set(intent.keys()) == {
         "intent",
@@ -190,6 +193,17 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
         "entities",
         "implicit_tasks",
         "source",
+    }
+    plan = dict(diag.get("assistant_plan") or {})
+    assert set(plan.keys()) == {
+        "contract_version",
+        "plan_id",
+        "status",
+        "deterministic",
+        "intent",
+        "steps",
+        "requires_confirmation",
+        "reason_codes",
     }
     assert isinstance(diag.get("planning_reason_codes"), list)
     assert isinstance(diag.get("plan_id"), str)
@@ -858,3 +872,42 @@ async def test_answer_service_proactive_disabled_adds_reason_code(monkeypatch):
     assert actions.get("status") == "disabled"
     assert actions.get("actions") == []
     assert "assistant_actions_disabled" in list(actions.get("reason_codes") or [])
+
+
+@pytest.mark.asyncio
+async def test_answer_service_builds_deterministic_plan_for_project_intent(monkeypatch):
+    class _S:
+        feature_reasoning = True
+        feature_graphrag = True
+        feature_reasoning_llm_enabled = False
+        feature_assistant_mode = True
+        feature_assistant_proactive = False
+        feature_assistant_actions = False
+        llm_provider = "ollama"
+        openai_model = ""
+        ollama_model = "llama3.2:latest"
+
+    monkeypatch.setattr("src.core.config.get_settings", lambda: _S())
+    monkeypatch.setattr("src.observability.trace.make_trace_id", lambda **kwargs: "trace-123", raising=False)
+    monkeypatch.setattr(
+        "src.core.providers.get_reasoning_engine",
+        lambda *, retriever=None, llm=None, llm_timeout_s=None: _FakeReasoningEngine(retriever),
+    )
+
+    http = _DummyHTTP(request_id="rid-plan-project", rag_engine=object(), hybrid_retriever=_FakeHybrid())
+    req = AnswerRequest(query="Мне дали проект ББРР 2026", session_id="default")
+    resp = await AnswerService().handle(http, req, workspace_id="default")
+    diag = dict(getattr(resp, "diagnostics", {}) or {})
+    plan = dict(diag.get("assistant_plan") or {})
+    steps = list(plan.get("steps") or [])
+
+    assert diag.get("assistant_mode_enabled") is True
+    assert diag.get("plan_contract_version") == "v1"
+    assert plan.get("status") == "ready"
+    assert plan.get("deterministic") is True
+    assert str(plan.get("plan_id", "")).startswith("plan:start_project:")
+    assert diag.get("plan_id") == plan.get("plan_id")
+    assert plan.get("requires_confirmation") is True
+    assert len(steps) >= 2
+    assert [str((row or {}).get("step_id", "")) for row in steps][:2] == ["step:1", "step:2"]
+    assert "deterministic_plan_built" in list(plan.get("reason_codes") or [])

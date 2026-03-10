@@ -16,6 +16,7 @@ SELF_CHECK_MINIMAL_COVERAGE_SCORE_MIN = 1.0
 SELF_CHECK_MISSING_MINIMAL_COUNT_MAX = 0
 ASSISTANT_CONTRACT_VERSION = "v1"
 INTENT_CONTRACT_VERSION = "v1"
+PLAN_CONTRACT_VERSION = "v1"
 
 
 class ProvenanceItem(BaseModel):
@@ -124,6 +125,29 @@ class AssistantIntentResult(BaseModel):
     contract_version: str = Field(default=INTENT_CONTRACT_VERSION)
     source: Literal["heuristic", "llm", "manual"] = Field(default="heuristic")
     intent: AssistantIntent
+    reason_codes: list[str] = Field(default_factory=list)
+
+
+class AssistantPlanStep(BaseModel):
+    """Deterministic draft planning step for assistant orchestration."""
+
+    step_id: str = Field(min_length=1)
+    role: str = Field(min_length=1)
+    action: str = Field(min_length=1)
+    parameters: dict[str, Any] = Field(default_factory=dict)
+    depends_on: list[str] = Field(default_factory=list)
+
+
+class AssistantPlan(BaseModel):
+    """Deterministic review-only plan produced from extracted intent."""
+
+    contract_version: str = Field(default=PLAN_CONTRACT_VERSION)
+    plan_id: str = Field(default="")
+    status: Literal["idle", "disabled", "ready"] = Field(default="idle")
+    deterministic: bool = Field(default=True)
+    intent: str = Field(default="general_query")
+    steps: list[AssistantPlanStep] = Field(default_factory=list)
+    requires_confirmation: bool = Field(default=True)
     reason_codes: list[str] = Field(default_factory=list)
 
 
