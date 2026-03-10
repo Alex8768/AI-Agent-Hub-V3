@@ -10,15 +10,19 @@ A2.42 — Learning from Feedback (Approve/Cancel/Edit)
 
 ## Current Active Anchor
 
-A2.43 — TBD (post-feedback planning)
+A2.43 — Feedback-to-Planning Adaptation (MVP)
 
 Current progress:
-- A2.42 is completed through patch 5 (docs/CI closure included).
-- A2.43 scope is not yet finalized.
+- Patch 1 pending: Adaptation Contract Baseline.
+- Patch 2 pending: Signal-to-Plan Adapter + Deterministic Ranking.
+- Patch 3 pending: Adaptation Policy Guardrails.
+- Patch 4 pending: Runtime Wiring + Diagnostics Parity.
+- Patch 5 pending: Docs/CI Closure.
 
 Focus:
-- lock A2.42 as completed and stable in docs/CI
-- define A2.43 scope and patch sequence before implementation starts
+- adapt planning relevance using approve/cancel/edit feedback signals
+- keep adaptation deterministic and policy-guarded
+- preserve review-safe behavior and existing execution boundaries
 - preserve strict micro-patch execution discipline
 
 Execution discipline:
@@ -29,7 +33,7 @@ Execution discipline:
 A2.44 — TBD
 
 Planned focus:
-- finalize post-feedback roadmap and select implementation scope
+- complete A2.43 adaptation flow from contract to docs/CI closure
 
 ## CI Status
 
@@ -39,5 +43,5 @@ The noop tracing span compatibility fix is completed and treated as closed work.
 
 ## Upcoming Anchors
 
-- A2.43 — TBD (post-feedback planning)
+- A2.43 — Feedback-to-Planning Adaptation (MVP)
 - A2.44 — TBD

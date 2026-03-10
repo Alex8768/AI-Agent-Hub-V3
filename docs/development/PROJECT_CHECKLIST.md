@@ -48,13 +48,17 @@
 - [x] A2.41 Dynamic Tool Selection (MCP-aware)
 - [x] A2.42 Learning from Feedback (Approve/Cancel/Edit)
 
-## Current Work — A2.43 TBD (post-feedback planning)
+## Current Work — A2.43 Feedback-to-Planning Adaptation (MVP)
 
-- [ ] Define anchor scope and patch plan
+- [ ] Patch 1 — Adaptation Contract Baseline
+- [ ] Patch 2 — Signal-to-Plan Adapter + Deterministic Ranking
+- [ ] Patch 3 — Adaptation Policy Guardrails
+- [ ] Patch 4 — Runtime Wiring + Diagnostics Parity
+- [ ] Patch 5 — Docs/CI Closure
 
 ## Next
 
-- [ ] Start A2.43 patch implementation after scope approval
+- [ ] Start A2.43 patch 1 implementation
 
 ## Later
 

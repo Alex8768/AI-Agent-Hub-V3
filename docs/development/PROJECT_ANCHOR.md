@@ -2,26 +2,39 @@
 
 ## Active Anchor
 
-A2.43 — TBD (post-feedback planning)
+A2.43 — Feedback-to-Planning Adaptation (MVP)
 
 ### Goal
 
-Define the next implementation anchor after feedback-learning stabilization.
+Use captured approve/cancel/edit feedback to deterministically adapt
+plan/action relevance diagnostics while preserving safe-mode constraints.
 
 ### Architecture Position
 
 Planned modules:
 
-- TBD (post-feedback planning)
+- adaptation diagnostics contract baseline
+- signal-to-plan deterministic adapter
+- adaptation policy guardrails
+- runtime wiring + diagnostics parity
+- docs + CI quality-gate closure
 
 ### Patch Plan
 
 #### Patch plan
-- Patch plan is intentionally deferred until A2.43 scope is approved.
+- Patch 1 — Adaptation Contract Baseline
+- Patch 2 — Signal-to-Plan Adapter + Deterministic Ranking
+- Patch 3 — Adaptation Policy Guardrails
+- Patch 4 — Runtime Wiring + Diagnostics Parity
+- Patch 5 — Docs/CI Closure
 
 ### Progress
 
-- [ ] Patch 1 — TBD
+- [ ] Patch 1 — Adaptation Contract Baseline
+- [ ] Patch 2 — Signal-to-Plan Adapter + Deterministic Ranking
+- [ ] Patch 3 — Adaptation Policy Guardrails
+- [ ] Patch 4 — Runtime Wiring + Diagnostics Parity
+- [ ] Patch 5 — Docs/CI Closure
 
 ### Out of Scope
 
@@ -32,8 +45,8 @@ Do NOT modify during planning:
 ### Definition of Done
 
 A2.43 completion criteria:
-- scope, contracts, and patch plan are explicitly documented and approved.
-- selected implementation path preserves deterministic safety constraints.
+- feedback signals influence planning diagnostics deterministically.
+- adaptation remains policy-guarded and review-safe by default.
 - full unit suite and quality-gate coverage remain green.
 
 ## Next Anchor
