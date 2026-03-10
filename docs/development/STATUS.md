@@ -6,22 +6,17 @@ Platform Hardening — Architectural Topology Stabilization
 
 ## Last Completed Anchor
 
-A2.46 — Kernel / Extensions / Execution Plane Hardening
+A2.47 — Debt Resolution Track (Runtime Clarity + Reliability)
 
 ## Current Active Anchor
 
-A2.47 — Debt Resolution Track (Runtime Clarity + Reliability)
+A2.48 — TBD
 
 Current progress:
-- Patch 1 complete: debt closure inventory + scope lock.
-- Patch 2 complete: AnswerService orchestration extraction seam.
-- Patch 3 complete: memory consistency strategy contract.
-- Patch 4 complete: runtime entrypoint cleanup decision.
-- Patch 5 pending: debt registry/docs/CI closure.
+- scope definition pending.
 
 Focus:
-- resolve explicitly tracked technical debt without capability expansion
-- preserve A2.46 topology and dependency guardrails
+- define post-A2.47 priorities
 - keep topology/dependency quality gates active
 - preserve strict micro-patch execution discipline
 
@@ -37,7 +32,7 @@ Execution discipline:
 A2.48 — TBD
 
 Planned focus:
-- execute A2.47 patch 5 debt registry/docs/CI closure
+- finalize A2.48 scope lock
 
 ## CI Status
 
@@ -47,4 +42,4 @@ The noop tracing span compatibility fix is completed and treated as closed work.
 
 ## Upcoming Anchors
 
-- A2.47 — Debt Resolution Track (Runtime Clarity + Reliability)
+- A2.48 — TBD

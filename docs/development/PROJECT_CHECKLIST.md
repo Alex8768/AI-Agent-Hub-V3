@@ -51,18 +51,15 @@
 - [x] A2.44 Assistant Conversational Recovery (Low-Evidence UX)
 - [x] A2.45 Architecture Hardening Track (COO Runtime Reliability)
 - [x] A2.46 Kernel / Extensions / Execution Plane Hardening
+- [x] A2.47 Debt Resolution Track (Runtime Clarity + Reliability)
 
-## Current Work — A2.47 Debt Resolution Track (Runtime Clarity + Reliability)
+## Current Work — A2.48 TBD
 
-- [x] Patch 1 — debt closure inventory + scope lock
-- [x] Patch 2 — AnswerService orchestration extraction seam
-- [x] Patch 3 — memory consistency strategy contract
-- [x] Patch 4 — runtime entrypoint cleanup decision
-- [ ] Patch 5 — debt registry/docs/CI closure
+- [ ] Patch 1 — scope lock (pending)
 
 ## Next
 
-- [ ] Start A2.47 patch 5 implementation
+- [ ] Start A2.48 scope lock
 
 ## Later
 

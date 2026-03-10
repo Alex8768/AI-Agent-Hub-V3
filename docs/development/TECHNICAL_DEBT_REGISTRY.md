@@ -23,10 +23,10 @@ Required fields per entry:
 - area: `services/answer`
 - description: `AnswerService remains large and includes many orchestration concerns.`
 - risk_level: `medium`
-- decision_status: `accepted_for_incremental_extraction`
+- decision_status: `resolved_in_a2_47`
 - owner: `architecture-track`
-- target_anchor: `A2.46`
-- notes: `Keep behavior stable; continue seam-based extraction only.`
+- target_anchor: `A2.47`
+- notes: `Resolved via `_run_assistant_execution_orchestration_seam` extraction with runtime parity preserved.`
 
 ### debt_id: `TD-A2.45-002`
 
@@ -43,17 +43,17 @@ Required fields per entry:
 - area: `memory/sqlite-qdrant`
 - description: `Cross-store consistency is best-effort and not transactionally unified.`
 - risk_level: `high`
-- decision_status: `visibility_added_pending_strategy`
+- decision_status: `resolved_in_a2_47`
 - owner: `architecture-track`
-- target_anchor: `A2.46`
-- notes: `A2.45 introduced memory consistency diagnostics; outbox/compensation strategy is pending.`
+- target_anchor: `A2.47`
+- notes: `Resolved by explicit `memory_consistency_strategy` contract; outbox/compensation remains deferred by policy.`
 
 ### debt_id: `TD-A2.45-004`
 
 - area: `legacy-runner`
 - description: `Temporary or legacy runner path (`run_utf8.py`) can cause entrypoint ambiguity.`
 - risk_level: `low`
-- decision_status: `pending_cleanup_decision`
+- decision_status: `resolved_in_a2_47`
 - owner: `architecture-track`
-- target_anchor: `A2.46`
-- notes: `Main runtime entrypoint is `src.api.main:app`; remove/retain decision deferred.`
+- target_anchor: `A2.47`
+- notes: `Resolved by keeping `run_utf8.py` as compatibility wrapper and locking canonical entrypoint to `src.api.main:app`.`

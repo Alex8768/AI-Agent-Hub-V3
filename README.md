@@ -298,6 +298,7 @@ Main project documentation:
 - `docs/architecture/ASSISTANT_CONVERSATIONAL_RECOVERY_RUNTIME.md`
 - `docs/architecture/ARCHITECTURE_HARDENING_RUNTIME.md`
 - `docs/architecture/TOPOLOGY_HARDENING_RUNTIME.md`
+- `docs/architecture/DEBT_RESOLUTION_RUNTIME.md`
 - `docs/development/TECHNICAL_DEBT_REGISTRY.md`
 - `docs/development/DOCS_TOPOLOGY_POLICY.md`
 - `docs/api/README.md`
