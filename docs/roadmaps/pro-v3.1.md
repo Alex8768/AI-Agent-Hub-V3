@@ -98,6 +98,7 @@ Alias compatibility:
 - Architecture hardening runtime docs quality gate in release-gate contracts (A2.45)
 - Topology hardening runtime docs quality gate in release-gate contracts (A2.46)
 - Debt resolution runtime docs quality gate in release-gate contracts (A2.47)
+- Planner decoupling runtime docs quality gate in release-gate contracts (A2.48)
 
 ---
 

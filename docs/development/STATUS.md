@@ -6,7 +6,7 @@ Platform Hardening — Architectural Topology Stabilization
 
 ## Last Completed Anchor
 
-A2.47 — Debt Resolution Track (Runtime Clarity + Reliability)
+A2.48 — Planner Decoupling Track (Kernel Composition Independence)
 
 ## Current Active Anchor
 
@@ -17,7 +17,7 @@ Current progress:
 - Patch 2 complete: planner composition seam extraction.
 - Patch 3 complete: prompt/planner boundary normalization.
 - Patch 4 complete: planner diagnostics/runtime parity guardrails.
-- Patch 5 pending: debt registry/docs/CI closure.
+- Patch 5 complete: debt registry/docs/CI closure.
 
 Focus:
 - close remaining planner-coupling debt without behavior expansion
@@ -36,7 +36,7 @@ Execution discipline:
 A2.49 — TBD
 
 Planned focus:
-- execute A2.48 patch 5 debt registry/docs/CI closure
+- define and start A2.49 anchor scope
 
 ## CI Status
 

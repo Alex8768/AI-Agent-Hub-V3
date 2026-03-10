@@ -33,10 +33,10 @@ Required fields per entry:
 - area: `reasoning/planner`
 - description: `Planner wiring still depends on concrete runtime provider composition paths.`
 - risk_level: `medium`
-- decision_status: `active_targeted_for_a2_48`
+- decision_status: `resolved_in_a2_48`
 - owner: `architecture-track`
 - target_anchor: `A2.48`
-- notes: `A2.45 added guarded adapter seam; A2.48 is dedicated to planner composition decoupling closure.`
+- notes: `Resolved via `build_reasoning_planner_runtime` seam extraction, `normalize_reasoning_query_input` boundary normalization, and `planner_runtime_parity` diagnostics guardrails with parity-preserving tests.`
 
 ### debt_id: `TD-A2.45-003`
 

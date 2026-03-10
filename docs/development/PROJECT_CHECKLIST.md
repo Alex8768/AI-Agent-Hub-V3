@@ -59,11 +59,11 @@
 - [x] Patch 2 — planner composition seam extraction
 - [x] Patch 3 — prompt/planner boundary normalization
 - [x] Patch 4 — planner diagnostics/runtime parity guardrails
-- [ ] Patch 5 — debt registry/docs/CI closure
+- [x] Patch 5 — debt registry/docs/CI closure
 
 ## Next
 
-- [ ] Start A2.48 patch 5 implementation
+- [ ] Define A2.49 anchor scope and patch plan
 
 ## Later
 

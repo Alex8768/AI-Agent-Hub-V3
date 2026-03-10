@@ -51,7 +51,7 @@ A2.48 preserves A2.46 topology constraints and A2.47 runtime decisions.
 - [x] Patch 2 — planner composition seam extraction
 - [x] Patch 3 — prompt/planner boundary normalization
 - [x] Patch 4 — planner diagnostics/runtime parity guardrails
-- [ ] Patch 5 — debt registry/docs/CI closure for A2.48
+- [x] Patch 5 — debt registry/docs/CI closure for A2.48
 
 ### Patch 1 Outputs
 
@@ -100,11 +100,11 @@ Work order is strict:
 
 ### Last Completed Anchor
 
-A2.47 — Debt Resolution Track (Runtime Clarity + Reliability)
+A2.48 — Planner Decoupling Track (Kernel Composition Independence)
 
 Completed via patches:
-- Patch 1 — debt closure inventory + scope lock
-- Patch 2 — AnswerService orchestration extraction seam
-- Patch 3 — memory consistency strategy contract (outbox/compensation decision)
-- Patch 4 — runtime entrypoint cleanup decision (`run_utf8.py`)
-- Patch 5 — debt registry/docs/CI closure for A2.47
+- Patch 1 — planner decoupling inventory + scope lock
+- Patch 2 — planner composition seam extraction
+- Patch 3 — prompt/planner boundary normalization
+- Patch 4 — planner diagnostics/runtime parity guardrails
+- Patch 5 — debt registry/docs/CI closure for A2.48
