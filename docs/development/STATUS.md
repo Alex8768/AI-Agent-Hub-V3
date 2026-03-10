@@ -16,13 +16,14 @@ Current progress:
 - Patch 1 complete: Feedback Contract Baseline.
 - Patch 2 complete: Feedback Capture Adapter + Deterministic Normalization.
 - Patch 3 complete: Feedback Policy Guardrails.
-- Patch 4 pending: Runtime Wiring + Diagnostics Parity.
+- Patch 4 complete: Runtime Wiring + Diagnostics Parity.
 - Patch 5 pending: Docs/CI Closure.
 
 Focus:
 - feedback contract baseline is exposed in diagnostics
 - feedback capture adapter normalizes approve/cancel/edit signals deterministically
 - feedback policy guardrails enforce allowlisted signals and forced fallback
+- runtime wiring keeps feedback diagnostics parity across proactive/non-proactive paths
 - keep deterministic normalization and policy-guarded safety in feedback flow
 - preserve strict micro-patch execution discipline
 

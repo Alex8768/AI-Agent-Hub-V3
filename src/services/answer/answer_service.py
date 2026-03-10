@@ -678,12 +678,71 @@ def _wire_tool_selection_runtime_diagnostics(
     return diag
 
 
+def _wire_feedback_runtime_diagnostics(
+    *,
+    diagnostics: dict[str, object],
+) -> dict[str, object]:
+    diag = dict(diagnostics or {})
+    feedback = dict(diag.get("assistant_feedback_learning") or {})
+    feedback_policy = dict(diag.get("feedback_policy") or {})
+
+    allowed = {"approve", "cancel", "edit"}
+    raw_signals = [str(x).strip().lower() for x in list(feedback.get("signals") or []) if str(x).strip()]
+    signals: list[str] = []
+    seen: set[str] = set()
+    dropped_unknown = False
+    for signal in raw_signals:
+        if signal not in allowed:
+            dropped_unknown = True
+            continue
+        if signal in seen:
+            continue
+        seen.add(signal)
+        signals.append(signal)
+
+    latest = str(feedback.get("latest_signal", "none") or "none").strip().lower()
+    if latest not in allowed:
+        latest = "none"
+    if latest != "none" and latest not in signals:
+        signals.append(latest)
+    if latest == "none" and signals:
+        latest = signals[-1]
+
+    counts = {
+        "approve": int(1 if "approve" in signals else 0),
+        "cancel": int(1 if "cancel" in signals else 0),
+        "edit": int(1 if "edit" in signals else 0),
+    }
+
+    reason_codes = [str(x) for x in list(feedback.get("reason_codes") or []) if str(x or "").strip()]
+    if dropped_unknown:
+        reason_codes.append("feedback_runtime_unknown_signals_removed")
+    if "feedback_runtime_wired" not in reason_codes:
+        reason_codes.append("feedback_runtime_wired")
+
+    policy_reasons = [str(x) for x in list(feedback_policy.get("applied_reason_codes") or []) if str(x or "").strip()]
+    if "feedback_runtime_wired" not in policy_reasons:
+        policy_reasons.append("feedback_runtime_wired")
+    feedback_policy.setdefault("violations", [])
+    feedback_policy["applied_reason_codes"] = sorted(set(policy_reasons))
+
+    feedback["signals"] = signals
+    feedback["latest_signal"] = latest
+    feedback["signal_counts"] = counts
+    feedback["reason_codes"] = sorted(set(reason_codes))
+
+    diag["assistant_feedback_learning"] = feedback
+    diag["feedback_policy"] = feedback_policy
+    return diag
+
+
 def _wire_runtime_diagnostics(
     *,
     diagnostics: dict[str, object],
 ) -> dict[str, object]:
     diag = _wire_planner_runtime_diagnostics(diagnostics=diagnostics)
     diag = _wire_tool_selection_runtime_diagnostics(diagnostics=diag)
+    diag = _wire_feedback_runtime_diagnostics(diagnostics=diag)
     return diag
 
 

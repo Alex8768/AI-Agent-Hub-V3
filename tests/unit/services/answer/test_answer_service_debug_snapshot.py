@@ -1783,6 +1783,42 @@ def test_wire_tool_selection_runtime_diagnostics_syncs_plan_steps():
     assert "tool_selection_runtime_orphaned_step_removed" in list(policy.get("violations") or [])
 
 
+def test_wire_feedback_runtime_diagnostics_normalizes_signals():
+    import src.services.answer.answer_service as answer_service_module
+
+    out = answer_service_module._wire_feedback_runtime_diagnostics(
+        diagnostics={
+            "assistant_feedback_learning": {
+                "contract_version": "v1",
+                "mode": "approve_cancel_edit_feedback",
+                "status": "ready",
+                "signals": ["approve", "unknown", "approve"],
+                "latest_signal": "edit",
+                "signal_counts": {"approve": 0, "cancel": 0, "edit": 0},
+                "reason_codes": ["feedback_capture_adapter_normalized"],
+            },
+            "feedback_policy": {
+                "mode": "feedback_learning_guarded",
+                "allowed_signals": ["approve", "cancel", "edit"],
+                "max_signals_per_request": 3,
+                "require_latest_in_signals": True,
+                "fallback_on_policy_violation": True,
+                "violations": [],
+                "applied_reason_codes": [],
+            },
+        }
+    )
+
+    feedback = dict(out.get("assistant_feedback_learning") or {})
+    policy = dict(out.get("feedback_policy") or {})
+    assert feedback.get("signals") == ["approve", "edit"]
+    assert feedback.get("latest_signal") == "edit"
+    assert feedback.get("signal_counts") == {"approve": 1, "cancel": 0, "edit": 1}
+    assert "feedback_runtime_unknown_signals_removed" in list(feedback.get("reason_codes") or [])
+    assert "feedback_runtime_wired" in list(feedback.get("reason_codes") or [])
+    assert "feedback_runtime_wired" in list(policy.get("applied_reason_codes") or [])
+
+
 @pytest.mark.asyncio
 async def test_answer_service_blocks_approval_when_rollback_plan_missing(monkeypatch):
     class _S:
