@@ -31,6 +31,7 @@ from src.observability.request_context import get_request_id
 
 SESSION_MEMORY_MAX_CHARS = 4000
 EXECUTION_IDEMPOTENCY_CONTRACT_VERSION = "v1"
+EXECUTION_GATEWAY_CONTRACT_VERSION = "v1"
 _EXECUTION_IDEMPOTENCY_SEEN: dict[str, str] = {}
 
 
@@ -776,6 +777,72 @@ def _build_execution_receipt_stub(
     }
 
 
+def _build_safe_mode_execution_gateway(
+    *,
+    handshake_bundle: dict[str, object],
+    receipt_bundle: dict[str, object],
+    actions_enabled: bool,
+) -> dict[str, object]:
+    handshake = dict(handshake_bundle or {})
+    receipt = dict(receipt_bundle or {})
+    state = str(handshake.get("state", "idle") or "idle")
+    approved = [str(x) for x in list(handshake.get("approved_action_ids") or []) if str(x)]
+    blocked = [str(x) for x in list(handshake.get("blocked_action_ids") or []) if str(x)]
+    if not actions_enabled:
+        return {
+            "contract_version": EXECUTION_GATEWAY_CONTRACT_VERSION,
+            "mode": "safe_mode",
+            "state": "disabled",
+            "safe_mode": True,
+            "approved_action_ids": [],
+            "blocked_action_ids": [],
+            "executed_action_ids": [],
+            "dry_run_action_ids": [],
+            "reason_codes": ["assistant_actions_disabled"],
+        }
+    if state == "approved":
+        return {
+            "contract_version": EXECUTION_GATEWAY_CONTRACT_VERSION,
+            "mode": "safe_mode",
+            "state": "ready_for_execution",
+            "safe_mode": True,
+            "approved_action_ids": approved,
+            "blocked_action_ids": blocked,
+            "executed_action_ids": [],
+            "dry_run_action_ids": approved,
+            "reason_codes": ["execution_safe_mode_no_side_effects"],
+        }
+    if state == "cancelled":
+        return {
+            "contract_version": EXECUTION_GATEWAY_CONTRACT_VERSION,
+            "mode": "safe_mode",
+            "state": "cancelled",
+            "safe_mode": True,
+            "approved_action_ids": [],
+            "blocked_action_ids": blocked,
+            "executed_action_ids": [],
+            "dry_run_action_ids": [],
+            "reason_codes": ["execution_cancelled_by_user"],
+        }
+    if str(receipt.get("status", "") or "") == "awaiting_confirmation":
+        gateway_state = "awaiting_confirmation"
+        reasons = ["execution_awaiting_confirmation"]
+    else:
+        gateway_state = "idle"
+        reasons = ["execution_gateway_idle"]
+    return {
+        "contract_version": EXECUTION_GATEWAY_CONTRACT_VERSION,
+        "mode": "safe_mode",
+        "state": gateway_state,
+        "safe_mode": True,
+        "approved_action_ids": approved,
+        "blocked_action_ids": blocked,
+        "executed_action_ids": [],
+        "dry_run_action_ids": [],
+        "reason_codes": reasons,
+    }
+
+
 def _build_approval_session_bundle(
     *,
     handshake_bundle: dict[str, object],
@@ -1364,6 +1431,13 @@ def _apply_diagnostics(
         diag.setdefault("execution_idempotency", execution_idempotency)
         diag.setdefault("execution_receipt_contract_version", EXECUTION_RECEIPT_CONTRACT_VERSION)
         diag.setdefault("assistant_execution_receipt", receipt)
+        execution_gateway = _build_safe_mode_execution_gateway(
+            handshake_bundle=handshake,
+            receipt_bundle=receipt,
+            actions_enabled=assistant_actions_enabled,
+        )
+        diag.setdefault("execution_gateway_contract_version", EXECUTION_GATEWAY_CONTRACT_VERSION)
+        diag.setdefault("assistant_execution_gateway", execution_gateway)
         diag.setdefault("approval_session_contract_version", APPROVAL_SESSION_CONTRACT_VERSION)
         diag.setdefault("assistant_approval_session", approval_session)
         reason_codes = list(intent.get("reason_codes") or []) + list(plan.get("reason_codes") or [])
@@ -1371,6 +1445,7 @@ def _apply_diagnostics(
         reason_codes.extend(list(handshake.get("reason_codes") or []))
         reason_codes.extend(list(execution_idempotency.get("reason_codes") or []))
         reason_codes.extend(list(receipt.get("reason_codes") or []))
+        reason_codes.extend(list(execution_gateway.get("reason_codes") or []))
         reason_codes.extend(list(approval_session.get("reason_codes") or []))
         reason_codes = sorted(set([str(x) for x in reason_codes if str(x or "").strip()]))
         diag.setdefault("planning_reason_codes", reason_codes)
@@ -1808,6 +1883,12 @@ class AnswerService:
                     workspace_id=str(workspace_id or ""),
                     request_id=str(get_request_id(http) or ""),
                 )
+                resp.diagnostics["execution_gateway_contract_version"] = EXECUTION_GATEWAY_CONTRACT_VERSION
+                resp.diagnostics["assistant_execution_gateway"] = _build_safe_mode_execution_gateway(
+                    handshake_bundle=handshake,
+                    receipt_bundle=dict(resp.diagnostics.get("assistant_execution_receipt") or {}),
+                    actions_enabled=assistant_actions_enabled,
+                )
                 resp.diagnostics["assistant_approval_session"] = _build_approval_session_bundle(
                     handshake_bundle=handshake,
                     plan_bundle=plan_bundle,
@@ -1875,6 +1956,12 @@ class AnswerService:
                     draft_actions_bundle=dict(base.get("draft_actions") or {}),
                     workspace_id=str(workspace_id or ""),
                     request_id=str(get_request_id(http) or ""),
+                )
+                resp.diagnostics["execution_gateway_contract_version"] = EXECUTION_GATEWAY_CONTRACT_VERSION
+                resp.diagnostics["assistant_execution_gateway"] = _build_safe_mode_execution_gateway(
+                    handshake_bundle=handshake,
+                    receipt_bundle=dict(resp.diagnostics.get("assistant_execution_receipt") or {}),
+                    actions_enabled=assistant_actions_enabled,
                 )
                 resp.diagnostics["assistant_approval_session"] = _build_approval_session_bundle(
                     handshake_bundle=handshake,

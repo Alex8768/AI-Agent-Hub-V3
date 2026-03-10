@@ -175,6 +175,8 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
         "execution_idempotency",
         "execution_receipt_contract_version",
         "assistant_execution_receipt",
+        "execution_gateway_contract_version",
+        "assistant_execution_gateway",
         "approval_session_contract_version",
         "assistant_approval_session",
         "planning_reason_codes",
@@ -267,6 +269,19 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
         "approved_action_ids",
         "blocked_action_ids",
         "executed_action_ids",
+        "reason_codes",
+    }
+    assert diag.get("execution_gateway_contract_version") == "v1"
+    gateway = dict(diag.get("assistant_execution_gateway") or {})
+    assert set(gateway.keys()) == {
+        "contract_version",
+        "mode",
+        "state",
+        "safe_mode",
+        "approved_action_ids",
+        "blocked_action_ids",
+        "executed_action_ids",
+        "dry_run_action_ids",
         "reason_codes",
     }
     assert diag.get("approval_session_contract_version") == "v1"
@@ -1151,6 +1166,11 @@ async def test_answer_service_handshake_transition_approve(monkeypatch):
     assert receipt.get("status") == "recorded"
     assert receipt.get("handshake_state") == "approved"
     assert str(receipt.get("receipt_id", "")).startswith("receipt:")
+    gateway = dict(diag.get("assistant_execution_gateway") or {})
+    assert gateway.get("state") == "ready_for_execution"
+    assert gateway.get("safe_mode") is True
+    assert gateway.get("executed_action_ids") == []
+    assert gateway.get("dry_run_action_ids") == [action_id]
 
 
 @pytest.mark.asyncio
@@ -1246,6 +1266,9 @@ async def test_answer_service_handshake_transition_cancel(monkeypatch):
     assert receipt.get("status") == "recorded"
     assert receipt.get("handshake_state") == "cancelled"
     assert str(receipt.get("receipt_id", "")).startswith("receipt:")
+    gateway = dict(diag.get("assistant_execution_gateway") or {})
+    assert gateway.get("state") == "cancelled"
+    assert gateway.get("executed_action_ids") == []
 
 
 @pytest.mark.asyncio

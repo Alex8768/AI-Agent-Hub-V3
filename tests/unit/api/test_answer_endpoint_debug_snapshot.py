@@ -114,6 +114,8 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
         "execution_idempotency",
         "execution_receipt_contract_version",
         "assistant_execution_receipt",
+        "execution_gateway_contract_version",
+        "assistant_execution_gateway",
         "approval_session_contract_version",
         "assistant_approval_session",
         "planning_reason_codes",
@@ -200,6 +202,19 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
         "approved_action_ids",
         "blocked_action_ids",
         "executed_action_ids",
+        "reason_codes",
+    }
+    assert diag.get("execution_gateway_contract_version") == "v1"
+    gateway = dict(diag.get("assistant_execution_gateway") or {})
+    assert set(gateway.keys()) == {
+        "contract_version",
+        "mode",
+        "state",
+        "safe_mode",
+        "approved_action_ids",
+        "blocked_action_ids",
+        "executed_action_ids",
+        "dry_run_action_ids",
         "reason_codes",
     }
     assert diag.get("approval_session_contract_version") == "v1"

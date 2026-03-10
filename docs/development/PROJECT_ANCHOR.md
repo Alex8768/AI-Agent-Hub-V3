@@ -37,7 +37,7 @@ Planned files:
 - [x] Patch 1 — Approval Session Contract Baseline
 - [x] Patch 2 — Confirm/Cancel API Contract Surface
 - [x] Patch 3 — Idempotency Key + Replay Guard
-- [ ] Patch 4 — Safe-Mode Execution Gateway
+- [x] Patch 4 — Safe-Mode Execution Gateway
 - [ ] Patch 5 — Docs/CI Closure
 
 ### Out of Scope

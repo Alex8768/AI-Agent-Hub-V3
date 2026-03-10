@@ -16,10 +16,12 @@ Current progress:
 - Patch 1 completed: Approval Session Contract Baseline.
 - Patch 2 completed: Confirm/Cancel API Contract Surface.
 - Patch 3 completed: Idempotency Key + Replay Guard.
+- Patch 4 completed: Safe-Mode Execution Gateway.
 
 Focus:
 - explicit approval-session diagnostics contract in answer runtime
 - replay-safe confirmation transitions with idempotency diagnostics
+- safe-mode execution gateway diagnostics with side-effect-free semantics
 
 Execution discipline:
 - keep work strictly inside the active anchor and move in micro-patches.
