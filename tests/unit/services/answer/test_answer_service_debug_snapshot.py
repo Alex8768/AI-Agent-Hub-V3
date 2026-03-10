@@ -1607,6 +1607,66 @@ def test_wire_planner_runtime_diagnostics_syncs_plan_id():
     assert "llm_planner_runtime_wired" in list(policy.get("applied_reason_codes") or [])
 
 
+def test_wire_tool_selection_runtime_diagnostics_syncs_plan_steps():
+    import src.services.answer.answer_service as answer_service_module
+
+    out = answer_service_module._wire_tool_selection_runtime_diagnostics(
+        diagnostics={
+            "assistant_plan": {
+                "plan_id": "plan:start_project:abc",
+                "intent": "start_project",
+                "steps": [
+                    {"step_id": "step:1", "action": "prepare_project_workspace_draft"},
+                    {"step_id": "step:2", "action": "prepare_project_brief_draft"},
+                ],
+            },
+            "assistant_tool_selection": {
+                "contract_version": "v1",
+                "mode": "mcp_aware_selector",
+                "status": "ready",
+                "source": "mcp",
+                "selected_tools": [
+                    {
+                        "step_id": "step:1",
+                        "tool_name": "workspace_manager",
+                        "route": "mcp_registry_match",
+                        "reason": "tool_selection_mcp_match",
+                    },
+                    {
+                        "step_id": "step:orphan",
+                        "tool_name": "unknown",
+                        "route": "mcp_registry_match",
+                        "reason": "orphan",
+                    },
+                ],
+                "blocked_step_ids": [],
+                "reason_codes": ["tool_selection_adapter_applied"],
+            },
+            "tool_selection_policy": {
+                "mode": "tool_selection_guarded",
+                "allow_mcp_source": True,
+                "allow_deterministic_fallback": True,
+                "allowed_routes": ["mcp_registry_match", "deterministic_fallback", "diagnostics_only"],
+                "require_plan_step_binding": True,
+                "max_selected_tools": 5,
+                "fallback_on_policy_violation": True,
+                "violations": [],
+                "applied_reason_codes": [],
+            },
+        }
+    )
+
+    selection = dict(out.get("assistant_tool_selection") or {})
+    policy = dict(out.get("tool_selection_policy") or {})
+    selected = list(selection.get("selected_tools") or [])
+    assert [str((row or {}).get("step_id", "")) for row in selected] == ["step:1", "step:2"]
+    assert str((selected[1] or {}).get("route", "")) == "deterministic_fallback"
+    assert "step:orphan" in list(selection.get("blocked_step_ids") or [])
+    assert "tool_selection_runtime_wired" in list(selection.get("reason_codes") or [])
+    assert "tool_selection_runtime_wired" in list(policy.get("applied_reason_codes") or [])
+    assert "tool_selection_runtime_orphaned_step_removed" in list(policy.get("violations") or [])
+
+
 @pytest.mark.asyncio
 async def test_answer_service_blocks_approval_when_rollback_plan_missing(monkeypatch):
     class _S:

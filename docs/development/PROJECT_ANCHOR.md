@@ -33,7 +33,7 @@ Planned modules:
 - [x] Patch 1 — Tool Selection Contract Baseline
 - [x] Patch 2 — MCP-aware Selector Adapter + Fallback
 - [x] Patch 3 — Tool Selection Policy Guardrails
-- [ ] Patch 4 — Runtime Wiring + Diagnostics Parity
+- [x] Patch 4 — Runtime Wiring + Diagnostics Parity
 - [ ] Patch 5 — Docs/CI Closure
 
 ### Out of Scope

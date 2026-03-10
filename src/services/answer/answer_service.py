@@ -611,6 +611,81 @@ def _wire_planner_runtime_diagnostics(
     return diag
 
 
+def _wire_tool_selection_runtime_diagnostics(
+    *,
+    diagnostics: dict[str, object],
+) -> dict[str, object]:
+    diag = dict(diagnostics or {})
+    plan = dict(diag.get("assistant_plan") or {})
+    tool_selection = dict(diag.get("assistant_tool_selection") or {})
+    tool_selection_policy = dict(diag.get("tool_selection_policy") or {})
+
+    steps = [dict(x or {}) for x in list(plan.get("steps") or [])]
+    plan_step_ids = [str(x.get("step_id", "") or "") for x in steps if str(x.get("step_id", "") or "")]
+    plan_step_id_set = set(plan_step_ids)
+    selected_rows = [dict(x or {}) for x in list(tool_selection.get("selected_tools") or [])]
+    blocked_step_ids = [str(x) for x in list(tool_selection.get("blocked_step_ids") or []) if str(x)]
+    reason_codes = [str(x) for x in list(tool_selection.get("reason_codes") or []) if str(x or "").strip()]
+    policy_reasons = [
+        str(x) for x in list(tool_selection_policy.get("applied_reason_codes") or []) if str(x or "").strip()
+    ]
+    policy_violations = [str(x) for x in list(tool_selection_policy.get("violations") or []) if str(x or "").strip()]
+
+    by_step: dict[str, dict[str, object]] = {}
+    orphaned_step_ids: list[str] = []
+    for row in selected_rows:
+        step_id = str(row.get("step_id", "") or "")
+        if not step_id:
+            continue
+        if plan_step_id_set and step_id not in plan_step_id_set:
+            orphaned_step_ids.append(step_id)
+            blocked_step_ids.append(step_id)
+            continue
+        if step_id not in by_step:
+            by_step[step_id] = row
+
+    if orphaned_step_ids:
+        reason_codes.append("tool_selection_runtime_orphaned_steps_removed")
+        policy_violations.append("tool_selection_runtime_orphaned_step_removed")
+
+    wired_rows: list[dict[str, object]] = []
+    for step_id in plan_step_ids:
+        row = by_step.get(step_id)
+        if row is None:
+            row = {
+                "step_id": step_id,
+                "tool_name": "none",
+                "route": "deterministic_fallback",
+                "reason": "tool_selection_runtime_step_backfilled",
+            }
+            reason_codes.append("tool_selection_runtime_backfilled")
+        wired_rows.append(row)
+
+    if "tool_selection_runtime_wired" not in reason_codes:
+        reason_codes.append("tool_selection_runtime_wired")
+    if "tool_selection_runtime_wired" not in policy_reasons:
+        policy_reasons.append("tool_selection_runtime_wired")
+
+    tool_selection["selected_tools"] = wired_rows
+    tool_selection["blocked_step_ids"] = sorted(set(blocked_step_ids))
+    tool_selection["reason_codes"] = sorted(set(reason_codes))
+    tool_selection_policy["applied_reason_codes"] = sorted(set(policy_reasons))
+    tool_selection_policy["violations"] = sorted(set(policy_violations))
+
+    diag["assistant_tool_selection"] = tool_selection
+    diag["tool_selection_policy"] = tool_selection_policy
+    return diag
+
+
+def _wire_runtime_diagnostics(
+    *,
+    diagnostics: dict[str, object],
+) -> dict[str, object]:
+    diag = _wire_planner_runtime_diagnostics(diagnostics=diagnostics)
+    diag = _wire_tool_selection_runtime_diagnostics(diagnostics=diag)
+    return diag
+
+
 def _build_tool_selection_bundle(
     *,
     plan_bundle: dict[str, object],
@@ -2344,7 +2419,7 @@ async def _apply_diagnostics(
         diag.setdefault("tool_selection_policy", tool_selection_policy_eval)
         diag.setdefault("llm_planner_policy", llm_planner_policy_eval)
         diag.setdefault("planning_policy", dict(planning_policy))
-        diag = _wire_planner_runtime_diagnostics(diagnostics=diag)
+        diag = _wire_runtime_diagnostics(diagnostics=diag)
         anticipatory = dict(diag.get("anticipatory") or {})
         draft_actions = dict(anticipatory.get("draft_actions") or {})
         handshake = _build_execution_handshake_bundle(
@@ -2863,7 +2938,7 @@ class AnswerService:
                     actions_enabled=assistant_actions_enabled,
                 )
                 diag = dict(getattr(resp, "diagnostics", None) or {})
-                diag = _wire_planner_runtime_diagnostics(diagnostics=diag)
+                diag = _wire_runtime_diagnostics(diagnostics=diag)
                 anticipatory["draft_actions"] = _bridge_plan_to_draft_actions(
                     plan_bundle=dict(diag.get("assistant_plan") or {}),
                     draft_actions_bundle=dict(anticipatory.get("draft_actions") or {}),
@@ -2872,7 +2947,7 @@ class AnswerService:
                 )
                 resp.diagnostics = dict(getattr(resp, "diagnostics", None) or {})
                 resp.diagnostics["anticipatory"] = anticipatory
-                resp.diagnostics = _wire_planner_runtime_diagnostics(diagnostics=resp.diagnostics)
+                resp.diagnostics = _wire_runtime_diagnostics(diagnostics=resp.diagnostics)
                 plan_bundle = dict(resp.diagnostics.get("assistant_plan") or {})
                 handshake = _build_execution_handshake_bundle(
                     plan_bundle=plan_bundle,
@@ -3010,7 +3085,7 @@ class AnswerService:
                     actions_enabled=False,
                 )
                 diag = dict(resp.diagnostics or {})
-                diag = _wire_planner_runtime_diagnostics(diagnostics=diag)
+                diag = _wire_runtime_diagnostics(diagnostics=diag)
                 base["draft_actions"] = _bridge_plan_to_draft_actions(
                     plan_bundle=dict(diag.get("assistant_plan") or {}),
                     draft_actions_bundle=dict(base.get("draft_actions") or {}),
@@ -3018,7 +3093,7 @@ class AnswerService:
                     actions_enabled=assistant_actions_enabled,
                 )
                 resp.diagnostics["anticipatory"] = base
-                resp.diagnostics = _wire_planner_runtime_diagnostics(diagnostics=resp.diagnostics)
+                resp.diagnostics = _wire_runtime_diagnostics(diagnostics=resp.diagnostics)
                 plan_bundle = dict(resp.diagnostics.get("assistant_plan") or {})
                 handshake = _build_execution_handshake_bundle(
                     plan_bundle=plan_bundle,
