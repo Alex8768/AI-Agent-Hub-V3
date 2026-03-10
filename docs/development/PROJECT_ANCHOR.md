@@ -2,43 +2,34 @@
 
 ## Active Anchor
 
-A2.37 — Approval Session & Idempotent Execution Gateway (Safe Mode)
+A2.38 — TBD
 
 ### Goal
 
-Add deterministic approval-session runtime contracts and diagnostics as the first
-step to an idempotent execution gateway, while keeping runtime side-effect free.
+Define and start the next anchor scope after A2.37 closure.
 
 ### Architecture Position
 
 Planned modules:
 
-- approval-session contract baseline for confirmation workflows
-- diagnostics wiring for approval session state in answer runtime
-- idempotent execution gateway skeleton for next patches
-
-Planned files:
-- `src/layers/pro/reasoning/contracts.py`
-- `src/services/answer/answer_service.py`
-- `tests/unit/services/answer/test_answer_service_debug_snapshot.py`
-- `tests/unit/api/test_answer_endpoint_debug_snapshot.py`
+- TBD
 
 ### Patch Plan
 
 #### Patch plan
-- Patch 1 — Approval Session Contract Baseline
-- Patch 2 — Confirm/Cancel API Contract Surface
-- Patch 3 — Idempotency Key + Replay Guard
-- Patch 4 — Safe-Mode Execution Gateway
-- Patch 5 — Docs/CI Closure
+- Patch 1 — TBD
+- Patch 2 — TBD
+- Patch 3 — TBD
+- Patch 4 — TBD
+- Patch 5 — TBD
 
 ### Progress
 
-- [x] Patch 1 — Approval Session Contract Baseline
-- [x] Patch 2 — Confirm/Cancel API Contract Surface
-- [x] Patch 3 — Idempotency Key + Replay Guard
-- [x] Patch 4 — Safe-Mode Execution Gateway
-- [ ] Patch 5 — Docs/CI Closure
+- [ ] Patch 1 — TBD
+- [ ] Patch 2 — TBD
+- [ ] Patch 3 — TBD
+- [ ] Patch 4 — TBD
+- [ ] Patch 5 — TBD
 
 ### Out of Scope
 
@@ -48,16 +39,11 @@ Do NOT modify during planning:
 
 ### Definition of Done
 
-A2.37 is complete when:
-- approval session contracts are explicit and deterministic
-- confirm/cancel flows use dedicated contract surface
-- idempotency and replay protection are diagnostics-backed
-- execution gateway remains safe-mode and side-effect free
-- docs and release-gate contracts cover A2.37 runtime
+A2.38 completion criteria are defined when patch 1 is formalized.
 
 ## Next Anchor
 
-A2.38 — TBD
+A2.39 — TBD
 
 ### Discipline
 
@@ -69,11 +55,11 @@ Work order is strict:
 
 ### Last Completed Anchor
 
-A2.36 — Confirmation-to-Execution Handshake (MVP)
+A2.37 — Approval Session & Idempotent Execution Gateway (Safe Mode)
 
 Completed via patches:
-- Patch 1 — Handshake Contract Baseline
-- Patch 2 — Confirmation Transition Model (Approved/Cancelled)
-- Patch 3 — Execution Receipt Stub Integration
-- Patch 4 — Transition Policy Guards
+- Patch 1 — Approval Session Contract Baseline
+- Patch 2 — Confirm/Cancel API Contract Surface
+- Patch 3 — Idempotency Key + Replay Guard
+- Patch 4 — Safe-Mode Execution Gateway
 - Patch 5 — Docs/CI Closure

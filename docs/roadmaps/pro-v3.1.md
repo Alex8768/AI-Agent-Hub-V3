@@ -87,6 +87,7 @@ Alias compatibility:
 - Assistant runtime docs quality gate in release-gate contracts (A2.34)
 - Intent-to-plan orchestrator docs quality gate in release-gate contracts (A2.35)
 - Confirmation handshake runtime docs quality gate in release-gate contracts (A2.36)
+- Approval execution gateway runtime docs quality gate in release-gate contracts (A2.37)
 
 ---
 

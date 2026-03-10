@@ -41,18 +41,19 @@
 - [x] A2.34 Digital COO Runtime (Assistant + Draft Actions)
 - [x] A2.35 Intent-to-Plan Orchestrator (COO MVP)
 - [x] A2.36 Confirmation-to-Execution Handshake (MVP)
+- [x] A2.37 Approval Session & Idempotent Execution Gateway (Safe Mode)
 
-## Current Work — A2.37 Approval Session & Idempotent Execution Gateway (Safe Mode)
+## Current Work — A2.38 TBD
 
-- [x] Patch 1 — Approval Session Contract Baseline
-- [x] Patch 2 — Confirm/Cancel API Contract Surface
-- [x] Patch 3 — Idempotency Key + Replay Guard
-- [x] Patch 4 — Safe-Mode Execution Gateway
-- [ ] Patch 5 — Docs/CI Closure
+- [ ] Patch 1 — TBD
+- [ ] Patch 2 — TBD
+- [ ] Patch 3 — TBD
+- [ ] Patch 4 — TBD
+- [ ] Patch 5 — TBD
 
 ## Next
 
-- [ ] Start A2.38 Patch 1 (TBD)
+- [ ] Start A2.39 Patch 1 (TBD)
 
 ## Later
 
