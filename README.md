@@ -290,6 +290,7 @@ Main project documentation:
 - `docs/architecture/CONFIRMATION_HANDSHAKE_RUNTIME.md`
 - `docs/architecture/APPROVAL_EXECUTION_GATEWAY_RUNTIME.md`
 - `docs/architecture/DURABLE_APPROVAL_RECOVERY_RUNTIME.md`
+- `docs/architecture/CONTROLLED_EXECUTION_PILOT_RUNTIME.md`
 - `docs/development/DOCS_TOPOLOGY_POLICY.md`
 - `docs/api/README.md`
 - `docs/api/A2.33_PATCH1_API_RUNTIME_AUDIT.md`

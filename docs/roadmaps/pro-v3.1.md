@@ -89,6 +89,7 @@ Alias compatibility:
 - Confirmation handshake runtime docs quality gate in release-gate contracts (A2.36)
 - Approval execution gateway runtime docs quality gate in release-gate contracts (A2.37)
 - Durable approval recovery runtime docs quality gate in release-gate contracts (A2.38)
+- Controlled execution pilot runtime docs quality gate in release-gate contracts (A2.39)
 
 ---
 

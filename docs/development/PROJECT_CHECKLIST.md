@@ -43,18 +43,19 @@
 - [x] A2.36 Confirmation-to-Execution Handshake (MVP)
 - [x] A2.37 Approval Session & Idempotent Execution Gateway (Safe Mode)
 - [x] A2.38 Durable Approval Recovery Runtime (Safe Mode)
+- [x] A2.39 Controlled Execution Pilot (Strict Safe Mode+)
 
-## Current Work — A2.39 Controlled Execution Pilot (Strict Safe Mode+)
+## Current Work — A2.40 Intent-based Planning Engine (LLM Planner)
 
-- [x] Patch 1 — Execution Pilot Contract Baseline
-- [x] Patch 2 — Allowlist + Policy Gate
-- [x] Patch 3 — Receipt + Rollback Contract Enforcement
-- [x] Patch 4 — Pilot Runtime Wiring
+- [ ] Patch 1 — LLM Planner Contract Baseline
+- [ ] Patch 2 — Planner Adapter + Deterministic Fallback
+- [ ] Patch 3 — Planner Policy Guardrails
+- [ ] Patch 4 — Runtime Wiring + Diagnostics Parity
 - [ ] Patch 5 — Docs/CI Closure
 
 ## Next
 
-- [ ] Start A2.40 Patch 1 (Intent-based Planning Engine baseline)
+- [ ] Start A2.41 Patch 1 (Dynamic Tool Selection baseline)
 
 ## Later
 

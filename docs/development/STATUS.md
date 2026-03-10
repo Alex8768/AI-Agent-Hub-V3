@@ -6,25 +6,22 @@ Pro Layer Development — Reasoning Stabilization
 
 ## Last Completed Anchor
 
-A2.38 — Durable Approval Recovery Runtime (Safe Mode)
+A2.39 — Controlled Execution Pilot (Strict Safe Mode+)
 
 ## Current Active Anchor
 
-A2.39 — Controlled Execution Pilot (Strict Safe Mode+)
+A2.40 — Intent-based Planning Engine (LLM Planner)
 
 Current progress:
-- Patch 1 complete: Execution Pilot Contract Baseline.
-- Patch 2 complete: Allowlist + Policy Gate.
-- Patch 3 complete: Receipt + Rollback Contract Enforcement.
-- Patch 4 complete: Pilot Runtime Wiring.
+- Patch 1 pending: LLM Planner Contract Baseline.
+- Patch 2 pending: Planner Adapter + Deterministic Fallback.
+- Patch 3 pending: Planner Policy Guardrails.
+- Patch 4 pending: Runtime Wiring + Diagnostics Parity.
 - Patch 5 pending: Docs/CI Closure.
 
 Focus:
-- pilot contract baseline is in place and exposed in diagnostics
-- allowlist and policy gate are enforced for approval transitions
-- receipt and rollback contract enforcement is active for approve transitions
-- pilot runtime wiring executes allowlisted low-risk draft actions in safe mode diagnostics
-- proceed with docs/ci closure in patch 5
+- formalize A2.40 planner contract and patch decomposition
+- keep deterministic safety guards while introducing LLM planning path
 - preserve strict micro-patch execution discipline
 
 Execution discipline:
@@ -32,10 +29,10 @@ Execution discipline:
 
 ## Next Anchor
 
-A2.40 — Intent-based Planning Engine (LLM Planner)
+A2.41 — Dynamic Tool Selection (MCP-aware)
 
 Planned focus:
-- LLM-driven intent planning with deterministic guardrails
+- policy-sandboxed dynamic MCP tool selection
 
 ## CI Status
 
@@ -45,5 +42,5 @@ The noop tracing span compatibility fix is completed and treated as closed work.
 
 ## Upcoming Anchors
 
-- A2.39 — Controlled Execution Pilot (Strict Safe Mode+)
 - A2.40 — Intent-based Planning Engine (LLM Planner)
+- A2.41 — Dynamic Tool Selection (MCP-aware)
