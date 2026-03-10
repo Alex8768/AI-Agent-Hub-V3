@@ -10,13 +10,15 @@ A2.49 — Conversational Reliability Track (Human-Friendly Safe UX)
 
 ## Current Active Anchor
 
-A2.50 — TBD
+A2.50 — Planner Residual Decoupling (Composition Boundary Closure)
 
 Current progress:
-- Patch 1 pending: scope lock and inventory definition.
+- Patch 1 complete: composition boundary contract + scope lock.
+- Patch 2 pending: composition resolver/adapter extraction.
+- Patch 3 pending: dependency/parity/fallback guardrails.
 
 Focus:
-- define next stabilization scope with strict non-expansion constraints
+- close residual planner/composition coupling debt without behavior change
 - keep topology/dependency quality gates active
 - preserve strict micro-patch execution discipline
 
@@ -29,10 +31,10 @@ Execution discipline:
 
 ## Next Anchor
 
-A2.50 — TBD
+A2.51 — TBD
 
 Planned focus:
-- define and start A2.50 patch 1 scope lock
+- execute A2.50 patch 2 composition resolver/adapter extraction
 
 ## CI Status
 
@@ -42,4 +44,4 @@ The noop tracing span compatibility fix is completed and treated as closed work.
 
 ## Upcoming Anchors
 
-- A2.50 — TBD
+- A2.50 — Planner Residual Decoupling (Composition Boundary Closure)

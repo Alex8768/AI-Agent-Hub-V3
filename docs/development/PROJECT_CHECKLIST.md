@@ -55,13 +55,15 @@
 - [x] A2.48 Planner Decoupling Track (Kernel Composition Independence)
 - [x] A2.49 Conversational Reliability Track (Human-Friendly Safe UX)
 
-## Current Work — A2.50 TBD
+## Current Work — A2.50 Planner Residual Decoupling (Composition Boundary Closure)
 
-- [ ] Patch 1 — scope lock and inventory definition
+- [x] Patch 1 — composition boundary contract + scope lock
+- [ ] Patch 2 — composition resolver/adapter extraction
+- [ ] Patch 3 — dependency/parity/fallback guardrails
 
 ## Next
 
-- [ ] Start A2.50 patch 1 implementation
+- [ ] Start A2.50 patch 2 implementation
 
 ## Later
 

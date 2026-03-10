@@ -2,75 +2,66 @@
 
 ## Active Anchor
 
-A2.49 — Conversational Reliability Track (Human-Friendly Safe UX)
+A2.50 — Planner Residual Decoupling (Composition Boundary Closure)
 
 ### Goal
 
-Make assistant responses consistently human-friendly and conversationally reliable
-while preserving existing safety, policy, and runtime contracts.
+Finalize residual planner/composition decoupling so planner callers and internals
+share a strict composition boundary, while preserving runtime parity.
 
-This anchor targets:
+This anchor targets residual debt:
 
-- response-style reliability under low evidence and fallback paths
-- deterministic friendliness guardrails without policy drift
-- diagnostics visibility for conversational quality decisions
-- CI/documentation enforcement for conversational boundary drift
+- normalized composition boundary contract (`CompositionRequest -> CompositionResolution`)
+- extraction of composition resolution from planner internals to dedicated adapter/resolver
+- deterministic dependency/parity/fallback guardrails for planner/composition boundary
 
 ### Why Now
 
-A2.48 closed planner-coupling debt and restored strict composition independence.
-The next operational risk is user-facing interaction quality: answers can stay safe
-but still feel too abrupt or non-human in constrained contexts.
+`A2.48` decoupled planner callers, but planner internals still own composition
+assembly details (registry lookup, graph build/validate, fallback decisioning).
 
-This anchor keeps behavior safe while normalizing a friendlier, reliable interaction tone.
-
-No net-new intelligence capability is introduced.
+Residual cleanup is required to fully close planner/composition coupling debt.
 
 ### Architecture Position
 
 Primary closure zones:
 
-- `services/answer` response-shaping seams and diagnostics handoff
-- `layers/pro/reasoning` fallback/recovery conversational boundaries
-- assistant runtime policy adapters (guarded, deterministic)
-- docs + quality gates for conversational reliability contracts
+- `layers/pro/reasoning/planner` boundary contract + planner consumption path
+- dedicated composition resolver/adapter seam
+- dependency and parity guardrails for deterministic fallback behavior
 
-A2.49 preserves A2.46 topology constraints, A2.47 debt decisions, and A2.48 planner decoupling outcomes.
+A2.50 preserves A2.46-A2.49 constraints and decisions, with no behavior expansion.
 
 ### Patch Plan
 
 #### Patch plan
-- Patch 1 — conversational reliability inventory + scope lock
-- Patch 2 — response-style boundary seam extraction
-- Patch 3 — low-evidence friendliness normalization
-- Patch 4 — conversational diagnostics/runtime parity guardrails
-- Patch 5 — docs/CI closure for A2.49
+- Patch 1 — composition boundary contract + scope lock
+- Patch 2 — composition resolver/adapter extraction
+- Patch 3 — dependency/parity/fallback guardrails
 
 ### Progress
 
-- [x] Patch 1 — conversational reliability inventory + scope lock
-- [x] Patch 2 — response-style boundary seam extraction
-- [x] Patch 3 — low-evidence friendliness normalization
-- [x] Patch 4 — conversational diagnostics/runtime parity guardrails
-- [x] Patch 5 — docs/CI closure for A2.49
+- [x] Patch 1 — composition boundary contract + scope lock
+- [ ] Patch 2 — composition resolver/adapter extraction
+- [ ] Patch 3 — dependency/parity/fallback guardrails
 
 ### Patch 1 Outputs
 
-Conversational reliability inventory mapped to A2.49:
+Residual debt mapped to A2.50:
 
-- low-evidence answer tone remains safe but can be too rigid in user-facing dialogue
-- fallback responses need clearer friendly-presence baseline across contexts
+- planner imports registry/builder/validator directly;
+- planner still owns composition fallback decision path.
 
 Scope lock:
 
-- preserve existing safety behavior, outputs, and diagnostics contracts
+- preserve runtime behavior, outputs, and diagnostics contracts
 - no net-new model/provider/intelligence capabilities
-- no quality-threshold policy changes for verify/self-check/release gates
-- keep topology/dependency/debt gates from A2.46-A2.48 active
+- no policy-threshold changes
+- one patch = one reason; no opportunistic refactors
 
 ### Out of Scope
 
-Do NOT modify during A2.49:
+Do NOT modify during A2.50:
 - new model/provider integrations
 - net-new intelligence capabilities
 - OCR redesign
@@ -81,15 +72,14 @@ Do NOT modify during A2.49:
 
 ### Definition of Done
 
-A2.49 completion criteria:
-- assistant response style stays human-friendly under constrained evidence paths;
-- friendliness normalization remains policy-safe and deterministic;
-- conversational diagnostics/runtime parity is preserved and test-covered;
-- docs/checklist/status/features and CI quality gates reflect closure state.
+A2.50 completion criteria:
+- planner consumes normalized `CompositionResolution` only;
+- composition resolution logic is extracted from planner internals;
+- dependency/parity/fallback guardrails are test-backed and deterministic.
 
 ## Next Anchor
 
-A2.50 — TBD
+A2.51 — TBD
 
 ### Discipline
 

@@ -11,6 +11,11 @@ from src.layers.pro.reasoning.planner.plan_model import (
     build_reasoning_composition_plan,
     build_reasoning_plan,
 )
+from src.layers.pro.reasoning.planner.composition_boundary import (
+    CompositionRequest,
+    build_composition_request,
+    build_composition_resolution,
+)
 
 
 _SPLIT_HINT_RE = re.compile(r"\b(and|then|after|before)\b", re.IGNORECASE)
@@ -53,6 +58,42 @@ def _build_composition_graph(*, query: str, registry: AgentRegistry | None) -> d
     return graph_spec
 
 
+def _resolve_composition_request(*, request: CompositionRequest) -> dict[str, object]:
+    query = str(request.get("query", "") or "").strip()
+    composition_mode = bool(request.get("composition_mode", False))
+    registry = request.get("composition_registry")
+    if not composition_mode:
+        return build_composition_resolution(
+            mode="disabled",
+            reason_codes=["composition_mode_disabled"],
+            diagnostics={"query_present": bool(query), "registry_present": bool(registry is not None)},
+        )
+    if not query:
+        return build_composition_resolution(
+            mode="fallback",
+            reason_codes=["empty_query"],
+            diagnostics={"query_present": False, "registry_present": bool(registry is not None)},
+            step_descriptions=[],
+            composition_graph=None,
+        )
+    graph_spec = _build_composition_graph(query=query, registry=registry)
+    if graph_spec is None:
+        return build_composition_resolution(
+            mode="fallback",
+            reason_codes=["composition_graph_unavailable"],
+            diagnostics={"query_present": True, "registry_present": bool(registry is not None)},
+            step_descriptions=[f"Answer query using verified evidence: {query}"],
+            composition_graph=None,
+        )
+    return build_composition_resolution(
+        mode="resolved",
+        reason_codes=[],
+        diagnostics={"query_present": True, "registry_present": bool(registry is not None)},
+        step_descriptions=[f"Compose plan and execute graph for query: {query}"],
+        composition_graph=graph_spec,
+    )
+
+
 def create_reasoning_plan(
     *,
     query: str | AnswerRequest,
@@ -69,39 +110,46 @@ def create_reasoning_plan(
     normalized = normalize_reasoning_query_input(query)
     if not normalized:
         if composition_mode:
+            request = build_composition_request(
+                query="",
+                composition_mode=True,
+                composition_registry=composition_registry,
+            )
+            resolution = _resolve_composition_request(request=request)
             return build_reasoning_composition_plan(
-                step_descriptions=[],
-                composition_graph=None,
-                reason_codes=["empty_query"],
+                step_descriptions=list(resolution.get("step_descriptions") or []),
+                composition_graph=resolution.get("composition_graph"),
+                reason_codes=list(resolution.get("reason_codes") or []),
             )
         return {"steps": []}
 
     base = _QUESTION_RE.sub("", normalized).strip()
     if not base:
         if composition_mode:
+            request = build_composition_request(
+                query="",
+                composition_mode=True,
+                composition_registry=composition_registry,
+            )
+            resolution = _resolve_composition_request(request=request)
             return build_reasoning_composition_plan(
-                step_descriptions=[],
-                composition_graph=None,
-                reason_codes=["empty_query"],
+                step_descriptions=list(resolution.get("step_descriptions") or []),
+                composition_graph=resolution.get("composition_graph"),
+                reason_codes=list(resolution.get("reason_codes") or []),
             )
         return {"steps": []}
 
     if composition_mode:
-        graph_spec = _build_composition_graph(query=base, registry=composition_registry)
-        if graph_spec is None:
-            return build_reasoning_composition_plan(
-                step_descriptions=[
-                    f"Answer query using verified evidence: {base}",
-                ],
-                composition_graph=None,
-                reason_codes=["composition_graph_unavailable"],
-            )
+        request = build_composition_request(
+            query=base,
+            composition_mode=True,
+            composition_registry=composition_registry,
+        )
+        resolution = _resolve_composition_request(request=request)
         return build_reasoning_composition_plan(
-            step_descriptions=[
-                f"Compose plan and execute graph for query: {base}",
-            ],
-            composition_graph=graph_spec,
-            reason_codes=[],
+            step_descriptions=list(resolution.get("step_descriptions") or []),
+            composition_graph=resolution.get("composition_graph"),
+            reason_codes=list(resolution.get("reason_codes") or []),
         )
 
     if _SPLIT_HINT_RE.search(base):
