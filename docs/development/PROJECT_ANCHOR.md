@@ -37,7 +37,7 @@ Planned files:
 - [x] Patch 1 — Assistant mode contracts, flags, and diagnostics baseline
 - [x] Patch 2 — Language-native assistant fallback behavior
 - [x] Patch 3 — Proactive suggestion ranking MVP
-- [ ] Patch 4 — Draft action runtime (review-before-execute)
+- [x] Patch 4 — Draft action runtime (review-before-execute)
 - [ ] Patch 5 — Docs/CI closure for assistant runtime
 
 ### Out of Scope

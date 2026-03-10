@@ -343,6 +343,7 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
         "whisper_receipt",
         "opportunity_scan",
         "proactive_suggestions",
+        "draft_actions",
     }
     ant_receipt = dict(ant.get("whisper_receipt") or {})
     assert set(ant_receipt.keys()) == {
@@ -367,6 +368,15 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
         "status",
         "suggestions",
         "top_suggestion_id",
+        "reason_codes",
+        "warnings",
+    }
+    ant_actions = dict(ant.get("draft_actions") or {})
+    assert set(ant_actions.keys()) == {
+        "status",
+        "actions",
+        "top_action_id",
+        "requires_confirmation",
         "reason_codes",
         "warnings",
     }

@@ -19,7 +19,8 @@ Current progress:
 - Patch 1 complete: assistant mode contracts/flags baseline and diagnostics shape added.
 - Patch 2 complete: language-native assistant fallback behavior added for zero-evidence responses.
 - Patch 3 complete: proactive suggestion ranking MVP added with deterministic priority/rank ordering.
-- Patch 4 next: draft action runtime (review-before-execute).
+- Patch 4 complete: draft action runtime added with review-before-execute bundle and confirmation requirement.
+- Patch 5 next: docs/CI closure for assistant runtime.
 
 Focus:
 - establish assistant runtime contracts before behavioral expansion

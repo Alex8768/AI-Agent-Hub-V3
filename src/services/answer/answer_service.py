@@ -108,6 +108,77 @@ def _rank_proactive_bundle(bundle: dict[str, object]) -> dict[str, object]:
     }
 
 
+def _build_draft_action_bundle(
+    *,
+    proactive_bundle: dict[str, object],
+    language: str,
+    actions_enabled: bool,
+) -> dict[str, object]:
+    rows = [dict(row or {}) for row in list(proactive_bundle.get("suggestions") or [])]
+    if not actions_enabled:
+        return {
+            "status": "disabled",
+            "actions": [],
+            "top_action_id": "",
+            "requires_confirmation": False,
+            "reason_codes": ["assistant_actions_disabled"],
+            "warnings": [],
+        }
+
+    def _map_action_type(suggestion_type: str) -> str:
+        key = str(suggestion_type or "").strip().lower()
+        if key == "automation":
+            return "prepare_workflow_draft"
+        if key == "summarization":
+            return "prepare_summary_draft"
+        if key == "retrieval":
+            return "collect_context_draft"
+        return "prepare_follow_up_draft"
+
+    actions: list[dict[str, object]] = []
+    for idx, row in enumerate(rows, start=1):
+        sid = str(row.get("suggestion_id", "") or f"suggestion:{idx}")
+        rank = int(row.get("rank", idx) or idx)
+        action_id = f"draft_action:{sid}"
+        action_type = _map_action_type(str(row.get("suggestion_type", "") or ""))
+        rationale = str(row.get("rationale", "") or "")
+        if language == "ru":
+            summary = rationale or "Подготовлен безопасный черновик действия для ревью."
+            rollback = "Откат не требуется: действие черновое и не имеет side effects."
+        else:
+            summary = rationale or "Prepared a safe draft action for review."
+            rollback = "No rollback required: draft action has no side effects."
+        actions.append(
+            {
+                "action_id": action_id,
+                "action_type": action_type,
+                "status": "draft",
+                "requires_confirmation": True,
+                "estimated_impact": "low",
+                "parameters": {
+                    "source_suggestion_id": sid,
+                    "priority": int(row.get("priority", 0) or 0),
+                },
+                "preview": {
+                    "title": str(row.get("action_hint", "") or action_type),
+                    "summary": summary,
+                    "rank": rank,
+                },
+                "rollback_plan": rollback,
+            }
+        )
+
+    top_action_id = str((actions[0] or {}).get("action_id", "") or "") if actions else ""
+    return {
+        "status": "ready" if actions else "idle",
+        "actions": actions,
+        "top_action_id": top_action_id,
+        "requires_confirmation": bool(actions),
+        "reason_codes": ["draft_actions_available"] if actions else ["no_suggestions_for_actions"],
+        "warnings": [],
+    }
+
+
 def log_observability(http: Request, *, workspace_id: str, req: AnswerRequest) -> None:
     try:
         from loguru import logger
@@ -508,6 +579,14 @@ def _apply_diagnostics(
                     "status": "idle",
                     "suggestions": [],
                     "top_suggestion_id": "",
+                    "reason_codes": [],
+                    "warnings": [],
+                },
+                "draft_actions": {
+                    "status": "idle",
+                    "actions": [],
+                    "top_action_id": "",
+                    "requires_confirmation": False,
                     "reason_codes": [],
                     "warnings": [],
                 },
@@ -956,6 +1035,11 @@ class AnswerService:
                 anticipatory["proactive_suggestions"] = _rank_proactive_bundle(
                     dict(anticipatory.get("proactive_suggestions") or {})
                 )
+                anticipatory["draft_actions"] = _build_draft_action_bundle(
+                    proactive_bundle=dict(anticipatory.get("proactive_suggestions") or {}),
+                    language=str(assistant_response_language or "auto"),
+                    actions_enabled=assistant_actions_enabled,
+                )
                 resp.diagnostics = dict(getattr(resp, "diagnostics", None) or {})
                 resp.diagnostics["anticipatory"] = anticipatory
             else:
@@ -974,6 +1058,11 @@ class AnswerService:
                 )
                 proactive["reason_codes"] = reason_codes
                 base["proactive_suggestions"] = proactive
+                base["draft_actions"] = _build_draft_action_bundle(
+                    proactive_bundle=proactive,
+                    language=str(assistant_response_language or "auto"),
+                    actions_enabled=False,
+                )
                 resp.diagnostics["anticipatory"] = base
         except Exception:
             pass

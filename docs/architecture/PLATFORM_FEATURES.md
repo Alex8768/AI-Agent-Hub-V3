@@ -108,7 +108,7 @@ AI-Agent-Hub-V3 is a modular AI platform for production-grade agent systems with
 - [x] Assistant mode contracts + flags + diagnostics baseline (A2.34 patch 1)
 - [x] Language-native assistant fallback behavior (A2.34 patch 2)
 - [x] Proactive suggestion ranking MVP (A2.34 patch 3)
-- [ ] Draft action runtime (review-before-execute) (A2.34 patch 4)
+- [x] Draft action runtime (review-before-execute) (A2.34 patch 4)
 - [ ] Assistant runtime docs/CI closure (A2.34 patch 5)
 
 ### 7) Interface Layer

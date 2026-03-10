@@ -414,6 +414,7 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
         "whisper_receipt",
         "opportunity_scan",
         "proactive_suggestions",
+        "draft_actions",
     }
     ant_receipt = dict(ant.get("whisper_receipt") or {})
     assert set(ant_receipt.keys()) == {
@@ -438,6 +439,15 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
         "status",
         "suggestions",
         "top_suggestion_id",
+        "reason_codes",
+        "warnings",
+    }
+    ant_actions = dict(ant.get("draft_actions") or {})
+    assert set(ant_actions.keys()) == {
+        "status",
+        "actions",
+        "top_action_id",
+        "requires_confirmation",
         "reason_codes",
         "warnings",
     }
@@ -747,7 +757,7 @@ async def test_answer_service_proactive_ranking_mvp(monkeypatch):
         feature_reasoning_llm_enabled = False
         feature_assistant_mode = True
         feature_assistant_proactive = True
-        feature_assistant_actions = False
+        feature_assistant_actions = True
         llm_provider = "ollama"
         openai_model = ""
         ollama_model = "llama3.2:latest"
@@ -783,6 +793,7 @@ async def test_answer_service_proactive_ranking_mvp(monkeypatch):
     resp = await AnswerService().handle(http, req, workspace_id="default")
     diag = dict(getattr(resp, "diagnostics", {}) or {})
     proactive = dict((dict(diag.get("anticipatory") or {})).get("proactive_suggestions") or {})
+    actions = dict((dict(diag.get("anticipatory") or {})).get("draft_actions") or {})
     rows = list(proactive.get("suggestions") or [])
 
     assert [str((row or {}).get("suggestion_id", "")) for row in rows] == ["s-high", "s-mid", "s-low"]
@@ -790,6 +801,16 @@ async def test_answer_service_proactive_ranking_mvp(monkeypatch):
     assert [int((row or {}).get("priority", -1) or -1) for row in rows] == [90, 60, 20]
     assert proactive.get("top_suggestion_id") == "s-high"
     assert "ranked_by_priority" in list(proactive.get("reason_codes") or [])
+    assert actions.get("status") == "ready"
+    assert actions.get("requires_confirmation") is True
+    action_rows = list(actions.get("actions") or [])
+    assert [str((row or {}).get("action_id", "")) for row in action_rows] == [
+        "draft_action:s-high",
+        "draft_action:s-mid",
+        "draft_action:s-low",
+    ]
+    assert actions.get("top_action_id") == "draft_action:s-high"
+    assert "draft_actions_available" in list(actions.get("reason_codes") or [])
 
 
 @pytest.mark.asyncio
@@ -817,4 +838,8 @@ async def test_answer_service_proactive_disabled_adds_reason_code(monkeypatch):
     resp = await AnswerService().handle(http, req, workspace_id="default")
     diag = dict(getattr(resp, "diagnostics", {}) or {})
     proactive = dict((dict(diag.get("anticipatory") or {})).get("proactive_suggestions") or {})
+    actions = dict((dict(diag.get("anticipatory") or {})).get("draft_actions") or {})
     assert "assistant_proactive_disabled" in list(proactive.get("reason_codes") or [])
+    assert actions.get("status") == "disabled"
+    assert actions.get("actions") == []
+    assert "assistant_actions_disabled" in list(actions.get("reason_codes") or [])
