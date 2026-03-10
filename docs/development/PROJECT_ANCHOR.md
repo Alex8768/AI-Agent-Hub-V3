@@ -2,39 +2,26 @@
 
 ## Active Anchor
 
-A2.44 — Assistant Conversational Recovery (Low-Evidence UX)
+A2.45 — TBD
 
 ### Goal
 
-Prevent assistant-mode generic "I don't know"/template outputs for low-evidence
-conversational queries while preserving strict safety for source-grounded flows.
+To be defined after A2.44 closure.
 
 ### Architecture Position
 
 Planned modules:
 
-- conversational recovery contract baseline
-- low-evidence non-greeting recovery adapter
-- recovery policy guardrails
-- runtime wiring + diagnostics parity
-- docs + CI quality-gate closure
+- TBD
 
 ### Patch Plan
 
 #### Patch plan
-- Patch 1 — Conversational Recovery Baseline + Runtime Hook
-- Patch 2 — Language-Native Recovery Adapter Hardening
-- Patch 3 — Recovery Policy Guardrails
-- Patch 4 — Runtime Wiring + Diagnostics Parity
-- Patch 5 — Docs/CI Closure
+- Pending formalization
 
 ### Progress
 
-- [x] Patch 1 — Conversational Recovery Baseline + Runtime Hook
-- [x] Patch 2 — Language-Native Recovery Adapter Hardening
-- [x] Patch 3 — Recovery Policy Guardrails
-- [x] Patch 4 — Runtime Wiring + Diagnostics Parity
-- [ ] Patch 5 — Docs/CI Closure
+- [ ] Formalize A2.45 scope and patch plan
 
 ### Out of Scope
 
@@ -44,14 +31,12 @@ Do NOT modify during planning:
 
 ### Definition of Done
 
-A2.44 completion criteria:
-- low-evidence conversational queries avoid generic "I don't know" output.
-- source-grounded/factual safety gates remain intact and deterministic.
-- full unit suite and quality-gate coverage remain green.
+A2.45 completion criteria:
+- TBD
 
 ## Next Anchor
 
-A2.45 — TBD
+A2.46 — TBD
 
 ### Discipline
 
@@ -63,11 +48,11 @@ Work order is strict:
 
 ### Last Completed Anchor
 
-A2.43 — Feedback-to-Planning Adaptation (MVP)
+A2.44 — Assistant Conversational Recovery (Low-Evidence UX)
 
 Completed via patches:
-- Patch 1 — Adaptation Contract Baseline
-- Patch 2 — Signal-to-Plan Adapter + Deterministic Ranking
-- Patch 3 — Adaptation Policy Guardrails
+- Patch 1 — Conversational Recovery Baseline + Runtime Hook
+- Patch 2 — Language-Native Recovery Adapter Hardening
+- Patch 3 — Recovery Policy Guardrails
 - Patch 4 — Runtime Wiring + Diagnostics Parity
 - Patch 5 — Docs/CI Closure

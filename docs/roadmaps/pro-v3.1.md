@@ -94,6 +94,7 @@ Alias compatibility:
 - Dynamic tool selection runtime docs quality gate in release-gate contracts (A2.41)
 - Feedback learning runtime docs quality gate in release-gate contracts (A2.42)
 - Feedback adaptation runtime docs quality gate in release-gate contracts (A2.43)
+- Conversational recovery runtime docs quality gate in release-gate contracts (A2.44)
 
 ---
 

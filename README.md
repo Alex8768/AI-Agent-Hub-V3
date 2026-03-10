@@ -295,6 +295,7 @@ Main project documentation:
 - `docs/architecture/DYNAMIC_TOOL_SELECTION_RUNTIME.md`
 - `docs/architecture/FEEDBACK_LEARNING_RUNTIME.md`
 - `docs/architecture/FEEDBACK_ADAPTATION_RUNTIME.md`
+- `docs/architecture/ASSISTANT_CONVERSATIONAL_RECOVERY_RUNTIME.md`
 - `docs/development/DOCS_TOPOLOGY_POLICY.md`
 - `docs/api/README.md`
 - `docs/api/A2.33_PATCH1_API_RUNTIME_AUDIT.md`

@@ -48,18 +48,15 @@
 - [x] A2.41 Dynamic Tool Selection (MCP-aware)
 - [x] A2.42 Learning from Feedback (Approve/Cancel/Edit)
 - [x] A2.43 Feedback-to-Planning Adaptation (MVP)
+- [x] A2.44 Assistant Conversational Recovery (Low-Evidence UX)
 
-## Current Work — A2.44 Assistant Conversational Recovery (Low-Evidence UX)
+## Current Work — A2.45 TBD
 
-- [x] Patch 1 — Conversational Recovery Baseline + Runtime Hook
-- [x] Patch 2 — Language-Native Recovery Adapter Hardening
-- [x] Patch 3 — Recovery Policy Guardrails
-- [x] Patch 4 — Runtime Wiring + Diagnostics Parity
-- [ ] Patch 5 — Docs/CI Closure
+- [ ] Formalize A2.45 patch plan
 
 ## Next
 
-- [ ] Start A2.44 patch 5 implementation
+- [ ] Start A2.45 implementation after formalization
 
 ## Later
 
