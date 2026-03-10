@@ -92,6 +92,7 @@ Alias compatibility:
 - Controlled execution pilot runtime docs quality gate in release-gate contracts (A2.39)
 - LLM planner runtime docs quality gate in release-gate contracts (A2.40)
 - Dynamic tool selection runtime docs quality gate in release-gate contracts (A2.41)
+- Feedback learning runtime docs quality gate in release-gate contracts (A2.42)
 
 ---
 

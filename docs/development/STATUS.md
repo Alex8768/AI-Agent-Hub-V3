@@ -6,25 +6,19 @@ Pro Layer Development — Reasoning Stabilization
 
 ## Last Completed Anchor
 
-A2.41 — Dynamic Tool Selection (MCP-aware)
+A2.42 — Learning from Feedback (Approve/Cancel/Edit)
 
 ## Current Active Anchor
 
-A2.42 — Learning from Feedback (Approve/Cancel/Edit)
+A2.43 — TBD (post-feedback planning)
 
 Current progress:
-- Patch 1 complete: Feedback Contract Baseline.
-- Patch 2 complete: Feedback Capture Adapter + Deterministic Normalization.
-- Patch 3 complete: Feedback Policy Guardrails.
-- Patch 4 complete: Runtime Wiring + Diagnostics Parity.
-- Patch 5 pending: Docs/CI Closure.
+- A2.42 is completed through patch 5 (docs/CI closure included).
+- A2.43 scope is not yet finalized.
 
 Focus:
-- feedback contract baseline is exposed in diagnostics
-- feedback capture adapter normalizes approve/cancel/edit signals deterministically
-- feedback policy guardrails enforce allowlisted signals and forced fallback
-- runtime wiring keeps feedback diagnostics parity across proactive/non-proactive paths
-- keep deterministic normalization and policy-guarded safety in feedback flow
+- lock A2.42 as completed and stable in docs/CI
+- define A2.43 scope and patch sequence before implementation starts
 - preserve strict micro-patch execution discipline
 
 Execution discipline:
@@ -32,10 +26,10 @@ Execution discipline:
 
 ## Next Anchor
 
-A2.43 — TBD (post-feedback planning)
+A2.44 — TBD
 
 Planned focus:
-- finalize post-feedback roadmap after A2.42 stabilization
+- finalize post-feedback roadmap and select implementation scope
 
 ## CI Status
 
@@ -45,5 +39,5 @@ The noop tracing span compatibility fix is completed and treated as closed work.
 
 ## Upcoming Anchors
 
-- A2.42 — Learning from Feedback (Approve/Cancel/Edit)
 - A2.43 — TBD (post-feedback planning)
+- A2.44 — TBD

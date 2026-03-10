@@ -46,18 +46,15 @@
 - [x] A2.39 Controlled Execution Pilot (Strict Safe Mode+)
 - [x] A2.40 Intent-based Planning Engine (LLM Planner)
 - [x] A2.41 Dynamic Tool Selection (MCP-aware)
+- [x] A2.42 Learning from Feedback (Approve/Cancel/Edit)
 
-## Current Work — A2.42 Learning from Feedback (Approve/Cancel/Edit)
+## Current Work — A2.43 TBD (post-feedback planning)
 
-- [x] Patch 1 — Feedback Contract Baseline
-- [x] Patch 2 — Feedback Capture Adapter + Deterministic Normalization
-- [x] Patch 3 — Feedback Policy Guardrails
-- [x] Patch 4 — Runtime Wiring + Diagnostics Parity
-- [ ] Patch 5 — Docs/CI Closure
+- [ ] Define anchor scope and patch plan
 
 ## Next
 
-- [ ] Define post-A2.42 next anchor
+- [ ] Start A2.43 patch implementation after scope approval
 
 ## Later
 
