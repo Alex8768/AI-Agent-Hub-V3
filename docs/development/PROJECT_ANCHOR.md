@@ -2,37 +2,44 @@
 
 ## Active Anchor
 
-A2.35 — TBD
+A2.35 — Intent-to-Plan Orchestrator (COO MVP)
 
 ### Goal
 
-TBD.
+Add a deterministic intent-to-plan baseline for assistant runtime: extract normalized
+intent from free-form request, expose stable planning diagnostics, and keep all
+execution in review-only mode (no side effects).
 
 ### Architecture Position
 
 Planned modules:
 
-- TBD
+- intent contract baseline under reasoning contracts
+- answer diagnostics bridge for intent/planning metadata
+- deterministic planner skeleton for next patches
 
 Planned files:
-- TBD
+- `src/layers/pro/reasoning/contracts.py`
+- `src/services/answer/answer_service.py`
+- `tests/unit/services/answer/test_answer_service_debug_snapshot.py`
+- `tests/unit/api/test_answer_endpoint_debug_snapshot.py`
 
 ### Patch Plan
 
 #### Patch plan
-- Patch 1 — TBD
-- Patch 2 — TBD
-- Patch 3 — TBD
-- Patch 4 — TBD
-- Patch 5 — TBD
+- Patch 1 — Intent Contract Baseline
+- Patch 2 — Deterministic Plan Builder MVP
+- Patch 3 — Plan -> Draft Actions Bridge
+- Patch 4 — Policy Guards for Planning
+- Patch 5 — Docs/CI Closure
 
 ### Progress
 
-- [ ] Patch 1 — TBD
-- [ ] Patch 2 — TBD
-- [ ] Patch 3 — TBD
-- [ ] Patch 4 — TBD
-- [ ] Patch 5 — TBD
+- [x] Patch 1 — Intent Contract Baseline
+- [ ] Patch 2 — Deterministic Plan Builder MVP
+- [ ] Patch 3 — Plan -> Draft Actions Bridge
+- [ ] Patch 4 — Policy Guards for Planning
+- [ ] Patch 5 — Docs/CI Closure
 
 ### Out of Scope
 
@@ -43,7 +50,11 @@ Do NOT modify during planning:
 ### Definition of Done
 
 A2.35 is complete when:
-- TBD
+- intent contract and planning diagnostics are stable and deterministic
+- plan generation is deterministic and review-only by default
+- policy guards prevent unsafe or side-effectful execution paths
+- plan-to-draft-action bridge is covered by focused tests
+- docs and release-gate quality checks are aligned
 
 ## Next Anchor
 

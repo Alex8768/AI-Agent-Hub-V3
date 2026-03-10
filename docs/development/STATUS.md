@@ -14,13 +14,14 @@ draft action diagnostics.
 
 ## Current Active Anchor
 
-A2.35 — TBD
+A2.35 — Intent-to-Plan Orchestrator (COO MVP)
 
 Current progress:
-- Patch plan TBD.
+- Patch 1 completed: Intent Contract Baseline.
 
 Focus:
-- TBD
+- deterministic intent extraction contract in diagnostics
+- baseline planning metadata surface with no side effects
 
 Execution discipline:
 - keep work strictly inside the active anchor and move in micro-patches.
@@ -40,5 +41,5 @@ The noop tracing span compatibility fix is completed and treated as closed work.
 
 ## Upcoming Anchors
 
-- A2.35 — TBD
+- A2.35 — Intent-to-Plan Orchestrator (COO MVP)
 - A2.36 — TBD

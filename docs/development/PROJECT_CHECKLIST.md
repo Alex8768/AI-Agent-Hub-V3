@@ -40,13 +40,13 @@
 - [x] A2.33 API Docs & Feature-Flag Alignment
 - [x] A2.34 Digital COO Runtime (Assistant + Draft Actions)
 
-## Current Work — A2.35 TBD
+## Current Work — A2.35 Intent-to-Plan Orchestrator (COO MVP)
 
-- [ ] Patch 1 — TBD
-- [ ] Patch 2 — TBD
-- [ ] Patch 3 — TBD
-- [ ] Patch 4 — TBD
-- [ ] Patch 5 — TBD
+- [x] Patch 1 — Intent Contract Baseline
+- [ ] Patch 2 — Deterministic Plan Builder MVP
+- [ ] Patch 3 — Plan -> Draft Actions Bridge
+- [ ] Patch 4 — Policy Guards for Planning
+- [ ] Patch 5 — Docs/CI Closure
 
 ## Next
 

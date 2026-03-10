@@ -15,6 +15,7 @@ VERIFY_SELF_CHECK_REASONS_COUNT_MAX = 0
 SELF_CHECK_MINIMAL_COVERAGE_SCORE_MIN = 1.0
 SELF_CHECK_MISSING_MINIMAL_COUNT_MAX = 0
 ASSISTANT_CONTRACT_VERSION = "v1"
+INTENT_CONTRACT_VERSION = "v1"
 
 
 class ProvenanceItem(BaseModel):
@@ -115,6 +116,15 @@ class AssistantIntent(BaseModel):
     confidence: float = Field(default=0.0, ge=0.0, le=1.0)
     entities: dict[str, Any] = Field(default_factory=dict)
     implicit_tasks: list[str] = Field(default_factory=list)
+
+
+class AssistantIntentResult(BaseModel):
+    """Intent extraction result contract used by assistant orchestration."""
+
+    contract_version: str = Field(default=INTENT_CONTRACT_VERSION)
+    source: Literal["heuristic", "llm", "manual"] = Field(default="heuristic")
+    intent: AssistantIntent
+    reason_codes: list[str] = Field(default_factory=list)
 
 
 class DraftAction(BaseModel):

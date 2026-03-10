@@ -14,6 +14,7 @@ from src.layers.pro.reasoning.control.execution_policy import build_reasoning_ex
 from src.layers.pro.reasoning.contracts import (
     AnswerRequest,
     EVIDENCE_CONTRACT_VERSION,
+    INTENT_CONTRACT_VERSION,
     SELF_CHECK_MINIMAL_COVERAGE_SCORE_MIN,
     SELF_CHECK_MISSING_MINIMAL_COUNT_MAX,
     VERIFY_DIAGNOSTICS_VERSION,
@@ -176,6 +177,61 @@ def _build_draft_action_bundle(
         "requires_confirmation": bool(actions),
         "reason_codes": ["draft_actions_available"] if actions else ["no_suggestions_for_actions"],
         "warnings": [],
+    }
+
+
+def _infer_assistant_intent(*, query: str, assistant_mode_enabled: bool) -> dict[str, object]:
+    text = str(query or "").strip()
+    lowered = text.lower()
+
+    if not assistant_mode_enabled:
+        return {
+            "intent": "disabled",
+            "confidence": 0.0,
+            "entities": {},
+            "implicit_tasks": [],
+            "source": "heuristic",
+            "reason_codes": ["assistant_mode_disabled"],
+        }
+
+    if "проект" in lowered or "project" in lowered:
+        return {
+            "intent": "start_project",
+            "confidence": 0.8,
+            "entities": {"project_name": text[:120]},
+            "implicit_tasks": [
+                "project_workspace",
+                "timeline_alignment",
+                "contacts_research",
+            ],
+            "source": "heuristic",
+            "reason_codes": ["keyword_project"],
+        }
+    if "встреч" in lowered or "митинг" in lowered or "meeting" in lowered:
+        return {
+            "intent": "prepare_meeting",
+            "confidence": 0.7,
+            "entities": {},
+            "implicit_tasks": ["agenda_draft", "context_summary", "follow_up_tasks"],
+            "source": "heuristic",
+            "reason_codes": ["keyword_meeting"],
+        }
+    if "привет" in lowered or lowered.startswith("hi") or "hello" in lowered:
+        return {
+            "intent": "general_chat",
+            "confidence": 0.6,
+            "entities": {},
+            "implicit_tasks": ["friendly_response"],
+            "source": "heuristic",
+            "reason_codes": ["keyword_greeting"],
+        }
+    return {
+        "intent": "general_query",
+        "confidence": 0.4,
+        "entities": {},
+        "implicit_tasks": [],
+        "source": "heuristic",
+        "reason_codes": ["fallback_general_query"],
     }
 
 
@@ -637,6 +693,7 @@ def _apply_diagnostics(
         diag.setdefault("llm_model", llm_model)
         diag.setdefault("llm_error", llm_error)
         diag.setdefault("assistant_contract_version", "v1")
+        diag.setdefault("intent_contract_version", INTENT_CONTRACT_VERSION)
         diag.setdefault(
             "response_mode",
             (
@@ -649,6 +706,22 @@ def _apply_diagnostics(
         diag.setdefault("assistant_mode_enabled", bool(assistant_mode_enabled))
         diag.setdefault("assistant_proactive_enabled", bool(assistant_proactive_enabled))
         diag.setdefault("assistant_actions_enabled", bool(assistant_actions_enabled))
+        intent = _infer_assistant_intent(
+            query=str(getattr(req, "query", "") or ""),
+            assistant_mode_enabled=assistant_mode_enabled,
+        )
+        diag.setdefault(
+            "assistant_intent",
+            {
+                "intent": str(intent.get("intent", "general_query") or "general_query"),
+                "confidence": float(intent.get("confidence", 0.0) or 0.0),
+                "entities": dict(intent.get("entities") or {}),
+                "implicit_tasks": list(intent.get("implicit_tasks") or []),
+                "source": str(intent.get("source", "heuristic") or "heuristic"),
+            },
+        )
+        diag.setdefault("planning_reason_codes", list(intent.get("reason_codes") or []))
+        diag.setdefault("plan_id", "")
 
         # Memory evidence observability (A2.1)
         try:

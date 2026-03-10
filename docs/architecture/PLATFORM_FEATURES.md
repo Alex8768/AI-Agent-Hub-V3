@@ -110,6 +110,7 @@ AI-Agent-Hub-V3 is a modular AI platform for production-grade agent systems with
 - [x] Proactive suggestion ranking MVP (A2.34 patch 3)
 - [x] Draft action runtime (review-before-execute) (A2.34 patch 4)
 - [x] Assistant runtime docs/CI closure (A2.34 patch 5)
+- [x] Intent contract baseline with planning diagnostics (A2.35 patch 1)
 
 ### 7) Interface Layer
 
@@ -142,7 +143,7 @@ AI-Agent-Hub-V3 is a modular AI platform for production-grade agent systems with
 - `A2.32` Docs Topology Cleanup (root -> docs/architecture + docs/development)
 - `A2.33` API Docs & Feature-Flag Alignment
 - `A2.34` Digital COO Runtime (Assistant + Draft Actions)
-- `A2.35` TBD
+- `A2.35` Intent-to-Plan Orchestrator (COO MVP)
 
 Roadmap order:
 

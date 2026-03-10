@@ -164,6 +164,10 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
         "assistant_mode_enabled",
         "assistant_proactive_enabled",
         "assistant_actions_enabled",
+        "intent_contract_version",
+        "assistant_intent",
+        "planning_reason_codes",
+        "plan_id",
         "retriever_stats",
         "session_memory_saved",
     }
@@ -178,6 +182,17 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
     assert "top_evidence" in diag
     assert isinstance(diag["top_evidence"], list)
     assert any(str(x).startswith("chunk:") for x in diag["top_evidence"])
+    assert diag.get("intent_contract_version") == "v1"
+    intent = dict(diag.get("assistant_intent") or {})
+    assert set(intent.keys()) == {
+        "intent",
+        "confidence",
+        "entities",
+        "implicit_tasks",
+        "source",
+    }
+    assert isinstance(diag.get("planning_reason_codes"), list)
+    assert isinstance(diag.get("plan_id"), str)
     assert diag.get("session_id") == "default"
     assert diag.get("evidence_contract_version") == "v1"
     assert isinstance(diag.get("evidence_contract_valid_minimal"), bool)
