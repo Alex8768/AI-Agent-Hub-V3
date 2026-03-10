@@ -52,17 +52,17 @@
 - [x] A2.45 Architecture Hardening Track (COO Runtime Reliability)
 - [x] A2.46 Kernel / Extensions / Execution Plane Hardening
 
-## Current Work — A2.46 Kernel / Extensions / Execution Plane Hardening
+## Current Work — A2.47 Debt Resolution Track (Runtime Clarity + Reliability)
 
-- [x] Patch 1 — architecture zoning inventory + scope lock
-- [x] Patch 2 — kernel boundary formalization
-- [x] Patch 3 — governance subcore extraction
-- [x] Patch 4 — execution request boundary + execution plane isolation
-- [x] Patch 5 — dependency quality gates + docs closure
+- [x] Patch 1 — debt closure inventory + scope lock
+- [ ] Patch 2 — AnswerService orchestration extraction seam
+- [ ] Patch 3 — memory consistency strategy contract
+- [ ] Patch 4 — runtime entrypoint cleanup decision
+- [ ] Patch 5 — debt registry/docs/CI closure
 
 ## Next
 
-- [ ] Start A2.47 scope lock
+- [ ] Start A2.47 patch 2 implementation
 
 ## Later
 
@@ -79,5 +79,5 @@
 ## Roadmap Policy
 
 - [x] MCP expansion is deferred until reasoning stabilization and OCR milestone are complete
-- [x] Large capability expansion is paused during topology hardening
-- [x] No new intelligence modules should be introduced during A2.46
+- [x] Large capability expansion is paused during debt-closure anchors
+- [x] No new intelligence modules should be introduced during A2.47

@@ -2,96 +2,75 @@
 
 ## Active Anchor
 
-A2.46 — Kernel / Extensions / Execution Plane Hardening
+A2.47 — Debt Resolution Track (Runtime Clarity + Reliability)
 
 ### Goal
 
-Formalize strict architectural zoning and prevent reasoning-core overpacking.
+Resolve post-A2.46 technical debt with strict runtime parity and zero capability expansion.
 
-This anchor introduces a canonical topology with three primary rings:
+This anchor closes explicitly tracked debt around:
 
-- Reasoning Kernel
-- Governance Subcore / Reasoning Extensions
-- Execution / Coordination Plane
+- `AnswerService` orchestration overpacking
+- cross-store memory consistency strategy
+- runtime entrypoint ambiguity (`run_utf8.py`)
+- dependency gate coverage continuity
 
-Runtime parity must be preserved while ownership boundaries become explicit and enforceable.
+The objective is to reduce operational and architectural risk while preserving behavior.
 
 ### Why Now
 
-Capability coverage is already broad across reasoning, governance, coordination,
-tool safety, evaluation, OCR, MCP, and release policy.
+A2.46 stabilized topology and dependency directions.
 
-The primary risk is center-of-gravity overpacking in reasoning core paths.
-A2.46 addresses this by defining canonical architectural homes and dependency rules.
+The next risk concentration is unresolved debt with known owners and accepted deferrals:
+
+- `TD-A2.45-001`
+- `TD-A2.45-003`
+- `TD-A2.45-004`
+
+Closing these items improves maintainability and production safety without adding new
+intelligence surfaces.
 
 ### Architecture Position
 
-Planned modules:
+Primary debt closure zones:
 
-- `kernel/`
-- `governance/`
-- `extensions/`
-- `execution_plane/`
-- `knowledge_plane/`
-- `platform_ops/`
-- `interface/`
+- `services/answer` (orchestration decomposition seams)
+- `layers/pro` + memory integration boundaries (consistency strategy contract)
+- runtime entrypoint docs/policy (`src.api.main:app` vs legacy runner)
+- platform quality gates and debt registry alignment
 
-Target conceptual mapping:
-
-- Reasoning Kernel: planner, step executor, execution control, policy application, minimal contracts
-- Governance Subcore: receipts, trace, replay, timeline
-- Reasoning Extensions: meta-cognition, anticipatory, optimization, benchmark enrichments
-- Execution / Coordination Plane: handoff, arbitration, tool safety, execution request handling
+A2.47 preserves the A2.46 topology and dependency constraints.
 
 ### Patch Plan
 
 #### Patch plan
-- Patch 1 — architecture zoning inventory + scope lock
-- Patch 2 — kernel boundary formalization
-- Patch 3 — governance subcore extraction
-- Patch 4 — execution request boundary + execution plane isolation
-- Patch 5 — dependency quality gates + docs closure
+- Patch 1 — debt closure inventory + scope lock
+- Patch 2 — AnswerService orchestration extraction seam
+- Patch 3 — memory consistency strategy contract (outbox/compensation decision)
+- Patch 4 — runtime entrypoint cleanup decision (`run_utf8.py`)
+- Patch 5 — debt registry/docs/CI closure for A2.47
 
 ### Progress
 
-- [x] Patch 1 — architecture zoning inventory + scope lock
-- [x] Patch 2 — kernel boundary formalization
-- [x] Patch 3 — governance subcore extraction
-- [x] Patch 4 — execution request boundary + execution plane isolation
-- [x] Patch 5 — dependency quality gates + docs closure
+- [x] Patch 1 — debt closure inventory + scope lock
+- [ ] Patch 2 — AnswerService orchestration extraction seam
+- [ ] Patch 3 — memory consistency strategy contract (outbox/compensation decision)
+- [ ] Patch 4 — runtime entrypoint cleanup decision (`run_utf8.py`)
+- [ ] Patch 5 — debt registry/docs/CI closure for A2.47
 
 ### Patch 1 Outputs
 
-Inventory by target home:
+Debt inventory mapped to A2.47:
 
-- `kernel/`: `src/layers/pro/reasoning/planner.py`, `step_executor.py`, `execution_policy.py`, `step_controller.py`, `contracts.py`
-- `governance/`: `execution_receipt_*`, `trace_*`, `timeline_*`, replay serializers
-- `extensions/`: `meta_cognition/*`, `anticipatory/*`, optimization and benchmark helpers
-- `execution_plane/`: `multi_agent_*`, tool safety stack, execution handoff/orchestration bridges
-- `knowledge_plane/`: retriever/memory integrations and knowledge shaping boundaries
-- `platform_ops/`: release-gate policy/matrix/decision stack + CI alignment docs
-- `interface/`: API endpoint adapters + UI-facing diagnostics contracts
+- `TD-A2.45-001`: `AnswerService` remains oversized and couples many orchestration concerns.
+- `TD-A2.45-003`: memory writes are cross-store best-effort and need explicit strategy.
+- `TD-A2.45-004`: `run_utf8.py` legacy path needs keep/remove decision.
 
-Current cross-layer leaks to address in A2.46:
+Scope lock:
 
-- reasoning-path orchestration ownership concentrated in `AnswerService`
-- direct runtime coupling between planning and acting surfaces
-- governance signals mixed into extension-heavy diagnostics paths
-
-Allowed dependency directions:
-
-- `interface -> execution_plane -> kernel`
-- `execution_plane -> governance`
-- `extensions -> kernel`
-- `platform_ops -> governance`
-- `knowledge_plane -> kernel`
-
-Forbidden dependency directions:
-
-- `kernel -> execution_plane`
-- `kernel -> interface`
-- `governance -> interface`
-- `extensions -> execution side-effects`
+- preserve runtime behavior and diagnostics contracts unless patch explicitly states otherwise
+- no net-new model/provider/intelligence capabilities
+- keep dependency gates from A2.46 active while debt is extracted
 
 ### Out of Scope
 
@@ -106,17 +85,16 @@ Do NOT modify during planning:
 
 ### Definition of Done
 
-A2.46 completion criteria:
-- every major subsystem has a canonical architectural home;
-- kernel boundary is minimal and explicit;
-- governance is represented as a distinct trusted subcore;
-- reasoning-to-execution boundary is explicit and normalized;
-- forbidden dependency directions are enforced by tests/gates;
-- docs and topology reflect actual platform structure.
+A2.47 completion criteria:
+- targeted debt items (`TD-A2.45-001/003/004`) have explicit closure outcomes;
+- `AnswerService` orchestration boundaries are clearer with preserved runtime parity;
+- memory consistency strategy is documented/contracted and test-covered;
+- runtime entrypoint ambiguity is resolved and documented;
+- docs/checklist/status/features and CI quality gates reflect actual closure state.
 
 ## Next Anchor
 
-A2.47 — TBD
+A2.48 — TBD
 
 ### Discipline
 
