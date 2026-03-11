@@ -18,9 +18,6 @@ from src.layers.pro.reasoning.control.loop_guard import (
     build_bounded_plan_steps_with_loop_guard as _build_bounded_plan_steps_with_loop_guard,
 )
 from src.layers.pro.reasoning.control.step_controller import build_controlled_plan_steps
-from src.layers.pro.reasoning.multi_agent.coordination_model import (
-    MultiAgentCoordinationPlan,
-)
 from src.layers.pro.reasoning.multi_agent.runtime_contracts import (
     build_multi_agent_coordination_plan_for_runtime as _build_multi_agent_coordination_plan_for_runtime,
     enrich_step_results_with_multi_agent_contract as _enrich_step_results_with_multi_agent_contract,
@@ -40,6 +37,7 @@ from src.layers.pro.reasoning.evaluation.runtime_productization import (
     build_dry_run_answer_from_parts as _build_dry_run_answer_from_parts,
     build_dry_run_answer_from_state as _build_dry_run_answer_from_state,
     build_enterprise_productization_diagnostics as _build_enterprise_productization_diagnostics,
+    execute_fallback_planner_steps_mvp as _execute_fallback_planner_steps_mvp,
     build_meta_cognition_diagnostics as _build_meta_cognition_diagnostics,
     build_reasoning_optimization_diagnostics as _build_reasoning_optimization_diagnostics,
     run_graph_runtime_with_state_contract as _run_graph_runtime_with_state_contract,
@@ -186,64 +184,18 @@ class ReasoningEngine:
             warnings=warnings,
         )
 
-    @staticmethod
-    def _build_multi_agent_coordination_plan_for_runtime(
-        *,
-        step_descriptions: list[str],
-        query: str,
-    ) -> MultiAgentCoordinationPlan:
-        return _build_multi_agent_coordination_plan_for_runtime(
-            step_descriptions=step_descriptions,
-            query=query,
-        )
-
-    @staticmethod
-    def _enrich_step_results_with_multi_agent_contract(
-        *,
-        step_results: list[dict[str, object]],
-        coordination_plan: MultiAgentCoordinationPlan,
-    ) -> list[dict[str, object]]:
-        return _enrich_step_results_with_multi_agent_contract(
-            step_results=step_results,
-            coordination_plan=coordination_plan,
-        )
-
     async def _execute_planner_steps_mvp(self, *, request: AnswerRequest) -> list[dict[str, object]]:
         """A2.11 Patch 4: execute deterministic planner steps inside engine fallback."""
-        plan = create_reasoning_plan(query=str(getattr(request, "query", "") or ""))
-        policy = build_reasoning_execution_policy()
-        controlled_steps = build_controlled_plan_steps(plan=plan, policy=policy)
-        bounded_steps = _build_bounded_plan_steps_with_loop_guard(
-            controlled_steps=controlled_steps,
-            max_visits_per_signature=max(int(policy.get("max_retries", 0)) + 1, 1),
-        )
-        bounded_plan = {"steps": bounded_steps}
-
-        async def _run_reasoning_step(step: dict[str, str]) -> str:
-            return str(step.get("description", "") or "")
-
-        async def _run_verify_step(reasoning_output: str) -> dict[str, object]:
-            _ = reasoning_output
-            return {"status": "pass", "reasons": []}
-
-        step_results = await execute_plan_steps(
-            plan=bounded_plan,
-            run_reasoning_step=_run_reasoning_step,
-            run_verify_step=_run_verify_step,
-            max_steps=int(policy.get("max_steps", 0) or 0),
-        )
-        step_results = apply_tool_safety_runtime_guard(step_results=list(step_results or []))
-        plan_steps = [
-            str((row or {}).get("description", "") or "")
-            for row in list(bounded_plan.get("steps") or [])
-        ]
-        coordination_plan = self._build_multi_agent_coordination_plan_for_runtime(
-            step_descriptions=plan_steps,
-            query=str(getattr(request, "query", "") or ""),
-        )
-        return self._enrich_step_results_with_multi_agent_contract(
-            step_results=list(step_results or []),
-            coordination_plan=coordination_plan,
+        return await _execute_fallback_planner_steps_mvp(
+            request=request,
+            create_reasoning_plan_fn=create_reasoning_plan,
+            build_reasoning_execution_policy_fn=build_reasoning_execution_policy,
+            build_controlled_plan_steps_fn=build_controlled_plan_steps,
+            build_bounded_plan_steps_with_loop_guard_fn=_build_bounded_plan_steps_with_loop_guard,
+            execute_plan_steps_fn=execute_plan_steps,
+            apply_tool_safety_runtime_guard_fn=apply_tool_safety_runtime_guard,
+            build_multi_agent_coordination_plan_for_runtime_fn=_build_multi_agent_coordination_plan_for_runtime,
+            enrich_step_results_with_multi_agent_contract_fn=_enrich_step_results_with_multi_agent_contract,
         )
 
     async def synthesize(self, request: AnswerRequest) -> AnswerResponse:

@@ -77,6 +77,24 @@ Patch 2 artifacts:
 - extract next bounded clusters from `reasoning/engine.py` (runtime fallback / diagnostics helper seams),
 - preserve reasoning diagnostics contract behavior.
 
+Patch 3 artifacts:
+- reasoning fallback-planner execution seam extracted into
+  `src/layers/pro/reasoning/evaluation/runtime_productization.py`:
+  - `execute_fallback_planner_steps_mvp`
+- `src/layers/pro/reasoning/engine.py` now delegates `_execute_planner_steps_mvp`
+  through extracted runtime-productization seam while preserving compatibility method.
+- monolith reduction achieved with parity-safe wiring:
+  - `src/layers/pro/reasoning/engine.py`: `454 -> 406` lines
+- focused parity/guardrail checks green:
+  - `tests/unit/layers/pro/test_reasoning_engine_synthesize.py`
+  - `tests/unit/layers/pro/test_reasoning_engine_synthesize_llm.py`
+  - `tests/unit/layers/pro/test_reasoning_engine_synthesize_llm_fallback.py`
+  - `tests/unit/layers/pro/test_reasoning_engine_synthesize_llm_timeout.py`
+  - `tests/unit/layers/pro/test_reasoning_multi_agent_coordination_quality_gate.py`
+  - `tests/unit/layers/pro/test_reasoning_multi_agent_runtime_integration.py`
+  - `tests/unit/services/answer/test_answer_orchestration_quality_gate.py`
+  - result: `33 passed`
+
 #### Patch 4 - Guardrail threshold recalibration and import-budget expansion
 - recalibrate no-growth thresholds to new post-extraction baselines,
 - expand deterministic checks for seam wiring + import-budget drift prevention,
@@ -89,7 +107,7 @@ Patch 2 artifacts:
 
 - [x] Patch 1 — inventory + scope lock
 - [x] Patch 2 - Answer extraction phase-15
-- [ ] Patch 3 - Reasoning extraction phase-15
+- [x] Patch 3 - Reasoning extraction phase-15
 - [ ] Patch 4 - Guardrail threshold recalibration and import-budget expansion
 - [ ] Patch 5 - guardrails + parity + closure
 

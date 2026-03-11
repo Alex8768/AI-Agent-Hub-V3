@@ -323,6 +323,55 @@ async def build_fallback_answer_text(
     return "(reasoning layer stub)"
 
 
+async def execute_fallback_planner_steps_mvp(
+    *,
+    request: object,
+    create_reasoning_plan_fn: object,
+    build_reasoning_execution_policy_fn: object,
+    build_controlled_plan_steps_fn: object,
+    build_bounded_plan_steps_with_loop_guard_fn: object,
+    execute_plan_steps_fn: object,
+    apply_tool_safety_runtime_guard_fn: object,
+    build_multi_agent_coordination_plan_for_runtime_fn: object,
+    enrich_step_results_with_multi_agent_contract_fn: object,
+) -> list[dict[str, object]]:
+    plan = create_reasoning_plan_fn(query=str(getattr(request, "query", "") or ""))
+    policy = build_reasoning_execution_policy_fn()
+    controlled_steps = build_controlled_plan_steps_fn(plan=plan, policy=policy)
+    bounded_steps = build_bounded_plan_steps_with_loop_guard_fn(
+        controlled_steps=controlled_steps,
+        max_visits_per_signature=max(int(policy.get("max_retries", 0)) + 1, 1),
+    )
+    bounded_plan = {"steps": bounded_steps}
+
+    async def _run_reasoning_step(step: dict[str, str]) -> str:
+        return str(step.get("description", "") or "")
+
+    async def _run_verify_step(reasoning_output: str) -> dict[str, object]:
+        _ = reasoning_output
+        return {"status": "pass", "reasons": []}
+
+    step_results = await execute_plan_steps_fn(
+        plan=bounded_plan,
+        run_reasoning_step=_run_reasoning_step,
+        run_verify_step=_run_verify_step,
+        max_steps=int(policy.get("max_steps", 0) or 0),
+    )
+    step_results = apply_tool_safety_runtime_guard_fn(step_results=list(step_results or []))
+    plan_steps = [
+        str((row or {}).get("description", "") or "")
+        for row in list(bounded_plan.get("steps") or [])
+    ]
+    coordination_plan = build_multi_agent_coordination_plan_for_runtime_fn(
+        step_descriptions=plan_steps,
+        query=str(getattr(request, "query", "") or ""),
+    )
+    return enrich_step_results_with_multi_agent_contract_fn(
+        step_results=list(step_results or []),
+        coordination_plan=coordination_plan,
+    )
+
+
 def _build_dry_run_answer_core(*, provenance: list, context_preview: str) -> str:
     ids = []
     for item in provenance[:5]:
