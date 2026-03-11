@@ -55,6 +55,18 @@ Target A2.56 boundaries:
 - Introduce explicit KPI wording/contracts in docs for healthy-path and fallback-rate policy.
 - Keep scope operational-policy first (no product behavior changes).
 
+KPI policy contract baseline for A2.56:
+- `healthy_request_kpi`: request is healthy when `soft_failures_count == 0`.
+- `fallback_rate_kpi`: `requests_with_fallback / total_answer_requests` over a fixed window.
+- `soft_failure_rate_kpi`: `requests_with_soft_failures / total_answer_requests` over a fixed window.
+- Threshold policy classes:
+  - `healthy`: fallback/soft-failure rates below warning thresholds,
+  - `warning`: any rate above warning threshold,
+  - `critical`: any rate above critical threshold.
+- Alertability policy:
+  - thresholds must be explicitly documented with denominator/window,
+  - all KPI terms must map to diagnostics fields used by answer-path runtime.
+
 #### Patch 3 — Diagnostics surface mapping and reporting contract
 - Document which diagnostics fields/panels/reports represent KPI components.
 - Ensure deterministic mapping from runtime diagnostics to operational policy terms.
@@ -70,7 +82,7 @@ Target A2.56 boundaries:
 ### Progress
 
 - [x] Patch 1 — inventory + scope lock
-- [ ] Patch 2 — KPI policy contract introduction
+- [x] Patch 2 — KPI policy contract introduction
 - [ ] Patch 3 — diagnostics surface mapping and reporting contract
 - [ ] Patch 4 — guardrail test/policy enforcement hardening
 - [ ] Patch 5 — guardrails + parity + closure

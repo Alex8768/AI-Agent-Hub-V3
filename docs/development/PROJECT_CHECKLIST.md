@@ -57,7 +57,7 @@
 ## Current Work — A2.56 Operational Guardrails for Soft-Failure KPIs
 
 - [x] Patch 1 — inventory + scope lock
-- [ ] Patch 2 — KPI policy contract introduction
+- [x] Patch 2 — KPI policy contract introduction
 - [ ] Patch 3 — diagnostics surface mapping and reporting contract
 - [ ] Patch 4 — guardrail test/policy enforcement hardening
 - [ ] Patch 5 — guardrails + parity + closure

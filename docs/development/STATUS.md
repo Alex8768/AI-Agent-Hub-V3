@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-Active Anchor Execution — A2.56 patch 1 complete (operational guardrails inventory + scope lock)
+Active Anchor Execution — A2.56 patch 2 complete (KPI policy contract introduction)
 
 ## Last Completed Anchor
 
@@ -19,8 +19,8 @@ A2.55 closed with:
 A2.56 — Operational Guardrails for Soft-Failure KPIs
 
 Current focus:
-- inventory operational KPI surfaces for soft-failure/fallback health
-- lock threshold/alert policy scope before enforcement patches
+- codify explicit healthy-path and rate-based KPI contracts
+- lock threshold class semantics (healthy/warning/critical) for enforcement patches
 - preserve answer/debug runtime parity during guardrail hardening
 
 Execution discipline:
