@@ -94,6 +94,7 @@ Exact filenames may vary if existing structure suggests a cleaner fit.
 - [x] Patch 5 — dependency / parity / quality gates
 - [x] Post-A2.51 M1 — soft-failure observability hardening in answer path
 - [x] Post-A2.51 M2 — guardrail tests for AnswerService soft-failure reason-codes
+- [x] Post-A2.51 M3 — guardrail test for AnswerService durable-hydration soft-failure reason-code
 
 ### Non-Negotiable Rules
 

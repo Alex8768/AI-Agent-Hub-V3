@@ -61,6 +61,7 @@
 
 - [x] M1 — answer-path soft-failure observability hardening (reason-codes + warnings)
 - [x] M2 — AnswerService soft-failure guardrail tests for durable-persist path
+- [x] M3 — AnswerService soft-failure guardrail tests for durable-hydration path
 
 ## Later
 

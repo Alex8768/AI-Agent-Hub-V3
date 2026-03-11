@@ -28,6 +28,7 @@ Current progress:
 - dependency and parity quality gates are in place.
 - CI/release-gate coverage includes answer orchestration quality gate.
 - post-A2.51 guardrail maintenance M1/M2 completed for answer-path soft-failure observability and tests.
+- post-A2.51 guardrail maintenance M3 completed for durable-hydration soft-failure guardrail coverage.
 
 Execution discipline:
 - no net-new intelligence features
