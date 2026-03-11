@@ -56,6 +56,17 @@ Patch 2 artifacts:
 - extract diagnostics, response assembly, execution guards, and context resolvers into bounded modules,
 - shrink monolith toward orchestration-only facade.
 
+Patch 3 phase-1 extraction completed:
+- context helper extracted:
+  - `answer_service._clip_text` -> `src/services/answer/context/session_text.py::clip_text`
+- execution durable key builders extracted:
+  - `answer_service._durable_approval_record_key` -> `src/services/answer/execution/durable_keys.py::durable_approval_record_key`
+  - `answer_service._durable_idempotency_record_key` -> `src/services/answer/execution/durable_keys.py::durable_idempotency_record_key`
+- diagnostics reason-code merge helper extracted:
+  - `answer_service._append_planning_reason_codes` -> `src/services/answer/diagnostics/reason_codes.py::append_planning_reason_codes`
+- observability logging helper extracted:
+  - `answer_service.log_observability` -> `src/services/answer/observability/event_logger.py::log_observability`
+
 #### Patch 4 - Reasoning engine move-map and first extraction
 - define and execute first safe extraction from `src/layers/pro/reasoning/engine.py`,
 - prioritize evaluation/self-check/diagnostics clusters with parity preserved.
@@ -68,7 +79,7 @@ Patch 2 artifacts:
 
 - [x] Patch 1 — inventory + scope lock
 - [x] Patch 2 - Answer move-map and package scaffolding
-- [ ] Patch 3 - Answer heavy-cluster extraction
+- [x] Patch 3 - Answer heavy-cluster extraction
 - [ ] Patch 4 - Reasoning engine move-map and first extraction
 - [ ] Patch 5 - guardrails + parity + closure
 

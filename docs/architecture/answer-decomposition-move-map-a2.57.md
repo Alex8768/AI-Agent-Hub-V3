@@ -136,3 +136,15 @@ To:
 - payload formatting logic,
 - diagnostics merge/business details,
 - provider-specific branching.
+
+## Patch 3 Progress (Implemented)
+
+- `answer_service._clip_text` moved to `context/session_text.py::clip_text`.
+- `answer_service._durable_approval_record_key` moved to
+  `execution/durable_keys.py::durable_approval_record_key`.
+- `answer_service._durable_idempotency_record_key` moved to
+  `execution/durable_keys.py::durable_idempotency_record_key`.
+- `answer_service._append_planning_reason_codes` moved to
+  `diagnostics/reason_codes.py::append_planning_reason_codes`.
+- `answer_service.log_observability` moved to
+  `observability/event_logger.py::log_observability`.

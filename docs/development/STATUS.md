@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-A2.57 patch 2 complete - answer move-map and package scaffolding baseline
+A2.57 patch 3 complete - answer heavy-cluster extraction phase 1
 
 ## Last Completed Anchor
 
@@ -21,8 +21,8 @@ A2.56 closed with:
 A2.57 - Application Decomposition Regime (Answer/Reasoning No-Growth)
 
 Current focus:
-- execute answer heavy-cluster extraction from move-map baselines
-- keep answer-service behavior and API contracts unchanged
+- start reasoning engine move-map and first safe extraction
+- keep answer and reasoning behavior/API contracts unchanged
 - continue extraction-only and thin-facade-only decomposition flow
 
 Execution discipline:

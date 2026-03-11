@@ -59,7 +59,7 @@
 
 - [x] Patch 1 - inventory + scope lock
 - [x] Patch 2 - Answer move-map and package scaffolding
-- [ ] Patch 3 - Answer heavy-cluster extraction
+- [x] Patch 3 - Answer heavy-cluster extraction
 - [ ] Patch 4 - Reasoning engine move-map and first extraction
 - [ ] Patch 5 - guardrails + parity + closure
 

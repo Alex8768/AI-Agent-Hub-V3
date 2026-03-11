@@ -52,14 +52,22 @@ from src.services.answer.diagnostics_merge import (
     AnswerDiagnosticsMergeDeps,
     run_answer_diagnostics_merge_flow,
 )
+from src.services.answer.diagnostics.reason_codes import (
+    append_planning_reason_codes as _append_planning_reason_codes,
+)
 from src.services.answer.orchestrator import run_answer_orchestration_core
+from src.services.answer.context.session_text import clip_text as _clip_text
+from src.services.answer.execution.durable_keys import (
+    durable_approval_record_key as _durable_approval_record_key,
+    durable_idempotency_record_key as _durable_idempotency_record_key,
+)
+from src.services.answer.observability.event_logger import log_observability
 from src.services.answer.post_orchestration import (
     AnswerPostOrchestrationDeps,
     run_answer_post_orchestration_flow,
 )
 from src.services.answer.response_assembly import run_answer_response_assembly
 
-SESSION_MEMORY_MAX_CHARS = 4000
 EXECUTION_IDEMPOTENCY_CONTRACT_VERSION = "v1"
 EXECUTION_GATEWAY_CONTRACT_VERSION = "v1"
 EXECUTION_PILOT_ALLOWLISTED_ACTION_TYPES: tuple[str, ...] = (
@@ -194,26 +202,6 @@ async def _run_answer_primary_pipeline(
         loaded_durable_approval=dict(orchestration.loaded_durable_approval or {}),
         loaded_durable_idempotency=dict(orchestration.loaded_durable_idempotency or {}),
     )
-
-
-def _clip_text(value: object, *, max_chars: int = SESSION_MEMORY_MAX_CHARS) -> str:
-    text = str(value or "")
-    if len(text) <= max_chars:
-        return text
-    return text[:max_chars]
-
-
-def _durable_approval_record_key(*, session_id: str) -> str:
-    sid = str(session_id or "default")
-    return f"session:{sid}:durable:approval_session_record"
-
-
-def _durable_idempotency_record_key(*, session_id: str, idempotency_key: str = "") -> str:
-    sid = str(session_id or "default")
-    ikey = str(idempotency_key or "").strip()
-    if ikey:
-        return f"session:{sid}:durable:idempotency_record:{ikey}"
-    return f"session:{sid}:durable:idempotency_record:last"
 
 
 def _detect_response_language(query: str) -> str:
@@ -1298,18 +1286,6 @@ def _build_conversational_runtime_parity_bundle(
         },
         "reason_codes": sorted(set(reason_codes)),
     }
-
-
-def _append_planning_reason_codes(
-    *,
-    diagnostics: dict[str, object],
-    reason_codes: list[str],
-) -> dict[str, object]:
-    diag = dict(diagnostics or {})
-    merged = [str(x) for x in list(diag.get("planning_reason_codes") or []) if str(x or "").strip()]
-    merged.extend(str(x) for x in list(reason_codes or []) if str(x or "").strip())
-    diag["planning_reason_codes"] = sorted(set(merged))
-    return diag
 
 
 def _build_feedback_learning_bundle(
@@ -2805,31 +2781,6 @@ async def _persist_durable_records(
         value=json.dumps(idempotency_record, ensure_ascii=True, sort_keys=True),
         metadata={"session_id": sid, "kind": "durable_idempotency_record"},
     )
-
-
-def log_observability(http: Request, *, workspace_id: str, req: AnswerRequest) -> None:
-    try:
-        from loguru import logger
-
-        rid = get_request_id(http)
-        logger.info(
-            "answer.endpoint request_id={} workspace={} qlen={} k={} depth={}",
-            rid,
-            workspace_id,
-            len(req.query or ""),
-            int(req.k or 0),
-            int(req.graph_depth or 0),
-        )
-    except Exception as exc:
-        _LOGGER.warning(
-            "Answer service soft-failure: request observability logging skipped",
-            context={
-                "workspace_id": str(workspace_id or ""),
-                "error": str(exc),
-                "error_type": type(exc).__name__,
-                "reason_code": "answer_service_observability_log_soft_failure",
-            },
-        )
 
 
 def _run_assistant_execution_orchestration_seam(
