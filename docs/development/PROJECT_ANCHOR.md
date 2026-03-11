@@ -54,6 +54,18 @@ Patch 1 artifacts:
 - extract next bounded clusters from `answer_service.py` (policy/runtime-guard/helper seams),
 - reduce facade branching and preserve endpoint/debug contract behavior.
 
+Patch 2 artifacts:
+- planner runtime helper seam extraction into existing planner-policy module:
+  - moved `_build_deterministic_plan` implementation to
+    `src/services/answer/reasoning/llm_planner_policy.py` as `build_deterministic_plan`
+  - moved `_parse_llm_planner_intent` implementation to
+    `src/services/answer/reasoning/llm_planner_policy.py` as `parse_llm_planner_intent`
+  - moved `_build_planner_with_fallback` implementation to
+    `src/services/answer/reasoning/llm_planner_policy.py` as `build_planner_with_fallback`
+- compatibility wrappers retained in `src/services/answer/answer_service.py` to preserve monkeypatch/runtime API parity
+- monolith reduction after extraction:
+  - `src/services/answer/answer_service.py`: `3136 -> 2972` lines
+
 #### Patch 3 - Reasoning extraction phase-10
 - extract next bounded clusters from `reasoning/engine.py` (runtime fallback / diagnostics helper seams),
 - preserve reasoning diagnostics contract behavior.
@@ -69,7 +81,7 @@ Patch 1 artifacts:
 ### Progress
 
 - [x] Patch 1 — inventory + scope lock
-- [ ] Patch 2 - Answer extraction phase-10
+- [x] Patch 2 - Answer extraction phase-10
 - [ ] Patch 3 - Reasoning extraction phase-10
 - [ ] Patch 4 - Guardrail threshold recalibration and import-budget expansion
 - [ ] Patch 5 - guardrails + parity + closure

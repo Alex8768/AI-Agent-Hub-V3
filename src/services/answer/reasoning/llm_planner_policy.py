@@ -2,12 +2,234 @@
 
 from __future__ import annotations
 
+import hashlib
+
 _DEFAULT_ALLOWED_INTENTS: tuple[str, ...] = (
     "start_project",
     "prepare_meeting",
     "general_chat",
     "general_query",
 )
+
+
+def parse_llm_planner_intent(
+    raw_text: str,
+    *,
+    allowed_intents: tuple[str, ...] = _DEFAULT_ALLOWED_INTENTS,
+) -> str:
+    lowered = str(raw_text or "").strip().lower()
+    for label in allowed_intents:
+        if label in lowered:
+            return label
+    if lowered in {"project", "start project"} and "start_project" in set(allowed_intents):
+        return "start_project"
+    if lowered in {"meeting", "prepare meeting"} and "prepare_meeting" in set(allowed_intents):
+        return "prepare_meeting"
+    if lowered in {"chat", "general chat"} and "general_chat" in set(allowed_intents):
+        return "general_chat"
+    return ""
+
+
+def build_deterministic_plan(
+    *,
+    query: str,
+    intent_payload: dict[str, object],
+    assistant_mode_enabled: bool,
+    plan_contract_version: str,
+) -> dict[str, object]:
+    if not assistant_mode_enabled:
+        return {
+            "contract_version": str(plan_contract_version or ""),
+            "plan_id": "",
+            "status": "disabled",
+            "deterministic": True,
+            "intent": "disabled",
+            "steps": [],
+            "requires_confirmation": False,
+            "reason_codes": ["assistant_mode_disabled"],
+        }
+
+    intent = str(intent_payload.get("intent", "general_query") or "general_query")
+    normalized_query = str(query or "").strip().lower()
+    seed = f"{intent}|{normalized_query}"
+    digest = hashlib.sha1(seed.encode("utf-8")).hexdigest()[:12]
+    plan_id = f"plan:{intent}:{digest}"
+    steps: list[dict[str, object]]
+
+    if intent == "start_project":
+        steps = [
+            {
+                "step_id": "step:1",
+                "role": "workspace_manager",
+                "action": "prepare_project_workspace_draft",
+                "parameters": {"template": "default_project"},
+                "depends_on": [],
+            },
+            {
+                "step_id": "step:2",
+                "role": "planning_assistant",
+                "action": "prepare_timeline_draft",
+                "parameters": {"horizon_days": 30},
+                "depends_on": ["step:1"],
+            },
+            {
+                "step_id": "step:3",
+                "role": "research_assistant",
+                "action": "prepare_contacts_research_draft",
+                "parameters": {"max_contacts": 5},
+                "depends_on": [],
+            },
+        ]
+    elif intent == "prepare_meeting":
+        steps = [
+            {
+                "step_id": "step:1",
+                "role": "meeting_assistant",
+                "action": "prepare_agenda_draft",
+                "parameters": {"sections": 4},
+                "depends_on": [],
+            },
+            {
+                "step_id": "step:2",
+                "role": "context_assistant",
+                "action": "prepare_context_summary_draft",
+                "parameters": {"max_items": 8},
+                "depends_on": [],
+            },
+        ]
+    elif intent == "general_chat":
+        steps = [
+            {
+                "step_id": "step:1",
+                "role": "assistant",
+                "action": "prepare_friendly_reply",
+                "parameters": {},
+                "depends_on": [],
+            }
+        ]
+    else:
+        steps = [
+            {
+                "step_id": "step:1",
+                "role": "assistant",
+                "action": "prepare_clarification_prompt",
+                "parameters": {},
+                "depends_on": [],
+            }
+        ]
+
+    return {
+        "contract_version": str(plan_contract_version or ""),
+        "plan_id": plan_id,
+        "status": "ready" if steps else "idle",
+        "deterministic": True,
+        "intent": intent,
+        "steps": steps,
+        "requires_confirmation": bool(steps),
+        "reason_codes": ["deterministic_plan_built"],
+    }
+
+
+async def build_planner_with_fallback(
+    *,
+    query: str,
+    intent_payload: dict[str, object],
+    assistant_mode_enabled: bool,
+    llm: object | None,
+    llm_enabled: bool,
+    llm_model: str,
+    llm_error: str,
+    deterministic_plan_builder: object,
+    parse_intent_fn: object,
+    llm_planner_contract_version: str,
+) -> tuple[dict[str, object], dict[str, object], dict[str, object]]:
+    base_intent = dict(intent_payload or {})
+    plan = deterministic_plan_builder(
+        query=query,
+        intent_payload=base_intent,
+        assistant_mode_enabled=assistant_mode_enabled,
+    )
+    intent_name = str(base_intent.get("intent", "general_query") or "general_query")
+    plan_id = str(plan.get("plan_id", "") or "")
+    if not assistant_mode_enabled:
+        return base_intent, plan, {
+            "contract_version": str(llm_planner_contract_version or ""),
+            "source": "heuristic",
+            "status": "disabled",
+            "model": str(llm_model or ""),
+            "intent": intent_name,
+            "plan_id": plan_id,
+            "reason_codes": ["assistant_mode_disabled"],
+        }
+    if not llm_enabled:
+        return base_intent, plan, {
+            "contract_version": str(llm_planner_contract_version or ""),
+            "source": "heuristic",
+            "status": "disabled",
+            "model": str(llm_model or ""),
+            "intent": intent_name,
+            "plan_id": plan_id,
+            "reason_codes": ["llm_planner_disabled"],
+        }
+    if llm is None or not callable(getattr(llm, "generate", None)):
+        reason_codes = ["llm_planner_adapter_unavailable"]
+        if str(llm_error or "").strip():
+            reason_codes.append("llm_planner_adapter_error")
+        return base_intent, plan, {
+            "contract_version": str(llm_planner_contract_version or ""),
+            "source": "fallback",
+            "status": "fallback",
+            "model": str(llm_model or ""),
+            "intent": intent_name,
+            "plan_id": plan_id,
+            "reason_codes": reason_codes,
+        }
+
+    prompt = (
+        "Classify user request intent with one label only: "
+        "start_project, prepare_meeting, general_chat, general_query.\n"
+        f"User request: {str(query or '').strip()}\n"
+        "Label:"
+    )
+    try:
+        raw = await llm.generate(prompt)
+        selected_intent = parse_intent_fn(str(raw or ""))
+    except Exception:
+        selected_intent = ""
+    if not selected_intent:
+        return base_intent, plan, {
+            "contract_version": str(llm_planner_contract_version or ""),
+            "source": "fallback",
+            "status": "fallback",
+            "model": str(llm_model or ""),
+            "intent": intent_name,
+            "plan_id": plan_id,
+            "reason_codes": ["llm_planner_invalid_response_fallback"],
+        }
+
+    merged_intent = dict(base_intent)
+    merged_intent["intent"] = selected_intent
+    merged_intent["source"] = "llm"
+    merged_intent["reason_codes"] = sorted(
+        set(
+            [str(x) for x in list(base_intent.get("reason_codes") or []) if str(x or "").strip()]
+            + ["llm_planner_intent_selected"]
+        )
+    )
+    llm_plan = deterministic_plan_builder(
+        query=query,
+        intent_payload=merged_intent,
+        assistant_mode_enabled=assistant_mode_enabled,
+    )
+    return merged_intent, llm_plan, {
+        "contract_version": str(llm_planner_contract_version or ""),
+        "source": "llm",
+        "status": "ready",
+        "model": str(llm_model or ""),
+        "intent": selected_intent,
+        "plan_id": str(llm_plan.get("plan_id", "") or ""),
+        "reason_codes": ["llm_planner_adapter_selected_intent"],
+    }
 
 
 def build_llm_planner_policy_contract(
