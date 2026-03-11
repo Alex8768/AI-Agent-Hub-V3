@@ -384,6 +384,81 @@ def apply_feedback_policy_guards(
     return feedback, policy_eval
 
 
+def build_feedback_learning_bundle(
+    *,
+    req: object,
+    assistant_mode_enabled: bool,
+    feedback_contract_version: str,
+) -> dict[str, object]:
+    if not assistant_mode_enabled:
+        return {
+            "contract_version": str(feedback_contract_version or ""),
+            "mode": "approve_cancel_edit_feedback",
+            "status": "disabled",
+            "signals": [],
+            "latest_signal": "none",
+            "signal_counts": {"approve": 0, "cancel": 0, "edit": 0},
+            "reason_codes": ["assistant_mode_disabled"],
+        }
+
+    filters = dict(getattr(req, "filters", {}) or {})
+    allowed = {"approve", "cancel", "edit"}
+
+    def _to_signal(raw: object) -> str:
+        value = str(raw or "").strip().lower()
+        return value if value in allowed else ""
+
+    normalized_signals: list[str] = []
+    for raw in list(filters.get("feedback_signals") or []):
+        signal = _to_signal(raw)
+        if signal:
+            normalized_signals.append(signal)
+
+    for row in list(filters.get("feedback_events") or []):
+        event = dict(row or {})
+        signal = _to_signal(event.get("signal", ""))
+        if signal:
+            normalized_signals.append(signal)
+
+    explicit_signal = _to_signal(filters.get("feedback_signal", ""))
+    if explicit_signal:
+        normalized_signals.append(explicit_signal)
+
+    decision_signal = _to_signal(filters.get("handshake_decision", ""))
+    if decision_signal:
+        normalized_signals.append(decision_signal)
+
+    if bool(filters.get("feedback_edit_payload") or filters.get("handshake_edit_payload")):
+        normalized_signals.append("edit")
+
+    signals: list[str] = []
+    seen: set[str] = set()
+    for signal in normalized_signals:
+        if signal in seen:
+            continue
+        seen.add(signal)
+        signals.append(signal)
+
+    latest = signals[-1] if signals else "none"
+    counts = {
+        "approve": int(1 if "approve" in signals else 0),
+        "cancel": int(1 if "cancel" in signals else 0),
+        "edit": int(1 if "edit" in signals else 0),
+    }
+    reasons = ["feedback_capture_adapter_normalized"]
+    if latest != "none":
+        reasons.append(f"feedback_signal_detected:{latest}")
+    return {
+        "contract_version": str(feedback_contract_version or ""),
+        "mode": "approve_cancel_edit_feedback",
+        "status": "ready",
+        "signals": signals,
+        "latest_signal": latest,
+        "signal_counts": counts,
+        "reason_codes": reasons,
+    }
+
+
 def build_feedback_adaptation_policy_contract(
     *,
     allowed_intents: tuple[str, ...] = _DEFAULT_ALLOWED_INTENTS,
@@ -567,6 +642,102 @@ def apply_tool_selection_policy_guards(
         "applied_reason_codes": sorted(set(applied_reason_codes)),
     }
     return selection, policy_eval
+
+
+def build_tool_selection_bundle(
+    *,
+    plan_bundle: dict[str, object],
+    assistant_mode_enabled: bool,
+    mcp_tools: list[dict[str, object]] | None,
+    tool_selection_contract_version: str,
+) -> dict[str, object]:
+    if not assistant_mode_enabled:
+        return {
+            "contract_version": str(tool_selection_contract_version or ""),
+            "mode": "mcp_aware_selector",
+            "status": "disabled",
+            "source": "none",
+            "selected_tools": [],
+            "blocked_step_ids": [],
+            "reason_codes": ["assistant_mode_disabled"],
+        }
+
+    plan = dict(plan_bundle or {})
+    steps = [dict(step or {}) for step in list(plan.get("steps") or [])]
+    if not steps:
+        return {
+            "contract_version": str(tool_selection_contract_version or ""),
+            "mode": "mcp_aware_selector",
+            "status": "idle",
+            "source": "deterministic",
+            "selected_tools": [],
+            "blocked_step_ids": [],
+            "reason_codes": ["tool_selection_no_plan_steps"],
+        }
+
+    def _tokens(value: object) -> set[str]:
+        text = str(value or "").strip().lower()
+        if not text:
+            return set()
+        normalized = "".join(ch if ch.isalnum() else " " for ch in text)
+        return {tok for tok in normalized.split() if tok}
+
+    tool_rows = [dict(row or {}) for row in list(mcp_tools or [])]
+    tool_rows = [row for row in tool_rows if str(row.get("tool_name", "") or "").strip()]
+    selected_tools: list[dict[str, object]] = []
+    used_mcp = False
+    for step in steps:
+        step_id = str(step.get("step_id", "") or "")
+        action = str(step.get("action", "") or "")
+        role = str(step.get("role", "") or "")
+        step_tokens = _tokens(f"{action} {role}")
+        best_name = "none"
+        best_score = 0
+        for tool in tool_rows:
+            tool_name = str(tool.get("tool_name", "") or "")
+            haystack = " ".join(
+                [
+                    tool_name,
+                    str(tool.get("description", "") or ""),
+                    " ".join(str(x) for x in list(tool.get("tags") or [])),
+                ]
+            )
+            score = len(step_tokens & _tokens(haystack))
+            if score > best_score:
+                best_score = score
+                best_name = tool_name
+        if best_score > 0 and best_name != "none":
+            used_mcp = True
+            selected_tools.append(
+                {
+                    "step_id": step_id,
+                    "tool_name": best_name,
+                    "route": "mcp_registry_match",
+                    "reason": "tool_selection_mcp_match",
+                }
+            )
+        else:
+            selected_tools.append(
+                {
+                    "step_id": step_id,
+                    "tool_name": "none",
+                    "route": "deterministic_fallback",
+                    "reason": "tool_selection_fallback_no_match",
+                }
+            )
+    source = "mcp" if used_mcp else "deterministic"
+    reasons = ["tool_selection_adapter_applied"] + (
+        ["tool_selection_mcp_matched"] if used_mcp else ["tool_selection_fallback_used"]
+    )
+    return {
+        "contract_version": str(tool_selection_contract_version or ""),
+        "mode": "mcp_aware_selector",
+        "status": "ready",
+        "source": source,
+        "selected_tools": selected_tools,
+        "blocked_step_ids": [],
+        "reason_codes": reasons,
+    }
 
 
 def build_transition_policy_contract(
