@@ -2,16 +2,16 @@
 
 ## Current Phase
 
-A2.65 patch 4 complete (Guardrail recalibration + no-growth baseline refresh)
+A2.65 closed (Facade Convergence Phase 9 complete)
 
 ## Last Completed Anchor
 
-A2.64 - Facade Convergence Phase 8 (Answer/Reasoning)
+A2.65 - Facade Convergence Phase 9 (Answer/Reasoning)
 
-A2.64 closed with:
-- answer assistant-recovery policy seam extracted into planner-policy module with facade signature compatibility wrappers
-- reasoning per-step diagnostics mapping seam extracted into evaluation runtime diagnostics module
-- no-growth budgets recalibrated to latest facade baselines and runtime diagnostics seam wiring gates expanded
+A2.65 closed with:
+- answer plan-policy guard seam extracted into planner-policy module
+- reasoning fallback planner observations seam extracted into evaluation runtime diagnostics module
+- no-growth baselines recalibrated to latest facade budgets
 - focused and full-suite checks green at closure (`84 passed`; `576 passed, 3 skipped`)
 
 Legacy closure markers retained for A2.56 docs quality-gate compatibility:
@@ -20,11 +20,11 @@ Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 
 ## Current Active Anchor
 
-A2.65 - Facade Convergence Phase 9 (Answer/Reasoning)
+TBD - Post-A2.65 planning
 
 Current focus:
-- execute A2.65 patch 5 closure (focused + full-suite checks, docs finalization)
-- preserve answer/reasoning decomposition and no-growth guardrail baseline
+- define next decomposition anchor and scope lock
+- preserve answer/reasoning no-growth guardrail baseline in follow-up work
 - continue one-patch-one-reason execution discipline
 
 Execution discipline:
