@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-Active Anchor Execution — A2.54 patch 1 complete (diagnostics contract guardrails inventory + scope lock)
+Active Anchor Execution — A2.54 patch 2 complete (diagnostics snapshot contract expansion)
 
 ## Last Completed Anchor
 
@@ -26,6 +26,7 @@ Current focus:
 
 Current progress:
 - A2.54 patch 1 complete (inventory + scope lock for diagnostics contract surfaces).
+- A2.54 patch 2 complete (diagnostics keyset stability guardrail across proactive flag modes).
 - baseline guardrails from A2.53 remain intact and green.
 - patch plan locked: snapshot expansion, policy-coverage expansion, enforcement hardening, closure.
 - A2.51 + post-A2.51 guardrail maintenance remain green and protected by existing quality gates.

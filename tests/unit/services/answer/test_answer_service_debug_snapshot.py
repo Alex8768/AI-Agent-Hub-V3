@@ -811,6 +811,48 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_answer_service_diagnostics_keyset_stable_when_proactive_flag_changes(monkeypatch):
+    class _S:
+        feature_reasoning = True
+        feature_graphrag = True
+        feature_reasoning_llm_enabled = False
+        llm_provider = "ollama"
+        openai_model = ""
+        ollama_model = "llama3.2:latest"
+        feature_assistant_mode = True
+        feature_assistant_actions = True
+
+        def __init__(self, *, proactive_enabled: bool):
+            self.feature_assistant_proactive = bool(proactive_enabled)
+
+    settings_holder = {"current": _S(proactive_enabled=True)}
+    monkeypatch.setattr("src.core.config.get_settings", lambda: settings_holder["current"])
+    monkeypatch.setattr("src.observability.trace.make_trace_id", lambda **kwargs: "trace-123", raising=False)
+
+    def _fake_get_reasoning_engine(*, retriever=None, llm=None, llm_timeout_s=None):
+        return _FakeReasoningEngine(retriever)
+
+    monkeypatch.setattr("src.core.providers.get_reasoning_engine", _fake_get_reasoning_engine)
+
+    service = AnswerService()
+    http = _DummyHTTP(request_id="rid-kset", rag_engine=object(), hybrid_retriever=_FakeHybrid())
+    req = AnswerRequest(query="x", k=8, graph_depth=1, filters={})
+
+    resp_proactive_on = await service.handle(http, req, workspace_id="default")
+    diag_on = dict(getattr(resp_proactive_on, "diagnostics", {}) or {})
+
+    settings_holder["current"] = _S(proactive_enabled=False)
+    resp_proactive_off = await service.handle(http, req, workspace_id="default")
+    diag_off = dict(getattr(resp_proactive_off, "diagnostics", {}) or {})
+
+    assert set(diag_on.keys()) == set(diag_off.keys())
+    assert "anticipatory" in diag_on
+    assert "anticipatory" in diag_off
+    assert "planning_reason_codes" in diag_on
+    assert "planning_reason_codes" in diag_off
+
+
+@pytest.mark.asyncio
 async def test_answer_service_forwards_evidence_policy_controls(monkeypatch):
     class _S:
         feature_reasoning = True
