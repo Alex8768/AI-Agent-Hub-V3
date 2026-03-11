@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-Anchor Closed — A2.56 complete (operational guardrails policy closure)
+Post-A2.56 Maintenance — M1 complete (quality-gate closed-status compatibility)
 
 ## Last Completed Anchor
 
@@ -13,6 +13,7 @@ A2.56 closed with:
 - diagnostics-to-KPI reporting mapping formalized for answer debug payload
 - deterministic docs quality-gate enforcement added for policy markers
 - focused and full-suite checks green at closure
+- post-closure guardrail compatibility fix applied for status-marker quality gate
 
 ## Current Active Anchor
 

@@ -137,6 +137,10 @@ A2.56 is complete when:
 
 TBD — Post-A2.56 planning
 
+## Post-A2.56 Maintenance
+
+- [x] M1 — operational quality-gate compatibility fix for closed-status marker handling
+
 ### Discipline
 
 Work order is strict:

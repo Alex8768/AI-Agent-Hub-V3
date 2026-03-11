@@ -34,6 +34,10 @@ def test_operational_guardrails_quality_gate_docs_sync_markers():
     checklist = _read("docs/development/PROJECT_CHECKLIST.md")
     features = _read("docs/architecture/PLATFORM_FEATURES.md")
 
-    assert "A2.56 patch 4 complete" in status, "Missing A2.56 patch 4 status marker"
+    assert (
+        "A2.56 patch 4 complete" in status
+        or "Anchor Closed — A2.56 complete" in status
+        or "Post-A2.56 Maintenance — M1 complete" in status
+    ), "Missing A2.56 status marker (patch 4 progress, closure, or maintenance)"
     assert "[x] Patch 4 — guardrail test/policy enforcement hardening" in checklist
     assert "A2.56 operational KPI policy quality-gate enforcement (patch 4)" in features

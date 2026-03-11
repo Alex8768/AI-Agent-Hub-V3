@@ -70,6 +70,10 @@
 - [x] M4 — AnswerService soft-failure guardrail tests for post-orchestration path
 - [x] M5 — closure sync across anchor/status/checklist/features docs
 
+## Post-A2.56 Guardrail Maintenance
+
+- [x] M1 — operational quality-gate compatibility fix for closed-status marker handling
+
 ## Later
 
 ## Working Rules
