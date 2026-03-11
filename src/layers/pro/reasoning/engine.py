@@ -36,6 +36,7 @@ from src.layers.pro.reasoning.evaluation.runtime_productization import (
     build_dry_run_answer_from_state as _build_dry_run_answer_from_state,
     build_enterprise_productization_diagnostics as _build_enterprise_productization_diagnostics,
     execute_fallback_planner_steps_mvp as _execute_fallback_planner_steps_mvp,
+    synthesize_with_graph_runtime as _synthesize_with_graph_runtime,
     synthesize_graph_response as _synthesize_graph_response,
     synthesize_fallback_response as _synthesize_fallback_response,
     build_meta_cognition_diagnostics as _build_meta_cognition_diagnostics,
@@ -201,50 +202,17 @@ class ReasoningEngine:
     async def synthesize(self, request: AnswerRequest) -> AnswerResponse:
         """Synthesize an answer using agentic graph."""
         from time import perf_counter
-        t0 = perf_counter()
 
-        # Если LLM нет, используем старый путь (dry-run или stub)
-        if self.llm is None:
-            return await self._synthesize_fallback(request)
-
-        # Строим граф
-        graph = build_reasoning_graph(self.llm, self.retriever)
-        
-        # Инициализируем состояние
-        initial_state = AgentState(
-            query=request.query,
-            workspace_id=getattr(request, "workspace_id", "default"),
-            session_id=getattr(request, "session_id", "default"),
-            session_memory_last_answer=str(getattr(request, "session_memory_last_answer", "") or ""),
-            k=request.k,
-            graph_depth=request.graph_depth,
-            max_context_chars=request.max_context_chars,
-            context_preview=str(getattr(request, "session_memory_last_answer", "") or ""),
-        )
-
-        # Запускаем граф
-        try:
-            final_state = await self._run_graph_runtime(
-                graph=graph,
-                initial_state=initial_state,
-            )
-        except Exception as e:
-            # В случае ошибки графа - падаем на старый путь
-            return await self._synthesize_fallback(request, error=str(e))
-
-        # Safety net: if planner graph produced an internal error marker,
-        # fallback to the one-pass path with established timeout/error behavior.
-        if getattr(final_state, "error", None):
-            return await self._synthesize_fallback(request, error=str(final_state.error))
-
-        # Собираем ответ из финального состояния
-        s = get_settings()
-        dry_run = bool(getattr(s, "feature_reasoning_llm_dry_run", False))
-
-        resp = _synthesize_graph_response(
-            final_state=final_state,
+        return await _synthesize_with_graph_runtime(
             request=request,
-            dry_run=dry_run,
+            llm=self.llm,
+            retriever=self.retriever,
+            build_reasoning_graph_fn=build_reasoning_graph,
+            run_graph_runtime_fn=self._run_graph_runtime,
+            synthesize_fallback_fn=self._synthesize_fallback,
+            get_settings_fn=get_settings,
+            agent_state_cls=AgentState,
+            synthesize_graph_response_fn=_synthesize_graph_response,
             build_dry_run_answer_fn=self._build_dry_run_answer,
             build_graph_answer_response_fn=_build_graph_answer_response,
             apply_graph_response_diagnostics_fn=_apply_graph_response_diagnostics,
@@ -263,22 +231,9 @@ class ReasoningEngine:
             enterprise_productization_builder_fn=self._build_enterprise_productization_diagnostics,
             meta_cognition_builder_fn=self._build_meta_cognition_diagnostics,
             warning_flags_applier_fn=_apply_reasoning_runtime_warning_flags,
+            perf_counter_fn=perf_counter,
+            logger_getter_fn=_get_runtime_logger,
         )
-
-        # Логируем
-        try:
-            from loguru import logger
-            elapsed_ms = int((perf_counter() - t0) * 1000)
-            logger.info(
-                "reasoning.agent elapsed_ms={} iterations={} conf={}",
-                elapsed_ms,
-                final_state.iteration_count,
-                float(resp.confidence),
-            )
-        except Exception:
-            pass
-
-        return resp
 
     async def _synthesize_fallback(self, request: AnswerRequest, error: str | None = None) -> AnswerResponse:
         """Fallback к старому однопроходному режиму (если нет LLM или ошибка графа)."""
@@ -349,4 +304,10 @@ class ReasoningEngine:
             build_prompt_fn=build_reasoning_prompt,
             dry_run_builder_fn=self._build_dry_run_answer_from_parts,
         )
+
+
+def _get_runtime_logger():
+    from loguru import logger
+
+    return logger
 

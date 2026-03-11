@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-A2.74 in progress (Patch 2 complete)
+A2.74 in progress (Patch 3 complete)
 
 ## Last Completed Anchor
 
@@ -23,8 +23,8 @@ Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 A2.74 - Facade Convergence Phase 18 (Answer/Reasoning)
 
 Current focus:
-- execute reasoning extraction phase-18 or guardrail recalibration (A2.74 patch 3/4)
-- preserve no-growth guardrail discipline from updated baselines (`2100`/`352`)
+- run no-growth threshold recalibration and import-budget verification (A2.74 patch 4)
+- preserve no-growth guardrail discipline from updated baselines (`2100`/`313`)
 - continue one-patch-one-reason execution discipline
 
 Execution discipline:

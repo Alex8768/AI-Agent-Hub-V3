@@ -521,6 +521,103 @@ def synthesize_graph_response(
     return resp
 
 
+async def synthesize_with_graph_runtime(
+    *,
+    request: object,
+    llm: object | None,
+    retriever: object,
+    build_reasoning_graph_fn: object,
+    run_graph_runtime_fn: object,
+    synthesize_fallback_fn: object,
+    get_settings_fn: object,
+    agent_state_cls: object,
+    synthesize_graph_response_fn: object,
+    build_dry_run_answer_fn: object,
+    build_graph_answer_response_fn: object,
+    apply_graph_response_diagnostics_fn: object,
+    confidence_fn: object,
+    response_model_cls: object,
+    evidence_contract_version: str,
+    evidence_summary_fn: object,
+    evidence_contract_status_fn: object,
+    evidence_contract_gate_reason_fn: object,
+    self_check_fn: object,
+    verify_preflight_fn: object,
+    planner_runtime_parity_fn: object,
+    execution_policy_builder_fn: object,
+    reasoning_quality_builder_fn: object,
+    reasoning_optimization_builder_fn: object,
+    enterprise_productization_builder_fn: object,
+    meta_cognition_builder_fn: object,
+    warning_flags_applier_fn: object,
+    perf_counter_fn: object,
+    logger_getter_fn: object,
+) -> object:
+    t0 = perf_counter_fn()
+    if llm is None:
+        return await synthesize_fallback_fn(request)
+
+    graph = build_reasoning_graph_fn(llm, retriever)
+    initial_state = agent_state_cls(
+        query=request.query,
+        workspace_id=getattr(request, "workspace_id", "default"),
+        session_id=getattr(request, "session_id", "default"),
+        session_memory_last_answer=str(getattr(request, "session_memory_last_answer", "") or ""),
+        k=request.k,
+        graph_depth=request.graph_depth,
+        max_context_chars=request.max_context_chars,
+        context_preview=str(getattr(request, "session_memory_last_answer", "") or ""),
+    )
+    try:
+        final_state = await run_graph_runtime_fn(
+            graph=graph,
+            initial_state=initial_state,
+        )
+    except Exception as e:
+        return await synthesize_fallback_fn(request, error=str(e))
+
+    if getattr(final_state, "error", None):
+        return await synthesize_fallback_fn(request, error=str(final_state.error))
+
+    settings = get_settings_fn()
+    dry_run = bool(getattr(settings, "feature_reasoning_llm_dry_run", False))
+    resp = synthesize_graph_response_fn(
+        final_state=final_state,
+        request=request,
+        dry_run=dry_run,
+        build_dry_run_answer_fn=build_dry_run_answer_fn,
+        build_graph_answer_response_fn=build_graph_answer_response_fn,
+        apply_graph_response_diagnostics_fn=apply_graph_response_diagnostics_fn,
+        confidence_fn=confidence_fn,
+        response_model_cls=response_model_cls,
+        evidence_contract_version=evidence_contract_version,
+        evidence_summary_fn=evidence_summary_fn,
+        evidence_contract_status_fn=evidence_contract_status_fn,
+        evidence_contract_gate_reason_fn=evidence_contract_gate_reason_fn,
+        self_check_fn=self_check_fn,
+        verify_preflight_fn=verify_preflight_fn,
+        planner_runtime_parity_fn=planner_runtime_parity_fn,
+        execution_policy_builder_fn=execution_policy_builder_fn,
+        reasoning_quality_builder_fn=reasoning_quality_builder_fn,
+        reasoning_optimization_builder_fn=reasoning_optimization_builder_fn,
+        enterprise_productization_builder_fn=enterprise_productization_builder_fn,
+        meta_cognition_builder_fn=meta_cognition_builder_fn,
+        warning_flags_applier_fn=warning_flags_applier_fn,
+    )
+    try:
+        logger = logger_getter_fn()
+        elapsed_ms = int((perf_counter_fn() - t0) * 1000)
+        logger.info(
+            "reasoning.agent elapsed_ms={} iterations={} conf={}",
+            elapsed_ms,
+            getattr(final_state, "iteration_count", 0),
+            float(resp.confidence),
+        )
+    except Exception:
+        pass
+    return resp
+
+
 def _build_dry_run_answer_core(*, provenance: list, context_preview: str) -> str:
     ids = []
     for item in provenance[:5]:
