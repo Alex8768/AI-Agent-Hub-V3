@@ -2,7 +2,7 @@
 
 ## Active Anchor
 
-A2.67 - Facade Convergence Phase 11 (Answer/Reasoning) (Closed)
+A2.68 - Facade Convergence Phase 12 (Answer/Reasoning)
 
 ### Goal
 
@@ -11,19 +11,19 @@ residual helper concentration and keep moving toward facade/orchestrator target 
 
 ### Why Now
 
-A2.66 closed with additional policy/runtime seam extraction and refreshed no-growth gates.
+A2.67 closed with additional policy/runtime seam extraction and refreshed no-growth gates.
 Residual high-density helper clusters remain in `answer_service.py` and `reasoning/engine.py`,
 so another bounded convergence phase is required.
 
 ### Architecture Position
 
-Target A2.67 boundaries:
+Target A2.68 boundaries:
 
-- **Answer convergence phase 11**
+- **Answer convergence phase 12**
   - continue extracting bounded helper clusters from `src/services/answer/answer_service.py`,
   - keep behavior/API/diagnostics parity unchanged.
 
-- **Reasoning convergence phase 11**
+- **Reasoning convergence phase 12**
   - continue extracting bounded helper clusters from `src/layers/pro/reasoning/engine.py`,
   - keep `ReasoningEngine` as compatibility facade.
 
@@ -39,84 +39,44 @@ Target A2.67 boundaries:
 
 Patch 1 artifacts:
 - no-growth baseline inventory captured:
-  - `src/services/answer/answer_service.py`: `2972` lines
-  - `src/layers/pro/reasoning/engine.py`: `535` lines
+  - `src/services/answer/answer_service.py`: `2832` lines
+  - `src/layers/pro/reasoning/engine.py`: `481` lines
 - hotspot inventory captured for extraction planning:
   - answer clusters: `_apply_diagnostics`, `_run_assistant_execution_orchestration_seam`,
-    `_apply_execution_idempotency_guard`, `_build_tool_selection_bundle`, `_build_feedback_learning_bundle`
+    `_apply_execution_idempotency_guard`, `_build_safe_mode_execution_gateway`, `_build_execution_receipt_stub`
   - reasoning clusters: `synthesize`, `_synthesize_fallback`
 - scope lock affirmed:
   - extraction-only changes,
   - parity-safe wiring updates only,
   - no net-new features or endpoint contract changes.
 
-#### Patch 2 - Answer extraction phase-11
+#### Patch 2 - Answer extraction phase-12
 - extract next bounded clusters from `answer_service.py` (policy/runtime-guard/helper seams),
 - reduce facade branching and preserve endpoint/debug contract behavior.
 
-Patch 2 artifacts:
-- feedback/tool-selection bundle seam extraction into existing planner-policy module:
-  - moved `_build_feedback_learning_bundle` implementation to
-    `src/services/answer/reasoning/llm_planner_policy.py` as `build_feedback_learning_bundle`
-  - moved `_build_tool_selection_bundle` implementation to
-    `src/services/answer/reasoning/llm_planner_policy.py` as `build_tool_selection_bundle`
-- compatibility wrappers retained in `src/services/answer/answer_service.py` for monkeypatch/runtime API parity
-- monolith reduction after extraction:
-  - `src/services/answer/answer_service.py`: `2972 -> 2832` lines
-- answer local import budget preserved:
-  - `src.services.answer*` imports: `15`
-
-#### Patch 3 - Reasoning extraction phase-11
+#### Patch 3 - Reasoning extraction phase-12
 - extract next bounded clusters from `reasoning/engine.py` (runtime fallback / diagnostics helper seams),
 - preserve reasoning diagnostics contract behavior.
-
-Patch 3 artifacts:
-- graph runtime diagnostics seam extraction into existing evaluation diagnostics module:
-  - moved graph-path diagnostics assembly from `ReasoningEngine.synthesize` to
-    `src/layers/pro/reasoning/evaluation/runtime_diagnostics.py` as
-    `apply_graph_runtime_diagnostics`
-  - `src/layers/pro/reasoning/engine.py` now delegates graph runtime diagnostics/warning enrichment
-    to extracted evaluation seam with compatibility callables
-- compatibility parity preserved:
-  - patched call path keeps `build_reasoning_execution_policy` and
-    `_reasoning_quality_diagnostics` injectable/monkeypatchable via engine-level callables
-- monolith reduction after extraction:
-  - `src/layers/pro/reasoning/engine.py`: `535 -> 481` lines
 
 #### Patch 4 - Guardrail threshold recalibration and import-budget expansion
 - recalibrate no-growth thresholds to new post-extraction baselines,
 - expand deterministic checks for seam wiring + import-budget drift prevention,
 - keep failure messages actionable for CI.
 
-Patch 4 artifacts:
-- quality-gate no-growth recalibration for current facade baselines:
-  - `answer_service_max_lines = 2832`
-  - `reasoning_engine_max_lines = 481`
-- seam wiring and import-budget guardrails preserved:
-  - reasoning runtime diagnostics seam import gate remains enforced
-  - answer local imports: `15`
-  - reasoning local imports: `17`
-
 #### Patch 5 - Guardrails + parity + closure
-- run focused and full-suite checks and close A2.67 with docs sync.
-
-Patch 5 artifacts:
-- closure verification completed with deterministic green checks:
-  - focused closure suite: `84 passed`
-  - full suite: `576 passed, 3 skipped`
-- A2.67 anchor closed with docs synchronization across anchor/checklist/status/features.
+- run focused and full-suite checks and close A2.68 with docs sync.
 
 ### Progress
 
 - [x] Patch 1 — inventory + scope lock
-- [x] Patch 2 - Answer extraction phase-11
-- [x] Patch 3 - Reasoning extraction phase-11
-- [x] Patch 4 - Guardrail threshold recalibration and import-budget expansion
-- [x] Patch 5 - guardrails + parity + closure
+- [ ] Patch 2 - Answer extraction phase-12
+- [ ] Patch 3 - Reasoning extraction phase-12
+- [ ] Patch 4 - Guardrail threshold recalibration and import-budget expansion
+- [ ] Patch 5 - guardrails + parity + closure
 
 ### Non-Negotiable Rules
 
-- No net-new user-facing features during A2.67
+- No net-new user-facing features during A2.68
 - Preserve answer/debug runtime/API parity
 - No new business logic additions inside monolith files
 - Extraction-only and thin-facade-only changes in monolith targets
@@ -125,7 +85,7 @@ Patch 5 artifacts:
 
 ### Out of Scope
 
-Do NOT modify during A2.67:
+Do NOT modify during A2.68:
 
 - unrelated product feature logic
 - endpoint contract shape
@@ -134,9 +94,9 @@ Do NOT modify during A2.67:
 
 ### Definition of Done
 
-A2.67 is complete when:
+A2.68 is complete when:
 
-- answer and reasoning convergence phase-11 extraction is completed with parity
+- answer and reasoning convergence phase-12 extraction is completed with parity
 - no-growth thresholds and import-budget constraints are updated to latest baselines and enforced in CI
 - target facades are further reduced and orchestration-focused
 - focused and full quality checks remain green
@@ -160,7 +120,7 @@ A2.56 policy markers are retained for deterministic docs quality gates:
 
 ## Next Anchor
 
-TBD - Post-A2.67 planning
+TBD - Post-A2.68 planning
 
 ## Post-A2.56 Maintenance
 
