@@ -75,6 +75,7 @@ from src.services.answer.execution.durable_keys import (
     apply_handshake_transition_policy as _apply_handshake_transition_policy_impl,
     apply_rollback_contract_guard as _apply_rollback_contract_guard_impl,
     build_approval_session_bundle as _build_approval_session_bundle_impl,
+    build_draft_action_bundle as _build_draft_action_bundle_impl,
     build_durable_approval_session_record as _build_durable_approval_session_record_impl,
     build_execution_handshake_bundle as _build_execution_handshake_bundle_impl,
     build_idempotency_record_snapshot as _build_idempotency_record_snapshot_impl,
@@ -390,69 +391,11 @@ def _build_draft_action_bundle(
     language: str,
     actions_enabled: bool,
 ) -> dict[str, object]:
-    rows = [dict(row or {}) for row in list(proactive_bundle.get("suggestions") or [])]
-    if not actions_enabled:
-        return {
-            "status": "disabled",
-            "actions": [],
-            "top_action_id": "",
-            "requires_confirmation": False,
-            "reason_codes": ["assistant_actions_disabled"],
-            "warnings": [],
-        }
-
-    def _map_action_type(suggestion_type: str) -> str:
-        key = str(suggestion_type or "").strip().lower()
-        if key == "automation":
-            return "prepare_workflow_draft"
-        if key == "summarization":
-            return "prepare_summary_draft"
-        if key == "retrieval":
-            return "collect_context_draft"
-        return "prepare_follow_up_draft"
-
-    actions: list[dict[str, object]] = []
-    for idx, row in enumerate(rows, start=1):
-        sid = str(row.get("suggestion_id", "") or f"suggestion:{idx}")
-        rank = int(row.get("rank", idx) or idx)
-        action_id = f"draft_action:{sid}"
-        action_type = _map_action_type(str(row.get("suggestion_type", "") or ""))
-        rationale = str(row.get("rationale", "") or "")
-        if language == "ru":
-            summary = rationale or "Подготовлен безопасный черновик действия для ревью."
-            rollback = "Откат не требуется: действие черновое и не имеет side effects."
-        else:
-            summary = rationale or "Prepared a safe draft action for review."
-            rollback = "No rollback required: draft action has no side effects."
-        actions.append(
-            {
-                "action_id": action_id,
-                "action_type": action_type,
-                "status": "draft",
-                "requires_confirmation": True,
-                "estimated_impact": "low",
-                "parameters": {
-                    "source_suggestion_id": sid,
-                    "priority": int(row.get("priority", 0) or 0),
-                },
-                "preview": {
-                    "title": str(row.get("action_hint", "") or action_type),
-                    "summary": summary,
-                    "rank": rank,
-                },
-                "rollback_plan": rollback,
-            }
-        )
-
-    top_action_id = str((actions[0] or {}).get("action_id", "") or "") if actions else ""
-    return {
-        "status": "ready" if actions else "idle",
-        "actions": actions,
-        "top_action_id": top_action_id,
-        "requires_confirmation": bool(actions),
-        "reason_codes": ["draft_actions_available"] if actions else ["no_suggestions_for_actions"],
-        "warnings": [],
-    }
+    return _build_draft_action_bundle_impl(
+        proactive_bundle=proactive_bundle,
+        language=language,
+        actions_enabled=actions_enabled,
+    )
 
 
 def _infer_assistant_intent(*, query: str, assistant_mode_enabled: bool) -> dict[str, object]:
