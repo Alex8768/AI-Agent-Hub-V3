@@ -463,6 +463,64 @@ async def synthesize_fallback_response(
     return resp
 
 
+def synthesize_graph_response(
+    *,
+    final_state: object,
+    request: object,
+    dry_run: bool,
+    build_dry_run_answer_fn: object,
+    build_graph_answer_response_fn: object,
+    apply_graph_response_diagnostics_fn: object,
+    confidence_fn: object,
+    response_model_cls: object,
+    evidence_contract_version: str,
+    evidence_summary_fn: object,
+    evidence_contract_status_fn: object,
+    evidence_contract_gate_reason_fn: object,
+    self_check_fn: object,
+    verify_preflight_fn: object,
+    planner_runtime_parity_fn: object,
+    execution_policy_builder_fn: object,
+    reasoning_quality_builder_fn: object,
+    reasoning_optimization_builder_fn: object,
+    enterprise_productization_builder_fn: object,
+    meta_cognition_builder_fn: object,
+    warning_flags_applier_fn: object,
+) -> object:
+    answer_text = getattr(final_state, "final_answer", None) or "(no answer generated)"
+    if dry_run and not getattr(final_state, "final_answer", None):
+        answer_text = str(build_dry_run_answer_fn(final_state))
+
+    resp = build_graph_answer_response_fn(
+        final_state=final_state,
+        answer_text=answer_text,
+        confidence_fn=confidence_fn,
+        response_model_cls=response_model_cls,
+    )
+    diag, runtime_warnings = apply_graph_response_diagnostics_fn(
+        response=resp,
+        final_state=final_state,
+        answer_text=answer_text,
+        request_query=str(getattr(request, "query", "") or ""),
+        evidence_contract_version=evidence_contract_version,
+        evidence_summary_fn=evidence_summary_fn,
+        evidence_contract_status_fn=evidence_contract_status_fn,
+        evidence_contract_gate_reason_fn=evidence_contract_gate_reason_fn,
+        self_check_fn=self_check_fn,
+        verify_preflight_fn=verify_preflight_fn,
+        planner_runtime_parity_fn=planner_runtime_parity_fn,
+        execution_policy_builder=execution_policy_builder_fn,
+        reasoning_quality_builder=reasoning_quality_builder_fn,
+        reasoning_optimization_builder=reasoning_optimization_builder_fn,
+        enterprise_productization_builder=enterprise_productization_builder_fn,
+        meta_cognition_builder=meta_cognition_builder_fn,
+        warning_flags_applier=warning_flags_applier_fn,
+    )
+    resp.warnings = list(runtime_warnings or [])
+    resp.diagnostics = diag
+    return resp
+
+
 def _build_dry_run_answer_core(*, provenance: list, context_preview: str) -> str:
     ids = []
     for item in provenance[:5]:

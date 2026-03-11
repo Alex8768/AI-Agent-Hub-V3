@@ -36,6 +36,7 @@ from src.layers.pro.reasoning.evaluation.runtime_productization import (
     build_dry_run_answer_from_state as _build_dry_run_answer_from_state,
     build_enterprise_productization_diagnostics as _build_enterprise_productization_diagnostics,
     execute_fallback_planner_steps_mvp as _execute_fallback_planner_steps_mvp,
+    synthesize_graph_response as _synthesize_graph_response,
     synthesize_fallback_response as _synthesize_fallback_response,
     build_meta_cognition_diagnostics as _build_meta_cognition_diagnostics,
     build_reasoning_optimization_diagnostics as _build_reasoning_optimization_diagnostics,
@@ -240,23 +241,15 @@ class ReasoningEngine:
         s = get_settings()
         dry_run = bool(getattr(s, "feature_reasoning_llm_dry_run", False))
 
-        answer_text = final_state.final_answer or "(no answer generated)"
-        if dry_run and not final_state.final_answer:
-            # Генерируем dry-run ответ из контекста
-            answer_text = self._build_dry_run_answer(final_state)
-
-        resp = _build_graph_answer_response(
+        resp = _synthesize_graph_response(
             final_state=final_state,
-            answer_text=answer_text,
+            request=request,
+            dry_run=dry_run,
+            build_dry_run_answer_fn=self._build_dry_run_answer,
+            build_graph_answer_response_fn=_build_graph_answer_response,
+            apply_graph_response_diagnostics_fn=_apply_graph_response_diagnostics,
             confidence_fn=compute_confidence,
             response_model_cls=AnswerResponse,
-        )
-
-        diag, runtime_warnings = _apply_graph_response_diagnostics(
-            response=resp,
-            final_state=final_state,
-            answer_text=answer_text,
-            request_query=str(getattr(request, "query", "") or ""),
             evidence_contract_version=EVIDENCE_CONTRACT_VERSION,
             evidence_summary_fn=self._evidence_summary,
             evidence_contract_status_fn=self._evidence_contract_status,
@@ -264,15 +257,13 @@ class ReasoningEngine:
             self_check_fn=self._self_check_diagnostics,
             verify_preflight_fn=self._verify_diagnostics_preflight,
             planner_runtime_parity_fn=self._build_planner_runtime_parity_diagnostics,
-            execution_policy_builder=build_reasoning_execution_policy,
-            reasoning_quality_builder=self._reasoning_quality_diagnostics,
-            reasoning_optimization_builder=self._build_reasoning_optimization_diagnostics,
-            enterprise_productization_builder=self._build_enterprise_productization_diagnostics,
-            meta_cognition_builder=self._build_meta_cognition_diagnostics,
-            warning_flags_applier=_apply_reasoning_runtime_warning_flags,
+            execution_policy_builder_fn=build_reasoning_execution_policy,
+            reasoning_quality_builder_fn=self._reasoning_quality_diagnostics,
+            reasoning_optimization_builder_fn=self._build_reasoning_optimization_diagnostics,
+            enterprise_productization_builder_fn=self._build_enterprise_productization_diagnostics,
+            meta_cognition_builder_fn=self._build_meta_cognition_diagnostics,
+            warning_flags_applier_fn=_apply_reasoning_runtime_warning_flags,
         )
-        resp.warnings = list(runtime_warnings or [])
-        resp.diagnostics = diag
 
         # Логируем
         try:
