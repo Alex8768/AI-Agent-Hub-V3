@@ -94,8 +94,17 @@ async def run_answer_orchestration_core(
     except Exception as exc:
         try:
             object.__setattr__(resp, "request_id", "")
-        except Exception:
-            pass
+        except Exception as fallback_exc:
+            soft_failure_reason_codes.append("answer_orchestrator_request_id_fallback_assignment_failed")
+            _LOGGER.warning(
+                "Answer orchestrator soft-failure: request_id fallback assignment failed",
+                context={
+                    "workspace_id": str(workspace_id or ""),
+                    "error": str(fallback_exc),
+                    "error_type": type(fallback_exc).__name__,
+                    "reason_code": "answer_orchestrator_request_id_fallback_assignment_failed",
+                },
+            )
         soft_failure_reason_codes.append("answer_orchestrator_request_id_assignment_failed")
         _LOGGER.warning(
             "Answer orchestrator soft-failure: request_id assignment failed",
@@ -111,8 +120,17 @@ async def run_answer_orchestration_core(
     except Exception as exc:
         try:
             object.__setattr__(resp, "workspace_id", "")
-        except Exception:
-            pass
+        except Exception as fallback_exc:
+            soft_failure_reason_codes.append("answer_orchestrator_workspace_id_fallback_assignment_failed")
+            _LOGGER.warning(
+                "Answer orchestrator soft-failure: workspace_id fallback assignment failed",
+                context={
+                    "workspace_id": str(workspace_id or ""),
+                    "error": str(fallback_exc),
+                    "error_type": type(fallback_exc).__name__,
+                    "reason_code": "answer_orchestrator_workspace_id_fallback_assignment_failed",
+                },
+            )
         soft_failure_reason_codes.append("answer_orchestrator_workspace_id_assignment_failed")
         _LOGGER.warning(
             "Answer orchestrator soft-failure: workspace_id assignment failed",

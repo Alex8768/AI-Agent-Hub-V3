@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-Active Anchor Execution — A2.53 patch 1 complete (answer-path exception policy inventory + scope lock)
+Active Anchor Execution — A2.53 patch 2 complete (`orchestrator` silent-except removal)
 
 ## Last Completed Anchor
 
@@ -27,7 +27,8 @@ Current focus:
 
 Current progress:
 - A2.53 patch 1 complete (inventory + scope lock for scoped silent exception sites).
-- inventory confirms remaining silent handlers in `answer_service` and `orchestrator`.
+- A2.53 patch 2 complete (`orchestrator` silent-except removal with fallback failure reason-codes).
+- inventory confirms remaining silent handlers in `answer_service`; `orchestrator` scope for patch 2 is remediated.
 - patch plan locked: orchestrator remediation, answer_service remediation (phase 1/2), guardrails closure.
 - A2.51 + post-A2.51 guardrail maintenance remain green and protected by existing quality gates.
 

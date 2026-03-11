@@ -36,6 +36,32 @@ class _ReasoningAdapter:
         return _RespWithDiagnostics()
 
 
+class _ReasoningAdapterWithFailingRequestIdFallback:
+    async def synthesize(self, req):
+        _ = req
+        return _RespWithFailingRequestIdFallback()
+
+
+class _RespWithFailingRequestIdFallback:
+    __slots__ = ("answer", "diagnostics", "provenance", "timings", "_request_id")
+
+    def __init__(self):
+        self.answer = "ok"
+        self.diagnostics = {"planning_reason_codes": []}
+        self.provenance = []
+        self.timings = {}
+        self._request_id = ""
+
+    @property
+    def request_id(self) -> str:
+        return self._request_id
+
+    @request_id.setter
+    def request_id(self, value: str) -> None:
+        _ = value
+        raise RuntimeError("request-id-write-failed")
+
+
 class _RetrieverAdapter:
     def __init__(self, *, engine, hybrid, workspace_id):
         self.engine = engine
@@ -144,6 +170,58 @@ async def test_orchestrator_writes_soft_failure_reason_code_for_request_id_assig
 
     diag = dict(getattr(out.resp, "diagnostics", None) or {})
     assert "answer_orchestrator_request_id_assignment_failed" in list(diag.get("planning_reason_codes") or [])
+
+
+@pytest.mark.asyncio
+async def test_orchestrator_writes_soft_failure_reason_code_for_request_id_fallback_assignment():
+    http = SimpleNamespace(state=SimpleNamespace(request_id="rid-soft"), headers={})
+    req = SimpleNamespace(query="q", session_id="s1")
+
+    async def _build_llm_adapter(*, settings):
+        _ = settings
+        return None, False, "", "", ""
+
+    async def _load_session_memory(**kwargs):
+        _ = kwargs
+        return False, False
+
+    async def _load_durable_records(**kwargs):
+        _ = kwargs
+        return {}, {}
+
+    async def _apply_diagnostics(**kwargs):
+        resp = kwargs["resp"]
+        resp.diagnostics = {"planning_reason_codes": []}
+
+    out = await run_answer_orchestration_core(
+        http=http,
+        req=req,
+        workspace_id="default",
+        settings=SimpleNamespace(),
+        engine=object(),
+        hybrid=object(),
+        runtime_context={
+            "assistant_mode_enabled": False,
+            "assistant_proactive_enabled": False,
+            "assistant_actions_enabled": False,
+            "assistant_response_language": "auto",
+        },
+        get_reasoning_engine=lambda **kwargs: None,
+        get_memory_store=lambda: None,
+        build_llm_adapter=_build_llm_adapter,
+        load_session_memory=_load_session_memory,
+        load_durable_records=_load_durable_records,
+        retriever_adapter_cls=_RetrieverAdapter,
+        build_reasoning_runtime_adapter=lambda **kwargs: _ReasoningAdapterWithFailingRequestIdFallback(),
+        detect_response_language=lambda _query: "en",
+        build_assistant_fallback_answer=lambda **kwargs: "fallback",
+        apply_diagnostics=_apply_diagnostics,
+    )
+
+    diag = dict(getattr(out.resp, "diagnostics", None) or {})
+    reason_codes = list(diag.get("planning_reason_codes") or [])
+    assert "answer_orchestrator_request_id_assignment_failed" in reason_codes
+    assert "answer_orchestrator_request_id_fallback_assignment_failed" in reason_codes
 
 
 @pytest.mark.asyncio

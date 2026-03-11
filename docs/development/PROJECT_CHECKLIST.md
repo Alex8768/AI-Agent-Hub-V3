@@ -70,7 +70,7 @@
 ## Current Work — A2.53 Answer-Path Exception Policy Hardening
 
 - [x] Patch 1 — inventory + scope lock
-- [ ] Patch 2 — `orchestrator` silent-except removal
+- [x] Patch 2 — `orchestrator` silent-except removal
 - [ ] Patch 3 — `answer_service` silent-except removal (phase 1)
 - [ ] Patch 4 — `answer_service` silent-except removal (phase 2)
 - [ ] Patch 5 — guardrails + parity + closure
