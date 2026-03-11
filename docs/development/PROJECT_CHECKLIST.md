@@ -81,7 +81,7 @@
 
 ## Current Work — A2.81 Facade Convergence Phase 25 (Answer/Reasoning)
 
-- [ ] Patch 1 - inventory + scope lock
+- [x] Patch 1 - inventory + scope lock
 - [ ] Patch 2 - Answer extraction phase-25
 - [ ] Patch 3 - Reasoning extraction phase-25
 - [ ] Patch 4 - Guardrail threshold recalibration and import-budget expansion

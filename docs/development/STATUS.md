@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-A2.80 complete
+A2.81 in progress (Patch 1 complete)
 
 ## Last Completed Anchor
 
@@ -20,10 +20,10 @@ Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 
 ## Current Active Anchor
 
-TBD - Post-A2.80 planning
+A2.81 - Facade Convergence Phase 25 (Answer/Reasoning)
 
 Current focus:
-- define next extraction inventory and scope lock (A2.81 planning)
+- execute answer extraction phase-25 (A2.81 patch 2)
 - preserve no-growth guardrail discipline from latest baselines (`1781`/`262`) and import budgets (`15`/`14`)
 - maintain one-patch-one-reason execution discipline
 
@@ -35,7 +35,7 @@ Execution discipline:
 
 ## Next Anchor
 
-TBD - Post-A2.80 planning
+TBD - Post-A2.81 planning
 
 ## CI Status
 
