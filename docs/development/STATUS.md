@@ -2,17 +2,17 @@
 
 ## Current Phase
 
-A2.73 in progress (Patch 4 complete)
+A2.73 closed
 
 ## Last Completed Anchor
 
-A2.72 - Facade Convergence Phase 16 (Answer/Reasoning)
+A2.73 - Facade Convergence Phase 17 (Answer/Reasoning)
 
-A2.72 closed with:
-- answer draft-action bundle helper seam extraction into execution durable-keys module
-- reasoning fallback synthesis runtime seam extraction into evaluation runtime-productization module
-- no-growth baselines recalibrated to latest reduced facade budgets (`2241`/`361`)
-- focused and full-suite checks green at closure (`91 passed`; `576 passed, 3 skipped`)
+A2.73 closed with:
+- answer handshake transition helper seam extraction into execution durable-keys module
+- reasoning graph synthesis runtime seam extraction into evaluation runtime-productization module
+- no-growth baselines recalibrated to latest reduced facade budgets (`2183`/`352`)
+- focused and full-suite checks green at closure (`132 passed`; `576 passed, 3 skipped`)
 
 Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 - Anchor Closed — A2.56 complete (operational guardrails policy closure)
@@ -20,11 +20,11 @@ Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 
 ## Current Active Anchor
 
-A2.73 - Facade Convergence Phase 17 (Answer/Reasoning)
+A2.74 - TBD (Post-A2.73 planning)
 
 Current focus:
-- run focused + full-suite closure checks and finalize A2.73 (patch 5)
-- preserve no-growth guardrail discipline from updated baselines (`2183`/`352`)
+- define next bounded extraction inventory and scope lock for follow-up convergence anchor
+- preserve no-growth guardrail discipline from A2.73 baselines (`2183`/`352`)
 - continue one-patch-one-reason execution discipline
 
 Execution discipline:
@@ -35,7 +35,7 @@ Execution discipline:
 
 ## Next Anchor
 
-TBD - Post-A2.73 planning
+A2.74 - TBD (Post-A2.73 planning)
 
 ## CI Status
 
