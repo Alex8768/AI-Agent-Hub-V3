@@ -74,7 +74,7 @@ Target A2.52 boundaries:
 - [x] Patch 2 — post-orchestration seam extraction
 - [x] Patch 3 — diagnostics merge seam extraction
 - [x] Patch 4 — facade pipeline cleanup
-- [ ] Patch 5 — guardrails + parity + closure
+- [x] Patch 5 — guardrails + parity + closure
 
 ### Non-Negotiable Rules
 
@@ -106,6 +106,9 @@ A2.52 is complete when:
 - `handle_contract()` is a short facade pipeline
 - answer/debug output parity is preserved
 - dependency and parity quality gates cover the new seams
+
+Closure status:
+- A2.52 closed; all patch milestones completed.
 
 ## Next Anchor
 

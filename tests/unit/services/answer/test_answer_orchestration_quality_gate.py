@@ -37,6 +37,41 @@ def _assert_no_forbidden_imports(path: Path, forbidden_prefixes: list[str], gate
     assert not violations, f"{gate_name} violations detected:\n" + "\n".join(sorted(violations))
 
 
+def _read_function_calls(path: Path, function_name: str) -> list[str]:
+    tree = ast.parse(path.read_text(encoding="utf-8"))
+    target: ast.FunctionDef | ast.AsyncFunctionDef | None = None
+    for node in tree.body:
+        if isinstance(node, ast.ClassDef) and node.name == "AnswerService":
+            for child in node.body:
+                if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)) and child.name == function_name:
+                    target = child
+                    break
+    if target is None:
+        return []
+    calls: list[str] = []
+    for node in ast.walk(target):
+        if not isinstance(node, ast.Call):
+            continue
+        if isinstance(node.func, ast.Name):
+            calls.append(str(node.func.id or ""))
+        elif isinstance(node.func, ast.Attribute):
+            calls.append(str(node.func.attr or ""))
+    return calls
+
+
+def _has_silent_except_pass(path: Path) -> bool:
+    tree = ast.parse(path.read_text(encoding="utf-8"))
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.ExceptHandler):
+            continue
+        if len(node.body) != 1:
+            continue
+        only_stmt = node.body[0]
+        if isinstance(only_stmt, ast.Pass):
+            return True
+    return False
+
+
 def test_answer_endpoint_dependency_gate_forbidden_internal_imports():
     endpoint_path = ROOT / "src/api/endpoints/answer.py"
     _assert_no_forbidden_imports(
@@ -79,10 +114,36 @@ def test_answer_service_facade_gate_requires_seam_imports():
     required = {
         "src.services.answer.interface_contract",
         "src.services.answer.orchestrator",
+        "src.services.answer.post_orchestration",
+        "src.services.answer.diagnostics_merge",
         "src.services.answer.response_assembly",
     }
     missing = sorted(mod for mod in required if mod not in modules)
     assert not missing, "answer_service_missing_required_seams:\n" + "\n".join(missing)
+
+
+def test_answer_service_facade_gate_handle_contract_pipeline_calls():
+    answer_service_path = ROOT / "src/services/answer/answer_service.py"
+    calls = _read_function_calls(answer_service_path, "handle_contract")
+    required = {
+        "_run_answer_primary_pipeline",
+        "run_answer_post_orchestration_flow",
+        "_build_post_orchestration_deps",
+        "run_answer_diagnostics_merge_flow",
+        "_build_diagnostics_merge_deps",
+    }
+    missing = sorted(call for call in required if call not in calls)
+    assert not missing, "answer_service_handle_contract_missing_pipeline_calls:\n" + "\n".join(missing)
+
+
+def test_answer_soft_failure_gate_no_silent_except_pass_in_a252_seams():
+    answer_paths = [
+        ROOT / "src/services/answer/response_assembly.py",
+        ROOT / "src/services/answer/post_orchestration.py",
+        ROOT / "src/services/answer/diagnostics_merge.py",
+    ]
+    violations = [str(path.relative_to(ROOT)) for path in answer_paths if _has_silent_except_pass(path)]
+    assert not violations, "answer_soft_failure_gate_detected_silent_except_pass:\n" + "\n".join(sorted(violations))
 
 
 class _DummyState:
