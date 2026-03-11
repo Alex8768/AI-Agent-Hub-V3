@@ -61,10 +61,15 @@
 - [x] A2.62 - Facade Convergence Phase 6 (Answer/Reasoning)
 - [x] A2.63 - Facade Convergence Phase 7 (Answer/Reasoning)
 - [x] A2.64 - Facade Convergence Phase 8 (Answer/Reasoning)
+- [ ] A2.65 - Facade Convergence Phase 9 (Answer/Reasoning)
 
-## Current Work — TBD (Post-A2.64 planning)
+## Current Work — A2.65 Facade Convergence Phase 9 (Answer/Reasoning)
 
-- [ ] Define next anchor and patch inventory/scope lock
+- [x] Patch 1 - inventory + scope lock
+- [ ] Patch 2 - Answer extraction phase-9
+- [ ] Patch 3 - Reasoning extraction phase-9
+- [ ] Patch 4 - Guardrail threshold recalibration and import-budget expansion
+- [ ] Patch 5 - guardrails + parity + closure
 
 ## A2.64 Historical Work - Facade Convergence Phase 8 (Answer/Reasoning)
 
