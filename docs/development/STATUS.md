@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-Anchor Closure — A2.53 complete (answer-path exception-policy hardening + guardrails/parity closure)
+Active Anchor Execution — A2.54 patch 1 complete (diagnostics contract guardrails inventory + scope lock)
 
 ## Last Completed Anchor
 
@@ -16,22 +16,18 @@ Answer-path exception policy hardening completed with:
 
 ## Current Active Anchor
 
-Post-A2.53 planning (next anchor TBD)
+A2.54 — Diagnostics Contract Guardrails
 
 Current focus:
-- anchor closure completed; preparing post-A2.53 planning
-- enforce soft-failure reason-code/logging policy with parity-safe behavior
+- strengthen diagnostics snapshot/contract guardrails for answer-path runtime
+- enforce deterministic policy coverage for soft-failure visibility
 - preserve answer/debug output parity baselines
 - keep one-patch-one-reason execution discipline
 
 Current progress:
-- A2.53 patch 1 complete (inventory + scope lock for scoped silent exception sites).
-- A2.53 patch 2 complete (`orchestrator` silent-except removal with fallback failure reason-codes).
-- A2.53 patch 3 complete (`answer_service` phase 1: diagnostics-path silent-except removal with soft-failure reason-codes).
-- A2.53 patch 4 complete (`answer_service` phase 2: observability/session-memory/retriever-adapter silent-except removal).
-- A2.53 patch 5 complete (quality gates + parity/full-suite closure sync).
-- scoped silent handler inventory from A2.53 is fully remediated in `answer_service` and `orchestrator`.
-- patch plan locked: orchestrator remediation, answer_service remediation (phase 1/2), guardrails closure.
+- A2.54 patch 1 complete (inventory + scope lock for diagnostics contract surfaces).
+- baseline guardrails from A2.53 remain intact and green.
+- patch plan locked: snapshot expansion, policy-coverage expansion, enforcement hardening, closure.
 - A2.51 + post-A2.51 guardrail maintenance remain green and protected by existing quality gates.
 
 Execution discipline:
@@ -42,7 +38,7 @@ Execution discipline:
 
 ## Next Anchor
 
-TBD — Post-A2.53 planning
+TBD — Post-A2.54 planning
 
 ## CI Status
 

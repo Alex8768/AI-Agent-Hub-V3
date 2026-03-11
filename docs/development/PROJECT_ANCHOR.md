@@ -2,90 +2,90 @@
 
 ## Active Anchor
 
-A2.53 — Answer-Path Exception Policy Hardening
+A2.54 — Diagnostics Contract Guardrails
 
 ### Goal
 
-Eliminate remaining silent exception swallowing in answer-path runtime code and
-standardize soft-failure diagnostics/logging policy without changing answer/debug behavior.
+Strengthen deterministic diagnostics contract guardrails for answer-path runtime so
+regressions in diagnostics shape/reason-codes/counters are caught early without changing API behavior.
 
-The intent of this anchor is reliability and observability focused:
+The intent of this anchor is quality-gate and contract safety focused:
 - preserve runtime/API parity,
-- remove silent failure paths (`except ...: pass`) from active answer runtime,
-- enforce deterministic soft-failure reason-code propagation and warning logs.
+- enforce diagnostics snapshot contract stability,
+- enforce exception-policy contract coverage via deterministic tests.
 
 ### Why Now
 
-A2.52 closed facade slimming and seam guardrails, but inventory still shows legacy
-silent `except ...: pass` blocks in active answer-path modules.
+A2.53 closed exception-policy hardening and removed scoped silent handlers in answer-path runtime.
 
-These blocks reduce diagnosability and can hide degradations in production.
+Now the main residual risk is silent drift of diagnostics schema/fields/reason-code policies
+without immediate failure signals.
 
-A2.53 focuses on exception-policy hardening with strict runtime parity.
+A2.54 focuses on guardrail depth so future refactors keep diagnostics contracts stable.
 
 ### Architecture Position
 
-Target A2.53 boundaries:
+Target A2.54 boundaries:
 
-- **Answer Runtime Modules (`answer_service`, `orchestrator`)**
-  - replace silent `except ...: pass` in active runtime paths
-  - keep best-effort semantics where required, but always emit reason codes + warning logs
-  - keep critical stages fail-fast with controlled exceptions
+- **Diagnostics Contract Snapshot Surface**
+  - answer/debug diagnostics top-level key set invariants
+  - soft-failure reason-code presence invariants in failure paths
+  - deterministic counter/flag invariants for fallback paths
 
-- **Soft-Failure Policy Contract**
-  - reason-code naming consistency
-  - diagnostics key policy consistency (`planning_reason_codes` and counters)
-  - deterministic fallback visibility contract
+- **Exception Policy Guardrails**
+  - scoped no-silent-swallow policy remains enforced
+  - critical-stage exception behavior remains explicit
 
 - **Quality Gates**
-  - AST/static gate for forbidden silent `except ...: pass` in scoped modules
+  - stronger diagnostics snapshot and contract assertions
   - parity gate to ensure no user-facing behavior regression
 
 ### Patch Plan
 
 #### Patch 1 — Inventory + scope lock
-- Build explicit inventory of remaining silent `except ...: pass` in answer-path runtime.
-- Classify each site:
-  - best-effort fallback (must log + reason-code),
-  - critical stage (must not swallow exception).
-- Define reason-code/logging policy and no-regression constraints.
+- Build explicit inventory of diagnostics contract surfaces already relied upon by tests/docs.
+- Classify current guardrails into:
+  - shape (snapshot keys),
+  - policy (reason-codes/flags),
+  - parity (answer/debug behavior).
+- Define no-regression constraints and forbidden drift scope.
 
-#### Patch 2 — `orchestrator` silent-except removal
-- Replace scoped silent handlers with structured warning logs + diagnostics reason-codes.
-- Preserve existing runtime contracts and fallback outputs.
+#### Patch 2 — Diagnostics snapshot contract expansion
+- Add/expand stable snapshot assertions for diagnostics schema in answer-path tests.
+- Preserve runtime outputs and avoid business-logic changes.
 
-#### Patch 3 — `answer_service` silent-except removal (phase 1)
-- Replace low-risk, best-effort silent handlers with policy-compliant soft-failure wiring.
-- Keep answer/debug parity and avoid opportunistic refactors.
+#### Patch 3 — Soft-failure policy guardrail coverage expansion
+- Add targeted tests asserting reason-code/counter visibility for fallback paths.
+- Keep all changes test/guardrail-centric.
 
-#### Patch 4 — `answer_service` silent-except removal (phase 2)
-- Finish remaining scoped sites and normalize reason-code/counter behavior.
-- Keep fallback behavior deterministic and observable.
+#### Patch 4 — Exception policy enforcement hardening
+- Strengthen AST/static guardrails for scoped modules and policy constraints.
+- Ensure deterministic failure messages for CI triage.
 
 #### Patch 5 — Guardrails + parity + closure
-- Extend quality gates to enforce exception policy scope.
+- Run full diagnostics/parity guardrail suite and finalize closure checks.
 - Run parity-focused tests and full suite.
-- Close docs/checklist/status/features sync for A2.53.
+- Close docs/checklist/status/features sync for A2.54.
 
 ### Progress
 
 - [x] Patch 1 — inventory + scope lock
-- [x] Patch 2 — `orchestrator` silent-except removal
-- [x] Patch 3 — `answer_service` silent-except removal (phase 1)
-- [x] Patch 4 — `answer_service` silent-except removal (phase 2)
-- [x] Patch 5 — guardrails + parity + closure
+- [ ] Patch 2 — diagnostics snapshot contract expansion
+- [ ] Patch 3 — soft-failure policy guardrail coverage expansion
+- [ ] Patch 4 — exception policy enforcement hardening
+- [ ] Patch 5 — guardrails + parity + closure
 
 ### Non-Negotiable Rules
 
-- No net-new intelligence features during A2.53
+- No net-new intelligence features during A2.54
 - Preserve answer/debug output parity
-- No silent `except ...: pass` in scoped active runtime modules after closure
-- Critical stages must not swallow exceptions
+- No diagnostics contract drift without explicit guardrail updates
+- No weakening of exception-policy scope gates
 - One patch = one reason
 
 ### Out of Scope
 
-Do NOT modify during A2.53:
+Do NOT modify during A2.54:
 
 - planner/kernel topology
 - new tool safety capabilities
@@ -97,19 +97,16 @@ Do NOT modify during A2.53:
 
 ### Definition of Done
 
-A2.53 is complete when:
+A2.54 is complete when:
 
-- remaining scoped silent exception sites are removed/replaced
-- soft-failure policy is deterministic and test-covered
+- diagnostics contract surfaces are covered by deterministic guardrails
+- soft-failure policy visibility is test-covered
 - answer/debug output parity is preserved
-- quality gates enforce scoped exception policy
-
-Closure status:
-- A2.53 closed; all patch milestones completed.
+- quality gates enforce scoped exception policy and diagnostics schema stability
 
 ## Next Anchor
 
-TBD — Post-A2.53 planning
+TBD — Post-A2.54 planning
 
 ### Discipline
 
