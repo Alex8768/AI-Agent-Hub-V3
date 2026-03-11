@@ -30,6 +30,65 @@ def parse_llm_planner_intent(
     return ""
 
 
+def infer_assistant_intent(
+    *,
+    query: str,
+    assistant_mode_enabled: bool,
+) -> dict[str, object]:
+    text = str(query or "").strip()
+    lowered = text.lower()
+
+    if not assistant_mode_enabled:
+        return {
+            "intent": "disabled",
+            "confidence": 0.0,
+            "entities": {},
+            "implicit_tasks": [],
+            "source": "heuristic",
+            "reason_codes": ["assistant_mode_disabled"],
+        }
+
+    if "проект" in lowered or "project" in lowered:
+        return {
+            "intent": "start_project",
+            "confidence": 0.8,
+            "entities": {"project_name": text[:120]},
+            "implicit_tasks": [
+                "project_workspace",
+                "timeline_alignment",
+                "contacts_research",
+            ],
+            "source": "heuristic",
+            "reason_codes": ["keyword_project"],
+        }
+    if "встреч" in lowered or "митинг" in lowered or "meeting" in lowered:
+        return {
+            "intent": "prepare_meeting",
+            "confidence": 0.7,
+            "entities": {},
+            "implicit_tasks": ["agenda_draft", "context_summary", "follow_up_tasks"],
+            "source": "heuristic",
+            "reason_codes": ["keyword_meeting"],
+        }
+    if "привет" in lowered or lowered.startswith("hi") or "hello" in lowered:
+        return {
+            "intent": "general_chat",
+            "confidence": 0.6,
+            "entities": {},
+            "implicit_tasks": ["friendly_response"],
+            "source": "heuristic",
+            "reason_codes": ["keyword_greeting"],
+        }
+    return {
+        "intent": "general_query",
+        "confidence": 0.4,
+        "entities": {},
+        "implicit_tasks": [],
+        "source": "heuristic",
+        "reason_codes": ["fallback_general_query"],
+    }
+
+
 def build_deterministic_plan(
     *,
     query: str,

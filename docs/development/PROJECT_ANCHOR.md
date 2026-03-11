@@ -58,7 +58,18 @@ Patch 1 artifacts:
 - reduce facade branching and preserve endpoint/debug contract behavior.
 
 Patch 2 artifacts:
-- pending.
+- assistant intent inference seam extracted into
+  `src/services/answer/reasoning/llm_planner_policy.py`:
+  - `infer_assistant_intent`
+- `src/services/answer/answer_service.py` now retains thin compatibility wrapper:
+  - `_infer_assistant_intent` delegates to extracted policy seam
+- facade reduction achieved:
+  - `src/services/answer/answer_service.py`: `2000 -> 1953` lines
+- focused parity/guardrail checks green:
+  - `tests/unit/services/answer/test_answer_service_debug_snapshot.py`
+  - `tests/unit/services/answer/test_answer_soft_failure_observability.py`
+  - `tests/unit/services/answer/test_answer_orchestration_quality_gate.py`
+  - result: `74 passed`
 
 #### Patch 3 - Reasoning extraction phase-21
 - extract next bounded clusters from `reasoning/engine.py` (runtime fallback / diagnostics helper seams),
@@ -84,7 +95,7 @@ Patch 5 artifacts:
 ### Progress
 
 - [x] Patch 1 — inventory + scope lock
-- [ ] Patch 2 - Answer extraction phase-21
+- [x] Patch 2 - Answer extraction phase-21
 - [ ] Patch 3 - Reasoning extraction phase-21
 - [ ] Patch 4 - Guardrail threshold recalibration and import-budget expansion
 - [ ] Patch 5 - guardrails + parity + closure

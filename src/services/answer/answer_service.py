@@ -110,6 +110,7 @@ from src.services.answer.reasoning.llm_planner_policy import (
     build_feedback_adaptation_bundle as _build_feedback_adaptation_bundle_impl,
     build_feedback_learning_bundle as _build_feedback_learning_bundle_impl,
     build_feedback_policy_contract as _build_feedback_policy_contract,
+    infer_assistant_intent as _infer_assistant_intent_impl,
     bridge_plan_to_draft_actions as _bridge_plan_to_draft_actions_impl,
     build_llm_planner_policy_contract as _build_llm_planner_policy_contract,
     build_tool_selection_bundle as _build_tool_selection_bundle_impl,
@@ -402,58 +403,10 @@ def _build_draft_action_bundle(
 
 
 def _infer_assistant_intent(*, query: str, assistant_mode_enabled: bool) -> dict[str, object]:
-    text = str(query or "").strip()
-    lowered = text.lower()
-
-    if not assistant_mode_enabled:
-        return {
-            "intent": "disabled",
-            "confidence": 0.0,
-            "entities": {},
-            "implicit_tasks": [],
-            "source": "heuristic",
-            "reason_codes": ["assistant_mode_disabled"],
-        }
-
-    if "проект" in lowered or "project" in lowered:
-        return {
-            "intent": "start_project",
-            "confidence": 0.8,
-            "entities": {"project_name": text[:120]},
-            "implicit_tasks": [
-                "project_workspace",
-                "timeline_alignment",
-                "contacts_research",
-            ],
-            "source": "heuristic",
-            "reason_codes": ["keyword_project"],
-        }
-    if "встреч" in lowered or "митинг" in lowered or "meeting" in lowered:
-        return {
-            "intent": "prepare_meeting",
-            "confidence": 0.7,
-            "entities": {},
-            "implicit_tasks": ["agenda_draft", "context_summary", "follow_up_tasks"],
-            "source": "heuristic",
-            "reason_codes": ["keyword_meeting"],
-        }
-    if "привет" in lowered or lowered.startswith("hi") or "hello" in lowered:
-        return {
-            "intent": "general_chat",
-            "confidence": 0.6,
-            "entities": {},
-            "implicit_tasks": ["friendly_response"],
-            "source": "heuristic",
-            "reason_codes": ["keyword_greeting"],
-        }
-    return {
-        "intent": "general_query",
-        "confidence": 0.4,
-        "entities": {},
-        "implicit_tasks": [],
-        "source": "heuristic",
-        "reason_codes": ["fallback_general_query"],
-    }
+    return _infer_assistant_intent_impl(
+        query=query,
+        assistant_mode_enabled=assistant_mode_enabled,
+    )
 
 
 def _build_deterministic_plan(
