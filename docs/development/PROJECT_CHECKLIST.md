@@ -61,7 +61,7 @@
 - [x] Patch 1 - inventory + scope lock
 - [x] Patch 2 - Answer extraction phase-2
 - [x] Patch 3 - Reasoning extraction phase-2
-- [ ] Patch 4 - Decomposition guardrail quality-gate expansion
+- [x] Patch 4 - Decomposition guardrail quality-gate expansion
 - [ ] Patch 5 - guardrails + parity + closure
 
 ## A2.57 Historical Work - Application Decomposition Regime (Answer/Reasoning No-Growth)

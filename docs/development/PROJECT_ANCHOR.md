@@ -71,6 +71,13 @@ Patch 3 artifacts:
 - expand deterministic checks for thin-facade budgets and no-growth constraints,
 - keep failure messages actionable for CI.
 
+Patch 4 artifacts:
+- deterministic no-growth line-budget gate added for monolith targets:
+  - `src/services/answer/answer_service.py`
+  - `src/layers/pro/reasoning/engine.py`
+- gate location:
+  - `tests/unit/services/answer/test_answer_orchestration_quality_gate.py`
+
 #### Patch 5 - Guardrails + parity + closure
 - run focused and full-suite checks and close A2.58 with docs sync.
 
@@ -79,7 +86,7 @@ Patch 3 artifacts:
 - [x] Patch 1 — inventory + scope lock
 - [x] Patch 2 - Answer extraction phase-2
 - [x] Patch 3 - Reasoning extraction phase-2
-- [ ] Patch 4 - Decomposition guardrail quality-gate expansion
+- [x] Patch 4 - Decomposition guardrail quality-gate expansion
 - [ ] Patch 5 - guardrails + parity + closure
 
 ### Non-Negotiable Rules

@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-A2.58 patch 3 complete - reasoning extraction phase-2 runtime evaluation diagnostics helpers
+A2.58 patch 4 complete - decomposition no-growth quality-gate expansion
 
 ## Last Completed Anchor
 
@@ -24,8 +24,8 @@ Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 A2.58 - Thin Facade Completion (Answer/Reasoning)
 
 Current focus:
-- expand decomposition guardrail quality-gates for no-growth and thin-facade constraints
-- keep reasoning behavior/api/diagnostics contracts unchanged
+- execute closure checks and finalize A2.58 docs parity sync
+- keep answer and reasoning behavior/api/diagnostics contracts unchanged
 - continue one-patch-one-reason execution discipline
 
 Execution discipline:

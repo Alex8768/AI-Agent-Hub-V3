@@ -13,6 +13,10 @@ from src.services.answer.interface_contract import build_answer_service_request_
 ROOT = Path(__file__).resolve().parents[4]
 
 
+def _line_count(path: Path) -> int:
+    return len(path.read_text(encoding="utf-8").splitlines())
+
+
 def _read_import_modules(path: Path) -> list[str]:
     tree = ast.parse(path.read_text(encoding="utf-8"))
     modules: list[str] = []
@@ -191,6 +195,27 @@ def test_answer_exception_policy_gate_scoped_handlers_require_warning_and_reason
         violations.extend(_read_exception_policy_violations(path))
     assert not violations, (
         "answer_exception_policy_gate_scoped_handler_contract_violations:\n" + "\n".join(sorted(violations))
+    )
+
+
+def test_decomposition_no_growth_gate_answer_and_reasoning_monolith_line_budgets():
+    # A2.58 patch 4: no-growth guardrail budgets pinned to latest reduced baselines.
+    answer_service_path = ROOT / "src/services/answer/answer_service.py"
+    reasoning_engine_path = ROOT / "src/layers/pro/reasoning/engine.py"
+
+    answer_service_max_lines = 3862
+    reasoning_engine_max_lines = 972
+
+    answer_service_lines = _line_count(answer_service_path)
+    reasoning_engine_lines = _line_count(reasoning_engine_path)
+
+    assert answer_service_lines <= answer_service_max_lines, (
+        "decomposition_no_growth_gate_answer_service_line_budget_exceeded:"
+        f" {answer_service_lines} > {answer_service_max_lines}"
+    )
+    assert reasoning_engine_lines <= reasoning_engine_max_lines, (
+        "decomposition_no_growth_gate_reasoning_engine_line_budget_exceeded:"
+        f" {reasoning_engine_lines} > {reasoning_engine_max_lines}"
     )
 
 
