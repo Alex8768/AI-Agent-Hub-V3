@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-A2.63 patch 5 complete (guardrails + parity + closure)
+A2.64 patch 1 complete (inventory + scope lock baseline for facade convergence phase 8)
 
 ## Last Completed Anchor
 
@@ -20,10 +20,10 @@ Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 
 ## Current Active Anchor
 
-TBD - Post-A2.63 planning
+A2.64 - Facade Convergence Phase 8 (Answer/Reasoning)
 
 Current focus:
-- define next anchor inventory/scope lock
+- execute A2.64 patch 2 answer extraction phase-8 (next bounded helper seam)
 - preserve answer/reasoning decomposition and no-growth guardrail baseline
 - continue one-patch-one-reason execution discipline
 
@@ -35,7 +35,7 @@ Execution discipline:
 
 ## Next Anchor
 
-TBD - Post-A2.63 planning
+TBD - Post-A2.64 planning
 
 ## CI Status
 
