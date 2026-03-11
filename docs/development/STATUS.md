@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-A2.68 patch 1 complete (Inventory + scope lock)
+A2.68 patch 2 complete (Answer extraction phase-12)
 
 ## Last Completed Anchor
 
@@ -23,7 +23,7 @@ Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 A2.68 - Facade Convergence Phase 12 (Answer/Reasoning)
 
 Current focus:
-- execute A2.68 patch 2 answer extraction phase-12
+- execute A2.68 patch 3 reasoning extraction phase-12
 - preserve answer/reasoning no-growth guardrail baseline through extraction-only changes
 - continue one-patch-one-reason execution discipline
 
