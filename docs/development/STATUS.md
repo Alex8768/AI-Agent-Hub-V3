@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-A2.70 in progress (Patch 1 complete)
+A2.70 in progress (Patch 2 complete)
 
 ## Last Completed Anchor
 
@@ -23,8 +23,8 @@ Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 A2.70 - Facade Convergence Phase 14 (Answer/Reasoning)
 
 Current focus:
-- execute extraction-only convergence plan after A2.70 scope lock
-- preserve answer/reasoning no-growth guardrail baseline from A2.70 patch-1 inventory
+- execute next bounded extraction seam for reasoning facade (A2.70 patch 3)
+- preserve answer/reasoning no-growth guardrail baseline from latest A2.70 extraction
 - continue one-patch-one-reason execution discipline
 
 Execution discipline:

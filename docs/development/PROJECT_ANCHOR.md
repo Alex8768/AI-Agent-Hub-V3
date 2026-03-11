@@ -54,6 +54,25 @@ Patch 1 artifacts:
 - extract next bounded clusters from `answer_service.py` (policy/runtime-guard/helper seams),
 - reduce facade branching and preserve endpoint/debug contract behavior.
 
+Patch 2 artifacts:
+- approval/handshake helper seam extracted into
+  `src/services/answer/execution/durable_keys.py`:
+  - `build_execution_handshake_bundle`
+  - `build_approval_session_bundle`
+  - `build_durable_approval_session_record`
+- `src/services/answer/answer_service.py` now retains thin compatibility wrappers:
+  - `_build_execution_handshake_bundle`
+  - `_build_approval_session_bundle`
+  - `_build_durable_approval_session_record`
+- facade reduction achieved without import-budget growth:
+  - `src/services/answer/answer_service.py`: `2440 -> 2345` lines
+  - local import statement count remained within current no-growth budget (`15`)
+- focused parity/guardrail checks green:
+  - `tests/unit/services/answer/test_answer_service_debug_snapshot.py`
+  - `tests/unit/services/answer/test_answer_soft_failure_observability.py`
+  - `tests/unit/services/answer/test_answer_orchestration_quality_gate.py`
+  - result: `74 passed`
+
 #### Patch 3 - Reasoning extraction phase-14
 - extract next bounded clusters from `reasoning/engine.py` (runtime fallback / diagnostics helper seams),
 - preserve reasoning diagnostics contract behavior.
@@ -69,7 +88,7 @@ Patch 1 artifacts:
 ### Progress
 
 - [x] Patch 1 — inventory + scope lock
-- [ ] Patch 2 - Answer extraction phase-14
+- [x] Patch 2 - Answer extraction phase-14
 - [ ] Patch 3 - Reasoning extraction phase-14
 - [ ] Patch 4 - Guardrail threshold recalibration and import-budget expansion
 - [ ] Patch 5 - guardrails + parity + closure

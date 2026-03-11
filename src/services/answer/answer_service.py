@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-import hashlib
 import json
-import time
 from time import perf_counter
 from typing import Any
 
@@ -77,6 +75,9 @@ from src.services.answer.execution.durable_keys import (
     apply_execution_idempotency_guard as _apply_execution_idempotency_guard_impl,
     apply_handshake_transition_policy as _apply_handshake_transition_policy_impl,
     apply_rollback_contract_guard as _apply_rollback_contract_guard_impl,
+    build_approval_session_bundle as _build_approval_session_bundle_impl,
+    build_durable_approval_session_record as _build_durable_approval_session_record_impl,
+    build_execution_handshake_bundle as _build_execution_handshake_bundle_impl,
     build_execution_pilot_bundle as _build_execution_pilot_bundle_impl,
     build_execution_receipt_stub as _build_execution_receipt_stub_impl,
     build_safe_mode_execution_gateway as _build_safe_mode_execution_gateway_impl,
@@ -800,54 +801,13 @@ def _build_execution_handshake_bundle(
     assistant_mode_enabled: bool,
     actions_enabled: bool,
 ) -> dict[str, object]:
-    if not assistant_mode_enabled:
-        return {
-            "contract_version": HANDSHAKE_CONTRACT_VERSION,
-            "state": "idle",
-            "requires_confirmation": False,
-            "confirmation_token": "",
-            "approved_action_ids": [],
-            "blocked_action_ids": [],
-            "receipt_id": "",
-            "reason_codes": ["assistant_mode_disabled"],
-        }
-    if not actions_enabled:
-        return {
-            "contract_version": HANDSHAKE_CONTRACT_VERSION,
-            "state": "idle",
-            "requires_confirmation": False,
-            "confirmation_token": "",
-            "approved_action_ids": [],
-            "blocked_action_ids": [],
-            "receipt_id": "",
-            "reason_codes": ["assistant_actions_disabled"],
-        }
-
-    actions = [dict(row or {}) for row in list(draft_actions_bundle.get("actions") or [])]
-    if not actions:
-        return {
-            "contract_version": HANDSHAKE_CONTRACT_VERSION,
-            "state": "idle",
-            "requires_confirmation": False,
-            "confirmation_token": "",
-            "approved_action_ids": [],
-            "blocked_action_ids": [],
-            "receipt_id": "",
-            "reason_codes": ["no_draft_actions_available"],
-        }
-    plan_id = str(plan_bundle.get("plan_id", "") or "")
-    seed = f"{plan_id}|{len(actions)}"
-    token = f"confirm:{hashlib.sha1(seed.encode('utf-8')).hexdigest()[:12]}"
-    return {
-        "contract_version": HANDSHAKE_CONTRACT_VERSION,
-        "state": "pending_confirmation",
-        "requires_confirmation": True,
-        "confirmation_token": token,
-        "approved_action_ids": [],
-        "blocked_action_ids": [],
-        "receipt_id": "",
-        "reason_codes": ["awaiting_user_confirmation"],
-    }
+    return _build_execution_handshake_bundle_impl(
+        plan_bundle=plan_bundle,
+        draft_actions_bundle=draft_actions_bundle,
+        assistant_mode_enabled=assistant_mode_enabled,
+        actions_enabled=actions_enabled,
+        handshake_contract_version=HANDSHAKE_CONTRACT_VERSION,
+    )
 
 
 def _extract_handshake_transition_input(req: AnswerRequest) -> dict[str, object]:
@@ -1075,47 +1035,13 @@ def _build_approval_session_bundle(
     workspace_id: str,
     request_id: str,
 ) -> dict[str, object]:
-    handshake = dict(handshake_bundle or {})
-    state = str(handshake.get("state", "idle") or "idle")
-    plan_id = str(plan_bundle.get("plan_id", "") or "")
-    if state == "pending_confirmation":
-        seed = f"{workspace_id}|{request_id}|{plan_id}|pending"
-        approval_id = f"approval:{hashlib.sha1(seed.encode('utf-8')).hexdigest()[:12]}"
-        token = str(handshake.get("confirmation_token", "") or "")
-        return {
-            "contract_version": APPROVAL_SESSION_CONTRACT_VERSION,
-            "approval_id": approval_id,
-            "workspace_id": str(workspace_id or ""),
-            "plan_id": plan_id,
-            "status": "open",
-            "requires_confirmation": True,
-            "one_time_token": token,
-            "token_ttl_seconds": 900,
-            "reason_codes": ["approval_session_opened"],
-        }
-    if state in {"approved", "cancelled", "executed"}:
-        return {
-            "contract_version": APPROVAL_SESSION_CONTRACT_VERSION,
-            "approval_id": "",
-            "workspace_id": str(workspace_id or ""),
-            "plan_id": plan_id,
-            "status": "closed",
-            "requires_confirmation": False,
-            "one_time_token": "",
-            "token_ttl_seconds": 0,
-            "reason_codes": ["approval_session_closed"],
-        }
-    return {
-        "contract_version": APPROVAL_SESSION_CONTRACT_VERSION,
-        "approval_id": "",
-        "workspace_id": str(workspace_id or ""),
-        "plan_id": plan_id,
-        "status": "idle",
-        "requires_confirmation": False,
-        "one_time_token": "",
-        "token_ttl_seconds": 0,
-        "reason_codes": ["approval_session_idle"],
-    }
+    return _build_approval_session_bundle_impl(
+        handshake_bundle=handshake_bundle,
+        plan_bundle=plan_bundle,
+        workspace_id=workspace_id,
+        request_id=request_id,
+        approval_session_contract_version=APPROVAL_SESSION_CONTRACT_VERSION,
+    )
 
 
 def _build_durable_approval_session_record(
@@ -1126,35 +1052,14 @@ def _build_durable_approval_session_record(
     transition_input: dict[str, object],
     previous_record: dict[str, object] | None = None,
 ) -> dict[str, object]:
-    approval = dict(approval_session_bundle or {})
-    previous = dict(previous_record or {})
-    status = str(approval.get("status", "idle") or "idle")
-    ttl = int(approval.get("token_ttl_seconds", 0) or 0)
-    token = str(confirmation_token or previous.get("confirmation_token", "") or "")
-    prev_exp = str(previous.get("token_expires_at", "") or "")
-    token_expires_at = prev_exp
-    if status == "open" and token:
-        if not token_expires_at:
-            token_expires_at = str(int(time.time()) + ttl if ttl > 0 else 0)
-        last_decision = ""
-    elif status == "closed":
-        current_decision = str(transition_input.get("decision", "") or "")
-        previous_decision = str(previous.get("last_decision", "") or "")
-        last_decision = current_decision if current_decision in {"approve", "cancel"} else previous_decision
-    else:
-        last_decision = str(previous.get("last_decision", "") or "")
-    return {
-        "contract_version": DURABLE_APPROVAL_SESSION_CONTRACT_VERSION,
-        "approval_id": str(approval.get("approval_id", "") or ""),
-        "workspace_id": str(approval.get("workspace_id", "") or ""),
-        "session_id": str(session_id or "default"),
-        "plan_id": str(approval.get("plan_id", "") or ""),
-        "status": status,
-        "confirmation_token": token,
-        "token_expires_at": token_expires_at,
-        "last_decision": last_decision,
-        "reason_codes": ["durable_record_not_persisted_yet"],
-    }
+    return _build_durable_approval_session_record_impl(
+        approval_session_bundle=approval_session_bundle,
+        session_id=session_id,
+        confirmation_token=confirmation_token,
+        transition_input=transition_input,
+        previous_record=previous_record,
+        durable_approval_session_contract_version=DURABLE_APPROVAL_SESSION_CONTRACT_VERSION,
+    )
 
 
 def _build_idempotency_record_snapshot(

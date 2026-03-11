@@ -19,6 +19,155 @@ def durable_idempotency_record_key(*, session_id: str, idempotency_key: str = ""
     return f"session:{sid}:durable:idempotency_record:last"
 
 
+def build_execution_handshake_bundle(
+    *,
+    plan_bundle: dict[str, object],
+    draft_actions_bundle: dict[str, object],
+    assistant_mode_enabled: bool,
+    actions_enabled: bool,
+    handshake_contract_version: str,
+) -> dict[str, object]:
+    if not assistant_mode_enabled:
+        return {
+            "contract_version": str(handshake_contract_version or ""),
+            "state": "idle",
+            "requires_confirmation": False,
+            "confirmation_token": "",
+            "approved_action_ids": [],
+            "blocked_action_ids": [],
+            "receipt_id": "",
+            "reason_codes": ["assistant_mode_disabled"],
+        }
+    if not actions_enabled:
+        return {
+            "contract_version": str(handshake_contract_version or ""),
+            "state": "idle",
+            "requires_confirmation": False,
+            "confirmation_token": "",
+            "approved_action_ids": [],
+            "blocked_action_ids": [],
+            "receipt_id": "",
+            "reason_codes": ["assistant_actions_disabled"],
+        }
+
+    actions = [dict(row or {}) for row in list(draft_actions_bundle.get("actions") or [])]
+    if not actions:
+        return {
+            "contract_version": str(handshake_contract_version or ""),
+            "state": "idle",
+            "requires_confirmation": False,
+            "confirmation_token": "",
+            "approved_action_ids": [],
+            "blocked_action_ids": [],
+            "receipt_id": "",
+            "reason_codes": ["no_draft_actions_available"],
+        }
+    plan_id = str(plan_bundle.get("plan_id", "") or "")
+    seed = f"{plan_id}|{len(actions)}"
+    token = f"confirm:{hashlib.sha1(seed.encode('utf-8')).hexdigest()[:12]}"
+    return {
+        "contract_version": str(handshake_contract_version or ""),
+        "state": "pending_confirmation",
+        "requires_confirmation": True,
+        "confirmation_token": token,
+        "approved_action_ids": [],
+        "blocked_action_ids": [],
+        "receipt_id": "",
+        "reason_codes": ["awaiting_user_confirmation"],
+    }
+
+
+def build_approval_session_bundle(
+    *,
+    handshake_bundle: dict[str, object],
+    plan_bundle: dict[str, object],
+    workspace_id: str,
+    request_id: str,
+    approval_session_contract_version: str,
+) -> dict[str, object]:
+    handshake = dict(handshake_bundle or {})
+    state = str(handshake.get("state", "idle") or "idle")
+    plan_id = str(plan_bundle.get("plan_id", "") or "")
+    if state == "pending_confirmation":
+        seed = f"{workspace_id}|{request_id}|{plan_id}|pending"
+        approval_id = f"approval:{hashlib.sha1(seed.encode('utf-8')).hexdigest()[:12]}"
+        token = str(handshake.get("confirmation_token", "") or "")
+        return {
+            "contract_version": str(approval_session_contract_version or ""),
+            "approval_id": approval_id,
+            "workspace_id": str(workspace_id or ""),
+            "plan_id": plan_id,
+            "status": "open",
+            "requires_confirmation": True,
+            "one_time_token": token,
+            "token_ttl_seconds": 900,
+            "reason_codes": ["approval_session_opened"],
+        }
+    if state in {"approved", "cancelled", "executed"}:
+        return {
+            "contract_version": str(approval_session_contract_version or ""),
+            "approval_id": "",
+            "workspace_id": str(workspace_id or ""),
+            "plan_id": plan_id,
+            "status": "closed",
+            "requires_confirmation": False,
+            "one_time_token": "",
+            "token_ttl_seconds": 0,
+            "reason_codes": ["approval_session_closed"],
+        }
+    return {
+        "contract_version": str(approval_session_contract_version or ""),
+        "approval_id": "",
+        "workspace_id": str(workspace_id or ""),
+        "plan_id": plan_id,
+        "status": "idle",
+        "requires_confirmation": False,
+        "one_time_token": "",
+        "token_ttl_seconds": 0,
+        "reason_codes": ["approval_session_idle"],
+    }
+
+
+def build_durable_approval_session_record(
+    *,
+    approval_session_bundle: dict[str, object],
+    session_id: str,
+    confirmation_token: str,
+    transition_input: dict[str, object],
+    previous_record: dict[str, object] | None,
+    durable_approval_session_contract_version: str,
+) -> dict[str, object]:
+    approval = dict(approval_session_bundle or {})
+    previous = dict(previous_record or {})
+    status = str(approval.get("status", "idle") or "idle")
+    ttl = int(approval.get("token_ttl_seconds", 0) or 0)
+    token = str(confirmation_token or previous.get("confirmation_token", "") or "")
+    prev_exp = str(previous.get("token_expires_at", "") or "")
+    token_expires_at = prev_exp
+    if status == "open" and token:
+        if not token_expires_at:
+            token_expires_at = str(int(time.time()) + ttl if ttl > 0 else 0)
+        last_decision = ""
+    elif status == "closed":
+        current_decision = str(transition_input.get("decision", "") or "")
+        previous_decision = str(previous.get("last_decision", "") or "")
+        last_decision = current_decision if current_decision in {"approve", "cancel"} else previous_decision
+    else:
+        last_decision = str(previous.get("last_decision", "") or "")
+    return {
+        "contract_version": str(durable_approval_session_contract_version or ""),
+        "approval_id": str(approval.get("approval_id", "") or ""),
+        "workspace_id": str(approval.get("workspace_id", "") or ""),
+        "session_id": str(session_id or "default"),
+        "plan_id": str(approval.get("plan_id", "") or ""),
+        "status": status,
+        "confirmation_token": token,
+        "token_expires_at": token_expires_at,
+        "last_decision": last_decision,
+        "reason_codes": ["durable_record_not_persisted_yet"],
+    }
+
+
 def run_execution_pilot_runtime(
     *,
     handshake_bundle: dict[str, object],
