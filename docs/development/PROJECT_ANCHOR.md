@@ -2,29 +2,29 @@
 
 ## Active Anchor
 
-A2.58 - Thin Facade Completion (Answer/Reasoning) (Closed)
+A2.59 - Monolith Burn-Down Phase 3 (Answer/Reasoning)
 
 ### Goal
 
-Complete phase-2 thin-facade decomposition for `answer_service` and `reasoning/engine`
-so orchestration entrypoints remain thin and bounded modules own policy/diagnostics logic.
+Continue controlled monolith burn-down for answer/reasoning entrypoints with extraction-only
+changes, reducing high-risk helper concentration while preserving endpoint/runtime parity.
 
 ### Why Now
 
-A2.57 established governance and first extraction seams.
-Residual risk remains concentrated in large facade/orchestrator files where policy and
-diagnostics logic still coexist with flow wiring.
+A2.58 closed with phase-2 extraction and no-growth line-budget gates.
+Residual risk remains in still-large orchestration files that need further bounded extraction
+to keep future changes maintainable and policy-safe.
 
 ### Architecture Position
 
-Target A2.58 boundaries:
+Target A2.59 boundaries:
 
-- **Answer thin-facade completion**
-  - continue extracting heavy clusters from `src/services/answer/answer_service.py`,
+- **Answer burn-down phase 3**
+  - continue extracting bounded helper clusters from `src/services/answer/answer_service.py`,
   - keep behavior/API/diagnostics parity unchanged.
 
-- **Reasoning thin-engine completion**
-  - continue extracting bounded helpers from `src/layers/pro/reasoning/engine.py`,
+- **Reasoning burn-down phase 3**
+  - continue extracting bounded helper clusters from `src/layers/pro/reasoning/engine.py`,
   - keep `ReasoningEngine` as compatibility facade.
 
 - **Guardrails and quality**
@@ -34,64 +34,36 @@ Target A2.58 boundaries:
 ### Patch Plan
 
 #### Patch 1 — Inventory + scope lock
-- inventory remaining heavy clusters and line-budget hotspots in answer/reasoning facades,
+- inventory remaining high-density helper clusters and line-budget hotspots in answer/reasoning facades,
 - lock scope to extraction-only changes with strict parity constraints.
 
-#### Patch 2 - Answer extraction phase-2
-- extract next bounded clusters from `answer_service.py` (diagnostics/response/execution flow helpers),
+#### Patch 2 - Answer extraction phase-3
+- extract next bounded clusters from `answer_service.py` (execution/diagnostics/post-orchestration helpers),
 - reduce facade branching and preserve endpoint/debug contract behavior.
 
-Patch 2 artifacts:
-- language helper extraction:
-  - `_detect_response_language`, `_normalize_language_tag`, `_answer_language`
-  - moved to `src/services/answer/response/language.py`
-- runtime context helper extraction:
-  - `_build_answer_service_runtime_context`
-  - moved to `src/services/answer/context/runtime_context.py`
-- reasoning adapter helper extraction:
-  - `_build_reasoning_runtime_adapter`
-  - moved to `src/services/answer/reasoning/runtime_adapter.py`
-- memory consistency diagnostics helper extraction:
-  - `_build_memory_consistency_bundle`, `_build_memory_consistency_strategy_contract`
-  - moved to `src/services/answer/diagnostics/memory_consistency.py`
-
-#### Patch 3 - Reasoning extraction phase-2
-- extract next bounded clusters from `reasoning/engine.py` (evaluation/self-check/synthesis helpers),
+#### Patch 3 - Reasoning extraction phase-3
+- extract next bounded clusters from `reasoning/engine.py` (optimization/enterprise/meta-cognition helpers),
 - preserve reasoning diagnostics contract behavior.
 
-Patch 3 artifacts:
-- runtime evaluation diagnostics helper extraction:
-  - `_reasoning_quality_diagnostics`
-  - `_build_reasoning_trace_diagnostics`
-  - `_build_reasoning_benchmark_diagnostics`
-  - moved to `src/layers/pro/reasoning/evaluation/runtime_diagnostics.py`
-- `ReasoningEngine` static methods retain compatibility wrappers delegating to extracted helpers.
-
-#### Patch 4 - Decomposition guardrail quality-gate expansion
-- expand deterministic checks for thin-facade budgets and no-growth constraints,
+#### Patch 4 - Guardrail threshold recalibration and coverage expansion
+- recalibrate no-growth thresholds to new post-extraction baselines,
+- expand deterministic checks for extraction-path coverage and guardrail drift prevention,
 - keep failure messages actionable for CI.
 
-Patch 4 artifacts:
-- deterministic no-growth line-budget gate added for monolith targets:
-  - `src/services/answer/answer_service.py`
-  - `src/layers/pro/reasoning/engine.py`
-- gate location:
-  - `tests/unit/services/answer/test_answer_orchestration_quality_gate.py`
-
 #### Patch 5 - Guardrails + parity + closure
-- run focused and full-suite checks and close A2.58 with docs sync.
+- run focused and full-suite checks and close A2.59 with docs sync.
 
 ### Progress
 
 - [x] Patch 1 — inventory + scope lock
-- [x] Patch 2 - Answer extraction phase-2
-- [x] Patch 3 - Reasoning extraction phase-2
-- [x] Patch 4 - Decomposition guardrail quality-gate expansion
-- [x] Patch 5 - guardrails + parity + closure
+- [ ] Patch 2 - Answer extraction phase-3
+- [ ] Patch 3 - Reasoning extraction phase-3
+- [ ] Patch 4 - Guardrail threshold recalibration and coverage expansion
+- [ ] Patch 5 - guardrails + parity + closure
 
 ### Non-Negotiable Rules
 
-- No net-new user-facing features during A2.58
+- No net-new user-facing features during A2.59
 - Preserve answer/debug runtime/API parity
 - No new business logic additions inside monolith files
 - Extraction-only and thin-facade-only changes in monolith targets
@@ -100,7 +72,7 @@ Patch 4 artifacts:
 
 ### Out of Scope
 
-Do NOT modify during A2.58:
+Do NOT modify during A2.59:
 
 - unrelated product feature logic
 - endpoint contract shape
@@ -109,10 +81,10 @@ Do NOT modify during A2.58:
 
 ### Definition of Done
 
-A2.58 is complete when:
+A2.59 is complete when:
 
-- answer and reasoning thin-facade extraction phase-2 is completed with parity
-- no-growth and size-budget guardrails are reinforced with deterministic checks
+- answer and reasoning burn-down phase-3 extraction is completed with parity
+- no-growth thresholds are updated to latest baselines and enforced in CI
 - target facades are further reduced and orchestration-focused
 - focused and full quality checks remain green
 - no answer/debug parity regressions are introduced
@@ -135,7 +107,7 @@ A2.56 policy markers are retained for deterministic docs quality gates:
 
 ## Next Anchor
 
-TBD - Post-A2.58 planning
+TBD - Post-A2.59 planning
 
 ## Post-A2.56 Maintenance
 

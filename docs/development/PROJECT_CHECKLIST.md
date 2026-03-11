@@ -55,8 +55,17 @@
 - [x] A2.56 — Operational Guardrails for Soft-Failure KPIs
 - [x] A2.57 - Application Decomposition Regime (Answer/Reasoning No-Growth)
 - [x] A2.58 - Thin Facade Completion (Answer/Reasoning)
+- [ ] A2.59 - Monolith Burn-Down Phase 3 (Answer/Reasoning)
 
-## Current Work — A2.58 Thin Facade Completion (Answer/Reasoning)
+## Current Work — A2.59 Monolith Burn-Down Phase 3 (Answer/Reasoning)
+
+- [x] Patch 1 - inventory + scope lock
+- [ ] Patch 2 - Answer extraction phase-3
+- [ ] Patch 3 - Reasoning extraction phase-3
+- [ ] Patch 4 - Guardrail threshold recalibration and coverage expansion
+- [ ] Patch 5 - guardrails + parity + closure
+
+## A2.58 Historical Work - Thin Facade Completion (Answer/Reasoning)
 
 - [x] Patch 1 - inventory + scope lock
 - [x] Patch 2 - Answer extraction phase-2

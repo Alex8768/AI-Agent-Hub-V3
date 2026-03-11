@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-Anchor Closed - A2.58 complete (thin-facade completion closure)
+A2.59 patch 1 complete (inventory + scope lock baseline for monolith burn-down phase 3)
 
 ## Last Completed Anchor
 
@@ -20,10 +20,10 @@ Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 
 ## Current Active Anchor
 
-TBD - Post-A2.58 planning
+A2.59 - Monolith Burn-Down Phase 3 (Answer/Reasoning)
 
 Current focus:
-- define next technical anchor after A2.58 closure
+- execute phase-3 extraction inventory and scope-locked burn-down for answer/reasoning monolith targets
 - preserve answer/reasoning decomposition and no-growth guardrail baseline
 - continue one-patch-one-reason execution discipline
 
@@ -35,7 +35,7 @@ Execution discipline:
 
 ## Next Anchor
 
-TBD - Post-A2.58 planning
+TBD - Post-A2.59 planning
 
 ## CI Status
 
