@@ -34,7 +34,9 @@ from src.layers.pro.reasoning.evaluation.runtime_diagnostics import (
     reasoning_quality_diagnostics as _reasoning_quality_diagnostics,
 )
 from src.layers.pro.reasoning.evaluation.runtime_productization import (
+    build_fallback_answer_response as _build_fallback_answer_response,
     build_fallback_answer_text as _build_fallback_answer_text,
+    build_graph_answer_response as _build_graph_answer_response,
     build_dry_run_answer_from_parts as _build_dry_run_answer_from_parts,
     build_dry_run_answer_from_state as _build_dry_run_answer_from_state,
     build_enterprise_productization_diagnostics as _build_enterprise_productization_diagnostics,
@@ -292,21 +294,11 @@ class ReasoningEngine:
             # Генерируем dry-run ответ из контекста
             answer_text = self._build_dry_run_answer(final_state)
 
-        # Считаем confidence (пока используем старую логику)
-        confidence = compute_confidence(final_state.provenance)
-
-        # Контекст для preview (берём из состояния)
-        context_preview = final_state.context_preview or ""
-
-        # Собираем результат
-        resp = AnswerResponse(
-            answer=answer_text,
-            confidence=confidence,
-            context_preview=context_preview,
-            provenance=final_state.provenance,
-            used_chunks=final_state.used_chunks,
-            used_nodes=final_state.used_nodes,
-            used_edges=final_state.used_edges,
+        resp = _build_graph_answer_response(
+            final_state=final_state,
+            answer_text=answer_text,
+            confidence_fn=compute_confidence,
+            response_model_cls=AnswerResponse,
         )
 
         diag, runtime_warnings = _apply_graph_response_diagnostics(
@@ -339,7 +331,7 @@ class ReasoningEngine:
                 "reasoning.agent elapsed_ms={} iterations={} conf={}",
                 elapsed_ms,
                 final_state.iteration_count,
-                float(confidence),
+                float(resp.confidence),
             )
         except Exception:
             pass
@@ -382,16 +374,15 @@ class ReasoningEngine:
             dry_run=dry_run,
         )
 
-        confidence = compute_confidence(provenance)
-
-        resp = AnswerResponse(
-            answer=answer_text,
-            confidence=confidence,
+        resp = _build_fallback_answer_response(
+            answer_text=answer_text,
             context_preview=context_preview,
             provenance=provenance,
-            used_chunks=[c for c in used_chunks if c],
-            used_nodes=[n for n in used_nodes if n],
-            used_edges=[e for e in used_edges if e],
+            used_chunks=used_chunks,
+            used_nodes=used_nodes,
+            used_edges=used_edges,
+            confidence_fn=compute_confidence,
+            response_model_cls=AnswerResponse,
         )
 
         diag, runtime_warnings = _apply_fallback_response_diagnostics(
@@ -460,3 +451,4 @@ class ReasoningEngine:
             build_prompt_fn=build_reasoning_prompt,
             dry_run_builder_fn=self._build_dry_run_answer_from_parts,
         )
+

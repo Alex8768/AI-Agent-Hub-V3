@@ -365,3 +365,47 @@ def build_dry_run_answer_from_parts(*, provenance: list, context_preview: str) -
         provenance=list(provenance or []),
         context_preview=str(context_preview or ""),
     )
+
+
+def build_graph_answer_response(
+    *,
+    final_state: object,
+    answer_text: str,
+    confidence_fn: object,
+    response_model_cls: object,
+) -> object:
+    provenance = list(getattr(final_state, "provenance", []) or [])
+    confidence = float(confidence_fn(provenance))
+    return response_model_cls(
+        answer=answer_text,
+        confidence=confidence,
+        context_preview=str(getattr(final_state, "context_preview", "") or ""),
+        provenance=provenance,
+        used_chunks=list(getattr(final_state, "used_chunks", []) or []),
+        used_nodes=list(getattr(final_state, "used_nodes", []) or []),
+        used_edges=list(getattr(final_state, "used_edges", []) or []),
+    )
+
+
+def build_fallback_answer_response(
+    *,
+    answer_text: str,
+    context_preview: str,
+    provenance: list,
+    used_chunks: list,
+    used_nodes: list,
+    used_edges: list,
+    confidence_fn: object,
+    response_model_cls: object,
+) -> object:
+    normalized_provenance = list(provenance or [])
+    confidence = float(confidence_fn(normalized_provenance))
+    return response_model_cls(
+        answer=answer_text,
+        confidence=confidence,
+        context_preview=str(context_preview or ""),
+        provenance=normalized_provenance,
+        used_chunks=[c for c in list(used_chunks or []) if c],
+        used_nodes=[n for n in list(used_nodes or []) if n],
+        used_edges=[e for e in list(used_edges or []) if e],
+    )
