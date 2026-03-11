@@ -2,7 +2,7 @@
 
 ## Active Anchor
 
-A2.61 - Facade Convergence Phase 5 (Answer/Reasoning)
+A2.61 - Facade Convergence Phase 5 (Answer/Reasoning) (Closed)
 
 ### Goal
 
@@ -82,7 +82,7 @@ Patch 4 artifacts:
 - [x] Patch 2 - Answer extraction phase-5
 - [x] Patch 3 - Reasoning extraction phase-5
 - [x] Patch 4 - Guardrail threshold recalibration and import-budget expansion
-- [ ] Patch 5 - guardrails + parity + closure
+- [x] Patch 5 - guardrails + parity + closure
 
 ### Non-Negotiable Rules
 

@@ -57,7 +57,7 @@
 - [x] A2.58 - Thin Facade Completion (Answer/Reasoning)
 - [x] A2.59 - Monolith Burn-Down Phase 3 (Answer/Reasoning)
 - [x] A2.60 - Facade Convergence Phase 4 (Answer/Reasoning)
-- [ ] A2.61 - Facade Convergence Phase 5 (Answer/Reasoning)
+- [x] A2.61 - Facade Convergence Phase 5 (Answer/Reasoning)
 
 ## Current Work — A2.61 Facade Convergence Phase 5 (Answer/Reasoning)
 
@@ -65,7 +65,7 @@
 - [x] Patch 2 - Answer extraction phase-5
 - [x] Patch 3 - Reasoning extraction phase-5
 - [x] Patch 4 - Guardrail threshold recalibration and import-budget expansion
-- [ ] Patch 5 - guardrails + parity + closure
+- [x] Patch 5 - guardrails + parity + closure
 
 ## A2.60 Historical Work - Facade Convergence Phase 4 (Answer/Reasoning)
 
