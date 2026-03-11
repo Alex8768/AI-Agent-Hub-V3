@@ -64,6 +64,16 @@ Patch 3 artifacts:
 - expand deterministic checks for seam wiring + import-budget drift prevention,
 - keep failure messages actionable for CI.
 
+Patch 4 artifacts:
+- quality-gate no-growth recalibration for current facade baselines:
+  - `answer_service_max_lines = 3188`
+  - `reasoning_engine_max_lines = 615`
+- expanded seam wiring enforcement:
+  - require `src.layers.pro.reasoning.evaluation.runtime_diagnostics` import in reasoning facade gate
+- import-budget gates preserved at current strict ceilings:
+  - answer local imports: `15`
+  - reasoning local imports: `17`
+
 #### Patch 5 - Guardrails + parity + closure
 - run focused and full-suite checks and close A2.64 with docs sync.
 
@@ -72,7 +82,7 @@ Patch 3 artifacts:
 - [x] Patch 1 — inventory + scope lock
 - [x] Patch 2 - Answer extraction phase-8
 - [x] Patch 3 - Reasoning extraction phase-8
-- [ ] Patch 4 - Guardrail threshold recalibration and import-budget expansion
+- [x] Patch 4 - Guardrail threshold recalibration and import-budget expansion
 - [ ] Patch 5 - guardrails + parity + closure
 
 ### Non-Negotiable Rules

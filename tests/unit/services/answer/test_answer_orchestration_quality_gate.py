@@ -186,6 +186,16 @@ def test_reasoning_engine_facade_gate_requires_extracted_runtime_productization_
     assert not missing, "reasoning_engine_missing_runtime_productization_seam:\n" + "\n".join(missing)
 
 
+def test_reasoning_engine_facade_gate_requires_runtime_diagnostics_seam_import():
+    reasoning_engine_path = ROOT / "src/layers/pro/reasoning/engine.py"
+    modules = _read_import_modules(reasoning_engine_path)
+    required = {
+        "src.layers.pro.reasoning.evaluation.runtime_diagnostics",
+    }
+    missing = sorted(mod for mod in required if mod not in modules)
+    assert not missing, "reasoning_engine_missing_runtime_diagnostics_seam:\n" + "\n".join(missing)
+
+
 def test_answer_service_facade_gate_requires_extracted_llm_planner_policy_seam_import():
     answer_service_path = ROOT / "src/services/answer/answer_service.py"
     modules = _read_import_modules(answer_service_path)
@@ -288,12 +298,12 @@ def test_answer_exception_policy_gate_scoped_handlers_require_warning_and_reason
 
 
 def test_decomposition_no_growth_gate_answer_and_reasoning_monolith_line_budgets():
-    # A2.63 patch 4: no-growth guardrail budgets recalibrated to latest reduced baselines.
+    # A2.64 patch 4: no-growth guardrail budgets recalibrated to latest reduced baselines.
     answer_service_path = ROOT / "src/services/answer/answer_service.py"
     reasoning_engine_path = ROOT / "src/layers/pro/reasoning/engine.py"
 
-    answer_service_max_lines = 3220
-    reasoning_engine_max_lines = 621
+    answer_service_max_lines = 3188
+    reasoning_engine_max_lines = 615
 
     answer_service_lines = _line_count(answer_service_path)
     reasoning_engine_lines = _line_count(reasoning_engine_path)

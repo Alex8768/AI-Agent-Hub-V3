@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-A2.64 patch 3 complete (Reasoning extraction phase-8 per-step diagnostics mapping seam)
+A2.64 patch 4 complete (Guardrail recalibration + runtime diagnostics seam wiring gate expansion)
 
 ## Last Completed Anchor
 
@@ -23,7 +23,7 @@ Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 A2.64 - Facade Convergence Phase 8 (Answer/Reasoning)
 
 Current focus:
-- execute A2.64 patch 4 guardrail recalibration and import-budget expansion
+- execute A2.64 patch 5 closure (focused + full-suite checks, docs finalization)
 - preserve answer/reasoning decomposition and no-growth guardrail baseline
 - continue one-patch-one-reason execution discipline
 
