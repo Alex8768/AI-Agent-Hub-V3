@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import time
 
 
 def durable_approval_record_key(*, session_id: str) -> str:
@@ -289,4 +290,263 @@ def build_execution_pilot_bundle(
         "blocked_action_ids": blocked,
         "executed_action_ids": executed_action_ids,
         "reason_codes": reasons,
+    }
+
+
+def apply_execution_idempotency_guard(
+    *,
+    transition_input: dict[str, object],
+    workspace_id: str,
+    plan_id: str,
+    prior_record: dict[str, object] | None,
+    persist: bool,
+    execution_idempotency_contract_version: str,
+    seen_store: dict[str, str],
+) -> tuple[dict[str, object], dict[str, object]]:
+    normalized = dict(transition_input or {})
+    decision = str(normalized.get("decision", "") or "")
+    idem_key = str(normalized.get("idempotency_key", "") or "").strip()
+    if not decision:
+        return normalized, {
+            "contract_version": str(execution_idempotency_contract_version or ""),
+            "status": "not_applicable",
+            "idempotency_key": idem_key,
+            "operation_fingerprint": "",
+            "guard_action": "none",
+            "reason_codes": ["no_transition_decision"],
+        }
+    if not idem_key:
+        return normalized, {
+            "contract_version": str(execution_idempotency_contract_version or ""),
+            "status": "missing_key",
+            "idempotency_key": "",
+            "operation_fingerprint": "",
+            "guard_action": "warning_only",
+            "reason_codes": ["idempotency_key_missing"],
+        }
+
+    requested = [str(x) for x in list(normalized.get("requested_action_ids") or []) if str(x)]
+    token = str(normalized.get("confirmation_token", "") or "")
+    seed = f"{workspace_id}|{plan_id}|{decision}|{token}|{','.join(sorted(requested))}"
+    fingerprint = hashlib.sha1(seed.encode("utf-8")).hexdigest()[:16]
+    if not persist:
+        return normalized, {
+            "contract_version": str(execution_idempotency_contract_version or ""),
+            "status": "dry_run",
+            "idempotency_key": idem_key,
+            "operation_fingerprint": fingerprint,
+            "guard_action": "none",
+            "reason_codes": ["idempotency_evaluation_deferred"],
+        }
+    prior = dict(prior_record or {})
+    prior_key = str(prior.get("idempotency_key", "") or "")
+    prior_fingerprint = str(prior.get("operation_fingerprint", "") or "")
+    if prior_key and prior_key == idem_key and prior_fingerprint:
+        if prior_fingerprint == fingerprint:
+            return normalized, {
+                "contract_version": str(execution_idempotency_contract_version or ""),
+                "status": "replayed",
+                "idempotency_key": idem_key,
+                "operation_fingerprint": fingerprint,
+                "guard_action": "recovered_from_durable_replay",
+                "reason_codes": ["idempotency_replay_recovered_from_durable"],
+            }
+        normalized["decision"] = ""
+        normalized["requested_action_ids"] = []
+        return normalized, {
+            "contract_version": str(execution_idempotency_contract_version or ""),
+            "status": "conflict",
+            "idempotency_key": idem_key,
+            "operation_fingerprint": fingerprint,
+            "guard_action": "blocked_durable_conflict",
+            "reason_codes": ["idempotency_conflict_blocked"],
+        }
+
+    prev = str(dict(seen_store or {}).get(idem_key, "") or "")
+    if not prev:
+        seen_store[idem_key] = fingerprint
+        status = "fresh"
+        guard_action = "recorded"
+        reason_codes = ["idempotency_recorded"]
+    elif prev == fingerprint:
+        status = "replayed"
+        guard_action = "short_circuit_replay_safe"
+        reason_codes = ["idempotency_replay_detected"]
+    else:
+        normalized["decision"] = ""
+        normalized["requested_action_ids"] = []
+        status = "conflict"
+        guard_action = "blocked_conflict"
+        reason_codes = ["idempotency_conflict_blocked"]
+
+    return normalized, {
+        "contract_version": str(execution_idempotency_contract_version or ""),
+        "status": status,
+        "idempotency_key": idem_key,
+        "operation_fingerprint": fingerprint,
+        "guard_action": guard_action,
+        "reason_codes": reason_codes,
+    }
+
+
+def apply_handshake_transition_policy(
+    *,
+    transition_input: dict[str, object],
+    draft_actions_bundle: dict[str, object],
+    policy_contract: dict[str, object],
+    is_allowlisted_action_type_fn: object,
+) -> tuple[dict[str, object], dict[str, object]]:
+    normalized = dict(transition_input or {})
+    decision = str(normalized.get("decision", "") or "")
+    requested_action_ids = [str(x) for x in list(normalized.get("requested_action_ids") or []) if str(x)]
+    action_rows = [dict(row or {}) for row in list(draft_actions_bundle.get("actions") or [])]
+    available_action_ids = [
+        str(row.get("action_id", "") or "")
+        for row in action_rows
+        if str(row.get("action_id", "") or "").strip()
+    ]
+    action_type_by_id = {
+        str(row.get("action_id", "") or ""): str(row.get("action_type", "") or "")
+        for row in action_rows
+        if str(row.get("action_id", "") or "").strip()
+    }
+    available_set = set(available_action_ids)
+    policy_reasons: list[str] = []
+    blocked_non_allowlisted_action_ids: list[str] = []
+    unknown_ids = [x for x in requested_action_ids if x not in available_set]
+    if unknown_ids:
+        policy_reasons.append("unknown_action_ids_blocked")
+    requested_action_ids = [x for x in requested_action_ids if x in available_set]
+
+    if decision == "cancel" and requested_action_ids:
+        requested_action_ids = []
+        policy_reasons.append("cancel_ignores_action_filter")
+
+    max_ids = int(policy_contract.get("max_approved_action_ids", 3) or 3)
+    allowlisted_action_types = [
+        str(x).strip()
+        for x in list(policy_contract.get("allowlisted_action_types") or [])
+        if str(x or "").strip()
+    ]
+    allowlisted_set = set(allowlisted_action_types)
+    enforce_allowlisted_action_types = bool(policy_contract.get("enforce_allowlisted_action_types", False))
+    if decision == "approve" and enforce_allowlisted_action_types:
+        blocked_non_allowlisted_action_ids = [
+            aid
+            for aid in requested_action_ids
+            if not bool(is_allowlisted_action_type_fn(str(action_type_by_id.get(aid, "") or ""), allowlisted_set))
+        ]
+        if blocked_non_allowlisted_action_ids:
+            requested_action_ids = [aid for aid in requested_action_ids if aid not in set(blocked_non_allowlisted_action_ids)]
+            policy_reasons.append("non_allowlisted_action_types_blocked")
+    if decision == "approve" and len(requested_action_ids) > max_ids:
+        requested_action_ids = requested_action_ids[:max_ids]
+        policy_reasons.append("approval_limit_applied")
+
+    normalized["requested_action_ids"] = requested_action_ids
+    policy_eval = {
+        **dict(policy_contract or {}),
+        "requested_action_ids_count": len(requested_action_ids),
+        "available_action_ids_count": len(available_action_ids),
+        "unknown_action_ids": unknown_ids,
+        "blocked_non_allowlisted_action_ids": blocked_non_allowlisted_action_ids,
+        "rollback_contract_status": "not_evaluated",
+        "rollback_missing_action_ids": [],
+        "applied_reason_codes": sorted(set(policy_reasons)),
+    }
+    return normalized, policy_eval
+
+
+def apply_durable_confirmation_token_guards(
+    *,
+    transition_input: dict[str, object],
+    durable_approval_record: dict[str, object],
+) -> tuple[dict[str, object], list[str]]:
+    normalized = dict(transition_input or {})
+    decision = str(normalized.get("decision", "") or "")
+    if not decision:
+        return normalized, []
+
+    record = dict(durable_approval_record or {})
+    provided_token = str(normalized.get("confirmation_token", "") or "")
+    stored_token = str(record.get("confirmation_token", "") or "")
+    if not provided_token or not stored_token or provided_token != stored_token:
+        return normalized, []
+
+    reasons: list[str] = []
+    try:
+        expires_at = int(str(record.get("token_expires_at", "") or "0") or "0")
+    except Exception:
+        expires_at = 0
+    now_ts = int(time.time())
+    if expires_at > 0 and now_ts >= expires_at:
+        reasons.append("confirmation_token_expired")
+
+    last_decision = str(record.get("last_decision", "") or "")
+    if last_decision in {"approve", "cancel"}:
+        reasons.append("confirmation_token_consumed")
+
+    if reasons:
+        normalized["decision"] = ""
+        normalized["requested_action_ids"] = []
+    return normalized, sorted(set(reasons))
+
+
+def apply_rollback_contract_guard(
+    *,
+    handshake_bundle: dict[str, object],
+    draft_actions_bundle: dict[str, object],
+) -> tuple[dict[str, object], dict[str, object]]:
+    handshake = dict(handshake_bundle or {})
+    state = str(handshake.get("state", "idle") or "idle")
+    approved_action_ids = [str(x) for x in list(handshake.get("approved_action_ids") or []) if str(x)]
+    action_rows = [dict(row or {}) for row in list(draft_actions_bundle.get("actions") or [])]
+    rollback_by_action_id = {
+        str(row.get("action_id", "") or ""): str(row.get("rollback_plan", "") or "")
+        for row in action_rows
+        if str(row.get("action_id", "") or "").strip()
+    }
+
+    if state != "approved":
+        return handshake, {
+            "status": "not_applicable",
+            "rollback_required_action_ids": [],
+            "rollback_ready_action_ids": [],
+            "rollback_missing_action_ids": [],
+            "reason_codes": [],
+        }
+
+    rollback_ready_action_ids = [
+        aid
+        for aid in approved_action_ids
+        if str(rollback_by_action_id.get(aid, "") or "").strip()
+    ]
+    rollback_missing_action_ids = [aid for aid in approved_action_ids if aid not in set(rollback_ready_action_ids)]
+    if not rollback_missing_action_ids:
+        return handshake, {
+            "status": "ready",
+            "rollback_required_action_ids": approved_action_ids,
+            "rollback_ready_action_ids": rollback_ready_action_ids,
+            "rollback_missing_action_ids": [],
+            "reason_codes": ["rollback_contract_validated"],
+        }
+
+    prior_reasons = [str(x) for x in list(handshake.get("reason_codes") or []) if str(x or "").strip()]
+    guarded_handshake = {
+        **handshake,
+        "state": "pending_confirmation",
+        "requires_confirmation": True,
+        "approved_action_ids": [],
+        "blocked_action_ids": sorted(
+            set([str(x) for x in list(handshake.get("blocked_action_ids") or []) if str(x)] + rollback_missing_action_ids)
+        ),
+        "receipt_id": "",
+        "reason_codes": sorted(set(prior_reasons + ["rollback_contract_missing_for_approved_actions"])),
+    }
+    return guarded_handshake, {
+        "status": "blocked_missing_rollback_plan",
+        "rollback_required_action_ids": approved_action_ids,
+        "rollback_ready_action_ids": rollback_ready_action_ids,
+        "rollback_missing_action_ids": rollback_missing_action_ids,
+        "reason_codes": ["rollback_contract_missing_for_approved_actions"],
     }
