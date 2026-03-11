@@ -72,6 +72,7 @@ from src.services.answer.context.session_text import clip_text as _clip_text
 from src.services.answer.execution.durable_keys import (
     apply_durable_confirmation_token_guards as _apply_durable_confirmation_token_guards_impl,
     apply_execution_idempotency_guard as _apply_execution_idempotency_guard_impl,
+    apply_handshake_transition as _apply_handshake_transition_impl,
     apply_handshake_transition_policy as _apply_handshake_transition_policy_impl,
     apply_rollback_contract_guard as _apply_rollback_contract_guard_impl,
     build_approval_session_bundle as _build_approval_session_bundle_impl,
@@ -764,70 +765,11 @@ def _apply_handshake_transition(
     transition_input: dict[str, object],
     draft_actions_bundle: dict[str, object],
 ) -> dict[str, object]:
-    decision = str(transition_input.get("decision", "") or "")
-    provided_token = str(transition_input.get("confirmation_token", "") or "")
-    requested_raw = transition_input.get("requested_action_ids", None)
-    requested_action_ids = [str(x) for x in list(requested_raw or []) if str(x)]
-    if not decision:
-        return dict(handshake_bundle or {})
-
-    current = dict(handshake_bundle or {})
-    expected_token = str(current.get("confirmation_token", "") or "")
-    if not expected_token or provided_token != expected_token:
-        reasons = sorted(
-            set([str(x) for x in list(current.get("reason_codes") or []) if str(x or "").strip()])
-            | {"invalid_confirmation_token"}
-        )
-        return {
-            **current,
-            "state": "pending_confirmation",
-            "approved_action_ids": [],
-            "blocked_action_ids": [],
-            "receipt_id": "",
-            "reason_codes": reasons,
-        }
-
-    action_rows = [dict(row or {}) for row in list(draft_actions_bundle.get("actions") or [])]
-    available_action_ids = [
-        str(row.get("action_id", "") or "")
-        for row in action_rows
-        if str(row.get("action_id", "") or "").strip()
-    ]
-    if decision == "cancel":
-        reasons = sorted(
-            set([str(x) for x in list(current.get("reason_codes") or []) if str(x or "").strip()])
-            | {"user_cancelled"}
-        )
-        return {
-            **current,
-            "state": "cancelled",
-            "requires_confirmation": False,
-            "approved_action_ids": [],
-            "blocked_action_ids": available_action_ids,
-            "receipt_id": "",
-            "reason_codes": reasons,
-        }
-
-    if requested_raw is None:
-        requested_set = set(available_action_ids)
-    else:
-        requested_set = set(requested_action_ids)
-    approved = [aid for aid in available_action_ids if aid in requested_set]
-    blocked = [aid for aid in available_action_ids if aid not in set(approved)]
-    state = "approved" if approved else "pending_confirmation"
-    reasons = sorted(
-        set([str(x) for x in list(current.get("reason_codes") or []) if str(x or "").strip()])
-        | ({"user_approved"} if approved else {"no_matching_action_ids"})
+    return _apply_handshake_transition_impl(
+        handshake_bundle=handshake_bundle,
+        transition_input=transition_input,
+        draft_actions_bundle=draft_actions_bundle,
     )
-    return {
-        **current,
-        "state": state,
-        "requires_confirmation": False if approved else True,
-        "approved_action_ids": approved,
-        "blocked_action_ids": blocked,
-        "receipt_id": "",
-        "reason_codes": reasons,
-    }
 
 
 def _apply_execution_idempotency_guard(

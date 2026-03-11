@@ -55,7 +55,19 @@ Patch 1 artifacts:
 - reduce facade branching and preserve endpoint/debug contract behavior.
 
 Patch 2 artifacts:
-- pending.
+- handshake transition helper seam extracted into
+  `src/services/answer/execution/durable_keys.py`:
+  - `apply_handshake_transition`
+- `src/services/answer/answer_service.py` now retains thin compatibility wrapper:
+  - `_apply_handshake_transition`
+- facade reduction achieved without import-budget growth:
+  - `src/services/answer/answer_service.py`: `2241 -> 2183` lines
+  - local import statement count remained within current no-growth budget (`15`)
+- focused parity/guardrail checks green:
+  - `tests/unit/services/answer/test_answer_service_debug_snapshot.py`
+  - `tests/unit/services/answer/test_answer_soft_failure_observability.py`
+  - `tests/unit/services/answer/test_answer_orchestration_quality_gate.py`
+  - result: `74 passed`
 
 #### Patch 3 - Reasoning extraction phase-17
 - extract next bounded clusters from `reasoning/engine.py` (runtime fallback / diagnostics helper seams),
@@ -81,7 +93,7 @@ Patch 5 artifacts:
 ### Progress
 
 - [x] Patch 1 — inventory + scope lock
-- [ ] Patch 2 - Answer extraction phase-17
+- [x] Patch 2 - Answer extraction phase-17
 - [ ] Patch 3 - Reasoning extraction phase-17
 - [ ] Patch 4 - Guardrail threshold recalibration and import-budget expansion
 - [ ] Patch 5 - guardrails + parity + closure

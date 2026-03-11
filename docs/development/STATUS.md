@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-A2.73 in progress (Patch 1 complete)
+A2.73 in progress (Patch 2 complete)
 
 ## Last Completed Anchor
 
@@ -23,7 +23,7 @@ Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 A2.73 - Facade Convergence Phase 17 (Answer/Reasoning)
 
 Current focus:
-- execute answer/reasoning extraction phase-17 from patch-1 inventory hotspots
+- execute reasoning extraction phase-17 from patch-1 inventory hotspots
 - preserve no-growth guardrail discipline from A2.73 patch-1 baselines (`2241`/`361`)
 - continue one-patch-one-reason execution discipline
 
