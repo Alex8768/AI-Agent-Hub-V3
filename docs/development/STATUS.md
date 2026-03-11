@@ -2,17 +2,17 @@
 
 ## Current Phase
 
-A2.68 patch 4 complete (Guardrail threshold recalibration and import-budget expansion)
+A2.68 complete (Anchor Closed)
 
 ## Last Completed Anchor
 
-A2.67 - Facade Convergence Phase 11 (Answer/Reasoning)
+A2.68 - Facade Convergence Phase 12 (Answer/Reasoning)
 
-A2.67 closed with:
-- answer feedback/tool-selection bundle seams extracted into planner-policy module
-- reasoning graph runtime diagnostics seam extracted into evaluation diagnostics module
-- no-growth baselines recalibrated to latest facade budgets
-- focused and full-suite checks green at closure (`84 passed`; `576 passed, 3 skipped`)
+A2.68 closed with:
+- answer execution runtime seam extraction into execution durable-keys module
+- reasoning runtime execution/fallback seam extraction into runtime productization module
+- no-growth baselines recalibrated to latest reduced facade budgets (`2640`/`480`)
+- focused and full-suite checks green at closure (`72 passed`; `576 passed, 3 skipped`)
 
 Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 - Anchor Closed — A2.56 complete (operational guardrails policy closure)
@@ -20,11 +20,11 @@ Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 
 ## Current Active Anchor
 
-A2.68 - Facade Convergence Phase 12 (Answer/Reasoning)
+TBD - Post-A2.68 planning
 
 Current focus:
-- execute A2.68 patch 5 guardrails + parity + closure
-- preserve answer/reasoning no-growth guardrail baseline through extraction-only changes
+- define next bounded convergence/decomposition scope and patch plan
+- preserve answer/reasoning no-growth guardrail baseline from A2.68 closure
 - continue one-patch-one-reason execution discipline
 
 Execution discipline:
@@ -35,7 +35,7 @@ Execution discipline:
 
 ## Next Anchor
 
-TBD - Post-A2.68 planning
+TBD
 
 ## CI Status
 
