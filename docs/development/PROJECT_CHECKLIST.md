@@ -73,7 +73,7 @@
 - [x] Patch 1 - inventory + scope lock
 - [x] Patch 2 - Answer extraction phase-14
 - [x] Patch 3 - Reasoning extraction phase-14
-- [ ] Patch 4 - Guardrail threshold recalibration and import-budget expansion
+- [x] Patch 4 - Guardrail threshold recalibration and import-budget expansion
 - [ ] Patch 5 - guardrails + parity + closure
 
 ## A2.69 Historical Work - Facade Convergence Phase 13 (Answer/Reasoning)

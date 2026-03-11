@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-A2.70 in progress (Patch 3 complete)
+A2.70 in progress (Patch 4 complete)
 
 ## Last Completed Anchor
 
@@ -23,7 +23,7 @@ Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 A2.70 - Facade Convergence Phase 14 (Answer/Reasoning)
 
 Current focus:
-- prepare no-growth threshold recalibration and import-budget verification (A2.70 patch 4)
+- run focused + full-suite closure checks and finalize docs sync (A2.70 patch 5)
 - preserve answer/reasoning no-growth guardrail baseline from latest A2.70 extraction
 - continue one-patch-one-reason execution discipline
 
