@@ -2,7 +2,7 @@
 
 ## Active Anchor
 
-A2.55 — Documentation Consistency Cleanup
+A2.55 — Documentation Consistency Cleanup (Closed)
 
 ### Goal
 
@@ -73,7 +73,7 @@ Target A2.55 boundaries:
 - [x] Patch 2 — capability map consistency corrections
 - [x] Patch 3 — checklist/status/anchor synchronization
 - [x] Patch 4 — roadmap wording normalization
-- [ ] Patch 5 — guardrails + parity + closure
+- [x] Patch 5 — guardrails + parity + closure
 
 ### Non-Negotiable Rules
 

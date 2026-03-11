@@ -2,26 +2,26 @@
 
 ## Current Phase
 
-Active Anchor Execution — A2.55 patch 4 complete (roadmap wording normalization)
+Anchor Closed — A2.55 complete (documentation consistency cleanup closure)
 
 ## Last Completed Anchor
 
-A2.54 — Diagnostics Contract Guardrails
+A2.55 — Documentation Consistency Cleanup
 
-A2.54 closed with:
-- diagnostics keyset snapshot guardrails expanded for cross-mode stability
-- soft-failure reason-code/flag visibility guardrails expanded for fallback paths
-- scoped AST exception-policy handler contract gate hardened (binding + warning + reason_code context)
-- parity-focused and full-suite checks green at closure
+A2.55 closed with:
+- capability map consistency corrected for completed OCR/MCP milestones
+- checklist/status/anchor active-state synchronization completed
+- roadmap wording normalized to remove stale completed-milestone phrasing
+- docs-focused and full-suite checks green at closure
 
 ## Current Active Anchor
 
-A2.55 — Documentation Consistency Cleanup
+TBD — Post-A2.55 planning
 
 Current focus:
-- normalize roadmap wording to remove stale completed-milestone phrasing
-- keep documentation updates deterministic and minimal per patch
-- preserve runtime/API behavior during docs-only cleanup
+- define next anchor scope after documentation consistency closure
+- preserve current docs/runtime parity baselines
+- continue one-patch-one-reason execution discipline
 
 Execution discipline:
 - no net-new intelligence features
