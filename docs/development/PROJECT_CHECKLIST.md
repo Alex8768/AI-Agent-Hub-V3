@@ -59,6 +59,7 @@
 - [x] A2.52 — AnswerService Facade Slimming
 - [x] A2.53 — Answer-Path Exception Policy Hardening
 - [x] A2.54 — Diagnostics Contract Guardrails
+- [ ] A2.55 — Documentation Consistency Cleanup
 
 ## Current Work — A2.52 AnswerService Facade Slimming
 
@@ -83,6 +84,14 @@
 - [x] Patch 3 — soft-failure policy guardrail coverage expansion
 - [x] Patch 4 — exception policy enforcement hardening
 - [x] Patch 5 — guardrails + parity + closure
+
+## Current Work — A2.55 Documentation Consistency Cleanup
+
+- [x] Patch 1 — inventory + scope lock
+- [ ] Patch 2 — capability map consistency corrections
+- [ ] Patch 3 — checklist/status/anchor synchronization
+- [ ] Patch 4 — roadmap wording normalization
+- [ ] Patch 5 — guardrails + parity + closure
 
 ## Post-A2.51 Guardrail Maintenance
 

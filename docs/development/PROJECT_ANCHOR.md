@@ -2,111 +2,109 @@
 
 ## Active Anchor
 
-A2.54 — Diagnostics Contract Guardrails (Closed)
+A2.55 — Documentation Consistency Cleanup
 
 ### Goal
 
-Strengthen deterministic diagnostics contract guardrails for answer-path runtime so
-regressions in diagnostics shape/reason-codes/counters are caught early without changing API behavior.
+Eliminate stale cross-document contradictions so planning/status artifacts remain a reliable
+source of truth for active and completed work without changing runtime behavior.
 
-The intent of this anchor is quality-gate and contract safety focused:
-- preserve runtime/API parity,
-- enforce diagnostics snapshot contract stability,
-- enforce exception-policy contract coverage via deterministic tests.
+The intent of this anchor is docs-consistency and operational clarity focused:
+- align capability status across features/checklist/status/anchor docs,
+- remove stale roadmap statements that conflict with completed anchors,
+- preserve existing docs topology and runtime/API behavior.
 
 ### Why Now
 
-A2.53 closed exception-policy hardening and removed scoped silent handlers in answer-path runtime.
+A2.54 is closed and guardrails are green.
 
-Now the main residual risk is silent drift of diagnostics schema/fields/reason-code policies
-without immediate failure signals.
+The main residual risk is documentation drift: stale capability states and roadmap text can
+mislead anchor selection, progress tracking, and execution order.
 
-A2.54 focuses on guardrail depth so future refactors keep diagnostics contracts stable.
+A2.55 focuses on consistency closure before new technical anchors begin.
 
 ### Architecture Position
 
-Target A2.54 boundaries:
+Target A2.55 boundaries:
 
-- **Diagnostics Contract Snapshot Surface**
-  - answer/debug diagnostics top-level key set invariants
-  - soft-failure reason-code presence invariants in failure paths
-  - deterministic counter/flag invariants for fallback paths
+- **Capability Status Consistency**
+  - align completed capabilities with completed anchors
+  - remove stale "planned/current" wording for already closed work
+  - preserve intentional deferred items only
 
-- **Exception Policy Guardrails**
-  - scoped no-silent-swallow policy remains enforced
-  - critical-stage exception behavior remains explicit
+- **Roadmap Text Consistency**
+  - remove outdated "current anchor" statements
+  - keep roadmap ideas as future-facing only
+  - ensure no contradiction with checklist/status
 
 - **Quality Gates**
-  - stronger diagnostics snapshot and contract assertions
-  - parity gate to ensure no user-facing behavior regression
+  - keep docs topology and docs quality gates green
+  - preserve deterministic CI outcomes
 
 ### Patch Plan
 
 #### Patch 1 — Inventory + scope lock
-- Build explicit inventory of diagnostics contract surfaces already relied upon by tests/docs.
-- Classify current guardrails into:
-  - shape (snapshot keys),
-  - policy (reason-codes/flags),
-  - parity (answer/debug behavior).
-- Define no-regression constraints and forbidden drift scope.
+- Build explicit inventory of docs contradictions and stale states.
+- Classify inconsistencies by type:
+  - capability status drift,
+  - roadmap/state wording drift,
+  - anchor/checklist synchronization drift.
+- Define no-regression constraints and allowed edit scope.
 
-#### Patch 2 — Diagnostics snapshot contract expansion
-- Add/expand stable snapshot assertions for diagnostics schema in answer-path tests.
-- Preserve runtime outputs and avoid business-logic changes.
+#### Patch 2 — Capability map consistency corrections
+- Update capability/status statements in `PLATFORM_FEATURES.md` to match closed anchors.
+- Keep changes wording-only (no scope expansion).
 
-#### Patch 3 — Soft-failure policy guardrail coverage expansion
-- Add targeted tests asserting reason-code/counter visibility for fallback paths.
-- Keep all changes test/guardrail-centric.
+#### Patch 3 — Checklist/status/anchor synchronization
+- Align `PROJECT_CHECKLIST.md`, `STATUS.md`, and `PROJECT_ANCHOR.md` on active/next state.
+- Remove stale "current work" carry-over blocks when no longer active.
 
-#### Patch 4 — Exception policy enforcement hardening
-- Strengthen AST/static guardrails for scoped modules and policy constraints.
-- Ensure deterministic failure messages for CI triage.
+#### Patch 4 — Roadmap wording normalization
+- Normalize roadmap clauses that conflict with completed milestones.
+- Keep future-looking roadmap ideas intact and non-contradictory.
 
 #### Patch 5 — Guardrails + parity + closure
-- Run full diagnostics/parity guardrail suite and finalize closure checks.
-- Run parity-focused tests and full suite.
-- Close docs/checklist/status/features sync for A2.54.
+- Run docs-focused and full-suite checks for closure.
+- Finalize docs-sync and close A2.55.
 
 ### Progress
 
 - [x] Patch 1 — inventory + scope lock
-- [x] Patch 2 — diagnostics snapshot contract expansion
-- [x] Patch 3 — soft-failure policy guardrail coverage expansion
-- [x] Patch 4 — exception policy enforcement hardening
-- [x] Patch 5 — guardrails + parity + closure
+- [ ] Patch 2 — capability map consistency corrections
+- [ ] Patch 3 — checklist/status/anchor synchronization
+- [ ] Patch 4 — roadmap wording normalization
+- [ ] Patch 5 — guardrails + parity + closure
 
 ### Non-Negotiable Rules
 
-- No net-new intelligence features during A2.54
-- Preserve answer/debug output parity
-- No diagnostics contract drift without explicit guardrail updates
-- No weakening of exception-policy scope gates
+- No net-new runtime features during A2.55
+- Preserve docs topology policy
+- Preserve runtime/API behavior (docs-only anchor)
+- No opportunistic refactors beyond docs consistency scope
 - One patch = one reason
 
 ### Out of Scope
 
-Do NOT modify during A2.54:
+Do NOT modify during A2.55:
 
 - planner/kernel topology
-- new tool safety capabilities
-- new multi-agent capabilities
-- OCR redesign
-- MCP ecosystem expansion
-- UI feature expansion unrelated to answer-path structure
-- product/marketing README work
+- service runtime logic
+- endpoint contracts
+- non-doc production code
+- unrelated UI or infra features
 
 ### Definition of Done
 
-A2.54 is complete when:
+A2.55 is complete when:
 
-- diagnostics contract surfaces are covered by deterministic guardrails
-- soft-failure policy visibility is test-covered
-- answer/debug output parity is preserved
-- quality gates enforce scoped exception policy and diagnostics schema stability
+- stale docs contradictions identified and resolved
+- active/next anchor state is consistent across docs
+- roadmap wording no longer conflicts with completed milestones
+- docs and full-suite quality checks remain green
 
 ## Next Anchor
 
-TBD — Post-A2.54 planning
+TBD — Post-A2.55 planning
 
 ### Discipline
 

@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-Anchor Closed — A2.54 complete (diagnostics contract guardrails closure)
+Active Anchor Execution — A2.55 patch 1 complete (documentation consistency inventory + scope lock)
 
 ## Last Completed Anchor
 
@@ -16,12 +16,12 @@ A2.54 closed with:
 
 ## Current Active Anchor
 
-TBD — Post-A2.54 planning
+A2.55 — Documentation Consistency Cleanup
 
 Current focus:
-- define next anchor scope after diagnostics-contract closure
-- preserve current answer/debug parity and guardrail baselines
-- continue one-patch-one-reason execution discipline
+- inventory stale cross-doc contradictions and lock edit scope
+- keep documentation updates deterministic and minimal per patch
+- preserve runtime/API behavior during docs-only cleanup
 
 Execution discipline:
 - no net-new intelligence features
@@ -31,7 +31,7 @@ Execution discipline:
 
 ## Next Anchor
 
-TBD — Post-A2.54 planning
+TBD — Post-A2.55 planning
 
 ## CI Status
 
