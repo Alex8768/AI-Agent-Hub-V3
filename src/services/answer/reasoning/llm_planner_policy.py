@@ -365,6 +365,58 @@ def build_transition_policy_contract(
     }
 
 
+def apply_plan_policy_guards(
+    *,
+    plan_bundle: dict[str, object],
+    max_steps: int = 5,
+) -> tuple[dict[str, object], dict[str, object]]:
+    plan = dict(plan_bundle or {})
+    rows = [dict(row or {}) for row in list(plan.get("steps") or [])]
+    reason_codes: list[str] = []
+    blocked_steps_count = 0
+    truncated = False
+
+    allowed_steps: list[dict[str, object]] = []
+    for row in rows:
+        action = str(row.get("action", "") or "")
+        action_lower = action.lower()
+        is_prepare_draft = action_lower.startswith("prepare_") and action_lower.endswith("_draft")
+        has_unsafe_marker = any(x in action_lower for x in ["execute", "delete", "write", "send", "publish"])
+        if is_prepare_draft and not has_unsafe_marker:
+            allowed_steps.append(row)
+            continue
+        blocked_steps_count += 1
+
+    if blocked_steps_count:
+        reason_codes.append("unsafe_steps_blocked")
+
+    if len(allowed_steps) > int(max_steps):
+        allowed_steps = allowed_steps[: int(max_steps)]
+        truncated = True
+        reason_codes.append("plan_steps_truncated_by_policy")
+
+    status = str(plan.get("status", "idle") or "idle")
+    if status == "ready" and not allowed_steps:
+        status = "guarded"
+        reason_codes.append("plan_guard_blocked_all_steps")
+
+    guarded_plan = {
+        **plan,
+        "status": status,
+        "steps": allowed_steps,
+        "requires_confirmation": bool(allowed_steps),
+    }
+    policy = {
+        "mode": "review_only",
+        "max_steps": int(max_steps),
+        "blocked_steps_count": int(blocked_steps_count),
+        "truncated": bool(truncated),
+        "allowed_action_pattern": "prepare_*_draft",
+        "reason_codes": reason_codes,
+    }
+    return guarded_plan, policy
+
+
 def build_assistant_recovery_policy_contract() -> dict[str, object]:
     return {
         "mode": "assistant_chat_recovery_guarded",

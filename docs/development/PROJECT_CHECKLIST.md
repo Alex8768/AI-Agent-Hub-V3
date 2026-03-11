@@ -66,7 +66,7 @@
 ## Current Work — A2.65 Facade Convergence Phase 9 (Answer/Reasoning)
 
 - [x] Patch 1 - inventory + scope lock
-- [ ] Patch 2 - Answer extraction phase-9
+- [x] Patch 2 - Answer extraction phase-9
 - [ ] Patch 3 - Reasoning extraction phase-9
 - [ ] Patch 4 - Guardrail threshold recalibration and import-budget expansion
 - [ ] Patch 5 - guardrails + parity + closure
