@@ -2,7 +2,7 @@
 
 ## Active Anchor
 
-A2.72 - Facade Convergence Phase 16 (Answer/Reasoning)
+A2.72 - Facade Convergence Phase 16 (Answer/Reasoning) (Closed)
 
 ### Goal
 
@@ -112,7 +112,21 @@ Patch 4 artifacts:
 - run focused and full-suite checks and close A2.72 with docs sync.
 
 Patch 5 artifacts:
-- pending.
+- focused closure checks green for answer/reasoning parity and guardrails:
+  - `tests/unit/services/answer/test_answer_service_debug_snapshot.py`
+  - `tests/unit/services/answer/test_answer_soft_failure_observability.py`
+  - `tests/unit/services/answer/test_answer_orchestration_quality_gate.py`
+  - `tests/unit/layers/pro/test_reasoning_engine_synthesize.py`
+  - `tests/unit/layers/pro/test_reasoning_engine_synthesize_llm.py`
+  - `tests/unit/layers/pro/test_reasoning_engine_synthesize_llm_fallback.py`
+  - `tests/unit/layers/pro/test_reasoning_engine_synthesize_llm_timeout.py`
+  - `tests/unit/layers/pro/test_reasoning_multi_agent_coordination_quality_gate.py`
+  - `tests/unit/layers/pro/test_reasoning_multi_agent_runtime_integration.py`
+  - result: `91 passed`
+- full-suite closure check green:
+  - `uv run pytest`
+  - result: `576 passed, 3 skipped`
+- A2.72 closure synced across anchor/checklist/status/features docs.
 
 ### Progress
 
@@ -120,7 +134,7 @@ Patch 5 artifacts:
 - [x] Patch 2 - Answer extraction phase-16
 - [x] Patch 3 - Reasoning extraction phase-16
 - [x] Patch 4 - Guardrail threshold recalibration and import-budget expansion
-- [ ] Patch 5 - guardrails + parity + closure
+- [x] Patch 5 - guardrails + parity + closure
 
 ### Non-Negotiable Rules
 
