@@ -2,17 +2,17 @@
 
 ## Current Phase
 
-A2.62 patch 4 complete (Guardrail recalibration + seam wiring gate expansion)
+A2.62 patch 5 complete (guardrails + parity + closure)
 
 ## Last Completed Anchor
 
-A2.61 - Facade Convergence Phase 5 (Answer/Reasoning)
+A2.62 - Facade Convergence Phase 6 (Answer/Reasoning)
 
-A2.61 closed with:
-- answer feedback-policy seam extraction completed with behavior/API parity preserved
-- reasoning dry-run fallback seam extraction completed with compatibility wrappers preserved
-- no-growth budgets recalibrated and seam/import-budget coverage refreshed
-- focused and full-suite checks green at closure
+A2.62 closed with:
+- answer tool-selection policy seam extraction consolidated into planner-policy module
+- reasoning runtime warning-flags seam extraction consolidated into diagnostics runtime contracts
+- no-growth budgets recalibrated to latest facade baselines and seam wiring gates expanded
+- focused and full-suite checks green at closure (`82 passed`; `574 passed, 3 skipped`)
 
 Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 - Anchor Closed — A2.56 complete (operational guardrails policy closure)
@@ -20,10 +20,10 @@ Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 
 ## Current Active Anchor
 
-A2.62 - Facade Convergence Phase 6 (Answer/Reasoning)
+TBD - Post-A2.62 planning
 
 Current focus:
-- execute A2.62 patch 5 closure (focused + full-suite checks, docs finalization)
+- define next anchor inventory/scope lock
 - preserve answer/reasoning decomposition and no-growth guardrail baseline
 - continue one-patch-one-reason execution discipline
 

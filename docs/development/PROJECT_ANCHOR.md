@@ -2,7 +2,7 @@
 
 ## Active Anchor
 
-A2.62 - Facade Convergence Phase 6 (Answer/Reasoning)
+A2.62 - Facade Convergence Phase 6 (Answer/Reasoning) (Closed)
 
 ### Goal
 
@@ -75,13 +75,20 @@ Patch 4 artifacts:
 #### Patch 5 - Guardrails + parity + closure
 - run focused and full-suite checks and close A2.62 with docs sync.
 
+Patch 5 artifacts:
+- focused closure gates green:
+  - `82 passed`
+- full-suite closure gate green:
+  - `574 passed, 3 skipped`
+- closure docs sync completed across anchor/checklist/status/platform features docs
+
 ### Progress
 
 - [x] Patch 1 — inventory + scope lock
 - [x] Patch 2 - Answer extraction phase-6
 - [x] Patch 3 - Reasoning extraction phase-6
 - [x] Patch 4 - Guardrail threshold recalibration and import-budget expansion
-- [ ] Patch 5 - guardrails + parity + closure
+- [x] Patch 5 - guardrails + parity + closure
 
 ### Non-Negotiable Rules
 
