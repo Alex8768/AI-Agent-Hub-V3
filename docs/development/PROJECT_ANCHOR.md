@@ -2,109 +2,109 @@
 
 ## Active Anchor
 
-A2.55 — Documentation Consistency Cleanup (Closed)
+A2.56 — Operational Guardrails for Soft-Failure KPIs
 
 ### Goal
 
-Eliminate stale cross-document contradictions so planning/status artifacts remain a reliable
-source of truth for active and completed work without changing runtime behavior.
+Introduce deterministic operational guardrails for answer-path soft-failure/fallback health
+signals so degradation risk is observable, trendable, and alertable without API regressions.
 
-The intent of this anchor is docs-consistency and operational clarity focused:
-- align capability status across features/checklist/status/anchor docs,
-- remove stale roadmap statements that conflict with completed anchors,
-- preserve existing docs topology and runtime/API behavior.
+The intent of this anchor is observability-policy and operations focused:
+- define KPI contracts for healthy answer-path requests,
+- establish fallback/soft-failure rate visibility and thresholds,
+- preserve runtime/API parity while improving operational triage signals.
 
 ### Why Now
 
-A2.54 is closed and guardrails are green.
+A2.55 is closed and documentation state is synchronized.
 
-The main residual risk is documentation drift: stale capability states and roadmap text can
-mislead anchor selection, progress tracking, and execution order.
+The main residual risk is operational blind spots: soft-failure and fallback paths are visible
+per request, but policy-level KPI/threshold guardrails for sustained degradation are not yet explicit.
 
-A2.55 focuses on consistency closure before new technical anchors begin.
+A2.56 focuses on operational policy closure for ongoing answer-path reliability.
 
 ### Architecture Position
 
-Target A2.55 boundaries:
+Target A2.56 boundaries:
 
-- **Capability Status Consistency**
-  - align completed capabilities with completed anchors
-  - remove stale "planned/current" wording for already closed work
-  - preserve intentional deferred items only
+- **KPI Contract Surface**
+  - define healthy-path KPI (`soft_failures_count == 0`)
+  - define fallback-rate denominator/numerator contract
+  - define deterministic threshold policy wording for alertability
 
-- **Roadmap Text Consistency**
-  - remove outdated "current anchor" statements
-  - keep roadmap ideas as future-facing only
-  - ensure no contradiction with checklist/status
+- **Operational Diagnostics Policy**
+  - codify soft-failure/fallback visibility expectations
+  - classify warning vs critical operational states
+  - keep scoped to answer-path diagnostics surface
 
 - **Quality Gates**
-  - keep docs topology and docs quality gates green
-  - preserve deterministic CI outcomes
+  - preserve docs and full-suite green status
+  - ensure policy assertions are deterministic and CI-triable
 
 ### Patch Plan
 
 #### Patch 1 — Inventory + scope lock
-- Build explicit inventory of docs contradictions and stale states.
-- Classify inconsistencies by type:
-  - capability status drift,
-  - roadmap/state wording drift,
-  - anchor/checklist synchronization drift.
+- Build explicit inventory of current soft-failure/fallback diagnostics surfaces and gaps.
+- Classify operational guardrail targets:
+  - KPI definition,
+  - threshold/alert policy wording,
+  - diagnostics exposure and reporting scope.
 - Define no-regression constraints and allowed edit scope.
 
-#### Patch 2 — Capability map consistency corrections
-- Update capability/status statements in `PLATFORM_FEATURES.md` to match closed anchors.
-- Keep changes wording-only (no scope expansion).
+#### Patch 2 — KPI policy contract introduction
+- Introduce explicit KPI wording/contracts in docs for healthy-path and fallback-rate policy.
+- Keep scope operational-policy first (no product behavior changes).
 
-#### Patch 3 — Checklist/status/anchor synchronization
-- Align `PROJECT_CHECKLIST.md`, `STATUS.md`, and `PROJECT_ANCHOR.md` on active/next state.
-- Remove stale "current work" carry-over blocks when no longer active.
+#### Patch 3 — Diagnostics surface mapping and reporting contract
+- Document which diagnostics fields/panels/reports represent KPI components.
+- Ensure deterministic mapping from runtime diagnostics to operational policy terms.
 
-#### Patch 4 — Roadmap wording normalization
-- Normalize roadmap clauses that conflict with completed milestones.
-- Keep future-looking roadmap ideas intact and non-contradictory.
+#### Patch 4 — Guardrail test/policy enforcement hardening
+- Add/expand deterministic tests or quality gates for operational policy wording/contracts.
+- Ensure failure messages are actionable for CI triage.
 
 #### Patch 5 — Guardrails + parity + closure
-- Run docs-focused and full-suite checks for closure.
-- Finalize docs-sync and close A2.55.
+- Run focused + full checks and finalize closure sync.
+- Close A2.56 with docs and quality-gate parity preserved.
 
 ### Progress
 
 - [x] Patch 1 — inventory + scope lock
-- [x] Patch 2 — capability map consistency corrections
-- [x] Patch 3 — checklist/status/anchor synchronization
-- [x] Patch 4 — roadmap wording normalization
-- [x] Patch 5 — guardrails + parity + closure
+- [ ] Patch 2 — KPI policy contract introduction
+- [ ] Patch 3 — diagnostics surface mapping and reporting contract
+- [ ] Patch 4 — guardrail test/policy enforcement hardening
+- [ ] Patch 5 — guardrails + parity + closure
 
 ### Non-Negotiable Rules
 
-- No net-new runtime features during A2.55
-- Preserve docs topology policy
-- Preserve runtime/API behavior (docs-only anchor)
-- No opportunistic refactors beyond docs consistency scope
+- No net-new user-facing features during A2.56
+- Preserve answer/debug runtime/API parity
+- Keep operational policy changes deterministic and scoped
+- No opportunistic refactors beyond operational guardrails scope
 - One patch = one reason
 
 ### Out of Scope
 
-Do NOT modify during A2.55:
+Do NOT modify during A2.56:
 
 - planner/kernel topology
-- service runtime logic
-- endpoint contracts
+- unrelated product feature logic
+- endpoint contract shape
 - non-doc production code
 - unrelated UI or infra features
 
 ### Definition of Done
 
-A2.55 is complete when:
+A2.56 is complete when:
 
-- stale docs contradictions identified and resolved
-- active/next anchor state is consistent across docs
-- roadmap wording no longer conflicts with completed milestones
-- docs and full-suite quality checks remain green
+- operational KPI/threshold policy is explicitly documented
+- diagnostics-to-policy mapping is stable and deterministic
+- focused and full quality checks remain green
+- no answer/debug parity regressions are introduced
 
 ## Next Anchor
 
-TBD — Post-A2.55 planning
+TBD — Post-A2.56 planning
 
 ### Discipline
 

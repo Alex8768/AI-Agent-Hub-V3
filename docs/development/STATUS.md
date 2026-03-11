@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-Anchor Closed — A2.55 complete (documentation consistency cleanup closure)
+Active Anchor Execution — A2.56 patch 1 complete (operational guardrails inventory + scope lock)
 
 ## Last Completed Anchor
 
@@ -16,12 +16,12 @@ A2.55 closed with:
 
 ## Current Active Anchor
 
-TBD — Post-A2.55 planning
+A2.56 — Operational Guardrails for Soft-Failure KPIs
 
 Current focus:
-- define next anchor scope after documentation consistency closure
-- preserve current docs/runtime parity baselines
-- continue one-patch-one-reason execution discipline
+- inventory operational KPI surfaces for soft-failure/fallback health
+- lock threshold/alert policy scope before enforcement patches
+- preserve answer/debug runtime parity during guardrail hardening
 
 Execution discipline:
 - no net-new intelligence features
@@ -31,7 +31,7 @@ Execution discipline:
 
 ## Next Anchor
 
-TBD — Post-A2.55 planning
+TBD — Post-A2.56 planning
 
 ## CI Status
 

@@ -52,14 +52,15 @@
 - [x] A2.53 — Answer-Path Exception Policy Hardening
 - [x] A2.54 — Diagnostics Contract Guardrails
 - [x] A2.55 — Documentation Consistency Cleanup
+- [ ] A2.56 — Operational Guardrails for Soft-Failure KPIs
 
-## Current Work — A2.55 Documentation Consistency Cleanup
+## Current Work — A2.56 Operational Guardrails for Soft-Failure KPIs
 
 - [x] Patch 1 — inventory + scope lock
-- [x] Patch 2 — capability map consistency corrections
-- [x] Patch 3 — checklist/status/anchor synchronization
-- [x] Patch 4 — roadmap wording normalization
-- [x] Patch 5 — guardrails + parity + closure
+- [ ] Patch 2 — KPI policy contract introduction
+- [ ] Patch 3 — diagnostics surface mapping and reporting contract
+- [ ] Patch 4 — guardrail test/policy enforcement hardening
+- [ ] Patch 5 — guardrails + parity + closure
 
 ## Post-A2.51 Guardrail Maintenance
 
