@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-A2.66 patch 3 complete (Reasoning extraction phase-10 fallback diagnostics seam)
+A2.66 patch 4 complete (Guardrail recalibration + no-growth baseline refresh)
 
 ## Last Completed Anchor
 
@@ -23,7 +23,7 @@ Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 A2.66 - Facade Convergence Phase 10 (Answer/Reasoning)
 
 Current focus:
-- execute A2.66 patch 4 guardrail recalibration and import-budget refresh
+- execute A2.66 patch 5 closure (focused + full-suite checks, docs finalization)
 - preserve answer/reasoning no-growth guardrail baseline through extraction-only changes
 - continue one-patch-one-reason execution discipline
 
