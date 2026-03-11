@@ -140,3 +140,23 @@ def build_runtime_step_results_from_planner_actions(
             }
         )
     return rows
+
+
+def build_fallback_planner_observations(
+    *,
+    planner_step_results: list[dict[str, object]],
+) -> dict[str, object]:
+    rows = [dict(x or {}) for x in list(planner_step_results or [])]
+    planner_step_count = int(len(rows))
+    planner_current_step = int(max(planner_step_count - 1, 0)) if planner_step_count > 0 else 0
+    planner_current_action = "ANSWER" if planner_step_count > 0 else ""
+    fallback_plan_steps = [
+        str((row or {}).get("step_description", "") or "")
+        for row in rows
+    ]
+    return {
+        "planner_step_count": planner_step_count,
+        "planner_current_step": planner_current_step,
+        "planner_current_action": planner_current_action,
+        "fallback_plan_steps": fallback_plan_steps,
+    }

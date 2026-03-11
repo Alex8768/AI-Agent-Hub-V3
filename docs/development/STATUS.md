@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-A2.65 patch 2 complete (Answer extraction phase-9 plan-policy guard seam)
+A2.65 patch 3 complete (Reasoning extraction phase-9 fallback planner observations seam)
 
 ## Last Completed Anchor
 
@@ -23,7 +23,7 @@ Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 A2.65 - Facade Convergence Phase 9 (Answer/Reasoning)
 
 Current focus:
-- execute A2.65 patch 3 reasoning extraction phase-9 (next bounded runtime seam)
+- execute A2.65 patch 4 guardrail recalibration and import-budget expansion
 - preserve answer/reasoning decomposition and no-growth guardrail baseline
 - continue one-patch-one-reason execution discipline
 

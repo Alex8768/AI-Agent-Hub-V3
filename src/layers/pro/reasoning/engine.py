@@ -27,6 +27,7 @@ from src.layers.pro.reasoning.multi_agent.runtime_contracts import (
     enrich_step_results_with_multi_agent_contract as _enrich_step_results_with_multi_agent_contract,
 )
 from src.layers.pro.reasoning.evaluation.runtime_diagnostics import (
+    build_fallback_planner_observations as _build_fallback_planner_observations,
     build_runtime_step_results_from_planner_actions as _build_runtime_step_results_from_planner_actions,
     build_reasoning_benchmark_diagnostics as _build_reasoning_benchmark_diagnostics,
     build_reasoning_trace_diagnostics as _build_reasoning_trace_diagnostics,
@@ -446,9 +447,12 @@ class ReasoningEngine:
 
         fallback_reason: str | None = error or "fallback"
         planner_step_results = await self._execute_planner_steps_mvp(request=request)
-        planner_step_count = int(len(planner_step_results or []))
-        planner_current_step = int(max(planner_step_count - 1, 0)) if planner_step_count > 0 else 0
-        planner_current_action = "ANSWER" if planner_step_count > 0 else ""
+        planner_observations = _build_fallback_planner_observations(
+            planner_step_results=list(planner_step_results or []),
+        )
+        planner_current_step = int(planner_observations.get("planner_current_step", 0) or 0)
+        planner_current_action = str(planner_observations.get("planner_current_action", "") or "")
+        fallback_plan_steps = [str(x or "") for x in list(planner_observations.get("fallback_plan_steps") or [])]
 
         if self.llm is not None and not dry_run:
             # Пробуем вызвать LLM напрямую (один раз)
@@ -536,10 +540,6 @@ class ReasoningEngine:
                 ),
             )
             verify = dict(diag.get("verify") or {})
-            fallback_plan_steps = [
-                str((row or {}).get("step_description", "") or "")
-                for row in list(planner_step_results or [])
-            ]
             diag.setdefault(
                 "planner_runtime_parity",
                 self._build_planner_runtime_parity_diagnostics(
