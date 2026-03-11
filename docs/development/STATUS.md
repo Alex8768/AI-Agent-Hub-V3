@@ -2,17 +2,16 @@
 
 ## Current Phase
 
-A2.58 patch 4 complete - decomposition no-growth quality-gate expansion
+Anchor Closed - A2.58 complete (thin-facade completion closure)
 
 ## Last Completed Anchor
 
-A2.57 - Application Decomposition Regime (Answer/Reasoning No-Growth)
+A2.58 - Thin Facade Completion (Answer/Reasoning)
 
-A2.57 closed with:
-- decomposition governance baseline and no-growth guardrails documented
-- answer move-map and bounded package scaffolding established
-- answer phase-1 heavy-cluster extraction completed with parity preserved
-- reasoning move-map and first diagnostics/evaluation extraction completed
+A2.58 closed with:
+- answer phase-2 helper extraction completed with behavior/API parity preserved
+- reasoning phase-2 runtime evaluation diagnostics extraction completed with wrapper parity
+- no-growth line-budget quality-gate enforced for answer/reasoning monolith targets
 - focused and full-suite checks green at closure
 
 Legacy closure markers retained for A2.56 docs quality-gate compatibility:
@@ -21,11 +20,11 @@ Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 
 ## Current Active Anchor
 
-A2.58 - Thin Facade Completion (Answer/Reasoning)
+TBD - Post-A2.58 planning
 
 Current focus:
-- execute closure checks and finalize A2.58 docs parity sync
-- keep answer and reasoning behavior/api/diagnostics contracts unchanged
+- define next technical anchor after A2.58 closure
+- preserve answer/reasoning decomposition and no-growth guardrail baseline
 - continue one-patch-one-reason execution discipline
 
 Execution discipline:

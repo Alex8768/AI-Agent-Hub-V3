@@ -2,7 +2,7 @@
 
 ## Active Anchor
 
-A2.58 - Thin Facade Completion (Answer/Reasoning)
+A2.58 - Thin Facade Completion (Answer/Reasoning) (Closed)
 
 ### Goal
 
@@ -87,7 +87,7 @@ Patch 4 artifacts:
 - [x] Patch 2 - Answer extraction phase-2
 - [x] Patch 3 - Reasoning extraction phase-2
 - [x] Patch 4 - Decomposition guardrail quality-gate expansion
-- [ ] Patch 5 - guardrails + parity + closure
+- [x] Patch 5 - guardrails + parity + closure
 
 ### Non-Negotiable Rules
 
