@@ -382,3 +382,117 @@ def apply_graph_runtime_diagnostics(
         contract=contract,
     )
     return diag, runtime_warnings
+
+
+def apply_graph_response_diagnostics(
+    *,
+    response: object,
+    final_state: object,
+    answer_text: str,
+    request_query: str,
+    evidence_contract_version: str,
+    evidence_summary_fn: object,
+    evidence_contract_status_fn: object,
+    evidence_contract_gate_reason_fn: object,
+    self_check_fn: object,
+    verify_preflight_fn: object,
+    planner_runtime_parity_fn: object,
+    execution_policy_builder: object,
+    reasoning_quality_builder: object,
+    reasoning_optimization_builder: object,
+    enterprise_productization_builder: object,
+    meta_cognition_builder: object,
+    warning_flags_applier: object,
+) -> tuple[dict[str, object], list[str]]:
+    base_diag = dict(getattr(response, "diagnostics", None) or {})
+    base_warnings = list(getattr(response, "warnings", []) or [])
+    try:
+        planner_actions = [str(x or "") for x in list(getattr(final_state, "plan", []) or [])]
+        diag, runtime_warnings = apply_graph_runtime_diagnostics(
+            diagnostics=base_diag,
+            warnings=base_warnings,
+            iteration_count=int(getattr(final_state, "iteration_count", 0) or 0),
+            planner_actions=planner_actions,
+            planner_current_action=str(getattr(final_state, "current_action", "") or ""),
+            planner_current_step=int(getattr(final_state, "current_step", 0) or 0),
+            session_id=str(getattr(final_state, "session_id", "") or ""),
+            provenance=list(getattr(final_state, "provenance", []) or []),
+            answer_text=answer_text,
+            request_query=request_query,
+            evidence_contract_version=evidence_contract_version,
+            evidence_summary_fn=evidence_summary_fn,
+            evidence_contract_status_fn=evidence_contract_status_fn,
+            evidence_contract_gate_reason_fn=evidence_contract_gate_reason_fn,
+            self_check_fn=self_check_fn,
+            verify_preflight_fn=verify_preflight_fn,
+            planner_runtime_parity_fn=planner_runtime_parity_fn,
+            execution_policy_builder=execution_policy_builder,
+            reasoning_quality_builder=reasoning_quality_builder,
+            reasoning_optimization_builder=reasoning_optimization_builder,
+            enterprise_productization_builder=enterprise_productization_builder,
+            meta_cognition_builder=meta_cognition_builder,
+            warning_flags_applier=warning_flags_applier,
+        )
+        if getattr(final_state, "error", None):
+            diag["agent_error"] = str(getattr(final_state, "error", "") or "")
+        return diag, list(runtime_warnings or [])
+    except Exception:
+        return base_diag, base_warnings
+
+
+def apply_fallback_response_diagnostics(
+    *,
+    response: object,
+    fallback_reason: str | None,
+    planner_current_action: str,
+    planner_current_step: int,
+    provenance: list,
+    answer_text: str,
+    request_query: str,
+    fallback_plan_steps: list[str],
+    planner_step_results: list[dict[str, object]],
+    evidence_contract_version: str,
+    evidence_summary_fn: object,
+    evidence_contract_status_fn: object,
+    evidence_contract_gate_reason_fn: object,
+    self_check_fn: object,
+    verify_preflight_fn: object,
+    planner_runtime_parity_fn: object,
+    execution_policy_builder: object,
+    reasoning_quality_builder: object,
+    reasoning_optimization_builder: object,
+    enterprise_productization_builder: object,
+    meta_cognition_builder: object,
+    warning_flags_applier: object,
+) -> tuple[dict[str, object], list[str]]:
+    base_diag = dict(getattr(response, "diagnostics", None) or {})
+    base_warnings = list(getattr(response, "warnings", []) or [])
+    try:
+        diag, runtime_warnings = apply_fallback_runtime_diagnostics(
+            diagnostics=base_diag,
+            warnings=base_warnings,
+            fallback_reason=fallback_reason,
+            planner_current_action=planner_current_action,
+            planner_current_step=planner_current_step,
+            provenance=provenance,
+            answer_text=answer_text,
+            request_query=request_query,
+            fallback_plan_steps=fallback_plan_steps,
+            planner_step_results=planner_step_results,
+            evidence_contract_version=evidence_contract_version,
+            evidence_summary_fn=evidence_summary_fn,
+            evidence_contract_status_fn=evidence_contract_status_fn,
+            evidence_contract_gate_reason_fn=evidence_contract_gate_reason_fn,
+            self_check_fn=self_check_fn,
+            verify_preflight_fn=verify_preflight_fn,
+            planner_runtime_parity_fn=planner_runtime_parity_fn,
+            execution_policy_builder=execution_policy_builder,
+            reasoning_quality_builder=reasoning_quality_builder,
+            reasoning_optimization_builder=reasoning_optimization_builder,
+            enterprise_productization_builder=enterprise_productization_builder,
+            meta_cognition_builder=meta_cognition_builder,
+            warning_flags_applier=warning_flags_applier,
+        )
+        return diag, list(runtime_warnings or [])
+    except Exception:
+        return base_diag, base_warnings

@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-A2.69 patch 2 complete (Answer extraction phase-13)
+A2.69 patch 3 complete (Reasoning extraction phase-13)
 
 ## Last Completed Anchor
 
@@ -23,7 +23,7 @@ Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 A2.69 - Facade Convergence Phase 13 (Answer/Reasoning)
 
 Current focus:
-- execute A2.69 patch 3 reasoning extraction phase-13
+- execute A2.69 patch 4 guardrail threshold recalibration and import-budget expansion
 - preserve answer/reasoning no-growth guardrail baseline through extraction-only changes
 - continue one-patch-one-reason execution discipline
 

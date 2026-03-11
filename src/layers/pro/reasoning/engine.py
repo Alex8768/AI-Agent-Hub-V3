@@ -26,8 +26,8 @@ from src.layers.pro.reasoning.multi_agent.runtime_contracts import (
     enrich_step_results_with_multi_agent_contract as _enrich_step_results_with_multi_agent_contract,
 )
 from src.layers.pro.reasoning.evaluation.runtime_diagnostics import (
-    apply_fallback_runtime_diagnostics as _apply_fallback_runtime_diagnostics,
-    apply_graph_runtime_diagnostics as _apply_graph_runtime_diagnostics,
+    apply_fallback_response_diagnostics as _apply_fallback_response_diagnostics,
+    apply_graph_response_diagnostics as _apply_graph_response_diagnostics,
     build_fallback_planner_observations as _build_fallback_planner_observations,
     build_reasoning_benchmark_diagnostics as _build_reasoning_benchmark_diagnostics,
     build_reasoning_trace_diagnostics as _build_reasoning_trace_diagnostics,
@@ -309,40 +309,27 @@ class ReasoningEngine:
             used_edges=final_state.used_edges,
         )
 
-        # Добавляем диагностику
-        try:
-            planner_actions = [str(x or "") for x in list(getattr(final_state, "plan", []) or [])]
-            diag, runtime_warnings = _apply_graph_runtime_diagnostics(
-                diagnostics=dict(getattr(resp, "diagnostics", None) or {}),
-                warnings=list(getattr(resp, "warnings", []) or []),
-                iteration_count=int(getattr(final_state, "iteration_count", 0) or 0),
-                planner_actions=planner_actions,
-                planner_current_action=str(getattr(final_state, "current_action", "") or ""),
-                planner_current_step=int(getattr(final_state, "current_step", 0) or 0),
-                session_id=str(getattr(final_state, "session_id", "") or ""),
-                provenance=list(getattr(final_state, "provenance", []) or []),
-                answer_text=answer_text,
-                request_query=str(getattr(request, "query", "") or ""),
-                evidence_contract_version=EVIDENCE_CONTRACT_VERSION,
-                evidence_summary_fn=self._evidence_summary,
-                evidence_contract_status_fn=self._evidence_contract_status,
-                evidence_contract_gate_reason_fn=self._evidence_contract_gate_reason,
-                self_check_fn=self._self_check_diagnostics,
-                verify_preflight_fn=self._verify_diagnostics_preflight,
-                planner_runtime_parity_fn=self._build_planner_runtime_parity_diagnostics,
-                execution_policy_builder=build_reasoning_execution_policy,
-                reasoning_quality_builder=self._reasoning_quality_diagnostics,
-                reasoning_optimization_builder=self._build_reasoning_optimization_diagnostics,
-                enterprise_productization_builder=self._build_enterprise_productization_diagnostics,
-                meta_cognition_builder=self._build_meta_cognition_diagnostics,
-                warning_flags_applier=_apply_reasoning_runtime_warning_flags,
-            )
-            resp.warnings = list(runtime_warnings or [])
-            if getattr(final_state, "error", None):
-                diag["agent_error"] = str(getattr(final_state, "error", "") or "")
-            resp.diagnostics = diag
-        except Exception:
-            pass
+        diag, runtime_warnings = _apply_graph_response_diagnostics(
+            response=resp,
+            final_state=final_state,
+            answer_text=answer_text,
+            request_query=str(getattr(request, "query", "") or ""),
+            evidence_contract_version=EVIDENCE_CONTRACT_VERSION,
+            evidence_summary_fn=self._evidence_summary,
+            evidence_contract_status_fn=self._evidence_contract_status,
+            evidence_contract_gate_reason_fn=self._evidence_contract_gate_reason,
+            self_check_fn=self._self_check_diagnostics,
+            verify_preflight_fn=self._verify_diagnostics_preflight,
+            planner_runtime_parity_fn=self._build_planner_runtime_parity_diagnostics,
+            execution_policy_builder=build_reasoning_execution_policy,
+            reasoning_quality_builder=self._reasoning_quality_diagnostics,
+            reasoning_optimization_builder=self._build_reasoning_optimization_diagnostics,
+            enterprise_productization_builder=self._build_enterprise_productization_diagnostics,
+            meta_cognition_builder=self._build_meta_cognition_diagnostics,
+            warning_flags_applier=_apply_reasoning_runtime_warning_flags,
+        )
+        resp.warnings = list(runtime_warnings or [])
+        resp.diagnostics = diag
 
         # Логируем
         try:
@@ -407,37 +394,32 @@ class ReasoningEngine:
             used_edges=[e for e in used_edges if e],
         )
 
-        # Добавляем диагностику
-        try:
-            diag, runtime_warnings = _apply_fallback_runtime_diagnostics(
-                diagnostics=dict(getattr(resp, "diagnostics", None) or {}),
-                warnings=list(getattr(resp, "warnings", []) or []),
-                fallback_reason=fallback_reason,
-                planner_current_action=planner_current_action,
-                planner_current_step=planner_current_step,
-                provenance=provenance,
-                answer_text=answer_text,
-                request_query=str(getattr(request, "query", "") or ""),
-                fallback_plan_steps=fallback_plan_steps,
-                planner_step_results=list(planner_step_results or []),
-                evidence_contract_version=EVIDENCE_CONTRACT_VERSION,
-                evidence_summary_fn=self._evidence_summary,
-                evidence_contract_status_fn=self._evidence_contract_status,
-                evidence_contract_gate_reason_fn=self._evidence_contract_gate_reason,
-                self_check_fn=self._self_check_diagnostics,
-                verify_preflight_fn=self._verify_diagnostics_preflight,
-                planner_runtime_parity_fn=self._build_planner_runtime_parity_diagnostics,
-                execution_policy_builder=build_reasoning_execution_policy,
-                reasoning_quality_builder=self._reasoning_quality_diagnostics,
-                reasoning_optimization_builder=self._build_reasoning_optimization_diagnostics,
-                enterprise_productization_builder=self._build_enterprise_productization_diagnostics,
-                meta_cognition_builder=self._build_meta_cognition_diagnostics,
-                warning_flags_applier=_apply_reasoning_runtime_warning_flags,
-            )
-            resp.warnings = list(runtime_warnings or [])
-            resp.diagnostics = diag
-        except Exception:
-            pass
+        diag, runtime_warnings = _apply_fallback_response_diagnostics(
+            response=resp,
+            fallback_reason=fallback_reason,
+            planner_current_action=planner_current_action,
+            planner_current_step=planner_current_step,
+            provenance=provenance,
+            answer_text=answer_text,
+            request_query=str(getattr(request, "query", "") or ""),
+            fallback_plan_steps=fallback_plan_steps,
+            planner_step_results=list(planner_step_results or []),
+            evidence_contract_version=EVIDENCE_CONTRACT_VERSION,
+            evidence_summary_fn=self._evidence_summary,
+            evidence_contract_status_fn=self._evidence_contract_status,
+            evidence_contract_gate_reason_fn=self._evidence_contract_gate_reason,
+            self_check_fn=self._self_check_diagnostics,
+            verify_preflight_fn=self._verify_diagnostics_preflight,
+            planner_runtime_parity_fn=self._build_planner_runtime_parity_diagnostics,
+            execution_policy_builder=build_reasoning_execution_policy,
+            reasoning_quality_builder=self._reasoning_quality_diagnostics,
+            reasoning_optimization_builder=self._build_reasoning_optimization_diagnostics,
+            enterprise_productization_builder=self._build_enterprise_productization_diagnostics,
+            meta_cognition_builder=self._build_meta_cognition_diagnostics,
+            warning_flags_applier=_apply_reasoning_runtime_warning_flags,
+        )
+        resp.warnings = list(runtime_warnings or [])
+        resp.diagnostics = diag
 
         return resp
 
