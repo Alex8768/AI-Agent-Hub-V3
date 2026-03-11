@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-A2.74 closed
+A2.75 in progress (Patch 1 complete)
 
 ## Last Completed Anchor
 
@@ -20,11 +20,11 @@ Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 
 ## Current Active Anchor
 
-A2.75 - TBD (Post-A2.74 planning)
+A2.75 - Facade Convergence Phase 19 (Answer/Reasoning)
 
 Current focus:
-- define next bounded extraction inventory and scope lock for follow-up convergence anchor
-- preserve no-growth guardrail discipline from A2.74 baselines (`2100`/`313`)
+- execute next bounded extraction seams from inventory hotspots (A2.75 patch 2/3)
+- preserve no-growth guardrail discipline from A2.75 patch-1 baselines (`2100`/`313`)
 - continue one-patch-one-reason execution discipline
 
 Execution discipline:
@@ -35,7 +35,7 @@ Execution discipline:
 
 ## Next Anchor
 
-A2.75 - TBD (Post-A2.74 planning)
+TBD - Post-A2.75 planning
 
 ## CI Status
 
