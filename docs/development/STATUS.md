@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-A2.73 in progress (Patch 3 complete)
+A2.73 in progress (Patch 4 complete)
 
 ## Last Completed Anchor
 
@@ -23,8 +23,8 @@ Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 A2.73 - Facade Convergence Phase 17 (Answer/Reasoning)
 
 Current focus:
-- prepare no-growth threshold recalibration and import-budget verification (A2.73 patch 4)
-- preserve no-growth guardrail discipline from A2.73 patch-1 baselines (`2241`/`361`)
+- run focused + full-suite closure checks and finalize A2.73 (patch 5)
+- preserve no-growth guardrail discipline from updated baselines (`2183`/`352`)
 - continue one-patch-one-reason execution discipline
 
 Execution discipline:
