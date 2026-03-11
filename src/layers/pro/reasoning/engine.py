@@ -190,7 +190,6 @@ class ReasoningEngine:
     async def synthesize(self, request: AnswerRequest) -> AnswerResponse:
         """Synthesize an answer using agentic graph."""
         import importlib
-
         impl = getattr(
             importlib.import_module("src.layers.pro.reasoning.synthesis.runtime_dependencies"),
             "synthesize_with_engine_runtime_dependencies",
@@ -200,6 +199,7 @@ class ReasoningEngine:
             request=request,
             build_reasoning_execution_policy_fn=build_reasoning_execution_policy,
             get_runtime_logger_fn=_get_runtime_logger,
+            build_reasoning_graph_fn=build_reasoning_graph,
         )
 
     async def _synthesize_fallback(self, request: AnswerRequest, error: str | None = None) -> AnswerResponse:

@@ -29,12 +29,14 @@ async def synthesize_with_engine_runtime_dependencies(
     request: object,
     build_reasoning_execution_policy_fn: object,
     get_runtime_logger_fn: object,
+    build_reasoning_graph_fn: object | None = None,
 ) -> object:
+    build_reasoning_graph_impl = build_reasoning_graph_fn or build_reasoning_graph
     return await _synthesize_with_graph_runtime(
         request=request,
         llm=getattr(engine, "llm"),
         retriever=getattr(engine, "retriever"),
-        build_reasoning_graph_fn=build_reasoning_graph,
+        build_reasoning_graph_fn=build_reasoning_graph_impl,
         run_graph_runtime_fn=getattr(engine, "_run_graph_runtime"),
         synthesize_fallback_fn=getattr(engine, "_synthesize_fallback"),
         get_settings_fn=get_settings,

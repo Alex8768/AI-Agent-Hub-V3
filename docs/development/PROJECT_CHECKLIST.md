@@ -77,14 +77,15 @@
 - [x] A2.78 - Facade Convergence Phase 22 (Answer/Reasoning)
 - [x] A2.79 - Facade Convergence Phase 23 (Answer/Reasoning)
 - [x] A2.80 - Facade Convergence Phase 24 (Answer/Reasoning)
-- [ ] A2.81 - Facade Convergence Phase 25 (Answer/Reasoning)
+- [x] A2.81 - Facade Convergence Phase 25 (Answer/Reasoning)
+- [ ] A2.82 - Facade Convergence Phase 26 (Answer/Reasoning)
 
-## Current Work — A2.81 Facade Convergence Phase 25 (Answer/Reasoning)
+## Current Work — A2.82 Facade Convergence Phase 26 (Answer/Reasoning)
 
-- [x] Patch 1 - inventory + scope lock
-- [x] Patch 2 - Answer extraction phase-25
-- [x] Patch 3 - Reasoning extraction phase-25
-- [x] Patch 4 - Guardrail threshold recalibration and import-budget expansion
+- [ ] Patch 1 - inventory + scope lock
+- [ ] Patch 2 - Answer extraction phase-26
+- [ ] Patch 3 - Reasoning extraction phase-26
+- [ ] Patch 4 - Guardrail threshold recalibration and import-budget expansion
 - [ ] Patch 5 - guardrails + parity + closure
 
 ## A2.74 Historical Work - Facade Convergence Phase 18 (Answer/Reasoning)

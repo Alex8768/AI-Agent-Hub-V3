@@ -2,17 +2,17 @@
 
 ## Current Phase
 
-A2.81 in progress (Patch 4 complete)
+A2.81 complete
 
 ## Last Completed Anchor
 
-A2.80 - Facade Convergence Phase 24 (Answer/Reasoning)
+A2.81 - Facade Convergence Phase 25 (Answer/Reasoning)
 
-A2.80 closed with:
-- answer conversational runtime parity seam extraction from `AnswerService` facade
-- reasoning fallback runtime dependency composition seam extraction from `ReasoningEngine` facade
-- no-growth baselines recalibrated and preserved at closure (`1781`/`262`) with import budgets (`15`/`14`)
-- focused and full-suite checks green at closure (`40 passed`; `576 passed, 3 skipped`)
+A2.81 closed with:
+- answer proactive ranking seam extraction from `AnswerService` facade
+- reasoning synthesize runtime dependency composition seam extraction from `ReasoningEngine` facade
+- no-growth baselines recalibrated and preserved at closure (`1737`/`241`) with import budgets (`15`/`14`)
+- focused and full-suite checks green at closure (`81 passed`; `576 passed, 3 skipped`)
 
 Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 - Anchor Closed — A2.56 complete (operational guardrails policy closure)
@@ -20,10 +20,10 @@ Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 
 ## Current Active Anchor
 
-A2.81 - Facade Convergence Phase 25 (Answer/Reasoning)
+TBD - Post-A2.81 planning
 
 Current focus:
-- execute guardrails + parity + closure flow (A2.81 patch 5)
+- define next extraction inventory and scope lock (A2.82 planning)
 - preserve no-growth guardrail discipline from latest baselines (`1737`/`241`) and import budgets (`15`/`14`)
 - maintain one-patch-one-reason execution discipline
 
@@ -35,7 +35,7 @@ Execution discipline:
 
 ## Next Anchor
 
-TBD - Post-A2.81 planning
+TBD - Post-A2.82 planning
 
 ## CI Status
 

@@ -2,7 +2,7 @@
 
 ## Active Anchor
 
-A2.81 - Facade Convergence Phase 25 (Answer/Reasoning)
+TBD - Post-A2.81 planning
 
 ### Goal
 
@@ -133,7 +133,21 @@ Patch 4 artifacts:
 - run focused and full-suite checks and close A2.81 with docs sync.
 
 Patch 5 artifacts:
-- pending.
+- full-suite checks green:
+  - `uv run pytest`
+  - result: `576 passed, 3 skipped`
+- focused closure checks retained green from A2.81 patch flow:
+  - answer/reasoning focused parity + guardrails (`81 passed`)
+  - docs quality gates (`41 passed`)
+- closure baselines preserved:
+  - `src/services/answer/answer_service.py`: `1737` lines
+  - `src/layers/pro/reasoning/engine.py`: `241` lines
+  - import budgets: answer `15`, reasoning `14`
+- mandatory docs sync completed across:
+  - `docs/development/PROJECT_ANCHOR.md`
+  - `docs/development/PROJECT_CHECKLIST.md`
+  - `docs/development/STATUS.md`
+  - `docs/architecture/PLATFORM_FEATURES.md`
 
 ### Progress
 
@@ -141,7 +155,7 @@ Patch 5 artifacts:
 - [x] Patch 2 - Answer extraction phase-25
 - [x] Patch 3 - Reasoning extraction phase-25
 - [x] Patch 4 - Guardrail threshold recalibration and import-budget expansion
-- [ ] Patch 5 - guardrails + parity + closure
+- [x] Patch 5 - guardrails + parity + closure
 
 ### Non-Negotiable Rules
 
@@ -189,11 +203,11 @@ A2.56 policy markers are retained for deterministic docs quality gates:
 
 ## Next Anchor
 
-TBD - Post-A2.81 planning
+TBD - Post-A2.82 planning
 
 ## Anchor Closed
 
-A2.80 complete - Facade Convergence Phase 24 closed with extraction + guardrails + parity.
+A2.81 complete - Facade Convergence Phase 25 closed with extraction + guardrails + parity.
 
 ## Post-A2.56 Maintenance
 
