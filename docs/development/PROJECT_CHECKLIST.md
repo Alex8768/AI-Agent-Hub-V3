@@ -59,7 +59,7 @@
 ## Current Work — A2.58 Thin Facade Completion (Answer/Reasoning)
 
 - [x] Patch 1 - inventory + scope lock
-- [ ] Patch 2 - Answer extraction phase-2
+- [x] Patch 2 - Answer extraction phase-2
 - [ ] Patch 3 - Reasoning extraction phase-2
 - [ ] Patch 4 - Decomposition guardrail quality-gate expansion
 - [ ] Patch 5 - guardrails + parity + closure

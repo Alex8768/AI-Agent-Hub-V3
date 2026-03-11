@@ -41,6 +41,20 @@ Target A2.58 boundaries:
 - extract next bounded clusters from `answer_service.py` (diagnostics/response/execution flow helpers),
 - reduce facade branching and preserve endpoint/debug contract behavior.
 
+Patch 2 artifacts:
+- language helper extraction:
+  - `_detect_response_language`, `_normalize_language_tag`, `_answer_language`
+  - moved to `src/services/answer/response/language.py`
+- runtime context helper extraction:
+  - `_build_answer_service_runtime_context`
+  - moved to `src/services/answer/context/runtime_context.py`
+- reasoning adapter helper extraction:
+  - `_build_reasoning_runtime_adapter`
+  - moved to `src/services/answer/reasoning/runtime_adapter.py`
+- memory consistency diagnostics helper extraction:
+  - `_build_memory_consistency_bundle`, `_build_memory_consistency_strategy_contract`
+  - moved to `src/services/answer/diagnostics/memory_consistency.py`
+
 #### Patch 3 - Reasoning extraction phase-2
 - extract next bounded clusters from `reasoning/engine.py` (evaluation/self-check/synthesis helpers),
 - preserve reasoning diagnostics contract behavior.
@@ -55,7 +69,7 @@ Target A2.58 boundaries:
 ### Progress
 
 - [x] Patch 1 — inventory + scope lock
-- [ ] Patch 2 - Answer extraction phase-2
+- [x] Patch 2 - Answer extraction phase-2
 - [ ] Patch 3 - Reasoning extraction phase-2
 - [ ] Patch 4 - Decomposition guardrail quality-gate expansion
 - [ ] Patch 5 - guardrails + parity + closure

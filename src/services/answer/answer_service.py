@@ -52,10 +52,17 @@ from src.services.answer.diagnostics_merge import (
     AnswerDiagnosticsMergeDeps,
     run_answer_diagnostics_merge_flow,
 )
+from src.services.answer.diagnostics.memory_consistency import (
+    build_memory_consistency_bundle as _build_memory_consistency_bundle,
+    build_memory_consistency_strategy_contract as _build_memory_consistency_strategy_contract,
+)
 from src.services.answer.diagnostics.reason_codes import (
     append_planning_reason_codes as _append_planning_reason_codes,
 )
 from src.services.answer.orchestrator import run_answer_orchestration_core
+from src.services.answer.context.runtime_context import (
+    build_answer_service_runtime_context as _build_answer_service_runtime_context,
+)
 from src.services.answer.context.session_text import clip_text as _clip_text
 from src.services.answer.execution.durable_keys import (
     durable_approval_record_key as _durable_approval_record_key,
@@ -65,6 +72,14 @@ from src.services.answer.observability.event_logger import log_observability
 from src.services.answer.post_orchestration import (
     AnswerPostOrchestrationDeps,
     run_answer_post_orchestration_flow,
+)
+from src.services.answer.reasoning.runtime_adapter import (
+    build_reasoning_runtime_adapter as _build_reasoning_runtime_adapter,
+)
+from src.services.answer.response.language import (
+    answer_language as _answer_language,
+    detect_response_language as _detect_response_language,
+    normalize_language_tag as _normalize_language_tag,
 )
 from src.services.answer.response_assembly import run_answer_response_assembly
 
@@ -202,103 +217,6 @@ async def _run_answer_primary_pipeline(
         loaded_durable_approval=dict(orchestration.loaded_durable_approval or {}),
         loaded_durable_idempotency=dict(orchestration.loaded_durable_idempotency or {}),
     )
-
-
-def _detect_response_language(query: str) -> str:
-    text = str(query or "")
-    if any("\u0400" <= ch <= "\u04FF" for ch in text):
-        return "ru"
-    return "en"
-
-
-def _normalize_language_tag(language: str, *, query: str = "") -> str:
-    value = str(language or "").strip().lower()
-    if value in {"ru", "en"}:
-        return value
-    return _detect_response_language(query)
-
-
-def _answer_language(answer: str) -> str:
-    text = str(answer or "")
-    if any("\u0400" <= ch <= "\u04FF" for ch in text):
-        return "ru"
-    return "en"
-
-
-def _build_answer_service_runtime_context(*, settings: object) -> dict[str, object]:
-    return {
-        "reasoning_enabled": bool(getattr(settings, "feature_reasoning", False)),
-        "graphrag_enabled": bool(getattr(settings, "feature_graphrag", False)),
-        "assistant_mode_enabled": bool(getattr(settings, "feature_assistant_mode", False)),
-        "assistant_proactive_enabled": bool(getattr(settings, "feature_assistant_proactive", False)),
-        "assistant_actions_enabled": bool(getattr(settings, "feature_assistant_actions", False)),
-        "assistant_response_language": "auto",
-    }
-
-
-def _build_reasoning_runtime_adapter(
-    *,
-    reasoning_factory: object,
-    retriever: object,
-    llm: object | None,
-) -> object | None:
-    if not callable(reasoning_factory):
-        return None
-    adapter = reasoning_factory(retriever=retriever, llm=llm)
-    if adapter is None:
-        return None
-    if not hasattr(adapter, "synthesize"):
-        return None
-    return adapter
-
-
-def _build_memory_consistency_bundle(
-    *,
-    session_memory_loaded: bool,
-    session_memory_hit: bool,
-    durable_approval_record_loaded: bool,
-    durable_idempotency_record_loaded: bool,
-) -> dict[str, object]:
-    reason_codes: list[str] = ["memory_consistency_guard_evaluated"]
-    if not session_memory_loaded:
-        reason_codes.append("memory_consistency_store_unavailable")
-    if session_memory_hit:
-        reason_codes.append("memory_consistency_session_hit")
-    if durable_approval_record_loaded:
-        reason_codes.append("memory_consistency_durable_approval_loaded")
-    if durable_idempotency_record_loaded:
-        reason_codes.append("memory_consistency_durable_idempotency_loaded")
-    status = "warn" if not session_memory_loaded else "ok"
-    return {
-        "contract_version": "v1",
-        "mode": "memory_consistency_guarded",
-        "status": status,
-        "inputs": {
-            "session_memory_loaded": bool(session_memory_loaded),
-            "session_memory_hit": bool(session_memory_hit),
-            "durable_approval_record_loaded": bool(durable_approval_record_loaded),
-            "durable_idempotency_record_loaded": bool(durable_idempotency_record_loaded),
-        },
-        "reason_codes": sorted(set(reason_codes)),
-    }
-
-
-def _build_memory_consistency_strategy_contract() -> dict[str, object]:
-    reason_codes = [
-        "memory_consistency_strategy_contract_defined",
-        "memory_consistency_strategy_best_effort",
-        "memory_consistency_strategy_outbox_deferred",
-        "memory_consistency_strategy_compensation_deferred",
-    ]
-    return {
-        "contract_version": "v1",
-        "mode": "best_effort_dual_store",
-        "consistency_target": "eventual_consistency",
-        "write_strategy": "sqlite_primary_qdrant_best_effort",
-        "outbox_strategy": "deferred",
-        "compensation_strategy": "deferred",
-        "reason_codes": sorted(set(reason_codes)),
-    }
 
 
 def _build_planner_runtime_parity_fallback_bundle(*, diagnostics: dict[str, object]) -> dict[str, object]:

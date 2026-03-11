@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-A2.58 patch 1 complete - thin-facade completion inventory and scope lock
+A2.58 patch 2 complete - answer extraction phase-2 helper decomposition
 
 ## Last Completed Anchor
 
@@ -24,8 +24,8 @@ Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 A2.58 - Thin Facade Completion (Answer/Reasoning)
 
 Current focus:
-- inventory remaining heavy clusters in answer/reasoning facades
-- lock phase-2 extraction scope with strict parity constraints
+- execute reasoning extraction phase-2 with parity preservation
+- keep answer-service behavior/api/diagnostics contracts unchanged
 - continue one-patch-one-reason execution discipline
 
 Execution discipline:
