@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-A2.75 in progress (Patch 1 complete)
+A2.75 in progress (Patch 2 complete)
 
 ## Last Completed Anchor
 
@@ -23,8 +23,8 @@ Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 A2.75 - Facade Convergence Phase 19 (Answer/Reasoning)
 
 Current focus:
-- execute next bounded extraction seams from inventory hotspots (A2.75 patch 2/3)
-- preserve no-growth guardrail discipline from A2.75 patch-1 baselines (`2100`/`313`)
+- execute reasoning extraction phase-19 (A2.75 patch 3)
+- preserve no-growth guardrail discipline from updated baselines (`2051`/`313`)
 - continue one-patch-one-reason execution discipline
 
 Execution discipline:
