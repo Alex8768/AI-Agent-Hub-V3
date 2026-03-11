@@ -58,7 +58,7 @@
 - [x] Patch 1 — inventory + scope lock
 - [x] Patch 2 — capability map consistency corrections
 - [x] Patch 3 — checklist/status/anchor synchronization
-- [ ] Patch 4 — roadmap wording normalization
+- [x] Patch 4 — roadmap wording normalization
 - [ ] Patch 5 — guardrails + parity + closure
 
 ## Post-A2.51 Guardrail Maintenance

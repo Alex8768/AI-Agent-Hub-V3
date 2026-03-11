@@ -215,6 +215,7 @@ AI-Agent-Hub-V3 is a modular AI platform for production-grade agent systems with
 - [x] A2.55 documentation consistency cleanup inventory/scope-lock (patch 1)
 - [x] A2.55 capability-map consistency correction for OCR completion status (patch 2)
 - [x] A2.55 checklist/status/anchor synchronization with stale carry-over cleanup (patch 3)
+- [x] A2.55 roadmap wording normalization for completed OCR/MCP milestones (patch 4)
 
 ### 7) Interface Layer
 
@@ -259,11 +260,11 @@ AI-Agent-Hub-V3 is a modular AI platform for production-grade agent systems with
 Roadmap order:
 
 - `A2.15 -> A2.16 -> A2.17 -> A2.18 -> A2.19 -> A2.20 -> A2.21 -> A2.22 -> A2.23 -> A2.24 -> A2.25 -> A2.26 -> A2.27 -> A2.28 -> A2.29 -> A2.30 -> A2.31 -> A2.32 -> A2.33 -> A2.34 -> A2.35 -> A2.36 -> A2.37 -> A2.38 -> A2.39`
-- OCR remains the current anchor and must close before composition work.
+- OCR milestone is complete (`A2.21`); future composition work must still follow staged MVP-first rollout.
 - Composition should start as rule-based MVP before advanced autonomy.
 - Meta-cognition should consume existing diagnostics first (no graph redesign in first pass).
 - Anticipatory mode should start as safe post-response suggestions (lightweight).
-- MCP expansion remains deferred until after A2.21 stabilization and quality gates.
+- MCP expansion milestone is complete (`A2.25`); future MCP work requires a new anchor with explicit quality gates.
 
 ---
 
