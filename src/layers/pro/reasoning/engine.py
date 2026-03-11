@@ -10,8 +10,6 @@ from src.layers.pro.reasoning.contracts import (
     AnswerResponse,
 )
 from src.layers.pro.reasoning.confidence import compute_confidence
-from src.layers.pro.reasoning.evidence_normalizer import normalize_retrieval_result
-from src.layers.pro.reasoning.context_packer import pack_context
 from src.layers.pro.reasoning.quality_retry import decide_reasoning_quality_retry
 from src.layers.pro.reasoning.control.execution_policy import build_reasoning_execution_policy
 from src.layers.pro.reasoning.control.loop_guard import (
@@ -38,6 +36,7 @@ from src.layers.pro.reasoning.evaluation.runtime_productization import (
     build_dry_run_answer_from_state as _build_dry_run_answer_from_state,
     build_enterprise_productization_diagnostics as _build_enterprise_productization_diagnostics,
     execute_fallback_planner_steps_mvp as _execute_fallback_planner_steps_mvp,
+    synthesize_fallback_response as _synthesize_fallback_response,
     build_meta_cognition_diagnostics as _build_meta_cognition_diagnostics,
     build_reasoning_optimization_diagnostics as _build_reasoning_optimization_diagnostics,
     run_graph_runtime_with_state_contract as _run_graph_runtime_with_state_contract,
@@ -292,61 +291,21 @@ class ReasoningEngine:
 
     async def _synthesize_fallback(self, request: AnswerRequest, error: str | None = None) -> AnswerResponse:
         """Fallback к старому однопроходному режиму (если нет LLM или ошибка графа)."""
-        from time import perf_counter
-        t0 = perf_counter()
-
-        result = await self.retriever.retrieve(request)
-
-        provenance, used_chunks, used_nodes, used_edges, preview_items = normalize_retrieval_result(result)
-
-        context_preview, _ = pack_context(
-            preview_items,
-            max_chars=int(getattr(request, "max_context_chars", 12000)),
-        )
-        if not context_preview:
-            # A2.1: keep session continuity when retrieval returns empty context.
-            context_preview = str(getattr(request, "session_memory_last_answer", "") or "")
-
         s = get_settings()
         dry_run = bool(getattr(s, "feature_reasoning_llm_dry_run", False))
-
         fallback_reason: str | None = error or "fallback"
-        planner_step_results = await self._execute_planner_steps_mvp(request=request)
-        planner_observations = _build_fallback_planner_observations(
-            planner_step_results=list(planner_step_results or []),
-        )
-        planner_current_step = int(planner_observations.get("planner_current_step", 0) or 0)
-        planner_current_action = str(planner_observations.get("planner_current_action", "") or "")
-        fallback_plan_steps = [str(x or "") for x in list(planner_observations.get("fallback_plan_steps") or [])]
-
-        answer_text = await self._build_fallback_answer_text(
+        return await _synthesize_fallback_response(
             request=request,
-            context_preview=context_preview,
-            provenance=provenance,
+            retriever=self.retriever,
             dry_run=dry_run,
-        )
-
-        resp = _build_fallback_answer_response(
-            answer_text=answer_text,
-            context_preview=context_preview,
-            provenance=provenance,
-            used_chunks=used_chunks,
-            used_nodes=used_nodes,
-            used_edges=used_edges,
+            fallback_reason=str(fallback_reason or "fallback"),
+            execute_planner_steps_mvp_fn=self._execute_planner_steps_mvp,
+            build_fallback_planner_observations_fn=_build_fallback_planner_observations,
+            build_fallback_answer_text_fn=self._build_fallback_answer_text,
+            build_fallback_answer_response_fn=_build_fallback_answer_response,
+            apply_fallback_response_diagnostics_fn=_apply_fallback_response_diagnostics,
             confidence_fn=compute_confidence,
             response_model_cls=AnswerResponse,
-        )
-
-        diag, runtime_warnings = _apply_fallback_response_diagnostics(
-            response=resp,
-            fallback_reason=fallback_reason,
-            planner_current_action=planner_current_action,
-            planner_current_step=planner_current_step,
-            provenance=provenance,
-            answer_text=answer_text,
-            request_query=str(getattr(request, "query", "") or ""),
-            fallback_plan_steps=fallback_plan_steps,
-            planner_step_results=list(planner_step_results or []),
             evidence_contract_version=EVIDENCE_CONTRACT_VERSION,
             evidence_summary_fn=self._evidence_summary,
             evidence_contract_status_fn=self._evidence_contract_status,
@@ -354,17 +313,13 @@ class ReasoningEngine:
             self_check_fn=self._self_check_diagnostics,
             verify_preflight_fn=self._verify_diagnostics_preflight,
             planner_runtime_parity_fn=self._build_planner_runtime_parity_diagnostics,
-            execution_policy_builder=build_reasoning_execution_policy,
-            reasoning_quality_builder=self._reasoning_quality_diagnostics,
-            reasoning_optimization_builder=self._build_reasoning_optimization_diagnostics,
-            enterprise_productization_builder=self._build_enterprise_productization_diagnostics,
-            meta_cognition_builder=self._build_meta_cognition_diagnostics,
-            warning_flags_applier=_apply_reasoning_runtime_warning_flags,
+            execution_policy_builder_fn=build_reasoning_execution_policy,
+            reasoning_quality_builder_fn=self._reasoning_quality_diagnostics,
+            reasoning_optimization_builder_fn=self._build_reasoning_optimization_diagnostics,
+            enterprise_productization_builder_fn=self._build_enterprise_productization_diagnostics,
+            meta_cognition_builder_fn=self._build_meta_cognition_diagnostics,
+            warning_flags_applier_fn=_apply_reasoning_runtime_warning_flags,
         )
-        resp.warnings = list(runtime_warnings or [])
-        resp.diagnostics = diag
-
-        return resp
 
     def _build_dry_run_answer(self, state: AgentState) -> str:
         """Строит dry-run ответ из состояния агента."""

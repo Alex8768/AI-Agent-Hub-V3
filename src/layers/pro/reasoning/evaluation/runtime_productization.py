@@ -7,6 +7,8 @@ import asyncio
 from src.layers.pro.meta_cognition.gaps import build_gap_map
 from src.layers.pro.meta_cognition.reflection import build_reflection_report
 from src.layers.pro.meta_cognition.uncertainty import build_uncertainty_summary
+from src.layers.pro.reasoning.context_packer import pack_context
+from src.layers.pro.reasoning.evidence_normalizer import normalize_retrieval_result
 from src.layers.pro.reasoning.enterprise.readiness_contract import (
     build_enterprise_readiness_contract_from_diagnostics,
 )
@@ -370,6 +372,95 @@ async def execute_fallback_planner_steps_mvp(
         step_results=list(step_results or []),
         coordination_plan=coordination_plan,
     )
+
+
+async def synthesize_fallback_response(
+    *,
+    request: object,
+    retriever: object,
+    dry_run: bool,
+    fallback_reason: str,
+    execute_planner_steps_mvp_fn: object,
+    build_fallback_planner_observations_fn: object,
+    build_fallback_answer_text_fn: object,
+    build_fallback_answer_response_fn: object,
+    apply_fallback_response_diagnostics_fn: object,
+    confidence_fn: object,
+    response_model_cls: object,
+    evidence_contract_version: str,
+    evidence_summary_fn: object,
+    evidence_contract_status_fn: object,
+    evidence_contract_gate_reason_fn: object,
+    self_check_fn: object,
+    verify_preflight_fn: object,
+    planner_runtime_parity_fn: object,
+    execution_policy_builder_fn: object,
+    reasoning_quality_builder_fn: object,
+    reasoning_optimization_builder_fn: object,
+    enterprise_productization_builder_fn: object,
+    meta_cognition_builder_fn: object,
+    warning_flags_applier_fn: object,
+) -> object:
+    result = await retriever.retrieve(request)
+    provenance, used_chunks, used_nodes, used_edges, preview_items = normalize_retrieval_result(result)
+    context_preview, _ = pack_context(
+        preview_items,
+        max_chars=int(getattr(request, "max_context_chars", 12000)),
+    )
+    if not context_preview:
+        context_preview = str(getattr(request, "session_memory_last_answer", "") or "")
+
+    planner_step_results = await execute_planner_steps_mvp_fn(request=request)
+    planner_observations = build_fallback_planner_observations_fn(
+        planner_step_results=list(planner_step_results or []),
+    )
+    planner_current_step = int(planner_observations.get("planner_current_step", 0) or 0)
+    planner_current_action = str(planner_observations.get("planner_current_action", "") or "")
+    fallback_plan_steps = [str(x or "") for x in list(planner_observations.get("fallback_plan_steps") or [])]
+
+    answer_text = await build_fallback_answer_text_fn(
+        request=request,
+        context_preview=context_preview,
+        provenance=provenance,
+        dry_run=dry_run,
+    )
+    resp = build_fallback_answer_response_fn(
+        answer_text=answer_text,
+        context_preview=context_preview,
+        provenance=provenance,
+        used_chunks=used_chunks,
+        used_nodes=used_nodes,
+        used_edges=used_edges,
+        confidence_fn=confidence_fn,
+        response_model_cls=response_model_cls,
+    )
+    diag, runtime_warnings = apply_fallback_response_diagnostics_fn(
+        response=resp,
+        fallback_reason=fallback_reason,
+        planner_current_action=planner_current_action,
+        planner_current_step=planner_current_step,
+        provenance=provenance,
+        answer_text=answer_text,
+        request_query=str(getattr(request, "query", "") or ""),
+        fallback_plan_steps=fallback_plan_steps,
+        planner_step_results=list(planner_step_results or []),
+        evidence_contract_version=evidence_contract_version,
+        evidence_summary_fn=evidence_summary_fn,
+        evidence_contract_status_fn=evidence_contract_status_fn,
+        evidence_contract_gate_reason_fn=evidence_contract_gate_reason_fn,
+        self_check_fn=self_check_fn,
+        verify_preflight_fn=verify_preflight_fn,
+        planner_runtime_parity_fn=planner_runtime_parity_fn,
+        execution_policy_builder=execution_policy_builder_fn,
+        reasoning_quality_builder=reasoning_quality_builder_fn,
+        reasoning_optimization_builder=reasoning_optimization_builder_fn,
+        enterprise_productization_builder=enterprise_productization_builder_fn,
+        meta_cognition_builder=meta_cognition_builder_fn,
+        warning_flags_applier=warning_flags_applier_fn,
+    )
+    resp.warnings = list(runtime_warnings or [])
+    resp.diagnostics = diag
+    return resp
 
 
 def _build_dry_run_answer_core(*, provenance: list, context_preview: str) -> str:
