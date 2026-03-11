@@ -41,6 +41,16 @@ Target A2.59 boundaries:
 - extract next bounded clusters from `answer_service.py` (execution/diagnostics/post-orchestration helpers),
 - reduce facade branching and preserve endpoint/debug contract behavior.
 
+Patch 2 artifacts:
+- runtime diagnostics wiring extraction:
+  - `_wire_planner_runtime_diagnostics`
+  - `_wire_tool_selection_runtime_diagnostics`
+  - `_wire_feedback_runtime_diagnostics`
+  - `_wire_feedback_adaptation_runtime_diagnostics`
+  - `_wire_assistant_recovery_runtime_diagnostics`
+  - `_wire_runtime_diagnostics`
+  - moved to `src/services/answer/diagnostics/runtime_wiring.py`
+
 #### Patch 3 - Reasoning extraction phase-3
 - extract next bounded clusters from `reasoning/engine.py` (optimization/enterprise/meta-cognition helpers),
 - preserve reasoning diagnostics contract behavior.
@@ -56,7 +66,7 @@ Target A2.59 boundaries:
 ### Progress
 
 - [x] Patch 1 — inventory + scope lock
-- [ ] Patch 2 - Answer extraction phase-3
+- [x] Patch 2 - Answer extraction phase-3
 - [ ] Patch 3 - Reasoning extraction phase-3
 - [ ] Patch 4 - Guardrail threshold recalibration and coverage expansion
 - [ ] Patch 5 - guardrails + parity + closure

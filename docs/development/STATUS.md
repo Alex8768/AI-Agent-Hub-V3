@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-A2.59 patch 1 complete (inventory + scope lock baseline for monolith burn-down phase 3)
+A2.59 patch 2 complete (answer phase-3 runtime diagnostics wiring extraction with parity)
 
 ## Last Completed Anchor
 
@@ -23,7 +23,7 @@ Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 A2.59 - Monolith Burn-Down Phase 3 (Answer/Reasoning)
 
 Current focus:
-- execute phase-3 extraction inventory and scope-locked burn-down for answer/reasoning monolith targets
+- execute reasoning phase-3 extraction for remaining high-density helper clusters
 - preserve answer/reasoning decomposition and no-growth guardrail baseline
 - continue one-patch-one-reason execution discipline
 

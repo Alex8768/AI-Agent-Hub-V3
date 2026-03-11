@@ -60,7 +60,7 @@
 ## Current Work — A2.59 Monolith Burn-Down Phase 3 (Answer/Reasoning)
 
 - [x] Patch 1 - inventory + scope lock
-- [ ] Patch 2 - Answer extraction phase-3
+- [x] Patch 2 - Answer extraction phase-3
 - [ ] Patch 3 - Reasoning extraction phase-3
 - [ ] Patch 4 - Guardrail threshold recalibration and coverage expansion
 - [ ] Patch 5 - guardrails + parity + closure
