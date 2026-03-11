@@ -34,7 +34,7 @@ from src.layers.pro.reasoning.evaluation.runtime_productization import (
     build_dry_run_answer_from_parts as _build_dry_run_answer_from_parts,
     build_dry_run_answer_from_state as _build_dry_run_answer_from_state,
     build_enterprise_productization_diagnostics as _build_enterprise_productization_diagnostics,
-    execute_fallback_planner_steps_mvp as _execute_fallback_planner_steps_mvp,
+    execute_fallback_planner_steps_with_full_runtime_dependencies as _execute_fallback_planner_steps_with_full_runtime_dependencies,
     synthesize_with_graph_runtime as _synthesize_with_graph_runtime,
     synthesize_graph_response as _synthesize_graph_response,
     build_meta_cognition_diagnostics as _build_meta_cognition_diagnostics,
@@ -185,7 +185,7 @@ class ReasoningEngine:
         )
 
     async def _execute_planner_steps_mvp(self, *, request: AnswerRequest) -> list[dict[str, object]]:
-        return await _execute_fallback_planner_steps_mvp(request=request, create_reasoning_plan_fn=create_reasoning_plan, build_reasoning_execution_policy_fn=build_reasoning_execution_policy, build_controlled_plan_steps_fn=build_controlled_plan_steps, build_bounded_plan_steps_with_loop_guard_fn=_build_bounded_plan_steps_with_loop_guard, execute_plan_steps_fn=execute_plan_steps, apply_tool_safety_runtime_guard_fn=apply_tool_safety_runtime_guard, build_multi_agent_coordination_plan_for_runtime_fn=_build_multi_agent_coordination_plan_for_runtime, enrich_step_results_with_multi_agent_contract_fn=_enrich_step_results_with_multi_agent_contract)
+        return await _execute_fallback_planner_steps_with_full_runtime_dependencies(request=request, create_reasoning_plan_fn=create_reasoning_plan, build_reasoning_execution_policy_fn=build_reasoning_execution_policy, build_controlled_plan_steps_fn=build_controlled_plan_steps, build_bounded_plan_steps_with_loop_guard_fn=_build_bounded_plan_steps_with_loop_guard, execute_plan_steps_fn=execute_plan_steps, apply_tool_safety_runtime_guard_fn=apply_tool_safety_runtime_guard, build_multi_agent_coordination_plan_for_runtime_fn=_build_multi_agent_coordination_plan_for_runtime, enrich_step_results_with_multi_agent_contract_fn=_enrich_step_results_with_multi_agent_contract)
 
     async def synthesize(self, request: AnswerRequest) -> AnswerResponse:
         """Synthesize an answer using agentic graph."""

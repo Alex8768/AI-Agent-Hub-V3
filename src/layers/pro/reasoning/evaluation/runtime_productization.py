@@ -397,6 +397,31 @@ async def execute_fallback_planner_steps_mvp(
     )
 
 
+async def execute_fallback_planner_steps_with_full_runtime_dependencies(
+    *,
+    request: object,
+    create_reasoning_plan_fn: object,
+    build_reasoning_execution_policy_fn: object,
+    build_controlled_plan_steps_fn: object,
+    build_bounded_plan_steps_with_loop_guard_fn: object,
+    execute_plan_steps_fn: object,
+    apply_tool_safety_runtime_guard_fn: object,
+    build_multi_agent_coordination_plan_for_runtime_fn: object,
+    enrich_step_results_with_multi_agent_contract_fn: object,
+) -> list[dict[str, object]]:
+    return await execute_fallback_planner_steps_mvp(
+        request=request,
+        create_reasoning_plan_fn=create_reasoning_plan_fn,
+        build_reasoning_execution_policy_fn=build_reasoning_execution_policy_fn,
+        build_controlled_plan_steps_fn=build_controlled_plan_steps_fn,
+        build_bounded_plan_steps_with_loop_guard_fn=build_bounded_plan_steps_with_loop_guard_fn,
+        execute_plan_steps_fn=execute_plan_steps_fn,
+        apply_tool_safety_runtime_guard_fn=apply_tool_safety_runtime_guard_fn,
+        build_multi_agent_coordination_plan_for_runtime_fn=build_multi_agent_coordination_plan_for_runtime_fn,
+        enrich_step_results_with_multi_agent_contract_fn=enrich_step_results_with_multi_agent_contract_fn,
+    )
+
+
 async def synthesize_fallback_response(
     *,
     request: object,
