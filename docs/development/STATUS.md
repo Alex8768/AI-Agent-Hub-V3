@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-A2.70 complete (Anchor Closed)
+A2.71 in progress (Patch 1 complete)
 
 ## Last Completed Anchor
 
@@ -20,11 +20,11 @@ Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 
 ## Current Active Anchor
 
-TBD - Post-A2.70 planning
+A2.71 - Facade Convergence Phase 15 (Answer/Reasoning)
 
 Current focus:
-- define next bounded convergence/decomposition scope and patch plan
-- preserve answer/reasoning no-growth guardrail baseline from A2.70 closure
+- execute extraction-only convergence plan after A2.71 scope lock
+- preserve answer/reasoning no-growth guardrail baseline from A2.71 patch-1 inventory
 - continue one-patch-one-reason execution discipline
 
 Execution discipline:
@@ -35,7 +35,7 @@ Execution discipline:
 
 ## Next Anchor
 
-TBD - Post-A2.70 planning
+TBD - Post-A2.71 planning
 
 ## CI Status
 
