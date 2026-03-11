@@ -27,6 +27,7 @@ Current progress:
 - A2.51 patch set complete (patches 1-5).
 - dependency and parity quality gates are in place.
 - CI/release-gate coverage includes answer orchestration quality gate.
+- post-A2.51 guardrail maintenance M1/M2 completed for answer-path soft-failure observability and tests.
 
 Execution discipline:
 - no net-new intelligence features

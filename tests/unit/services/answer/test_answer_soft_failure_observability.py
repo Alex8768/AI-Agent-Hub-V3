@@ -4,6 +4,9 @@ from types import SimpleNamespace
 
 import pytest
 
+from src.layers.pro.reasoning.contracts import AnswerRequest
+from src.services.answer.answer_service import AnswerService
+from src.services.answer.interface_contract import build_answer_service_request_contract
 from src.services.answer.orchestrator import run_answer_orchestration_core
 from src.services.answer.response_assembly import run_answer_response_assembly
 
@@ -38,6 +41,29 @@ class _RetrieverAdapter:
         self.engine = engine
         self.hybrid = hybrid
         self.workspace_id = workspace_id
+
+
+class _DummyState:
+    def __init__(self, request_id: str):
+        self.request_id = request_id
+
+
+class _DummyAppState:
+    def __init__(self, rag_engine: object, hybrid_retriever: object):
+        self.rag_engine = rag_engine
+        self.hybrid_retriever = hybrid_retriever
+
+
+class _DummyApp:
+    def __init__(self, state: _DummyAppState):
+        self.state = state
+
+
+class _DummyHTTP:
+    def __init__(self, *, request_id: str, rag_engine: object, hybrid_retriever: object):
+        self.state = _DummyState(request_id)
+        self.headers = {}
+        self.app = _DummyApp(_DummyAppState(rag_engine, hybrid_retriever))
 
 
 @pytest.mark.asyncio
@@ -118,3 +144,66 @@ async def test_orchestrator_writes_soft_failure_reason_code_for_request_id_assig
 
     diag = dict(getattr(out.resp, "diagnostics", None) or {})
     assert "answer_orchestrator_request_id_assignment_failed" in list(diag.get("planning_reason_codes") or [])
+
+
+@pytest.mark.asyncio
+async def test_answer_service_writes_soft_failure_reason_code_for_durable_persist(monkeypatch):
+    class _S:
+        feature_reasoning = True
+        feature_graphrag = True
+
+    monkeypatch.setattr("src.core.config.get_settings", lambda: _S())
+    monkeypatch.setattr("src.core.providers.get_reasoning_engine", lambda **kwargs: None)
+    monkeypatch.setattr("src.core.providers.get_memory_store", lambda: None)
+
+    async def _fake_orchestration(**kwargs):
+        _ = kwargs
+        resp = SimpleNamespace(
+            answer="ok",
+            diagnostics={"planning_reason_codes": []},
+            timings={},
+            provenance=[],
+            used_chunks=[],
+            used_nodes=[],
+            used_edges=[],
+        )
+        return SimpleNamespace(
+            resp=resp,
+            llm=None,
+            assistant_mode_enabled=False,
+            assistant_proactive_enabled=False,
+            assistant_actions_enabled=False,
+            assistant_response_language="en",
+            loaded_durable_approval={},
+            loaded_durable_idempotency={},
+        )
+
+    async def _fake_response_assembly(**kwargs):
+        return kwargs["resp"]
+
+    async def _raise_persist(**kwargs):
+        _ = kwargs
+        raise RuntimeError("persist-failed")
+
+    async def _noop_save(**kwargs):
+        _ = kwargs
+        return None
+
+    monkeypatch.setattr("src.services.answer.answer_service.run_answer_orchestration_core", _fake_orchestration)
+    monkeypatch.setattr("src.services.answer.answer_service.run_answer_response_assembly", _fake_response_assembly)
+    monkeypatch.setattr("src.services.answer.answer_service._persist_durable_records", _raise_persist)
+    monkeypatch.setattr("src.services.answer.answer_service._save_session_memory", _noop_save)
+
+    req = AnswerRequest(query="q", session_id="s1", filters={})
+    http = _DummyHTTP(request_id="rid-1", rag_engine=object(), hybrid_retriever=object())
+    contract = build_answer_service_request_contract(
+        http=http,
+        req=req,
+        workspace_id="default",
+        engine=object(),
+        retriever=object(),
+    )
+
+    resp = await AnswerService().handle_contract(contract)
+    diag = dict(getattr(resp, "diagnostics", None) or {})
+    assert "answer_service_durable_persist_soft_failure" in list(diag.get("planning_reason_codes") or [])

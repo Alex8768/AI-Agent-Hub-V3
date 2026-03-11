@@ -193,6 +193,7 @@ AI-Agent-Hub-V3 is a modular AI platform for production-grade agent systems with
 - [x] Response assembly extraction for recovery/friendliness/parity shaping (A2.51 patch 3)
 - [x] Endpoint-facing interface contract cleanup with stable answer-service request envelope (A2.51 patch 4)
 - [x] Answer-path dependency/parity quality gates with CI release-gate wiring (A2.51 patch 5)
+- [x] Post-A2.51 answer-path soft-failure observability hardening + guardrail tests (M1/M2)
 
 ### 7) Interface Layer
 

@@ -92,6 +92,8 @@ Exact filenames may vary if existing structure suggests a cleaner fit.
 - [x] Patch 3 — response assembly extraction
 - [x] Patch 4 — interface contract cleanup
 - [x] Patch 5 — dependency / parity / quality gates
+- [x] Post-A2.51 M1 — soft-failure observability hardening in answer path
+- [x] Post-A2.51 M2 — guardrail tests for AnswerService soft-failure reason-codes
 
 ### Non-Negotiable Rules
 
