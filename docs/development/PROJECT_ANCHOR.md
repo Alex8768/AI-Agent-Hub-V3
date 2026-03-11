@@ -2,28 +2,28 @@
 
 ## Active Anchor
 
-A2.59 - Monolith Burn-Down Phase 3 (Answer/Reasoning) (Closed)
+A2.60 - Facade Convergence Phase 4 (Answer/Reasoning)
 
 ### Goal
 
-Continue controlled monolith burn-down for answer/reasoning entrypoints with extraction-only
-changes, reducing high-risk helper concentration while preserving endpoint/runtime parity.
+Continue extraction-only convergence of answer/reasoning facades so orchestration entrypoints
+move closer to guardrail budgets with parity-safe responsibility boundaries.
 
 ### Why Now
 
-A2.58 closed with phase-2 extraction and no-growth line-budget gates.
-Residual risk remains in still-large orchestration files that need further bounded extraction
-to keep future changes maintainable and policy-safe.
+A2.59 closed with major helper extractions and recalibrated no-growth gates.
+Residual risk still exists in oversized facade/orchestrator files relative to target budgets,
+so another bounded phase is required before declaring convergence.
 
 ### Architecture Position
 
-Target A2.59 boundaries:
+Target A2.60 boundaries:
 
-- **Answer burn-down phase 3**
+- **Answer convergence phase 4**
   - continue extracting bounded helper clusters from `src/services/answer/answer_service.py`,
   - keep behavior/API/diagnostics parity unchanged.
 
-- **Reasoning burn-down phase 3**
+- **Reasoning convergence phase 4**
   - continue extracting bounded helper clusters from `src/layers/pro/reasoning/engine.py`,
   - keep `ReasoningEngine` as compatibility facade.
 
@@ -37,59 +37,33 @@ Target A2.59 boundaries:
 - inventory remaining high-density helper clusters and line-budget hotspots in answer/reasoning facades,
 - lock scope to extraction-only changes with strict parity constraints.
 
-#### Patch 2 - Answer extraction phase-3
-- extract next bounded clusters from `answer_service.py` (execution/diagnostics/post-orchestration helpers),
+#### Patch 2 - Answer extraction phase-4
+- extract next bounded clusters from `answer_service.py` (planning/execution gateway/helper-policy seams),
 - reduce facade branching and preserve endpoint/debug contract behavior.
 
-Patch 2 artifacts:
-- runtime diagnostics wiring extraction:
-  - `_wire_planner_runtime_diagnostics`
-  - `_wire_tool_selection_runtime_diagnostics`
-  - `_wire_feedback_runtime_diagnostics`
-  - `_wire_feedback_adaptation_runtime_diagnostics`
-  - `_wire_assistant_recovery_runtime_diagnostics`
-  - `_wire_runtime_diagnostics`
-  - moved to `src/services/answer/diagnostics/runtime_wiring.py`
-
-#### Patch 3 - Reasoning extraction phase-3
-- extract next bounded clusters from `reasoning/engine.py` (optimization/enterprise/meta-cognition helpers),
+#### Patch 3 - Reasoning extraction phase-4
+- extract next bounded clusters from `reasoning/engine.py` (multi-agent/dry-run/runtime helper seams),
 - preserve reasoning diagnostics contract behavior.
 
-Patch 3 artifacts:
-- runtime productization diagnostics extraction:
-  - `_build_reasoning_optimization_diagnostics`
-  - `_build_enterprise_productization_diagnostics`
-  - `_build_meta_cognition_diagnostics`
-  - moved to `src/layers/pro/reasoning/evaluation/runtime_productization.py`
-
-#### Patch 4 - Guardrail threshold recalibration and coverage expansion
+#### Patch 4 - Guardrail threshold recalibration and import-budget expansion
 - recalibrate no-growth thresholds to new post-extraction baselines,
-- expand deterministic checks for extraction-path coverage and guardrail drift prevention,
+- expand deterministic checks for seam wiring + import-budget drift prevention,
 - keep failure messages actionable for CI.
 
-Patch 4 artifacts:
-- no-growth line-budget gate recalibrated for latest monolith baselines:
-  - `src/services/answer/answer_service.py` -> `3535` lines max
-  - `src/layers/pro/reasoning/engine.py` -> `743` lines max
-- extraction-path seam coverage gate expansion:
-  - require `src.services.answer.diagnostics.runtime_wiring` import in answer facade
-  - require `src.layers.pro.reasoning.evaluation.runtime_productization` import in reasoning facade
-  - gate location: `tests/unit/services/answer/test_answer_orchestration_quality_gate.py`
-
 #### Patch 5 - Guardrails + parity + closure
-- run focused and full-suite checks and close A2.59 with docs sync.
+- run focused and full-suite checks and close A2.60 with docs sync.
 
 ### Progress
 
 - [x] Patch 1 — inventory + scope lock
-- [x] Patch 2 - Answer extraction phase-3
-- [x] Patch 3 - Reasoning extraction phase-3
-- [x] Patch 4 - Guardrail threshold recalibration and coverage expansion
-- [x] Patch 5 - guardrails + parity + closure
+- [ ] Patch 2 - Answer extraction phase-4
+- [ ] Patch 3 - Reasoning extraction phase-4
+- [ ] Patch 4 - Guardrail threshold recalibration and import-budget expansion
+- [ ] Patch 5 - guardrails + parity + closure
 
 ### Non-Negotiable Rules
 
-- No net-new user-facing features during A2.59
+- No net-new user-facing features during A2.60
 - Preserve answer/debug runtime/API parity
 - No new business logic additions inside monolith files
 - Extraction-only and thin-facade-only changes in monolith targets
@@ -98,7 +72,7 @@ Patch 4 artifacts:
 
 ### Out of Scope
 
-Do NOT modify during A2.59:
+Do NOT modify during A2.60:
 
 - unrelated product feature logic
 - endpoint contract shape
@@ -107,10 +81,10 @@ Do NOT modify during A2.59:
 
 ### Definition of Done
 
-A2.59 is complete when:
+A2.60 is complete when:
 
-- answer and reasoning burn-down phase-3 extraction is completed with parity
-- no-growth thresholds are updated to latest baselines and enforced in CI
+- answer and reasoning convergence phase-4 extraction is completed with parity
+- no-growth thresholds and import-budget constraints are updated to latest baselines and enforced in CI
 - target facades are further reduced and orchestration-focused
 - focused and full quality checks remain green
 - no answer/debug parity regressions are introduced
@@ -133,7 +107,7 @@ A2.56 policy markers are retained for deterministic docs quality gates:
 
 ## Next Anchor
 
-TBD - Post-A2.59 planning
+TBD - Post-A2.60 planning
 
 ## Post-A2.56 Maintenance
 

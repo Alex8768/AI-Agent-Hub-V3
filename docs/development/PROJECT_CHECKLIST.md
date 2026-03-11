@@ -56,8 +56,17 @@
 - [x] A2.57 - Application Decomposition Regime (Answer/Reasoning No-Growth)
 - [x] A2.58 - Thin Facade Completion (Answer/Reasoning)
 - [x] A2.59 - Monolith Burn-Down Phase 3 (Answer/Reasoning)
+- [ ] A2.60 - Facade Convergence Phase 4 (Answer/Reasoning)
 
-## Current Work — A2.59 Monolith Burn-Down Phase 3 (Answer/Reasoning)
+## Current Work — A2.60 Facade Convergence Phase 4 (Answer/Reasoning)
+
+- [x] Patch 1 - inventory + scope lock
+- [ ] Patch 2 - Answer extraction phase-4
+- [ ] Patch 3 - Reasoning extraction phase-4
+- [ ] Patch 4 - Guardrail threshold recalibration and import-budget expansion
+- [ ] Patch 5 - guardrails + parity + closure
+
+## A2.59 Historical Work - Monolith Burn-Down Phase 3 (Answer/Reasoning)
 
 - [x] Patch 1 - inventory + scope lock
 - [x] Patch 2 - Answer extraction phase-3
