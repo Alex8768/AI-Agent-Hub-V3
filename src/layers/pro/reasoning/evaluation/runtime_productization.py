@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import asyncio
+
 from src.layers.pro.meta_cognition.gaps import build_gap_map
 from src.layers.pro.meta_cognition.reflection import build_reflection_report
 from src.layers.pro.meta_cognition.uncertainty import build_uncertainty_summary
@@ -269,6 +271,56 @@ def build_meta_cognition_diagnostics(
         "gap_map": dict(gap_map),
         "reflection": dict(reflection),
     }
+
+
+async def run_graph_runtime_with_state_contract(
+    *,
+    graph: object,
+    initial_state: object,
+    state_model_cls: object,
+) -> object:
+    runtime_graph = graph.compile() if hasattr(graph, "compile") else graph
+    if hasattr(runtime_graph, "ainvoke"):
+        raw_state = await runtime_graph.ainvoke(initial_state)
+    elif hasattr(runtime_graph, "invoke"):
+        raw_state = await asyncio.to_thread(runtime_graph.invoke, initial_state)
+    else:
+        raise RuntimeError("Reasoning graph runtime does not support invoke/ainvoke")
+
+    if isinstance(raw_state, state_model_cls):
+        return raw_state
+    if isinstance(raw_state, dict):
+        return state_model_cls.model_validate(raw_state)
+    raise RuntimeError(f"Unsupported final state type: {type(raw_state).__name__}")
+
+
+async def build_fallback_answer_text(
+    *,
+    llm: object | None,
+    dry_run: bool,
+    llm_timeout_s: float,
+    request: object,
+    context_preview: str,
+    provenance: list,
+    build_prompt_fn: object,
+    dry_run_builder_fn: object,
+) -> str:
+    if llm is not None and not dry_run:
+        prompt = build_prompt_fn(
+            request,
+            context_preview=context_preview,
+            provenance=provenance,
+        )
+        try:
+            return await asyncio.wait_for(
+                llm.generate(prompt),
+                timeout=float(llm_timeout_s),
+            )
+        except Exception:
+            return "(reasoning layer stub)"
+    if dry_run:
+        return str(dry_run_builder_fn(provenance, context_preview))
+    return "(reasoning layer stub)"
 
 
 def _build_dry_run_answer_core(*, provenance: list, context_preview: str) -> str:

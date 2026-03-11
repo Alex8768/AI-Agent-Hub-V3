@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Optional
 
 from src.layers.pro.reasoning.graph.builder import build_reasoning_graph
 from src.layers.pro.reasoning.graph.state import AgentState
@@ -35,11 +34,13 @@ from src.layers.pro.reasoning.evaluation.runtime_diagnostics import (
     reasoning_quality_diagnostics as _reasoning_quality_diagnostics,
 )
 from src.layers.pro.reasoning.evaluation.runtime_productization import (
+    build_fallback_answer_text as _build_fallback_answer_text,
     build_dry_run_answer_from_parts as _build_dry_run_answer_from_parts,
     build_dry_run_answer_from_state as _build_dry_run_answer_from_state,
     build_enterprise_productization_diagnostics as _build_enterprise_productization_diagnostics,
     build_meta_cognition_diagnostics as _build_meta_cognition_diagnostics,
     build_reasoning_optimization_diagnostics as _build_reasoning_optimization_diagnostics,
+    run_graph_runtime_with_state_contract as _run_graph_runtime_with_state_contract,
 )
 from src.layers.pro.reasoning.kernel import build_reasoning_planner_runtime
 from src.layers.pro.reasoning.tool_safety.runtime_guard import apply_tool_safety_runtime_guard
@@ -269,23 +270,10 @@ class ReasoningEngine:
 
         # Запускаем граф
         try:
-            runtime_graph = graph.compile() if hasattr(graph, "compile") else graph
-            if hasattr(runtime_graph, "ainvoke"):
-                raw_state = await runtime_graph.ainvoke(initial_state)
-            elif hasattr(runtime_graph, "invoke"):
-                import asyncio
-
-                raw_state = await asyncio.to_thread(runtime_graph.invoke, initial_state)
-            else:
-                raise RuntimeError("Reasoning graph runtime does not support invoke/ainvoke")
-
-            # LangGraph runtime may return dict-like state snapshots.
-            if isinstance(raw_state, AgentState):
-                final_state = raw_state
-            elif isinstance(raw_state, dict):
-                final_state = AgentState.model_validate(raw_state)
-            else:
-                raise RuntimeError(f"Unsupported final state type: {type(raw_state).__name__}")
+            final_state = await self._run_graph_runtime(
+                graph=graph,
+                initial_state=initial_state,
+            )
         except Exception as e:
             # В случае ошибки графа - падаем на старый путь
             return await self._synthesize_fallback(request, error=str(e))
@@ -296,7 +284,6 @@ class ReasoningEngine:
             return await self._synthesize_fallback(request, error=str(final_state.error))
 
         # Собираем ответ из финального состояния
-        from src.core.config import get_settings
         s = get_settings()
         dry_run = bool(getattr(s, "feature_reasoning_llm_dry_run", False))
 
@@ -401,27 +388,12 @@ class ReasoningEngine:
         planner_current_action = str(planner_observations.get("planner_current_action", "") or "")
         fallback_plan_steps = [str(x or "") for x in list(planner_observations.get("fallback_plan_steps") or [])]
 
-        if self.llm is not None and not dry_run:
-            # Пробуем вызвать LLM напрямую (один раз)
-            import asyncio
-
-            prompt = build_reasoning_prompt(
-                request,
-                context_preview=context_preview,
-                provenance=provenance,
-            )
-            try:
-                answer_text = await asyncio.wait_for(
-                    self.llm.generate(prompt),
-                    timeout=float(self.llm_timeout_s),
-                )
-            except Exception:
-                answer_text = "(reasoning layer stub)"
-        else:
-            if dry_run:
-                answer_text = self._build_dry_run_answer_from_parts(provenance, context_preview)
-            else:
-                answer_text = "(reasoning layer stub)"
+        answer_text = await self._build_fallback_answer_text(
+            request=request,
+            context_preview=context_preview,
+            provenance=provenance,
+            dry_run=dry_run,
+        )
 
         confidence = compute_confidence(provenance)
 
@@ -478,4 +450,31 @@ class ReasoningEngine:
         return _build_dry_run_answer_from_parts(
             provenance=provenance,
             context_preview=context_preview,
+        )
+
+    @staticmethod
+    async def _run_graph_runtime(*, graph: object, initial_state: AgentState) -> AgentState:
+        return await _run_graph_runtime_with_state_contract(
+            graph=graph,
+            initial_state=initial_state,
+            state_model_cls=AgentState,
+        )
+
+    async def _build_fallback_answer_text(
+        self,
+        *,
+        request: AnswerRequest,
+        context_preview: str,
+        provenance: list,
+        dry_run: bool,
+    ) -> str:
+        return await _build_fallback_answer_text(
+            llm=self.llm,
+            dry_run=dry_run,
+            llm_timeout_s=float(self.llm_timeout_s),
+            request=request,
+            context_preview=context_preview,
+            provenance=provenance,
+            build_prompt_fn=build_reasoning_prompt,
+            dry_run_builder_fn=self._build_dry_run_answer_from_parts,
         )
