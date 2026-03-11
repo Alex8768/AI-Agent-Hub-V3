@@ -79,7 +79,7 @@
 ## Current Work — A2.78 Facade Convergence Phase 22 (Answer/Reasoning)
 
 - [x] Patch 1 - inventory + scope lock
-- [ ] Patch 2 - Answer extraction phase-22
+- [x] Patch 2 - Answer extraction phase-22
 - [ ] Patch 3 - Reasoning extraction phase-22
 - [ ] Patch 4 - Guardrail threshold recalibration and import-budget expansion
 - [ ] Patch 5 - guardrails + parity + closure

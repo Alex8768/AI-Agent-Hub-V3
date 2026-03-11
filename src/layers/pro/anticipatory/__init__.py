@@ -19,6 +19,7 @@ from src.layers.pro.anticipatory.suggestions import (
     build_proactive_suggestion_bundle,
     rank_proactive_suggestions,
 )
+from src.layers.pro.anticipatory.runtime_safe_mode import run_answer_anticipatory_safe_mode
 
 __all__ = [
     "OpportunityScanResult",
@@ -36,4 +37,5 @@ __all__ = [
     "build_proactive_suggestion",
     "build_proactive_suggestion_bundle",
     "rank_proactive_suggestions",
+    "run_answer_anticipatory_safe_mode",
 ]
