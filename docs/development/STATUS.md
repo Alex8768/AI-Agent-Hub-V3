@@ -2,16 +2,16 @@
 
 ## Current Phase
 
-A2.60 patch 4 complete (guardrail threshold recalibration + seam/import-budget coverage expansion)
+Anchor Closed - A2.60 complete (facade convergence phase-4 closure)
 
 ## Last Completed Anchor
 
-A2.59 - Monolith Burn-Down Phase 3 (Answer/Reasoning)
+A2.60 - Facade Convergence Phase 4 (Answer/Reasoning)
 
-A2.59 closed with:
-- answer runtime diagnostics wiring extraction completed with behavior/API parity preserved
-- reasoning runtime productization diagnostics extraction completed with compatibility wrappers preserved
-- no-growth budgets recalibrated and extraction-path seam coverage gates expanded
+A2.60 closed with:
+- answer llm-planner policy seam extraction completed with behavior/API parity preserved
+- reasoning multi-agent runtime helper seam extraction completed with compatibility wrappers preserved
+- no-growth budgets recalibrated and seam/import-budget coverage gates expanded
 - focused and full-suite checks green at closure
 
 Legacy closure markers retained for A2.56 docs quality-gate compatibility:
@@ -20,10 +20,10 @@ Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 
 ## Current Active Anchor
 
-A2.60 - Facade Convergence Phase 4 (Answer/Reasoning)
+TBD - Post-A2.60 planning
 
 Current focus:
-- execute patch-5 closure checks (focused + full-suite) and docs finalization
+- define next technical anchor after A2.60 closure
 - preserve answer/reasoning decomposition and no-growth guardrail baseline
 - continue one-patch-one-reason execution discipline
 
