@@ -65,7 +65,19 @@ Patch 1 artifacts:
 - reduce facade branching and preserve endpoint/debug contract behavior.
 
 Patch 2 artifacts:
-- pending.
+- conversational runtime parity seam extracted into:
+  - `src/services/answer/response/conversational_runtime_parity.py`
+  - `build_conversational_runtime_parity_bundle`
+- `src/services/answer/answer_service.py` now retains thin compatibility wrapper:
+  - `_build_conversational_runtime_parity_bundle` delegates to extracted seam with runtime adapters
+- facade reduction achieved:
+  - `src/services/answer/answer_service.py`: `1823 -> 1781` lines
+- focused parity/guardrail checks green:
+  - `tests/unit/services/answer/test_answer_service_debug_snapshot.py`
+  - `tests/unit/services/answer/test_answer_soft_failure_observability.py`
+  - `tests/unit/services/answer/test_answer_orchestration_quality_gate.py`
+  - `tests/unit/layers/pro/test_reasoning_anticipatory_quality_gate.py`
+  - result: `77 passed`
 
 #### Patch 3 - Reasoning extraction phase-24
 - extract next bounded clusters from `reasoning/engine.py` (runtime fallback / diagnostics helper seams),
@@ -83,7 +95,7 @@ Patch 4 artifacts:
 - pending.
 
 #### Patch 5 - Guardrails + parity + closure
-- run focused and full-suite checks and close A2.79 with docs sync.
+- run focused and full-suite checks and close A2.80 with docs sync.
 
 Patch 5 artifacts:
 - pending.
@@ -91,7 +103,7 @@ Patch 5 artifacts:
 ### Progress
 
 - [x] Patch 1 — inventory + scope lock
-- [ ] Patch 2 - Answer extraction phase-24
+- [x] Patch 2 - Answer extraction phase-24
 - [ ] Patch 3 - Reasoning extraction phase-24
 - [ ] Patch 4 - Guardrail threshold recalibration and import-budget expansion
 - [ ] Patch 5 - guardrails + parity + closure

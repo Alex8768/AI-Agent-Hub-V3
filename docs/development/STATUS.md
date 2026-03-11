@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-A2.80 in progress (Patch 1 complete)
+A2.80 in progress (Patch 2 complete)
 
 ## Last Completed Anchor
 
@@ -23,7 +23,7 @@ Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 A2.80 - Facade Convergence Phase 24 (Answer/Reasoning)
 
 Current focus:
-- execute answer extraction phase-24 (A2.80 patch 2)
+- execute reasoning extraction phase-24 (A2.80 patch 3)
 - preserve no-growth guardrail discipline from latest baselines (`1823`/`283`) and import budgets (`15`/`14`)
 - maintain one-patch-one-reason execution discipline
 
