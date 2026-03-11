@@ -107,6 +107,7 @@ AI-Agent-Hub-V3 is a modular AI platform for production-grade agent systems with
 - [x] API docs and roadmap closure (A2.33 patch 5)
 - [x] Operational KPI policy contract baseline for answer-path soft-failure/fallback health (A2.56 patch 2)
 - [x] Operational diagnostics-to-KPI mapping contract for answer debug/reporting surfaces (A2.56 patch 3)
+- [x] Operational KPI policy quality-gate enforcement for deterministic docs markers (A2.56 patch 4)
 - [x] Assistant mode contracts + flags + diagnostics baseline (A2.34 patch 1)
 - [x] Language-native assistant fallback behavior (A2.34 patch 2)
 - [x] Proactive suggestion ranking MVP (A2.34 patch 3)
@@ -222,6 +223,7 @@ AI-Agent-Hub-V3 is a modular AI platform for production-grade agent systems with
 - [x] A2.56 operational guardrails inventory/scope-lock for soft-failure KPI policy (patch 1)
 - [x] A2.56 KPI policy contract introduction (healthy path + fallback/soft-failure rate definitions) (patch 2)
 - [x] A2.56 diagnostics surface mapping and reporting contract for KPI numerators/counters (patch 3)
+- [x] A2.56 operational KPI policy quality-gate enforcement (patch 4)
 
 ### 7) Interface Layer
 
