@@ -71,7 +71,7 @@ Target A2.55 boundaries:
 
 - [x] Patch 1 — inventory + scope lock
 - [x] Patch 2 — capability map consistency corrections
-- [ ] Patch 3 — checklist/status/anchor synchronization
+- [x] Patch 3 — checklist/status/anchor synchronization
 - [ ] Patch 4 — roadmap wording normalization
 - [ ] Patch 5 — guardrails + parity + closure
 

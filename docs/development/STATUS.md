@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-Active Anchor Execution — A2.55 patch 2 complete (capability map consistency corrections)
+Active Anchor Execution — A2.55 patch 3 complete (checklist/status/anchor synchronization)
 
 ## Last Completed Anchor
 
@@ -19,7 +19,7 @@ A2.54 closed with:
 A2.55 — Documentation Consistency Cleanup
 
 Current focus:
-- resolve capability-status drift in features catalog against closed anchors
+- align active/next anchor state consistently across checklist/status/anchor docs
 - keep documentation updates deterministic and minimal per patch
 - preserve runtime/API behavior during docs-only cleanup
 

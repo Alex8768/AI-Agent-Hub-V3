@@ -45,14 +45,6 @@
 - [x] A2.50 Planner Residual Decoupling (Composition Boundary Closure)
 - [x] A2.51 Answer Orchestration Decomposition
 
-## Current Work — A2.51 Answer Orchestration Decomposition
-
-- [x] Patch 1 — answer path inventory + scope lock
-- [x] Patch 2 — orchestrator seam extraction
-- [x] Patch 3 — response assembly extraction
-- [x] Patch 4 — interface contract cleanup
-- [x] Patch 5 — dependency / parity / quality gates
-
 ## Next
 
 - [x] Post-A2.51 guardrail maintenance closure
@@ -61,35 +53,11 @@
 - [x] A2.54 — Diagnostics Contract Guardrails
 - [ ] A2.55 — Documentation Consistency Cleanup
 
-## Current Work — A2.52 AnswerService Facade Slimming
-
-- [x] Patch 1 — inventory + scope lock
-- [x] Patch 2 — post-orchestration seam extraction
-- [x] Patch 3 — diagnostics merge seam extraction
-- [x] Patch 4 — facade pipeline cleanup
-- [x] Patch 5 — guardrails + parity + closure
-
-## Current Work — A2.53 Answer-Path Exception Policy Hardening
-
-- [x] Patch 1 — inventory + scope lock
-- [x] Patch 2 — `orchestrator` silent-except removal
-- [x] Patch 3 — `answer_service` silent-except removal (phase 1)
-- [x] Patch 4 — `answer_service` silent-except removal (phase 2)
-- [x] Patch 5 — guardrails + parity + closure
-
-## Current Work — A2.54 Diagnostics Contract Guardrails
-
-- [x] Patch 1 — inventory + scope lock
-- [x] Patch 2 — diagnostics snapshot contract expansion
-- [x] Patch 3 — soft-failure policy guardrail coverage expansion
-- [x] Patch 4 — exception policy enforcement hardening
-- [x] Patch 5 — guardrails + parity + closure
-
 ## Current Work — A2.55 Documentation Consistency Cleanup
 
 - [x] Patch 1 — inventory + scope lock
 - [x] Patch 2 — capability map consistency corrections
-- [ ] Patch 3 — checklist/status/anchor synchronization
+- [x] Patch 3 — checklist/status/anchor synchronization
 - [ ] Patch 4 — roadmap wording normalization
 - [ ] Patch 5 — guardrails + parity + closure
 
