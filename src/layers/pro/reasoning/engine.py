@@ -189,38 +189,17 @@ class ReasoningEngine:
 
     async def synthesize(self, request: AnswerRequest) -> AnswerResponse:
         """Synthesize an answer using agentic graph."""
-        from time import perf_counter
+        import importlib
 
-        return await _synthesize_with_graph_runtime(
+        impl = getattr(
+            importlib.import_module("src.layers.pro.reasoning.synthesis.runtime_dependencies"),
+            "synthesize_with_engine_runtime_dependencies",
+        )
+        return await impl(
+            engine=self,
             request=request,
-            llm=self.llm,
-            retriever=self.retriever,
-            build_reasoning_graph_fn=build_reasoning_graph,
-            run_graph_runtime_fn=self._run_graph_runtime,
-            synthesize_fallback_fn=self._synthesize_fallback,
-            get_settings_fn=get_settings,
-            agent_state_cls=AgentState,
-            synthesize_graph_response_fn=_synthesize_graph_response,
-            build_dry_run_answer_fn=self._build_dry_run_answer,
-            build_graph_answer_response_fn=_build_graph_answer_response,
-            apply_graph_response_diagnostics_fn=_apply_graph_response_diagnostics,
-            confidence_fn=compute_confidence,
-            response_model_cls=AnswerResponse,
-            evidence_contract_version=EVIDENCE_CONTRACT_VERSION,
-            evidence_summary_fn=self._evidence_summary,
-            evidence_contract_status_fn=self._evidence_contract_status,
-            evidence_contract_gate_reason_fn=self._evidence_contract_gate_reason,
-            self_check_fn=self._self_check_diagnostics,
-            verify_preflight_fn=self._verify_diagnostics_preflight,
-            planner_runtime_parity_fn=self._build_planner_runtime_parity_diagnostics,
-            execution_policy_builder_fn=build_reasoning_execution_policy,
-            reasoning_quality_builder_fn=self._reasoning_quality_diagnostics,
-            reasoning_optimization_builder_fn=self._build_reasoning_optimization_diagnostics,
-            enterprise_productization_builder_fn=self._build_enterprise_productization_diagnostics,
-            meta_cognition_builder_fn=self._build_meta_cognition_diagnostics,
-            warning_flags_applier_fn=_apply_reasoning_runtime_warning_flags,
-            perf_counter_fn=perf_counter,
-            logger_getter_fn=_get_runtime_logger,
+            build_reasoning_execution_policy_fn=build_reasoning_execution_policy,
+            get_runtime_logger_fn=_get_runtime_logger,
         )
 
     async def _synthesize_fallback(self, request: AnswerRequest, error: str | None = None) -> AnswerResponse:
