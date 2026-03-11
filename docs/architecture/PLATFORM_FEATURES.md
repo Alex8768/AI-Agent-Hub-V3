@@ -45,7 +45,7 @@ AI-Agent-Hub-V3 is a modular AI platform for production-grade agent systems with
 
 - [x] Text/document ingest pipeline
 - [x] Chunking and embeddings
-- [ ] OCR for scanned PDFs/images (planned for A2.21)
+- [x] OCR for scanned PDFs/images (A2.21 complete)
 - [ ] Structured layout extraction (tables/forms)
 - [ ] Multilingual ingest quality checks
 
@@ -213,6 +213,7 @@ AI-Agent-Hub-V3 is a modular AI platform for production-grade agent systems with
 - [x] A2.54 exception-policy enforcement hardening with scoped AST handler-contract gate (patch 4)
 - [x] A2.54 guardrails/parity closure with focused + full-suite green (patch 5)
 - [x] A2.55 documentation consistency cleanup inventory/scope-lock (patch 1)
+- [x] A2.55 capability-map consistency correction for OCR completion status (patch 2)
 
 ### 7) Interface Layer
 

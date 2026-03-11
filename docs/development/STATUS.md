@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-Active Anchor Execution — A2.55 patch 1 complete (documentation consistency inventory + scope lock)
+Active Anchor Execution — A2.55 patch 2 complete (capability map consistency corrections)
 
 ## Last Completed Anchor
 
@@ -19,7 +19,7 @@ A2.54 closed with:
 A2.55 — Documentation Consistency Cleanup
 
 Current focus:
-- inventory stale cross-doc contradictions and lock edit scope
+- resolve capability-status drift in features catalog against closed anchors
 - keep documentation updates deterministic and minimal per patch
 - preserve runtime/API behavior during docs-only cleanup
 
