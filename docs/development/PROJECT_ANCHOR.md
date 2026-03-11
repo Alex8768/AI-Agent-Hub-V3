@@ -2,7 +2,7 @@
 
 ## Active Anchor
 
-A2.57 - Application Decomposition Regime (Answer/Reasoning No-Growth)
+A2.57 - Application Decomposition Regime (Answer/Reasoning No-Growth) (Closed)
 
 ### Goal
 
@@ -88,7 +88,7 @@ Patch 4 artifacts:
 - [x] Patch 2 - Answer move-map and package scaffolding
 - [x] Patch 3 - Answer heavy-cluster extraction
 - [x] Patch 4 - Reasoning engine move-map and first extraction
-- [ ] Patch 5 - guardrails + parity + closure
+- [x] Patch 5 - guardrails + parity + closure
 
 ### Non-Negotiable Rules
 

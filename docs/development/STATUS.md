@@ -2,28 +2,31 @@
 
 ## Current Phase
 
-A2.57 patch 4 complete - reasoning engine move-map and first extraction
+Anchor Closed - A2.57 complete (application decomposition regime closure)
 
 ## Last Completed Anchor
 
-A2.56 — Operational Guardrails for Soft-Failure KPIs
+A2.57 - Application Decomposition Regime (Answer/Reasoning No-Growth)
 
-A2.56 closed with:
-- KPI policy contracts defined for healthy-path and rate-based guardrails
-- diagnostics-to-KPI reporting mapping formalized for answer debug payload
-- deterministic docs quality-gate enforcement added for policy markers
+A2.57 closed with:
+- decomposition governance baseline and no-growth guardrails documented
+- answer move-map and bounded package scaffolding established
+- answer phase-1 heavy-cluster extraction completed with parity preserved
+- reasoning move-map and first diagnostics/evaluation extraction completed
 - focused and full-suite checks green at closure
-- post-closure guardrail compatibility fix applied for status-marker quality gate
+
+Legacy closure markers retained for A2.56 docs quality-gate compatibility:
+- Anchor Closed — A2.56 complete (operational guardrails policy closure)
 - Post-A2.56 Maintenance — M1 complete (quality-gate closed-status compatibility)
 
 ## Current Active Anchor
 
-A2.57 - Application Decomposition Regime (Answer/Reasoning No-Growth)
+TBD - Post-A2.57 planning
 
 Current focus:
-- complete A2.57 closure guardrails and full parity verification
-- keep answer and reasoning behavior/API contracts unchanged
-- continue extraction-only and thin-facade-only decomposition flow
+- define next technical anchor after A2.57 closure
+- preserve answer/reasoning decomposition parity baseline
+- continue one-patch-one-reason execution discipline
 
 Execution discipline:
 - no net-new intelligence features
