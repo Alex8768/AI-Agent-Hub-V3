@@ -2,28 +2,28 @@
 
 ## Active Anchor
 
-A2.75 - Facade Convergence Phase 19 (Answer/Reasoning)
+A2.76 - Facade Convergence Phase 20 (Answer/Reasoning)
 
 ### Goal
 
-Continue extraction-only convergence of answer/reasoning facades after A2.74 closure,
+Continue extraction-only convergence of answer/reasoning facades after A2.75 closure,
 reducing residual high-density helper concentration while preserving runtime parity.
 
 ### Why Now
 
-A2.74 closed with extraction and guardrail recalibration to `2100`/`313` baselines.
+A2.75 closed with extraction and guardrail recalibration to `2051`/`310` baselines.
 Residual hotspots remain in answer/reasoning facades, requiring another bounded
 inventory-first extraction cycle.
 
 ### Architecture Position
 
-Target A2.75 boundaries:
+Target A2.76 boundaries:
 
-- **Answer convergence phase 19**
+- **Answer convergence phase 20**
   - continue extracting bounded helper clusters from `src/services/answer/answer_service.py`,
   - keep behavior/API/diagnostics parity unchanged.
 
-- **Reasoning convergence phase 19**
+- **Reasoning convergence phase 20**
   - continue extracting bounded helper clusters from `src/layers/pro/reasoning/engine.py`,
   - keep `ReasoningEngine` as compatibility facade.
 
@@ -39,10 +39,10 @@ Target A2.75 boundaries:
 
 Patch 1 artifacts:
 - no-growth baseline inventory captured:
-  - `src/services/answer/answer_service.py`: `2100` lines
-  - `src/layers/pro/reasoning/engine.py`: `313` lines
+  - `src/services/answer/answer_service.py`: `2051` lines
+  - `src/layers/pro/reasoning/engine.py`: `310` lines
 - hotspot inventory captured for extraction planning:
-  - answer clusters: `_apply_diagnostics`, `_build_feedback_adaptation_bundle`,
+  - answer clusters: `_apply_diagnostics`, `retrieve`,
     `_bridge_plan_to_draft_actions`, `_build_conversational_runtime_parity_bundle`, `handle_contract`
   - reasoning clusters: `synthesize`, `_synthesize_fallback`, `_build_fallback_answer_text`
 - import budget inventory captured:
@@ -53,45 +53,19 @@ Patch 1 artifacts:
   - parity-safe wiring updates only,
   - no net-new features or endpoint contract changes.
 
-#### Patch 2 - Answer extraction phase-19
+#### Patch 2 - Answer extraction phase-20
 - extract next bounded clusters from `answer_service.py` (policy/runtime-guard/helper seams),
 - reduce facade branching and preserve endpoint/debug contract behavior.
 
 Patch 2 artifacts:
-- feedback adaptation builder seam extracted into
-  `src/services/answer/reasoning/llm_planner_policy.py`:
-  - `build_feedback_adaptation_bundle`
-- `src/services/answer/answer_service.py` now retains thin compatibility wrapper:
-  - `_build_feedback_adaptation_bundle` delegates to extracted policy seam
-- facade reduction achieved:
-  - `src/services/answer/answer_service.py`: `2100 -> 2051` lines
-- focused parity/guardrail checks green:
-  - `tests/unit/services/answer/test_answer_service_debug_snapshot.py`
-  - `tests/unit/services/answer/test_answer_soft_failure_observability.py`
-  - `tests/unit/services/answer/test_answer_orchestration_quality_gate.py`
-  - result: `74 passed`
+- pending.
 
-#### Patch 3 - Reasoning extraction phase-19
+#### Patch 3 - Reasoning extraction phase-20
 - extract next bounded clusters from `reasoning/engine.py` (runtime fallback / diagnostics helper seams),
 - preserve reasoning diagnostics contract behavior.
 
 Patch 3 artifacts:
-- fallback orchestration seam extracted into
-  `src/layers/pro/reasoning/evaluation/runtime_productization.py`:
-  - `synthesize_fallback_with_runtime_settings`
-- `src/layers/pro/reasoning/engine.py` now retains thin compatibility wrapper:
-  - `_synthesize_fallback` delegates to extracted runtime-productization seam
-- facade reduction achieved:
-  - `src/layers/pro/reasoning/engine.py`: `313 -> 310` lines
-- focused reasoning + guardrail checks green:
-  - `tests/unit/layers/pro/test_reasoning_engine_synthesize.py`
-  - `tests/unit/layers/pro/test_reasoning_engine_synthesize_llm.py`
-  - `tests/unit/layers/pro/test_reasoning_engine_synthesize_llm_fallback.py`
-  - `tests/unit/layers/pro/test_reasoning_engine_synthesize_llm_timeout.py`
-  - `tests/unit/layers/pro/test_reasoning_engine_planner_runtime_parity.py`
-  - `tests/unit/layers/pro/test_reasoning_verify_contract.py`
-  - `tests/unit/services/answer/test_answer_orchestration_quality_gate.py`
-  - result: `31 passed`
+- pending.
 
 #### Patch 4 - Guardrail threshold recalibration and import-budget expansion
 - recalibrate no-growth thresholds to new post-extraction baselines,
@@ -99,51 +73,25 @@ Patch 3 artifacts:
 - keep failure messages actionable for CI.
 
 Patch 4 artifacts:
-- quality-gate no-growth baseline recalibration applied in
-  `tests/unit/services/answer/test_answer_orchestration_quality_gate.py`:
-  - `answer_service_max_lines`: `2100 -> 2051`
-  - `reasoning_engine_max_lines`: `313 -> 310`
-- import-budget verification (no-growth, unchanged):
-  - answer local imports: `15` (budget `<= 15`)
-  - reasoning local imports: `14` (budget `<= 17`)
-- guardrail checks green:
-  - `tests/unit/services/answer/test_answer_orchestration_quality_gate.py`
-  - result: `16 passed`
+- pending.
 
 #### Patch 5 - Guardrails + parity + closure
-- run focused and full-suite checks and close A2.75 with docs sync.
+- run focused and full-suite checks and close A2.76 with docs sync.
 
 Patch 5 artifacts:
-- focused closure checks green:
-  - `tests/unit/services/answer/test_answer_service_debug_snapshot.py`
-  - `tests/unit/services/answer/test_answer_soft_failure_observability.py`
-  - `tests/unit/layers/pro/test_reasoning_engine_synthesize.py`
-  - `tests/unit/layers/pro/test_reasoning_engine_synthesize_llm.py`
-  - `tests/unit/layers/pro/test_reasoning_engine_synthesize_llm_fallback.py`
-  - `tests/unit/layers/pro/test_reasoning_engine_synthesize_llm_timeout.py`
-  - `tests/unit/layers/pro/test_reasoning_engine_planner_runtime_parity.py`
-  - `tests/unit/layers/pro/test_reasoning_verify_contract.py`
-  - `tests/unit/services/answer/test_answer_orchestration_quality_gate.py`
-  - `tests/unit/docs`
-  - result: `130 passed`
-- full-suite regression check green:
-  - `uv run pytest`
-  - result: `576 passed, 3 skipped`
-- closure baselines confirmed:
-  - `src/services/answer/answer_service.py`: `2051` lines
-  - `src/layers/pro/reasoning/engine.py`: `310` lines
+- pending.
 
 ### Progress
 
 - [x] Patch 1 — inventory + scope lock
-- [x] Patch 2 - Answer extraction phase-19
-- [x] Patch 3 - Reasoning extraction phase-19
-- [x] Patch 4 - Guardrail threshold recalibration and import-budget expansion
-- [x] Patch 5 - guardrails + parity + closure
+- [ ] Patch 2 - Answer extraction phase-20
+- [ ] Patch 3 - Reasoning extraction phase-20
+- [ ] Patch 4 - Guardrail threshold recalibration and import-budget expansion
+- [ ] Patch 5 - guardrails + parity + closure
 
 ### Non-Negotiable Rules
 
-- No net-new user-facing features during A2.75
+- No net-new user-facing features during A2.76
 - Preserve answer/debug runtime/API parity
 - No new business logic additions inside monolith files
 - Extraction-only and thin-facade-only changes in monolith targets
@@ -152,7 +100,7 @@ Patch 5 artifacts:
 
 ### Out of Scope
 
-Do NOT modify during A2.75:
+Do NOT modify during A2.76:
 
 - unrelated product feature logic
 - endpoint contract shape
@@ -161,9 +109,9 @@ Do NOT modify during A2.75:
 
 ### Definition of Done
 
-A2.75 is complete when:
+A2.76 is complete when:
 
-- answer and reasoning convergence phase-19 extraction is completed with parity
+- answer and reasoning convergence phase-20 extraction is completed with parity
 - no-growth thresholds and import-budget constraints are updated to latest baselines and enforced in CI
 - target facades are further reduced and orchestration-focused
 - focused and full quality checks remain green
@@ -187,7 +135,7 @@ A2.56 policy markers are retained for deterministic docs quality gates:
 
 ## Next Anchor
 
-TBD - Post-A2.75 planning
+TBD - Post-A2.76 planning
 
 ## Anchor Closed
 
