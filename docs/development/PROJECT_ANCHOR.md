@@ -76,7 +76,23 @@ Patch 2 artifacts:
 - preserve reasoning diagnostics contract behavior.
 
 Patch 3 artifacts:
-- pending.
+- fallback runtime+text adapter seam extracted into
+  `src/layers/pro/reasoning/evaluation/runtime_productization.py`:
+  - `synthesize_fallback_with_runtime_and_text_adapter`
+- `src/layers/pro/reasoning/engine.py` now retains thinner compatibility facade:
+  - `_synthesize_fallback` delegates to extracted runtime+text seam
+  - in-engine `_build_fallback_answer_text` helper removed (runtime wiring moved out)
+- facade reduction achieved:
+  - `src/layers/pro/reasoning/engine.py`: `310 -> 292` lines
+- focused reasoning + guardrail checks green:
+  - `tests/unit/layers/pro/test_reasoning_engine_synthesize.py`
+  - `tests/unit/layers/pro/test_reasoning_engine_synthesize_llm.py`
+  - `tests/unit/layers/pro/test_reasoning_engine_synthesize_llm_fallback.py`
+  - `tests/unit/layers/pro/test_reasoning_engine_synthesize_llm_timeout.py`
+  - `tests/unit/layers/pro/test_reasoning_engine_planner_runtime_parity.py`
+  - `tests/unit/layers/pro/test_reasoning_verify_contract.py`
+  - `tests/unit/services/answer/test_answer_orchestration_quality_gate.py`
+  - result: `31 passed`
 
 #### Patch 4 - Guardrail threshold recalibration and import-budget expansion
 - recalibrate no-growth thresholds to new post-extraction baselines,
@@ -96,7 +112,7 @@ Patch 5 artifacts:
 
 - [x] Patch 1 — inventory + scope lock
 - [x] Patch 2 - Answer extraction phase-21
-- [ ] Patch 3 - Reasoning extraction phase-21
+- [x] Patch 3 - Reasoning extraction phase-21
 - [ ] Patch 4 - Guardrail threshold recalibration and import-budget expansion
 - [ ] Patch 5 - guardrails + parity + closure
 

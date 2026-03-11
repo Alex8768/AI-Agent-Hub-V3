@@ -544,6 +544,82 @@ async def synthesize_fallback_with_runtime_settings(
     )
 
 
+async def synthesize_fallback_with_runtime_and_text_adapter(
+    *,
+    request: object,
+    retriever: object,
+    error: str | None,
+    get_settings_fn: object,
+    llm: object | None,
+    llm_timeout_s: float,
+    build_prompt_fn: object,
+    dry_run_builder_fn: object,
+    execute_planner_steps_mvp_fn: object,
+    build_fallback_planner_observations_fn: object,
+    build_fallback_answer_response_fn: object,
+    apply_fallback_response_diagnostics_fn: object,
+    confidence_fn: object,
+    response_model_cls: object,
+    evidence_contract_version: str,
+    evidence_summary_fn: object,
+    evidence_contract_status_fn: object,
+    evidence_contract_gate_reason_fn: object,
+    self_check_fn: object,
+    verify_preflight_fn: object,
+    planner_runtime_parity_fn: object,
+    execution_policy_builder_fn: object,
+    reasoning_quality_builder_fn: object,
+    reasoning_optimization_builder_fn: object,
+    enterprise_productization_builder_fn: object,
+    meta_cognition_builder_fn: object,
+    warning_flags_applier_fn: object,
+) -> object:
+    async def _build_fallback_answer_text_fn(
+        *,
+        request: object,
+        context_preview: str,
+        provenance: list,
+        dry_run: bool,
+    ) -> str:
+        return await build_fallback_answer_text_with_runtime_adapter(
+            llm=llm,
+            llm_timeout_s=llm_timeout_s,
+            request=request,
+            context_preview=context_preview,
+            provenance=provenance,
+            dry_run=dry_run,
+            build_prompt_fn=build_prompt_fn,
+            dry_run_builder_fn=dry_run_builder_fn,
+        )
+
+    return await synthesize_fallback_with_runtime_settings(
+        request=request,
+        retriever=retriever,
+        error=error,
+        get_settings_fn=get_settings_fn,
+        execute_planner_steps_mvp_fn=execute_planner_steps_mvp_fn,
+        build_fallback_planner_observations_fn=build_fallback_planner_observations_fn,
+        build_fallback_answer_text_fn=_build_fallback_answer_text_fn,
+        build_fallback_answer_response_fn=build_fallback_answer_response_fn,
+        apply_fallback_response_diagnostics_fn=apply_fallback_response_diagnostics_fn,
+        confidence_fn=confidence_fn,
+        response_model_cls=response_model_cls,
+        evidence_contract_version=evidence_contract_version,
+        evidence_summary_fn=evidence_summary_fn,
+        evidence_contract_status_fn=evidence_contract_status_fn,
+        evidence_contract_gate_reason_fn=evidence_contract_gate_reason_fn,
+        self_check_fn=self_check_fn,
+        verify_preflight_fn=verify_preflight_fn,
+        planner_runtime_parity_fn=planner_runtime_parity_fn,
+        execution_policy_builder_fn=execution_policy_builder_fn,
+        reasoning_quality_builder_fn=reasoning_quality_builder_fn,
+        reasoning_optimization_builder_fn=reasoning_optimization_builder_fn,
+        enterprise_productization_builder_fn=enterprise_productization_builder_fn,
+        meta_cognition_builder_fn=meta_cognition_builder_fn,
+        warning_flags_applier_fn=warning_flags_applier_fn,
+    )
+
+
 def synthesize_graph_response(
     *,
     final_state: object,

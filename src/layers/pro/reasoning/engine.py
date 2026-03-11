@@ -30,7 +30,6 @@ from src.layers.pro.reasoning.evaluation.runtime_diagnostics import (
 )
 from src.layers.pro.reasoning.evaluation.runtime_productization import (
     build_fallback_answer_response as _build_fallback_answer_response,
-    build_fallback_answer_text_with_runtime_adapter as _build_fallback_answer_text_with_runtime_adapter,
     build_graph_answer_response as _build_graph_answer_response,
     build_dry_run_answer_from_parts as _build_dry_run_answer_from_parts,
     build_dry_run_answer_from_state as _build_dry_run_answer_from_state,
@@ -41,7 +40,7 @@ from src.layers.pro.reasoning.evaluation.runtime_productization import (
     build_meta_cognition_diagnostics as _build_meta_cognition_diagnostics,
     build_reasoning_optimization_diagnostics as _build_reasoning_optimization_diagnostics,
     run_graph_runtime_with_state_contract as _run_graph_runtime_with_state_contract,
-    synthesize_fallback_with_runtime_settings as _synthesize_fallback_with_runtime_settings,
+    synthesize_fallback_with_runtime_and_text_adapter as _synthesize_fallback_with_runtime_and_text_adapter,
 )
 from src.layers.pro.reasoning.kernel import build_reasoning_planner_runtime
 from src.layers.pro.reasoning.tool_safety.runtime_guard import apply_tool_safety_runtime_guard
@@ -237,14 +236,17 @@ class ReasoningEngine:
 
     async def _synthesize_fallback(self, request: AnswerRequest, error: str | None = None) -> AnswerResponse:
         """Fallback к старому однопроходному режиму (если нет LLM или ошибка графа)."""
-        return await _synthesize_fallback_with_runtime_settings(
+        return await _synthesize_fallback_with_runtime_and_text_adapter(
             request=request,
             retriever=self.retriever,
             error=error,
             get_settings_fn=get_settings,
+            llm=self.llm,
+            llm_timeout_s=float(self.llm_timeout_s),
+            build_prompt_fn=build_reasoning_prompt,
+            dry_run_builder_fn=self._build_dry_run_answer_from_parts,
             execute_planner_steps_mvp_fn=self._execute_planner_steps_mvp,
             build_fallback_planner_observations_fn=_build_fallback_planner_observations,
-            build_fallback_answer_text_fn=self._build_fallback_answer_text,
             build_fallback_answer_response_fn=_build_fallback_answer_response,
             apply_fallback_response_diagnostics_fn=_apply_fallback_response_diagnostics,
             confidence_fn=compute_confidence,
@@ -282,26 +284,6 @@ class ReasoningEngine:
             initial_state=initial_state,
             state_model_cls=AgentState,
         )
-
-    async def _build_fallback_answer_text(
-        self,
-        *,
-        request: AnswerRequest,
-        context_preview: str,
-        provenance: list,
-        dry_run: bool,
-    ) -> str:
-        return await _build_fallback_answer_text_with_runtime_adapter(
-            llm=self.llm,
-            llm_timeout_s=self.llm_timeout_s,
-            request=request,
-            context_preview=context_preview,
-            provenance=provenance,
-            dry_run=dry_run,
-            build_prompt_fn=build_reasoning_prompt,
-            dry_run_builder_fn=self._build_dry_run_answer_from_parts,
-        )
-
 
 def _get_runtime_logger():
     from loguru import logger
