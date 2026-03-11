@@ -2,17 +2,17 @@
 
 ## Current Phase
 
-A2.75 in progress (Patch 4 complete)
+Post-A2.75 planning (A2.75 closed)
 
 ## Last Completed Anchor
 
-A2.74 - Facade Convergence Phase 18 (Answer/Reasoning)
+A2.75 - Facade Convergence Phase 19 (Answer/Reasoning)
 
-A2.74 closed with:
-- answer execution orchestration seam extraction into execution durable-keys module
-- reasoning graph-runtime synthesize seam extraction into evaluation runtime-productization module
-- no-growth baselines recalibrated to latest reduced facade budgets (`2100`/`313`)
-- focused and full-suite checks green at closure (`132 passed`; `576 passed, 3 skipped`)
+A2.75 closed with:
+- answer feedback adaptation builder seam extraction into llm-planner-policy module
+- reasoning fallback orchestration seam extraction into evaluation runtime-productization module
+- no-growth baselines recalibrated to latest reduced facade budgets (`2051`/`310`)
+- focused and full-suite checks green at closure (`130 passed`; `576 passed, 3 skipped`)
 
 Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 - Anchor Closed — A2.56 complete (operational guardrails policy closure)
@@ -20,12 +20,12 @@ Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 
 ## Current Active Anchor
 
-A2.75 - Facade Convergence Phase 19 (Answer/Reasoning)
+TBD - Post-A2.75 planning
 
 Current focus:
-- execute guardrails + parity + closure (A2.75 patch 5)
-- preserve no-growth guardrail discipline from recalibrated baselines (`2051`/`310`)
-- continue one-patch-one-reason execution discipline
+- define next extraction scope after A2.75 closure
+- preserve no-growth guardrail discipline from latest baselines (`2051`/`310`)
+- maintain one-patch-one-reason execution discipline
 
 Execution discipline:
 - no net-new intelligence features

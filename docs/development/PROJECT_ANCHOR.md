@@ -111,10 +111,27 @@ Patch 4 artifacts:
   - result: `16 passed`
 
 #### Patch 5 - Guardrails + parity + closure
-- run focused and full-suite checks and close A2.74 with docs sync.
+- run focused and full-suite checks and close A2.75 with docs sync.
 
 Patch 5 artifacts:
-- pending.
+- focused closure checks green:
+  - `tests/unit/services/answer/test_answer_service_debug_snapshot.py`
+  - `tests/unit/services/answer/test_answer_soft_failure_observability.py`
+  - `tests/unit/layers/pro/test_reasoning_engine_synthesize.py`
+  - `tests/unit/layers/pro/test_reasoning_engine_synthesize_llm.py`
+  - `tests/unit/layers/pro/test_reasoning_engine_synthesize_llm_fallback.py`
+  - `tests/unit/layers/pro/test_reasoning_engine_synthesize_llm_timeout.py`
+  - `tests/unit/layers/pro/test_reasoning_engine_planner_runtime_parity.py`
+  - `tests/unit/layers/pro/test_reasoning_verify_contract.py`
+  - `tests/unit/services/answer/test_answer_orchestration_quality_gate.py`
+  - `tests/unit/docs`
+  - result: `130 passed`
+- full-suite regression check green:
+  - `uv run pytest`
+  - result: `576 passed, 3 skipped`
+- closure baselines confirmed:
+  - `src/services/answer/answer_service.py`: `2051` lines
+  - `src/layers/pro/reasoning/engine.py`: `310` lines
 
 ### Progress
 
@@ -122,7 +139,7 @@ Patch 5 artifacts:
 - [x] Patch 2 - Answer extraction phase-19
 - [x] Patch 3 - Reasoning extraction phase-19
 - [x] Patch 4 - Guardrail threshold recalibration and import-budget expansion
-- [ ] Patch 5 - guardrails + parity + closure
+- [x] Patch 5 - guardrails + parity + closure
 
 ### Non-Negotiable Rules
 
@@ -171,6 +188,10 @@ A2.56 policy markers are retained for deterministic docs quality gates:
 ## Next Anchor
 
 TBD - Post-A2.75 planning
+
+## Anchor Closed
+
+A2.75 complete - Facade Convergence Phase 19 closed with extraction + guardrails + parity.
 
 ## Post-A2.56 Maintenance
 
