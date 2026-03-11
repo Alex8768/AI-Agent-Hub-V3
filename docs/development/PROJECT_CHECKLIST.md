@@ -68,11 +68,15 @@
 - [x] A2.69 - Facade Convergence Phase 13 (Answer/Reasoning)
 - [x] A2.70 - Facade Convergence Phase 14 (Answer/Reasoning)
 - [x] A2.71 - Facade Convergence Phase 15 (Answer/Reasoning)
+- [ ] A2.72 - Facade Convergence Phase 16 (Answer/Reasoning)
 
-## Current Work — Post-A2.71 planning
+## Current Work — A2.72 Facade Convergence Phase 16 (Answer/Reasoning)
 
-- [x] A2.71 closure synced (focused + full-suite checks green)
-- [ ] Define next anchor scope and patch-1 inventory baseline
+- [x] Patch 1 - inventory + scope lock
+- [ ] Patch 2 - Answer extraction phase-16
+- [ ] Patch 3 - Reasoning extraction phase-16
+- [ ] Patch 4 - Guardrail threshold recalibration and import-budget expansion
+- [ ] Patch 5 - guardrails + parity + closure
 
 ## A2.71 Historical Work - Facade Convergence Phase 15 (Answer/Reasoning)
 
