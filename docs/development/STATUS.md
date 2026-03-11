@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-A2.62 patch 2 complete (Answer extraction phase-6 tool-selection policy seam)
+A2.62 patch 3 complete (Reasoning extraction phase-6 runtime warning-flags seam)
 
 ## Last Completed Anchor
 
@@ -23,7 +23,7 @@ Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 A2.62 - Facade Convergence Phase 6 (Answer/Reasoning)
 
 Current focus:
-- execute A2.62 patch 3 reasoning extraction phase-6 (next bounded runtime seam)
+- execute A2.62 patch 4 guardrail recalibration and import-budget expansion
 - preserve answer/reasoning decomposition and no-growth guardrail baseline
 - continue one-patch-one-reason execution discipline
 

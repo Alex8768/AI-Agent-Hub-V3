@@ -42,6 +42,7 @@ from src.layers.pro.reasoning.evaluation.runtime_productization import (
 from src.layers.pro.reasoning.kernel import build_reasoning_planner_runtime
 from src.layers.pro.reasoning.tool_safety.runtime_guard import apply_tool_safety_runtime_guard
 from src.layers.pro.reasoning.diagnostics.runtime_contracts import (
+    apply_reasoning_runtime_warning_flags as _apply_reasoning_runtime_warning_flags,
     build_planner_runtime_parity_diagnostics as _build_planner_runtime_parity_diagnostics,
     evidence_contract_gate_reason as _evidence_contract_gate_reason,
     evidence_contract_status as _evidence_contract_status,
@@ -413,18 +414,12 @@ class ReasoningEngine:
             diag["reasoning_timeline"] = dict(
                 (dict(diag.get("reasoning_trace") or {}).get("timeline") or {})
             )
-            if str(verify.get("status", "")) == "warn":
-                resp.warnings = list(getattr(resp, "warnings", []) or [])
-                if "verify_warning" not in resp.warnings:
-                    resp.warnings.append("verify_warning")
-            if str(self_check.get("status", "")) == "warn":
-                resp.warnings = list(getattr(resp, "warnings", []) or [])
-                if "self_check_warning" not in resp.warnings:
-                    resp.warnings.append("self_check_warning")
-            if not bool(contract.get("valid_minimal", False)):
-                resp.warnings = list(getattr(resp, "warnings", []) or [])
-                if "evidence_contract_minimal_invalid" not in resp.warnings:
-                    resp.warnings.append("evidence_contract_minimal_invalid")
+            resp.warnings = _apply_reasoning_runtime_warning_flags(
+                warnings=list(getattr(resp, "warnings", []) or []),
+                verify=verify,
+                self_check=self_check,
+                contract=contract,
+            )
             if final_state.error:
                 diag["agent_error"] = final_state.error
             resp.diagnostics = diag
@@ -613,18 +608,12 @@ class ReasoningEngine:
                 "reasoning_timeline",
                 dict((dict(diag.get("reasoning_trace") or {}).get("timeline") or {})),
             )
-            if str(verify.get("status", "")) == "warn":
-                resp.warnings = list(getattr(resp, "warnings", []) or [])
-                if "verify_warning" not in resp.warnings:
-                    resp.warnings.append("verify_warning")
-            if str(self_check.get("status", "")) == "warn":
-                resp.warnings = list(getattr(resp, "warnings", []) or [])
-                if "self_check_warning" not in resp.warnings:
-                    resp.warnings.append("self_check_warning")
-            if not bool(contract.get("valid_minimal", False)):
-                resp.warnings = list(getattr(resp, "warnings", []) or [])
-                if "evidence_contract_minimal_invalid" not in resp.warnings:
-                    resp.warnings.append("evidence_contract_minimal_invalid")
+            resp.warnings = _apply_reasoning_runtime_warning_flags(
+                warnings=list(getattr(resp, "warnings", []) or []),
+                verify=verify,
+                self_check=self_check,
+                contract=contract,
+            )
             resp.diagnostics = diag
         except Exception:
             pass

@@ -199,3 +199,20 @@ def build_planner_runtime_parity_diagnostics(
         },
         "reason_codes": sorted(set(reasons)),
     }
+
+
+def apply_reasoning_runtime_warning_flags(
+    *,
+    warnings: list[str],
+    verify: dict[str, object],
+    self_check: dict[str, object],
+    contract: dict[str, object],
+) -> list[str]:
+    rows = [str(x) for x in list(warnings or []) if str(x)]
+    if str(verify.get("status", "")) == "warn" and "verify_warning" not in rows:
+        rows.append("verify_warning")
+    if str(self_check.get("status", "")) == "warn" and "self_check_warning" not in rows:
+        rows.append("self_check_warning")
+    if not bool(contract.get("valid_minimal", False)) and "evidence_contract_minimal_invalid" not in rows:
+        rows.append("evidence_contract_minimal_invalid")
+    return rows
