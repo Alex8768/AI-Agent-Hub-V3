@@ -6,6 +6,7 @@ import pytest
 
 from src.layers.pro.reasoning.contracts import AnswerRequest
 from src.services.answer.answer_service import AnswerService
+from src.services.answer.answer_service import _apply_diagnostics
 from src.services.answer.interface_contract import build_answer_service_request_contract
 from src.services.answer.orchestrator import run_answer_orchestration_core
 from src.services.answer.response_assembly import run_answer_response_assembly
@@ -421,3 +422,47 @@ async def test_answer_service_writes_soft_failure_reason_code_for_post_orchestra
     resp = await AnswerService().handle_contract(contract)
     diag = dict(getattr(resp, "diagnostics", None) or {})
     assert "answer_service_post_orchestration_soft_failure" in list(diag.get("planning_reason_codes") or [])
+
+
+@pytest.mark.asyncio
+async def test_answer_service_writes_soft_failure_reason_code_for_apply_diagnostics(monkeypatch):
+    def _raise_intent(**kwargs):
+        _ = kwargs
+        raise RuntimeError("intent-build-failed")
+
+    monkeypatch.setattr("src.services.answer.answer_service._infer_assistant_intent", _raise_intent)
+
+    req = AnswerRequest(query="q", session_id="s1", filters={})
+    resp = SimpleNamespace(
+        answer="ok",
+        diagnostics={"planning_reason_codes": []},
+        provenance=[],
+        used_chunks=[],
+        used_nodes=[],
+        used_edges=[],
+    )
+    http = SimpleNamespace(state=SimpleNamespace(request_id="rid-soft"), headers={})
+
+    await _apply_diagnostics(
+        resp=resp,
+        req=req,
+        http=http,
+        workspace_id="default",
+        retriever=SimpleNamespace(last_stats={}),
+        llm=None,
+        llm_enabled=False,
+        llm_provider_name="",
+        llm_model="",
+        llm_error="",
+        assistant_mode_enabled=False,
+        assistant_proactive_enabled=False,
+        assistant_actions_enabled=False,
+        assistant_response_language="auto",
+        session_memory_loaded=False,
+        session_memory_hit=False,
+        durable_approval_record_loaded=False,
+        durable_idempotency_record_loaded=False,
+    )
+
+    diag = dict(getattr(resp, "diagnostics", None) or {})
+    assert "answer_service_apply_diagnostics_soft_failure" in list(diag.get("planning_reason_codes") or [])

@@ -3566,18 +3566,58 @@ async def _apply_diagnostics(
             if session_memory_hit:
                 etc["memory"] = int(etc.get("memory", 0)) + 1
             diag["evidence_type_counts"] = etc
-        except Exception:
-            pass
+        except Exception as exc:
+            diag = _append_planning_reason_codes(
+                diagnostics=diag,
+                reason_codes=["answer_service_evidence_type_counts_soft_failure"],
+            )
+            _LOGGER.warning(
+                "Answer service soft-failure: evidence type counts diagnostics skipped",
+                context={
+                    "workspace_id": str(workspace_id or ""),
+                    "error": str(exc),
+                    "error_type": type(exc).__name__,
+                    "reason_code": "answer_service_evidence_type_counts_soft_failure",
+                },
+            )
 
         # Retriever stats (best-effort)
         try:
             diag.setdefault("retriever_stats", dict(getattr(retriever, "last_stats", {}) or {}))
-        except Exception:
-            pass
+        except Exception as exc:
+            diag = _append_planning_reason_codes(
+                diagnostics=diag,
+                reason_codes=["answer_service_retriever_stats_soft_failure"],
+            )
+            _LOGGER.warning(
+                "Answer service soft-failure: retriever stats diagnostics skipped",
+                context={
+                    "workspace_id": str(workspace_id or ""),
+                    "error": str(exc),
+                    "error_type": type(exc).__name__,
+                    "reason_code": "answer_service_retriever_stats_soft_failure",
+                },
+            )
 
         resp.diagnostics = diag
-    except Exception:
-        pass
+    except Exception as exc:
+        fallback_diag = _append_planning_reason_codes(
+            diagnostics=dict(getattr(resp, "diagnostics", None) or {}),
+            reason_codes=["answer_service_apply_diagnostics_soft_failure"],
+        )
+        try:
+            resp.diagnostics = fallback_diag
+        except Exception:
+            object.__setattr__(resp, "diagnostics", fallback_diag)
+        _LOGGER.warning(
+            "Answer service soft-failure: diagnostics assembly skipped",
+            context={
+                "workspace_id": str(workspace_id or ""),
+                "error": str(exc),
+                "error_type": type(exc).__name__,
+                "reason_code": "answer_service_apply_diagnostics_soft_failure",
+            },
+        )
 
 
 async def _load_session_memory(
