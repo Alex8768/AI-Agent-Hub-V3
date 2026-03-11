@@ -247,6 +247,7 @@ AI-Agent-Hub-V3 is a modular AI platform for production-grade agent systems with
 - [x] A2.60 no-growth threshold recalibration + seam/import-budget coverage expansion for answer/reasoning facades (patch 4)
 - [x] A2.60 guardrails/parity closure with focused + full-suite green (patch 5)
 - [x] A2.61 facade convergence phase-5 inventory + scope lock for answer/reasoning extraction-only governance (patch 1)
+- [x] A2.61 answer phase-5 feedback-policy seam extraction for feedback/adaptation guard contracts (patch 2)
 
 ### 7) Interface Layer
 
