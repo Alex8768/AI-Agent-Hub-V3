@@ -71,6 +71,25 @@ KPI policy contract baseline for A2.56:
 - Document which diagnostics fields/panels/reports represent KPI components.
 - Ensure deterministic mapping from runtime diagnostics to operational policy terms.
 
+Diagnostics-to-KPI mapping contract (A2.56):
+- `requests_with_soft_failures` source:
+  - `planning_reason_codes` contains any entry matching `*_soft_failure*`
+    or `*_assignment_failed`.
+- `requests_with_fallback` source:
+  - `response_mode == "assistant_fallback"` OR
+  - `planning_reason_codes` contains any entry with `fallback`.
+- `healthy_request_kpi` source:
+  - request is healthy when neither soft-failure nor fallback predicates are true.
+- `soft_failures_count` reporting contract:
+  - computed as `len(filtered_soft_failure_codes)` from `planning_reason_codes`
+    for each request.
+- `fallback_count` reporting contract:
+  - computed as `1` when fallback predicate is true, otherwise `0`.
+- Panel/report mapping:
+  - source-of-truth diagnostics surface is answer debug diagnostics payload;
+    operational dashboards/alerts must derive KPI numerators from this payload
+    without introducing alternate definitions.
+
 #### Patch 4 — Guardrail test/policy enforcement hardening
 - Add/expand deterministic tests or quality gates for operational policy wording/contracts.
 - Ensure failure messages are actionable for CI triage.
@@ -83,7 +102,7 @@ KPI policy contract baseline for A2.56:
 
 - [x] Patch 1 — inventory + scope lock
 - [x] Patch 2 — KPI policy contract introduction
-- [ ] Patch 3 — diagnostics surface mapping and reporting contract
+- [x] Patch 3 — diagnostics surface mapping and reporting contract
 - [ ] Patch 4 — guardrail test/policy enforcement hardening
 - [ ] Patch 5 — guardrails + parity + closure
 

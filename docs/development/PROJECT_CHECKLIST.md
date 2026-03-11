@@ -58,7 +58,7 @@
 
 - [x] Patch 1 — inventory + scope lock
 - [x] Patch 2 — KPI policy contract introduction
-- [ ] Patch 3 — diagnostics surface mapping and reporting contract
+- [x] Patch 3 — diagnostics surface mapping and reporting contract
 - [ ] Patch 4 — guardrail test/policy enforcement hardening
 - [ ] Patch 5 — guardrails + parity + closure
 

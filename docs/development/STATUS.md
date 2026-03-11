@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-Active Anchor Execution — A2.56 patch 2 complete (KPI policy contract introduction)
+Active Anchor Execution — A2.56 patch 3 complete (diagnostics surface mapping and reporting contract)
 
 ## Last Completed Anchor
 
@@ -19,8 +19,8 @@ A2.55 closed with:
 A2.56 — Operational Guardrails for Soft-Failure KPIs
 
 Current focus:
-- codify explicit healthy-path and rate-based KPI contracts
-- lock threshold class semantics (healthy/warning/critical) for enforcement patches
+- map runtime diagnostics fields to KPI numerators/counters deterministically
+- keep answer debug payload as source-of-truth for operational KPI reporting
 - preserve answer/debug runtime parity during guardrail hardening
 
 Execution discipline:
