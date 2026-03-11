@@ -345,3 +345,21 @@ def apply_tool_selection_policy_guards(
         "applied_reason_codes": sorted(set(applied_reason_codes)),
     }
     return selection, policy_eval
+
+
+def build_transition_policy_contract(
+    *,
+    max_approved_action_ids: int,
+    allowlisted_action_types: tuple[str, ...],
+    allowlisted_action_pattern: str,
+) -> dict[str, object]:
+    return {
+        "mode": "confirmation_guarded",
+        "require_confirmation_token": True,
+        "allow_partial_approval": True,
+        "max_approved_action_ids": int(max_approved_action_ids),
+        "allowlisted_action_types": list(allowlisted_action_types),
+        "allowlisted_action_pattern": str(allowlisted_action_pattern or ""),
+        "enforce_allowlisted_action_types": True,
+        "allowed_decisions": ["approve", "cancel"],
+    }

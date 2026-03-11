@@ -89,6 +89,7 @@ from src.services.answer.reasoning.llm_planner_policy import (
     apply_feedback_policy_guards as _apply_feedback_policy_guards,
     apply_llm_planner_policy_guards as _apply_llm_planner_policy_guards,
     apply_tool_selection_policy_guards as _apply_tool_selection_policy_guards,
+    build_transition_policy_contract as _build_transition_policy_contract_impl,
     build_feedback_adaptation_policy_contract as _build_feedback_adaptation_policy_contract,
     build_feedback_policy_contract as _build_feedback_policy_contract,
     build_llm_planner_policy_contract as _build_llm_planner_policy_contract,
@@ -276,15 +277,6 @@ def _build_planner_runtime_parity_fallback_bundle(*, diagnostics: dict[str, obje
         },
         "reason_codes": sorted(set(reason_codes)),
     }
-
-
-def _is_allowlisted_pilot_action_type(action_type: str, allowlisted_action_types: set[str]) -> bool:
-    normalized = str(action_type or "").strip()
-    if not normalized:
-        return False
-    if normalized in allowlisted_action_types:
-        return True
-    return normalized.startswith("prepare_") and normalized.endswith("_draft")
 
 
 _RESPONSE_STYLE_RUNTIME = build_reasoning_response_style_runtime()
@@ -1410,16 +1402,20 @@ def _apply_execution_idempotency_guard(
 
 
 def _build_transition_policy_contract() -> dict[str, object]:
-    return {
-        "mode": "confirmation_guarded",
-        "require_confirmation_token": True,
-        "allow_partial_approval": True,
-        "max_approved_action_ids": EXECUTION_PILOT_MAX_APPROVED_ACTION_IDS,
-        "allowlisted_action_types": list(EXECUTION_PILOT_ALLOWLISTED_ACTION_TYPES),
-        "allowlisted_action_pattern": EXECUTION_PILOT_ALLOWLISTED_ACTION_PATTERN,
-        "enforce_allowlisted_action_types": True,
-        "allowed_decisions": ["approve", "cancel"],
-    }
+    return _build_transition_policy_contract_impl(
+        max_approved_action_ids=EXECUTION_PILOT_MAX_APPROVED_ACTION_IDS,
+        allowlisted_action_types=EXECUTION_PILOT_ALLOWLISTED_ACTION_TYPES,
+        allowlisted_action_pattern=EXECUTION_PILOT_ALLOWLISTED_ACTION_PATTERN,
+    )
+
+
+def _is_allowlisted_pilot_action_type(action_type: str, allowlisted_action_types: set[str]) -> bool:
+    normalized = str(action_type or "").strip()
+    if not normalized:
+        return False
+    if normalized in allowlisted_action_types:
+        return True
+    return normalized.startswith("prepare_") and normalized.endswith("_draft")
 
 
 def _apply_handshake_transition_policy(
