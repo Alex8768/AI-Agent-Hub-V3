@@ -79,6 +79,123 @@ _LLM_PLANNER_ALLOWED_INTENTS: tuple[str, ...] = (
 _LOGGER = get_logger()
 
 
+class _AnswerFacadePipelineState:
+    def __init__(
+        self,
+        *,
+        resp: object,
+        assistant_mode_enabled: bool,
+        assistant_proactive_enabled: bool,
+        assistant_actions_enabled: bool,
+        assistant_response_language: str,
+        loaded_durable_approval: dict[str, object],
+        loaded_durable_idempotency: dict[str, object],
+    ):
+        self.resp = resp
+        self.assistant_mode_enabled = bool(assistant_mode_enabled)
+        self.assistant_proactive_enabled = bool(assistant_proactive_enabled)
+        self.assistant_actions_enabled = bool(assistant_actions_enabled)
+        self.assistant_response_language = str(assistant_response_language or "auto")
+        self.loaded_durable_approval = dict(loaded_durable_approval or {})
+        self.loaded_durable_idempotency = dict(loaded_durable_idempotency or {})
+
+
+def _build_post_orchestration_deps() -> AnswerPostOrchestrationDeps:
+    return AnswerPostOrchestrationDeps(
+        run_anticipatory_safe_mode=_run_anticipatory_safe_mode,
+        rank_proactive_bundle=_rank_proactive_bundle,
+        build_draft_action_bundle=_build_draft_action_bundle,
+        wire_runtime_diagnostics=_wire_runtime_diagnostics,
+        bridge_plan_to_draft_actions=_bridge_plan_to_draft_actions,
+        build_execution_handshake_bundle=_build_execution_handshake_bundle,
+        build_transition_policy_contract=_build_transition_policy_contract,
+        apply_handshake_transition_policy=_apply_handshake_transition_policy,
+        extract_handshake_transition_input=_extract_handshake_transition_input,
+        apply_durable_confirmation_token_guards=_apply_durable_confirmation_token_guards,
+        apply_execution_idempotency_guard=_apply_execution_idempotency_guard,
+        apply_handshake_transition=_apply_handshake_transition,
+        apply_rollback_contract_guard=_apply_rollback_contract_guard,
+        run_execution_pilot_runtime=_run_execution_pilot_runtime,
+        build_execution_receipt_stub=_build_execution_receipt_stub,
+        build_safe_mode_execution_gateway=_build_safe_mode_execution_gateway,
+        build_execution_pilot_bundle=_build_execution_pilot_bundle,
+        build_approval_session_bundle=_build_approval_session_bundle,
+        build_durable_approval_session_record=_build_durable_approval_session_record,
+        build_idempotency_record_snapshot=_build_idempotency_record_snapshot,
+        append_planning_reason_codes=_append_planning_reason_codes,
+        get_request_id=get_request_id,
+        logger=_LOGGER,
+        durable_approval_session_contract_version=DURABLE_APPROVAL_SESSION_CONTRACT_VERSION,
+        idempotency_record_contract_version=IDEMPOTENCY_RECORD_CONTRACT_VERSION,
+        execution_gateway_contract_version=EXECUTION_GATEWAY_CONTRACT_VERSION,
+        execution_pilot_contract_version=EXECUTION_PILOT_CONTRACT_VERSION,
+    )
+
+
+def _build_diagnostics_merge_deps() -> AnswerDiagnosticsMergeDeps:
+    return AnswerDiagnosticsMergeDeps(
+        hydrate_durable_records_into_diagnostics=_hydrate_durable_records_into_diagnostics,
+        persist_durable_records=_persist_durable_records,
+        save_session_memory=_save_session_memory,
+        append_planning_reason_codes=_append_planning_reason_codes,
+        logger=_LOGGER,
+    )
+
+
+async def _run_answer_primary_pipeline(
+    *,
+    http: Request,
+    req: object,
+    workspace_id: str,
+    settings: object,
+    runtime_context: dict[str, object],
+    engine: object,
+    hybrid: object,
+    get_reasoning_engine: object,
+    get_memory_store: object,
+) -> _AnswerFacadePipelineState:
+    orchestration = await run_answer_orchestration_core(
+        http=http,
+        req=req,
+        workspace_id=workspace_id,
+        settings=settings,
+        engine=engine,
+        hybrid=hybrid,
+        runtime_context=runtime_context,
+        get_reasoning_engine=get_reasoning_engine,
+        get_memory_store=get_memory_store,
+        build_llm_adapter=_build_llm_adapter,
+        load_session_memory=_load_session_memory,
+        load_durable_records=_load_durable_records,
+        retriever_adapter_cls=RetrieverAdapter,
+        build_reasoning_runtime_adapter=_build_reasoning_runtime_adapter,
+        detect_response_language=_detect_response_language,
+        build_assistant_fallback_answer=_build_assistant_fallback_answer,
+        apply_diagnostics=_apply_diagnostics,
+    )
+    resp = await run_answer_response_assembly(
+        resp=orchestration.resp,
+        req=req,
+        llm=orchestration.llm,
+        assistant_mode_enabled=bool(orchestration.assistant_mode_enabled),
+        assistant_response_language=str(orchestration.assistant_response_language or "auto"),
+        build_assistant_recovery_policy_contract=_build_assistant_recovery_policy_contract,
+        apply_assistant_recovery_policy_guards=_apply_assistant_recovery_policy_guards,
+        build_assistant_chat_recovery_answer=_build_assistant_chat_recovery_answer,
+        normalize_low_evidence_friendliness=_normalize_low_evidence_friendliness,
+        build_conversational_runtime_parity_bundle=_build_conversational_runtime_parity_bundle,
+    )
+    return _AnswerFacadePipelineState(
+        resp=resp,
+        assistant_mode_enabled=bool(orchestration.assistant_mode_enabled),
+        assistant_proactive_enabled=bool(orchestration.assistant_proactive_enabled),
+        assistant_actions_enabled=bool(orchestration.assistant_actions_enabled),
+        assistant_response_language=str(orchestration.assistant_response_language or "auto"),
+        loaded_durable_approval=dict(orchestration.loaded_durable_approval or {}),
+        loaded_durable_idempotency=dict(orchestration.loaded_durable_idempotency or {}),
+    )
+
+
 def _clip_text(value: object, *, max_chars: int = SESSION_MEMORY_MAX_CHARS) -> str:
     text = str(value or "")
     if len(text) <= max_chars:
@@ -3765,102 +3882,40 @@ class AnswerService:
             from fastapi import HTTPException
             raise HTTPException(status_code=503, detail="Reasoning stack not initialized")
 
-        orchestration = await run_answer_orchestration_core(
+        pipeline = await _run_answer_primary_pipeline(
             http=http,
             req=req,
             workspace_id=workspace_id,
             settings=s,
+            runtime_context=runtime_context,
             engine=engine,
             hybrid=hybrid,
-            runtime_context=runtime_context,
             get_reasoning_engine=get_reasoning_engine,
             get_memory_store=get_memory_store,
-            build_llm_adapter=_build_llm_adapter,
-            load_session_memory=_load_session_memory,
-            load_durable_records=_load_durable_records,
-            retriever_adapter_cls=RetrieverAdapter,
-            build_reasoning_runtime_adapter=_build_reasoning_runtime_adapter,
-            detect_response_language=_detect_response_language,
-            build_assistant_fallback_answer=_build_assistant_fallback_answer,
-            apply_diagnostics=_apply_diagnostics,
-        )
-        resp = orchestration.resp
-        llm = orchestration.llm
-        assistant_mode_enabled = bool(orchestration.assistant_mode_enabled)
-        assistant_proactive_enabled = bool(orchestration.assistant_proactive_enabled)
-        assistant_actions_enabled = bool(orchestration.assistant_actions_enabled)
-        assistant_response_language = str(orchestration.assistant_response_language or "auto")
-        loaded_durable_approval = dict(orchestration.loaded_durable_approval or {})
-        loaded_durable_idempotency = dict(orchestration.loaded_durable_idempotency or {})
-        resp = await run_answer_response_assembly(
-            resp=resp,
-            req=req,
-            llm=llm,
-            assistant_mode_enabled=assistant_mode_enabled,
-            assistant_response_language=assistant_response_language,
-            build_assistant_recovery_policy_contract=_build_assistant_recovery_policy_contract,
-            apply_assistant_recovery_policy_guards=_apply_assistant_recovery_policy_guards,
-            build_assistant_chat_recovery_answer=_build_assistant_chat_recovery_answer,
-            normalize_low_evidence_friendliness=_normalize_low_evidence_friendliness,
-            build_conversational_runtime_parity_bundle=_build_conversational_runtime_parity_bundle,
         )
         resp = await run_answer_post_orchestration_flow(
             req=req,
             http=http,
-            resp=resp,
+            resp=pipeline.resp,
             workspace_id=workspace_id,
-            assistant_mode_enabled=assistant_mode_enabled,
-            assistant_proactive_enabled=assistant_proactive_enabled,
-            assistant_actions_enabled=assistant_actions_enabled,
-            assistant_response_language=assistant_response_language,
-            loaded_durable_approval=loaded_durable_approval,
-            loaded_durable_idempotency=loaded_durable_idempotency,
+            assistant_mode_enabled=pipeline.assistant_mode_enabled,
+            assistant_proactive_enabled=pipeline.assistant_proactive_enabled,
+            assistant_actions_enabled=pipeline.assistant_actions_enabled,
+            assistant_response_language=pipeline.assistant_response_language,
+            loaded_durable_approval=pipeline.loaded_durable_approval,
+            loaded_durable_idempotency=pipeline.loaded_durable_idempotency,
             get_memory_store=get_memory_store,
-            deps=AnswerPostOrchestrationDeps(
-                run_anticipatory_safe_mode=_run_anticipatory_safe_mode,
-                rank_proactive_bundle=_rank_proactive_bundle,
-                build_draft_action_bundle=_build_draft_action_bundle,
-                wire_runtime_diagnostics=_wire_runtime_diagnostics,
-                bridge_plan_to_draft_actions=_bridge_plan_to_draft_actions,
-                build_execution_handshake_bundle=_build_execution_handshake_bundle,
-                build_transition_policy_contract=_build_transition_policy_contract,
-                apply_handshake_transition_policy=_apply_handshake_transition_policy,
-                extract_handshake_transition_input=_extract_handshake_transition_input,
-                apply_durable_confirmation_token_guards=_apply_durable_confirmation_token_guards,
-                apply_execution_idempotency_guard=_apply_execution_idempotency_guard,
-                apply_handshake_transition=_apply_handshake_transition,
-                apply_rollback_contract_guard=_apply_rollback_contract_guard,
-                run_execution_pilot_runtime=_run_execution_pilot_runtime,
-                build_execution_receipt_stub=_build_execution_receipt_stub,
-                build_safe_mode_execution_gateway=_build_safe_mode_execution_gateway,
-                build_execution_pilot_bundle=_build_execution_pilot_bundle,
-                build_approval_session_bundle=_build_approval_session_bundle,
-                build_durable_approval_session_record=_build_durable_approval_session_record,
-                build_idempotency_record_snapshot=_build_idempotency_record_snapshot,
-                append_planning_reason_codes=_append_planning_reason_codes,
-                get_request_id=get_request_id,
-                logger=_LOGGER,
-                durable_approval_session_contract_version=DURABLE_APPROVAL_SESSION_CONTRACT_VERSION,
-                idempotency_record_contract_version=IDEMPOTENCY_RECORD_CONTRACT_VERSION,
-                execution_gateway_contract_version=EXECUTION_GATEWAY_CONTRACT_VERSION,
-                execution_pilot_contract_version=EXECUTION_PILOT_CONTRACT_VERSION,
-            ),
+            deps=_build_post_orchestration_deps(),
         )
 
         resp = await run_answer_diagnostics_merge_flow(
             req=req,
             resp=resp,
             workspace_id=workspace_id,
-            loaded_durable_approval=loaded_durable_approval,
-            loaded_durable_idempotency=loaded_durable_idempotency,
+            loaded_durable_approval=pipeline.loaded_durable_approval,
+            loaded_durable_idempotency=pipeline.loaded_durable_idempotency,
             get_memory_store=get_memory_store,
-            deps=AnswerDiagnosticsMergeDeps(
-                hydrate_durable_records_into_diagnostics=_hydrate_durable_records_into_diagnostics,
-                persist_durable_records=_persist_durable_records,
-                save_session_memory=_save_session_memory,
-                append_planning_reason_codes=_append_planning_reason_codes,
-                logger=_LOGGER,
-            ),
+            deps=_build_diagnostics_merge_deps(),
         )
 
         return resp

@@ -200,6 +200,7 @@ AI-Agent-Hub-V3 is a modular AI platform for production-grade agent systems with
 - [x] A2.52 AnswerService facade slimming inventory + scope lock (patch 1)
 - [x] A2.52 AnswerService post-orchestration seam extraction via dedicated flow module (patch 2)
 - [x] A2.52 AnswerService diagnostics merge seam extraction via dedicated flow module (patch 3)
+- [x] A2.52 AnswerService facade pipeline cleanup via helper-driven primary pipeline/dependency builders (patch 4)
 
 ### 7) Interface Layer
 
