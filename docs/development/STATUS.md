@@ -2,26 +2,26 @@
 
 ## Current Phase
 
-Active Anchor Execution — A2.56 patch 4 complete (guardrail test/policy enforcement hardening)
+Anchor Closed — A2.56 complete (operational guardrails policy closure)
 
 ## Last Completed Anchor
 
-A2.55 — Documentation Consistency Cleanup
+A2.56 — Operational Guardrails for Soft-Failure KPIs
 
-A2.55 closed with:
-- capability map consistency corrected for completed OCR/MCP milestones
-- checklist/status/anchor active-state synchronization completed
-- roadmap wording normalized to remove stale completed-milestone phrasing
-- docs-focused and full-suite checks green at closure
+A2.56 closed with:
+- KPI policy contracts defined for healthy-path and rate-based guardrails
+- diagnostics-to-KPI reporting mapping formalized for answer debug payload
+- deterministic docs quality-gate enforcement added for policy markers
+- focused and full-suite checks green at closure
 
 ## Current Active Anchor
 
-A2.56 — Operational Guardrails for Soft-Failure KPIs
+TBD — Post-A2.56 planning
 
 Current focus:
-- enforce deterministic policy-contract markers via docs quality gate checks
-- keep KPI/mapping contracts CI-triable with actionable failure messages
-- preserve answer/debug runtime parity during guardrail hardening
+- define next technical anchor after operational guardrails closure
+- preserve current diagnostics and parity baselines
+- continue one-patch-one-reason execution discipline
 
 Execution discipline:
 - no net-new intelligence features

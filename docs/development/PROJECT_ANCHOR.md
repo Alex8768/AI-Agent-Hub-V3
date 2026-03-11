@@ -2,7 +2,7 @@
 
 ## Active Anchor
 
-A2.56 — Operational Guardrails for Soft-Failure KPIs
+A2.56 — Operational Guardrails for Soft-Failure KPIs (Closed)
 
 ### Goal
 
@@ -104,7 +104,7 @@ Diagnostics-to-KPI mapping contract (A2.56):
 - [x] Patch 2 — KPI policy contract introduction
 - [x] Patch 3 — diagnostics surface mapping and reporting contract
 - [x] Patch 4 — guardrail test/policy enforcement hardening
-- [ ] Patch 5 — guardrails + parity + closure
+- [x] Patch 5 — guardrails + parity + closure
 
 ### Non-Negotiable Rules
 
