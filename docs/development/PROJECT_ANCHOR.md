@@ -52,6 +52,13 @@ Patch 2 artifacts:
 - extract next bounded clusters from `reasoning/engine.py` (runtime fallback / diagnostics helper seams),
 - preserve reasoning diagnostics contract behavior.
 
+Patch 3 artifacts:
+- loop-guard bounded-plan builder extraction from reasoning engine fallback planner path:
+  - moved bounded-step loop-guard traversal to
+    `src/layers/pro/reasoning/control/loop_guard.py`
+  - new helper: `build_bounded_plan_steps_with_loop_guard`
+  - `src/layers/pro/reasoning/engine.py` now delegates bounded-step construction to extracted control seam
+
 #### Patch 4 - Guardrail threshold recalibration and import-budget expansion
 - recalibrate no-growth thresholds to new post-extraction baselines,
 - expand deterministic checks for seam wiring + import-budget drift prevention,
@@ -64,7 +71,7 @@ Patch 2 artifacts:
 
 - [x] Patch 1 — inventory + scope lock
 - [x] Patch 2 - Answer extraction phase-7
-- [ ] Patch 3 - Reasoning extraction phase-7
+- [x] Patch 3 - Reasoning extraction phase-7
 - [ ] Patch 4 - Guardrail threshold recalibration and import-budget expansion
 - [ ] Patch 5 - guardrails + parity + closure
 

@@ -16,8 +16,7 @@ from src.layers.pro.reasoning.context_packer import pack_context
 from src.layers.pro.reasoning.quality_retry import decide_reasoning_quality_retry
 from src.layers.pro.reasoning.control.execution_policy import build_reasoning_execution_policy
 from src.layers.pro.reasoning.control.loop_guard import (
-    apply_reasoning_loop_guard,
-    build_reasoning_loop_guard_state,
+    build_bounded_plan_steps_with_loop_guard as _build_bounded_plan_steps_with_loop_guard,
 )
 from src.layers.pro.reasoning.control.step_controller import build_controlled_plan_steps
 from src.layers.pro.reasoning.multi_agent.coordination_model import (
@@ -208,20 +207,10 @@ class ReasoningEngine:
         plan = create_reasoning_plan(query=str(getattr(request, "query", "") or ""))
         policy = build_reasoning_execution_policy()
         controlled_steps = build_controlled_plan_steps(plan=plan, policy=policy)
-
-        loop_guard_state = build_reasoning_loop_guard_state(
-            max_visits_per_signature=max(int(policy.get("max_retries", 0)) + 1, 1)
+        bounded_steps = _build_bounded_plan_steps_with_loop_guard(
+            controlled_steps=controlled_steps,
+            max_visits_per_signature=max(int(policy.get("max_retries", 0)) + 1, 1),
         )
-        bounded_steps: list[dict[str, str]] = []
-        for row in controlled_steps:
-            guard_result = apply_reasoning_loop_guard(
-                state=loop_guard_state,
-                step_description=row.get("description", ""),
-            )
-            loop_guard_state = guard_result["state"]
-            if bool((guard_result.get("decision") or {}).get("should_stop")):
-                break
-            bounded_steps.append({"description": str(row.get("description", "") or "")})
         bounded_plan = {"steps": bounded_steps}
 
         async def _run_reasoning_step(step: dict[str, str]) -> str:

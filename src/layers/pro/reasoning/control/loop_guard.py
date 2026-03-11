@@ -106,3 +106,24 @@ def apply_reasoning_loop_guard(
             "reason": reason,
         },
     }
+
+
+def build_bounded_plan_steps_with_loop_guard(
+    *,
+    controlled_steps: list[dict[str, object]],
+    max_visits_per_signature: int,
+) -> list[dict[str, str]]:
+    loop_guard_state = build_reasoning_loop_guard_state(
+        max_visits_per_signature=max(int(max_visits_per_signature), 1)
+    )
+    bounded_steps: list[dict[str, str]] = []
+    for row in list(controlled_steps or []):
+        guard_result = apply_reasoning_loop_guard(
+            state=loop_guard_state,
+            step_description=(row or {}).get("description", ""),
+        )
+        loop_guard_state = guard_result["state"]
+        if bool((guard_result.get("decision") or {}).get("should_stop")):
+            break
+        bounded_steps.append({"description": str((row or {}).get("description", "") or "")})
+    return bounded_steps
