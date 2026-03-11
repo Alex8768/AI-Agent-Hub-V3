@@ -227,6 +227,7 @@ AI-Agent-Hub-V3 is a modular AI platform for production-grade agent systems with
 - [x] A2.56 guardrails/parity closure with docs-focused + full-suite green (patch 5)
 - [x] Post-A2.56 guardrail compatibility maintenance for closed-status quality-gate handling (M1)
 - [x] A2.57 decomposition regime inventory + scope lock with no-growth governance baseline (patch 1)
+- [x] A2.57 answer-service move-map contract and package scaffolding baseline (patch 2)
 
 ### 7) Interface Layer
 

@@ -46,6 +46,12 @@ Target A2.57 boundaries:
 - add target subpackage scaffolding for context/retrieval/reasoning/execution/diagnostics/response/observability,
 - keep behavior unchanged.
 
+Patch 2 artifacts:
+- Move map document: `docs/architecture/answer-decomposition-move-map-a2.57.md`
+- Scaffolding baseline created under `src/services/answer/`:
+  - `facade.py`, `models.py`, `types.py`, `constants.py`
+  - `context/`, `retrieval/`, `reasoning/`, `execution/`, `diagnostics/`, `response/`, `observability/`
+
 #### Patch 3 - Answer heavy-cluster extraction
 - extract diagnostics, response assembly, execution guards, and context resolvers into bounded modules,
 - shrink monolith toward orchestration-only facade.
@@ -61,7 +67,7 @@ Target A2.57 boundaries:
 ### Progress
 
 - [x] Patch 1 — inventory + scope lock
-- [ ] Patch 2 - Answer move-map and package scaffolding
+- [x] Patch 2 - Answer move-map and package scaffolding
 - [ ] Patch 3 - Answer heavy-cluster extraction
 - [ ] Patch 4 - Reasoning engine move-map and first extraction
 - [ ] Patch 5 - guardrails + parity + closure

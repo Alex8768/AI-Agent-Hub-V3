@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-A2.57 patch 1 complete - decomposition regime inventory and scope lock
+A2.57 patch 2 complete - answer move-map and package scaffolding baseline
 
 ## Last Completed Anchor
 
@@ -21,9 +21,9 @@ A2.56 closed with:
 A2.57 - Application Decomposition Regime (Answer/Reasoning No-Growth)
 
 Current focus:
-- freeze monolith growth for answer/reasoning orchestration files
-- enforce extraction-only and thin-facade-only decomposition flow
-- establish move-map-first execution before behavioral changes
+- execute answer heavy-cluster extraction from move-map baselines
+- keep answer-service behavior and API contracts unchanged
+- continue extraction-only and thin-facade-only decomposition flow
 
 Execution discipline:
 - no net-new intelligence features
