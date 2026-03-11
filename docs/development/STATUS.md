@@ -2,16 +2,16 @@
 
 ## Current Phase
 
-A2.74 in progress (Patch 4 complete)
+A2.74 closed
 
 ## Last Completed Anchor
 
-A2.73 - Facade Convergence Phase 17 (Answer/Reasoning)
+A2.74 - Facade Convergence Phase 18 (Answer/Reasoning)
 
-A2.73 closed with:
-- answer handshake transition helper seam extraction into execution durable-keys module
-- reasoning graph synthesis runtime seam extraction into evaluation runtime-productization module
-- no-growth baselines recalibrated to latest reduced facade budgets (`2183`/`352`)
+A2.74 closed with:
+- answer execution orchestration seam extraction into execution durable-keys module
+- reasoning graph-runtime synthesize seam extraction into evaluation runtime-productization module
+- no-growth baselines recalibrated to latest reduced facade budgets (`2100`/`313`)
 - focused and full-suite checks green at closure (`132 passed`; `576 passed, 3 skipped`)
 
 Legacy closure markers retained for A2.56 docs quality-gate compatibility:
@@ -20,11 +20,11 @@ Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 
 ## Current Active Anchor
 
-A2.74 - Facade Convergence Phase 18 (Answer/Reasoning)
+A2.75 - TBD (Post-A2.74 planning)
 
 Current focus:
-- run focused + full-suite closure checks and finalize A2.74 (patch 5)
-- preserve no-growth guardrail discipline from updated baselines (`2100`/`313`)
+- define next bounded extraction inventory and scope lock for follow-up convergence anchor
+- preserve no-growth guardrail discipline from A2.74 baselines (`2100`/`313`)
 - continue one-patch-one-reason execution discipline
 
 Execution discipline:
@@ -35,7 +35,7 @@ Execution discipline:
 
 ## Next Anchor
 
-TBD - Post-A2.74 planning
+A2.75 - TBD (Post-A2.74 planning)
 
 ## CI Status
 

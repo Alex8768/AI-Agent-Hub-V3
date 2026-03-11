@@ -2,7 +2,7 @@
 
 ## Active Anchor
 
-A2.74 - Facade Convergence Phase 18 (Answer/Reasoning)
+A2.74 - Facade Convergence Phase 18 (Answer/Reasoning, closed)
 
 ### Goal
 
@@ -109,7 +109,26 @@ Patch 4 artifacts:
 - run focused and full-suite checks and close A2.74 with docs sync.
 
 Patch 5 artifacts:
-- pending.
+- focused parity + docs quality checks green:
+  - `tests/unit/services/answer/test_answer_service_debug_snapshot.py`
+  - `tests/unit/services/answer/test_answer_soft_failure_observability.py`
+  - `tests/unit/services/answer/test_answer_orchestration_quality_gate.py`
+  - `tests/unit/layers/pro/test_reasoning_engine_synthesize.py`
+  - `tests/unit/layers/pro/test_reasoning_engine_synthesize_llm.py`
+  - `tests/unit/layers/pro/test_reasoning_engine_synthesize_llm_fallback.py`
+  - `tests/unit/layers/pro/test_reasoning_engine_synthesize_llm_timeout.py`
+  - `tests/unit/layers/pro/test_reasoning_multi_agent_coordination_quality_gate.py`
+  - `tests/unit/layers/pro/test_reasoning_multi_agent_runtime_integration.py`
+  - `tests/unit/docs`
+  - result: `132 passed`
+- full regression suite green:
+  - `uv run pytest`
+  - result: `576 passed, 3 skipped`
+- A2.74 closure sync completed across:
+  - `docs/development/PROJECT_ANCHOR.md`
+  - `docs/development/PROJECT_CHECKLIST.md`
+  - `docs/development/STATUS.md`
+  - `docs/architecture/PLATFORM_FEATURES.md`
 
 ### Progress
 
@@ -117,7 +136,7 @@ Patch 5 artifacts:
 - [x] Patch 2 - Answer extraction phase-18
 - [x] Patch 3 - Reasoning extraction phase-18
 - [x] Patch 4 - Guardrail threshold recalibration and import-budget expansion
-- [ ] Patch 5 - guardrails + parity + closure
+- [x] Patch 5 - guardrails + parity + closure
 
 ### Non-Negotiable Rules
 
