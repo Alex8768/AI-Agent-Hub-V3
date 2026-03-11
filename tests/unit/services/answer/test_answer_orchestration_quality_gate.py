@@ -241,7 +241,7 @@ def test_facade_import_budget_no_growth_gate_answer_and_reasoning():
     reasoning_engine_path = ROOT / "src/layers/pro/reasoning/engine.py"
 
     answer_local_import_budget = 15
-    reasoning_local_import_budget = 17
+    reasoning_local_import_budget = 14
 
     answer_local_imports = _count_imports_with_prefix(answer_service_path, "src.services.answer")
     reasoning_local_imports = _count_imports_with_prefix(reasoning_engine_path, "src.layers.pro.reasoning")
@@ -298,12 +298,12 @@ def test_answer_exception_policy_gate_scoped_handlers_require_warning_and_reason
 
 
 def test_decomposition_no_growth_gate_answer_and_reasoning_monolith_line_budgets():
-    # A2.77 patch 4: no-growth guardrail budgets recalibrated to latest reduced baselines.
+    # A2.78 patch 4: no-growth guardrail budgets recalibrated to latest reduced baselines.
     answer_service_path = ROOT / "src/services/answer/answer_service.py"
     reasoning_engine_path = ROOT / "src/layers/pro/reasoning/engine.py"
 
-    answer_service_max_lines = 1953
-    reasoning_engine_max_lines = 292
+    answer_service_max_lines = 1896
+    reasoning_engine_max_lines = 283
 
     answer_service_lines = _line_count(answer_service_path)
     reasoning_engine_lines = _line_count(reasoning_engine_path)

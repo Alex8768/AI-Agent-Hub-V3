@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-A2.78 in progress (Patch 3 complete)
+A2.78 in progress (Patch 4 complete)
 
 ## Last Completed Anchor
 
@@ -23,8 +23,8 @@ Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 A2.78 - Facade Convergence Phase 22 (Answer/Reasoning)
 
 Current focus:
-- execute guardrail threshold recalibration and import-budget expansion (A2.78 patch 4)
-- preserve no-growth guardrail discipline from updated baselines (`1896`/`283`)
+- execute guardrails + parity + closure flow (A2.78 patch 5)
+- preserve no-growth guardrail discipline from updated baselines (`1896`/`283`) and import budgets (`15`/`14`)
 - maintain one-patch-one-reason execution discipline
 
 Execution discipline:
