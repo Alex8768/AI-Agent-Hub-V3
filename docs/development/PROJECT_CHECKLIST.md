@@ -72,7 +72,7 @@
 - [x] Patch 1 — inventory + scope lock
 - [x] Patch 2 — `orchestrator` silent-except removal
 - [x] Patch 3 — `answer_service` silent-except removal (phase 1)
-- [ ] Patch 4 — `answer_service` silent-except removal (phase 2)
+- [x] Patch 4 — `answer_service` silent-except removal (phase 2)
 - [ ] Patch 5 — guardrails + parity + closure
 
 ## Post-A2.51 Guardrail Maintenance

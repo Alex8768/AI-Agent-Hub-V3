@@ -2820,8 +2820,16 @@ def log_observability(http: Request, *, workspace_id: str, req: AnswerRequest) -
             int(req.k or 0),
             int(req.graph_depth or 0),
         )
-    except Exception:
-        pass
+    except Exception as exc:
+        _LOGGER.warning(
+            "Answer service soft-failure: request observability logging skipped",
+            context={
+                "workspace_id": str(workspace_id or ""),
+                "error": str(exc),
+                "error_type": type(exc).__name__,
+                "reason_code": "answer_service_observability_log_soft_failure",
+            },
+        )
 
 
 def _run_assistant_execution_orchestration_seam(
@@ -3667,8 +3675,16 @@ async def _save_session_memory(
         try:
             resp.diagnostics = dict(getattr(resp, "diagnostics", None) or {})
             resp.diagnostics.setdefault("session_memory_saved", False)
-        except Exception:
-            pass
+        except Exception as fallback_exc:
+            _LOGGER.warning(
+                "Answer service soft-failure: session memory failure diagnostics skipped",
+                context={
+                    "workspace_id": str(workspace_id or ""),
+                    "error": str(fallback_exc),
+                    "error_type": type(fallback_exc).__name__,
+                    "reason_code": "answer_service_session_memory_failure_diagnostics_soft_failure",
+                },
+            )
 
 
 class _AnticipatorySessionWriter:
@@ -3817,8 +3833,16 @@ class RetrieverAdapter:
                 self.last_stats = dict(self.last_stats or {})
                 for k, v in stats.items():
                     self.last_stats.setdefault(str(k), v)
-        except Exception:
-            pass
+        except Exception as exc:
+            _LOGGER.warning(
+                "Answer service soft-failure: retriever adapter stats merge skipped",
+                context={
+                    "workspace_id": str(self.workspace_id or ""),
+                    "error": str(exc),
+                    "error_type": type(exc).__name__,
+                    "reason_code": "answer_service_retriever_adapter_stats_merge_soft_failure",
+                },
+            )
 
         # Hybrid retriever owns evidence policy in A1.5. Keep adapter diagnostics additive only.
         self.last_stats = dict(self.last_stats or {})
@@ -3827,8 +3851,16 @@ class RetrieverAdapter:
             self.last_stats.setdefault("graph_nodes_count", int(len((graph or {}).get("nodes") or [])))
             self.last_stats.setdefault("graph_edges_count", int(len((graph or {}).get("edges") or [])))
             self.last_stats.setdefault("evidence_after_policy_count", int(len(evidence or [])))
-        except Exception:
-            pass
+        except Exception as exc:
+            _LOGGER.warning(
+                "Answer service soft-failure: retriever adapter additive stats skipped",
+                context={
+                    "workspace_id": str(self.workspace_id or ""),
+                    "error": str(exc),
+                    "error_type": type(exc).__name__,
+                    "reason_code": "answer_service_retriever_adapter_additive_stats_soft_failure",
+                },
+            )
 
 
         # Build debug "top_evidence" list (best-effort). Test expects at least one "chunk:*" when evidence exists.

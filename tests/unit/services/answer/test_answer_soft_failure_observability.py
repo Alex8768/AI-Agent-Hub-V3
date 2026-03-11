@@ -7,6 +7,8 @@ import pytest
 from src.layers.pro.reasoning.contracts import AnswerRequest
 from src.services.answer.answer_service import AnswerService
 from src.services.answer.answer_service import _apply_diagnostics
+from src.services.answer.answer_service import _save_session_memory
+from src.services.answer.answer_service import log_observability
 from src.services.answer.interface_contract import build_answer_service_request_contract
 from src.services.answer.orchestrator import run_answer_orchestration_core
 from src.services.answer.response_assembly import run_answer_response_assembly
@@ -466,3 +468,47 @@ async def test_answer_service_writes_soft_failure_reason_code_for_apply_diagnost
 
     diag = dict(getattr(resp, "diagnostics", None) or {})
     assert "answer_service_apply_diagnostics_soft_failure" in list(diag.get("planning_reason_codes") or [])
+
+
+@pytest.mark.asyncio
+async def test_answer_service_save_session_memory_does_not_raise_when_failure_diagnostics_fails():
+    class _FailingDiagnosticsResp:
+        def __init__(self):
+            self.answer = "ok"
+
+        @property
+        def diagnostics(self):
+            raise RuntimeError("diagnostics-read-failed")
+
+        @diagnostics.setter
+        def diagnostics(self, value):
+            _ = value
+            raise RuntimeError("diagnostics-write-failed")
+
+    class _Mem:
+        async def put(self, **kwargs):
+            _ = kwargs
+            raise RuntimeError("memory-put-failed")
+
+    req = AnswerRequest(query="q", session_id="s1", filters={})
+    resp = _FailingDiagnosticsResp()
+
+    await _save_session_memory(
+        req=req,
+        resp=resp,
+        workspace_id="default",
+        get_memory_store=lambda: _Mem(),
+    )
+
+
+def test_answer_service_log_observability_does_not_raise_when_logger_fails(monkeypatch):
+    class _FailingLogger:
+        @staticmethod
+        def info(*args, **kwargs):
+            _ = args, kwargs
+            raise RuntimeError("logger-failed")
+
+    monkeypatch.setattr("loguru.logger", _FailingLogger())
+    http = SimpleNamespace(state=SimpleNamespace(request_id="rid-soft"), headers={})
+    req = AnswerRequest(query="hello", session_id="s1", filters={})
+    log_observability(http, workspace_id="default", req=req)
