@@ -298,11 +298,11 @@ def test_answer_exception_policy_gate_scoped_handlers_require_warning_and_reason
 
 
 def test_decomposition_no_growth_gate_answer_and_reasoning_monolith_line_budgets():
-    # A2.75 patch 4: no-growth guardrail budgets recalibrated to latest reduced baselines.
+    # A2.76 patch 4: no-growth guardrail budgets recalibrated to latest reduced baselines.
     answer_service_path = ROOT / "src/services/answer/answer_service.py"
     reasoning_engine_path = ROOT / "src/layers/pro/reasoning/engine.py"
 
-    answer_service_max_lines = 2051
+    answer_service_max_lines = 2000
     reasoning_engine_max_lines = 310
 
     answer_service_lines = _line_count(answer_service_path)
