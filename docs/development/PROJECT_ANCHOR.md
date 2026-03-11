@@ -73,7 +73,7 @@ Target A2.53 boundaries:
 - [x] Patch 2 — `orchestrator` silent-except removal
 - [x] Patch 3 — `answer_service` silent-except removal (phase 1)
 - [x] Patch 4 — `answer_service` silent-except removal (phase 2)
-- [ ] Patch 5 — guardrails + parity + closure
+- [x] Patch 5 — guardrails + parity + closure
 
 ### Non-Negotiable Rules
 
@@ -103,6 +103,9 @@ A2.53 is complete when:
 - soft-failure policy is deterministic and test-covered
 - answer/debug output parity is preserved
 - quality gates enforce scoped exception policy
+
+Closure status:
+- A2.53 closed; all patch milestones completed.
 
 ## Next Anchor
 

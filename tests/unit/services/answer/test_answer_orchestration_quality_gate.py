@@ -136,8 +136,10 @@ def test_answer_service_facade_gate_handle_contract_pipeline_calls():
     assert not missing, "answer_service_handle_contract_missing_pipeline_calls:\n" + "\n".join(missing)
 
 
-def test_answer_soft_failure_gate_no_silent_except_pass_in_a252_seams():
+def test_answer_soft_failure_gate_no_silent_except_pass_in_a253_scoped_runtime_modules():
     answer_paths = [
+        ROOT / "src/services/answer/answer_service.py",
+        ROOT / "src/services/answer/orchestrator.py",
         ROOT / "src/services/answer/response_assembly.py",
         ROOT / "src/services/answer/post_orchestration.py",
         ROOT / "src/services/answer/diagnostics_merge.py",

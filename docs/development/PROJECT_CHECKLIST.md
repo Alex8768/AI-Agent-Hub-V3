@@ -57,7 +57,7 @@
 
 - [x] Post-A2.51 guardrail maintenance closure
 - [x] A2.52 — AnswerService Facade Slimming
-- [ ] A2.53 — Answer-Path Exception Policy Hardening
+- [x] A2.53 — Answer-Path Exception Policy Hardening
 
 ## Current Work — A2.52 AnswerService Facade Slimming
 
@@ -73,7 +73,7 @@
 - [x] Patch 2 — `orchestrator` silent-except removal
 - [x] Patch 3 — `answer_service` silent-except removal (phase 1)
 - [x] Patch 4 — `answer_service` silent-except removal (phase 2)
-- [ ] Patch 5 — guardrails + parity + closure
+- [x] Patch 5 — guardrails + parity + closure
 
 ## Post-A2.51 Guardrail Maintenance
 
