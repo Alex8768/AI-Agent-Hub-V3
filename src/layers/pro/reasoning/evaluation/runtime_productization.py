@@ -463,6 +463,64 @@ async def synthesize_fallback_response(
     return resp
 
 
+async def synthesize_fallback_with_runtime_settings(
+    *,
+    request: object,
+    retriever: object,
+    error: str | None,
+    get_settings_fn: object,
+    execute_planner_steps_mvp_fn: object,
+    build_fallback_planner_observations_fn: object,
+    build_fallback_answer_text_fn: object,
+    build_fallback_answer_response_fn: object,
+    apply_fallback_response_diagnostics_fn: object,
+    confidence_fn: object,
+    response_model_cls: object,
+    evidence_contract_version: str,
+    evidence_summary_fn: object,
+    evidence_contract_status_fn: object,
+    evidence_contract_gate_reason_fn: object,
+    self_check_fn: object,
+    verify_preflight_fn: object,
+    planner_runtime_parity_fn: object,
+    execution_policy_builder_fn: object,
+    reasoning_quality_builder_fn: object,
+    reasoning_optimization_builder_fn: object,
+    enterprise_productization_builder_fn: object,
+    meta_cognition_builder_fn: object,
+    warning_flags_applier_fn: object,
+) -> object:
+    settings = get_settings_fn()
+    dry_run = bool(getattr(settings, "feature_reasoning_llm_dry_run", False))
+    fallback_reason = str(error or "fallback")
+    return await synthesize_fallback_response(
+        request=request,
+        retriever=retriever,
+        dry_run=dry_run,
+        fallback_reason=fallback_reason,
+        execute_planner_steps_mvp_fn=execute_planner_steps_mvp_fn,
+        build_fallback_planner_observations_fn=build_fallback_planner_observations_fn,
+        build_fallback_answer_text_fn=build_fallback_answer_text_fn,
+        build_fallback_answer_response_fn=build_fallback_answer_response_fn,
+        apply_fallback_response_diagnostics_fn=apply_fallback_response_diagnostics_fn,
+        confidence_fn=confidence_fn,
+        response_model_cls=response_model_cls,
+        evidence_contract_version=evidence_contract_version,
+        evidence_summary_fn=evidence_summary_fn,
+        evidence_contract_status_fn=evidence_contract_status_fn,
+        evidence_contract_gate_reason_fn=evidence_contract_gate_reason_fn,
+        self_check_fn=self_check_fn,
+        verify_preflight_fn=verify_preflight_fn,
+        planner_runtime_parity_fn=planner_runtime_parity_fn,
+        execution_policy_builder_fn=execution_policy_builder_fn,
+        reasoning_quality_builder_fn=reasoning_quality_builder_fn,
+        reasoning_optimization_builder_fn=reasoning_optimization_builder_fn,
+        enterprise_productization_builder_fn=enterprise_productization_builder_fn,
+        meta_cognition_builder_fn=meta_cognition_builder_fn,
+        warning_flags_applier_fn=warning_flags_applier_fn,
+    )
+
+
 def synthesize_graph_response(
     *,
     final_state: object,

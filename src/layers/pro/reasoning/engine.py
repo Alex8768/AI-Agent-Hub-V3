@@ -38,10 +38,10 @@ from src.layers.pro.reasoning.evaluation.runtime_productization import (
     execute_fallback_planner_steps_mvp as _execute_fallback_planner_steps_mvp,
     synthesize_with_graph_runtime as _synthesize_with_graph_runtime,
     synthesize_graph_response as _synthesize_graph_response,
-    synthesize_fallback_response as _synthesize_fallback_response,
     build_meta_cognition_diagnostics as _build_meta_cognition_diagnostics,
     build_reasoning_optimization_diagnostics as _build_reasoning_optimization_diagnostics,
     run_graph_runtime_with_state_contract as _run_graph_runtime_with_state_contract,
+    synthesize_fallback_with_runtime_settings as _synthesize_fallback_with_runtime_settings,
 )
 from src.layers.pro.reasoning.kernel import build_reasoning_planner_runtime
 from src.layers.pro.reasoning.tool_safety.runtime_guard import apply_tool_safety_runtime_guard
@@ -237,14 +237,11 @@ class ReasoningEngine:
 
     async def _synthesize_fallback(self, request: AnswerRequest, error: str | None = None) -> AnswerResponse:
         """Fallback к старому однопроходному режиму (если нет LLM или ошибка графа)."""
-        s = get_settings()
-        dry_run = bool(getattr(s, "feature_reasoning_llm_dry_run", False))
-        fallback_reason: str | None = error or "fallback"
-        return await _synthesize_fallback_response(
+        return await _synthesize_fallback_with_runtime_settings(
             request=request,
             retriever=self.retriever,
-            dry_run=dry_run,
-            fallback_reason=str(fallback_reason or "fallback"),
+            error=error,
+            get_settings_fn=get_settings,
             execute_planner_steps_mvp_fn=self._execute_planner_steps_mvp,
             build_fallback_planner_observations_fn=_build_fallback_planner_observations,
             build_fallback_answer_text_fn=self._build_fallback_answer_text,
