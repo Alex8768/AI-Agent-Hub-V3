@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-A2.61 patch 2 complete (answer feedback-policy seam extraction with parity)
+A2.61 patch 3 complete (reasoning dry-run fallback seam extraction with parity)
 
 ## Last Completed Anchor
 
@@ -23,7 +23,7 @@ Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 A2.61 - Facade Convergence Phase 5 (Answer/Reasoning)
 
 Current focus:
-- execute reasoning phase-5 extraction for remaining high-density helper clusters
+- execute patch-4 guardrail threshold recalibration and import-budget expansion
 - preserve answer/reasoning decomposition and no-growth guardrail baseline
 - continue one-patch-one-reason execution discipline
 

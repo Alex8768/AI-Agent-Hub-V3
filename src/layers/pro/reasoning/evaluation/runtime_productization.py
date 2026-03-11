@@ -269,3 +269,47 @@ def build_meta_cognition_diagnostics(
         "gap_map": dict(gap_map),
         "reflection": dict(reflection),
     }
+
+
+def _build_dry_run_answer_core(*, provenance: list, context_preview: str) -> str:
+    ids = []
+    for item in provenance[:5]:
+        try:
+            ids.append(f"{item.type}:{item.id}")
+        except Exception:
+            continue
+
+    snippet = (context_preview or "").strip()
+    if len(snippet) > 400:
+        snippet = snippet[:400].rstrip() + "…"
+
+    parts = []
+    if snippet:
+        parts.append("Draft answer (dry-run):")
+        parts.append(snippet)
+    else:
+        parts.append("Draft answer (dry-run): (no context)")
+
+    if ids:
+        parts.append("")
+        parts.append("Evidence:")
+        for row in ids:
+            parts.append(f"- {row}")
+
+    return "\n".join(parts)
+
+
+def build_dry_run_answer_from_state(*, state: object) -> str:
+    provenance = list(getattr(state, "provenance", []) or [])
+    context_preview = str(getattr(state, "context_preview", "") or "")
+    return _build_dry_run_answer_core(
+        provenance=provenance,
+        context_preview=context_preview,
+    )
+
+
+def build_dry_run_answer_from_parts(*, provenance: list, context_preview: str) -> str:
+    return _build_dry_run_answer_core(
+        provenance=list(provenance or []),
+        context_preview=str(context_preview or ""),
+    )

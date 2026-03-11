@@ -53,6 +53,12 @@ Patch 2 artifacts:
 - extract next bounded clusters from `reasoning/engine.py` (runtime fallback / planning helper seams),
 - preserve reasoning diagnostics contract behavior.
 
+Patch 3 artifacts:
+- runtime dry-run fallback seam extraction:
+  - `_build_dry_run_answer`
+  - `_build_dry_run_answer_from_parts`
+  - moved to `src/layers/pro/reasoning/evaluation/runtime_productization.py`
+
 #### Patch 4 - Guardrail threshold recalibration and import-budget expansion
 - recalibrate no-growth thresholds to new post-extraction baselines,
 - expand deterministic checks for seam wiring + import-budget drift prevention,
@@ -65,7 +71,7 @@ Patch 2 artifacts:
 
 - [x] Patch 1 — inventory + scope lock
 - [x] Patch 2 - Answer extraction phase-5
-- [ ] Patch 3 - Reasoning extraction phase-5
+- [x] Patch 3 - Reasoning extraction phase-5
 - [ ] Patch 4 - Guardrail threshold recalibration and import-budget expansion
 - [ ] Patch 5 - guardrails + parity + closure
 

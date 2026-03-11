@@ -33,6 +33,8 @@ from src.layers.pro.reasoning.evaluation.runtime_diagnostics import (
     reasoning_quality_diagnostics as _reasoning_quality_diagnostics,
 )
 from src.layers.pro.reasoning.evaluation.runtime_productization import (
+    build_dry_run_answer_from_parts as _build_dry_run_answer_from_parts,
+    build_dry_run_answer_from_state as _build_dry_run_answer_from_state,
     build_enterprise_productization_diagnostics as _build_enterprise_productization_diagnostics,
     build_meta_cognition_diagnostics as _build_meta_cognition_diagnostics,
     build_reasoning_optimization_diagnostics as _build_reasoning_optimization_diagnostics,
@@ -631,56 +633,11 @@ class ReasoningEngine:
 
     def _build_dry_run_answer(self, state: AgentState) -> str:
         """Строит dry-run ответ из состояния агента."""
-        ids = []
-        for p in state.provenance[:5]:
-            try:
-                ids.append(f"{p.type}:{p.id}")
-            except Exception:
-                continue
-
-        snippet = (state.context_preview or "").strip()
-        if len(snippet) > 400:
-            snippet = snippet[:400].rstrip() + "…"
-
-        parts = []
-        if snippet:
-            parts.append("Draft answer (dry-run):")
-            parts.append(snippet)
-        else:
-            parts.append("Draft answer (dry-run): (no context)")
-
-        if ids:
-            parts.append("")
-            parts.append("Evidence:")
-            for x in ids:
-                parts.append(f"- {x}")
-
-        return "\n".join(parts)
+        return _build_dry_run_answer_from_state(state=state)
 
     def _build_dry_run_answer_from_parts(self, provenance: list, context_preview: str) -> str:
         """Строит dry-run ответ из частей (для fallback)."""
-        ids = []
-        for p in provenance[:5]:
-            try:
-                ids.append(f"{p.type}:{p.id}")
-            except Exception:
-                continue
-
-        snippet = (context_preview or "").strip()
-        if len(snippet) > 400:
-            snippet = snippet[:400].rstrip() + "…"
-
-        parts = []
-        if snippet:
-            parts.append("Draft answer (dry-run):")
-            parts.append(snippet)
-        else:
-            parts.append("Draft answer (dry-run): (no context)")
-
-        if ids:
-            parts.append("")
-            parts.append("Evidence:")
-            for x in ids:
-                parts.append(f"- {x}")
-
-        return "\n".join(parts)
+        return _build_dry_run_answer_from_parts(
+            provenance=provenance,
+            context_preview=context_preview,
+        )
