@@ -225,40 +225,19 @@ class ReasoningEngine:
 
     async def _synthesize_fallback(self, request: AnswerRequest, error: str | None = None) -> AnswerResponse:
         """Fallback к старому однопроходному режиму (если нет LLM или ошибка графа)."""
-        return await _synthesize_fallback_with_full_runtime_dependencies(
+        import importlib
+
+        impl = getattr(
+            importlib.import_module("src.layers.pro.reasoning.fallback.runtime_dependencies"),
+            "synthesize_fallback_with_engine_runtime_dependencies",
+        )
+        return await impl(
+            engine=self,
             request=request,
-            retriever=self.retriever,
             error=error,
-            get_settings_fn=get_settings,
-            llm=self.llm,
-            llm_timeout_s=float(self.llm_timeout_s),
-            build_prompt_fn=build_reasoning_prompt,
-            dry_run_builder_fn=self._build_dry_run_answer_from_parts,
             create_reasoning_plan_fn=create_reasoning_plan,
             build_reasoning_execution_policy_fn=build_reasoning_execution_policy,
-            build_controlled_plan_steps_fn=build_controlled_plan_steps,
-            build_bounded_plan_steps_with_loop_guard_fn=_build_bounded_plan_steps_with_loop_guard,
             execute_plan_steps_fn=execute_plan_steps,
-            apply_tool_safety_runtime_guard_fn=apply_tool_safety_runtime_guard,
-            build_multi_agent_coordination_plan_for_runtime_fn=_build_multi_agent_coordination_plan_for_runtime,
-            enrich_step_results_with_multi_agent_contract_fn=_enrich_step_results_with_multi_agent_contract,
-            build_fallback_planner_observations_fn=_build_fallback_planner_observations,
-            build_fallback_answer_response_fn=_build_fallback_answer_response,
-            apply_fallback_response_diagnostics_fn=_apply_fallback_response_diagnostics,
-            confidence_fn=compute_confidence,
-            response_model_cls=AnswerResponse,
-            evidence_contract_version=EVIDENCE_CONTRACT_VERSION,
-            evidence_summary_fn=self._evidence_summary,
-            evidence_contract_status_fn=self._evidence_contract_status,
-            evidence_contract_gate_reason_fn=self._evidence_contract_gate_reason,
-            self_check_fn=self._self_check_diagnostics,
-            verify_preflight_fn=self._verify_diagnostics_preflight,
-            planner_runtime_parity_fn=self._build_planner_runtime_parity_diagnostics,
-            reasoning_quality_builder_fn=self._reasoning_quality_diagnostics,
-            reasoning_optimization_builder_fn=self._build_reasoning_optimization_diagnostics,
-            enterprise_productization_builder_fn=self._build_enterprise_productization_diagnostics,
-            meta_cognition_builder_fn=self._build_meta_cognition_diagnostics,
-            warning_flags_applier_fn=_apply_reasoning_runtime_warning_flags,
         )
 
     def _build_dry_run_answer(self, state: AgentState) -> str:
