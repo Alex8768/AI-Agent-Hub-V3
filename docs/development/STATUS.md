@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-A2.60 patch 1 complete (inventory + scope lock baseline for facade convergence phase 4)
+A2.60 patch 2 complete (answer llm-planner policy seam extraction with parity)
 
 ## Last Completed Anchor
 
@@ -23,7 +23,7 @@ Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 A2.60 - Facade Convergence Phase 4 (Answer/Reasoning)
 
 Current focus:
-- execute phase-4 extraction inventory and scope-locked convergence for answer/reasoning facades
+- execute reasoning phase-4 extraction for remaining high-density helper clusters
 - preserve answer/reasoning decomposition and no-growth guardrail baseline
 - continue one-patch-one-reason execution discipline
 

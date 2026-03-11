@@ -84,6 +84,10 @@ from src.services.answer.post_orchestration import (
 from src.services.answer.reasoning.runtime_adapter import (
     build_reasoning_runtime_adapter as _build_reasoning_runtime_adapter,
 )
+from src.services.answer.reasoning.llm_planner_policy import (
+    apply_llm_planner_policy_guards as _apply_llm_planner_policy_guards,
+    build_llm_planner_policy_contract as _build_llm_planner_policy_contract,
+)
 from src.services.answer.response.language import (
     answer_language as _answer_language,
     detect_response_language as _detect_response_language,
@@ -735,84 +739,6 @@ async def _build_planner_with_fallback(
         "plan_id": str(llm_plan.get("plan_id", "") or ""),
         "reason_codes": ["llm_planner_adapter_selected_intent"],
     }
-
-
-def _build_llm_planner_policy_contract() -> dict[str, object]:
-    return {
-        "mode": "llm_planner_guarded",
-        "allow_llm_source": True,
-        "allowed_intents": list(_LLM_PLANNER_ALLOWED_INTENTS),
-        "require_plan_id_prefix_match": True,
-        "fallback_on_policy_violation": True,
-    }
-
-
-def _apply_llm_planner_policy_guards(
-    *,
-    intent_payload: dict[str, object],
-    plan_bundle: dict[str, object],
-    llm_planner_bundle: dict[str, object],
-    policy_contract: dict[str, object],
-    query: str,
-    assistant_mode_enabled: bool,
-) -> tuple[dict[str, object], dict[str, object], dict[str, object], dict[str, object]]:
-    normalized_intent = dict(intent_payload or {})
-    normalized_plan = dict(plan_bundle or {})
-    planner = dict(llm_planner_bundle or {})
-    policy = dict(policy_contract or {})
-
-    allowed_intents = [str(x).strip() for x in list(policy.get("allowed_intents") or []) if str(x or "").strip()]
-    allowed_intent_set = set(allowed_intents)
-    violations: list[str] = []
-    applied_reason_codes: list[str] = []
-
-    planner_intent = str(planner.get("intent", "") or "")
-    plan_intent = str(normalized_plan.get("intent", "") or "")
-    plan_id = str(normalized_plan.get("plan_id", "") or "")
-    planner_source = str(planner.get("source", "heuristic") or "heuristic")
-    require_prefix_match = bool(policy.get("require_plan_id_prefix_match", True))
-    fallback_on_violation = bool(policy.get("fallback_on_policy_violation", True))
-
-    if planner_source == "llm" and planner_intent and planner_intent not in allowed_intent_set:
-        violations.append("llm_planner_intent_not_allowlisted")
-    if planner_source == "llm" and plan_intent and plan_intent not in allowed_intent_set:
-        violations.append("llm_plan_intent_not_allowlisted")
-    if planner_source == "llm" and require_prefix_match and plan_id and plan_intent and not plan_id.startswith(
-        f"plan:{plan_intent}:"
-    ):
-        violations.append("llm_plan_id_intent_mismatch")
-
-    if violations and fallback_on_violation:
-        fallback_intent = dict(normalized_intent)
-        fallback_intent["source"] = "heuristic"
-        fallback_intent["reason_codes"] = sorted(
-            set([str(x) for x in list(fallback_intent.get("reason_codes") or []) if str(x or "").strip()] + ["llm_planner_policy_forced_fallback"])
-        )
-        fallback_plan = _build_deterministic_plan(
-            query=query,
-            intent_payload=fallback_intent,
-            assistant_mode_enabled=assistant_mode_enabled,
-        )
-        planner = {
-            **planner,
-            "source": "fallback",
-            "status": "fallback",
-            "intent": str(fallback_intent.get("intent", "") or ""),
-            "plan_id": str(fallback_plan.get("plan_id", "") or ""),
-            "reason_codes": sorted(
-                set([str(x) for x in list(planner.get("reason_codes") or []) if str(x or "").strip()] + ["llm_planner_policy_forced_fallback"])
-            ),
-        }
-        normalized_intent = fallback_intent
-        normalized_plan = fallback_plan
-        applied_reason_codes.append("llm_planner_policy_forced_fallback")
-
-    policy_eval = {
-        **policy,
-        "violations": sorted(set(violations)),
-        "applied_reason_codes": sorted(set(applied_reason_codes)),
-    }
-    return normalized_intent, normalized_plan, planner, policy_eval
 
 
 def _build_conversational_runtime_parity_bundle(
@@ -2982,7 +2908,9 @@ async def _apply_diagnostics(
             llm_model=str(llm_model or ""),
             llm_error=str(llm_error or ""),
         )
-        llm_planner_policy = _build_llm_planner_policy_contract()
+        llm_planner_policy = _build_llm_planner_policy_contract(
+            allowed_intents=_LLM_PLANNER_ALLOWED_INTENTS,
+        )
         intent, plan, llm_planner, llm_planner_policy_eval = _apply_llm_planner_policy_guards(
             intent_payload=intent,
             plan_bundle=plan,
@@ -2990,6 +2918,7 @@ async def _apply_diagnostics(
             policy_contract=llm_planner_policy,
             query=str(getattr(req, "query", "") or ""),
             assistant_mode_enabled=assistant_mode_enabled,
+            deterministic_plan_builder=_build_deterministic_plan,
         )
         plan, planning_policy = _apply_plan_policy_guards(plan_bundle=plan, max_steps=5)
         mcp_tools = _load_mcp_tools_from_runtime(http)

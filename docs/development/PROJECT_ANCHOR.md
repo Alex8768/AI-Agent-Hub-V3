@@ -41,6 +41,12 @@ Target A2.60 boundaries:
 - extract next bounded clusters from `answer_service.py` (planning/execution gateway/helper-policy seams),
 - reduce facade branching and preserve endpoint/debug contract behavior.
 
+Patch 2 artifacts:
+- llm planner policy seam extraction:
+  - `_build_llm_planner_policy_contract`
+  - `_apply_llm_planner_policy_guards`
+  - moved to `src/services/answer/reasoning/llm_planner_policy.py`
+
 #### Patch 3 - Reasoning extraction phase-4
 - extract next bounded clusters from `reasoning/engine.py` (multi-agent/dry-run/runtime helper seams),
 - preserve reasoning diagnostics contract behavior.
@@ -56,7 +62,7 @@ Target A2.60 boundaries:
 ### Progress
 
 - [x] Patch 1 — inventory + scope lock
-- [ ] Patch 2 - Answer extraction phase-4
+- [x] Patch 2 - Answer extraction phase-4
 - [ ] Patch 3 - Reasoning extraction phase-4
 - [ ] Patch 4 - Guardrail threshold recalibration and import-budget expansion
 - [ ] Patch 5 - guardrails + parity + closure
