@@ -27,6 +27,7 @@ from src.layers.pro.reasoning.multi_agent.runtime_contracts import (
     enrich_step_results_with_multi_agent_contract as _enrich_step_results_with_multi_agent_contract,
 )
 from src.layers.pro.reasoning.evaluation.runtime_diagnostics import (
+    build_runtime_step_results_from_planner_actions as _build_runtime_step_results_from_planner_actions,
     build_reasoning_benchmark_diagnostics as _build_reasoning_benchmark_diagnostics,
     build_reasoning_trace_diagnostics as _build_reasoning_trace_diagnostics,
     reasoning_quality_diagnostics as _reasoning_quality_diagnostics,
@@ -365,18 +366,11 @@ class ReasoningEngine:
                 observed_action=str(diag.get("agent_current_action", "") or ""),
                 observed_step=int(diag.get("agent_current_step", 0) or 0),
             )
-            per_step_results: list[dict[str, object]] = []
-            for idx, description in enumerate(planner_actions):
-                step_output = answer_text if idx == len(planner_actions) - 1 else description
-                per_step_results.append(
-                    {
-                        "step_index": int(idx),
-                        "step_description": str(description or ""),
-                        "reasoning_output": str(step_output or ""),
-                        "verify_status": str(verify.get("status", "") or ""),
-                        "verify_reasons": list(verify.get("reasons") or []),
-                    }
-                )
+            per_step_results = _build_runtime_step_results_from_planner_actions(
+                planner_actions=planner_actions,
+                answer_text=answer_text,
+                verify=verify,
+            )
             diag["reasoning_trace"] = self._build_reasoning_trace_diagnostics(
                 query=str(getattr(request, "query", "") or ""),
                 answer_text=answer_text,

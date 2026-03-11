@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-A2.64 patch 2 complete (Answer extraction phase-8 assistant-recovery policy seam)
+A2.64 patch 3 complete (Reasoning extraction phase-8 per-step diagnostics mapping seam)
 
 ## Last Completed Anchor
 
@@ -23,7 +23,7 @@ Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 A2.64 - Facade Convergence Phase 8 (Answer/Reasoning)
 
 Current focus:
-- execute A2.64 patch 3 reasoning extraction phase-8 (next bounded runtime seam)
+- execute A2.64 patch 4 guardrail recalibration and import-budget expansion
 - preserve answer/reasoning decomposition and no-growth guardrail baseline
 - continue one-patch-one-reason execution discipline
 

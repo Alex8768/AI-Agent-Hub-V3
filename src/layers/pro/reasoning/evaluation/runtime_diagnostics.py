@@ -116,3 +116,27 @@ def build_reasoning_benchmark_diagnostics(
         suite=suite,
         evaluate_case=_evaluate,
     )
+
+
+def build_runtime_step_results_from_planner_actions(
+    *,
+    planner_actions: list[str],
+    answer_text: str,
+    verify: dict[str, object],
+) -> list[dict[str, object]]:
+    rows: list[dict[str, object]] = []
+    actions = [str(x or "") for x in list(planner_actions or [])]
+    verify_status = str(verify.get("status", "") or "")
+    verify_reasons = list(verify.get("reasons") or [])
+    for idx, description in enumerate(actions):
+        step_output = answer_text if idx == len(actions) - 1 else description
+        rows.append(
+            {
+                "step_index": int(idx),
+                "step_description": str(description or ""),
+                "reasoning_output": str(step_output or ""),
+                "verify_status": verify_status,
+                "verify_reasons": verify_reasons,
+            }
+        )
+    return rows
