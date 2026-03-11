@@ -72,6 +72,37 @@ def _has_silent_except_pass(path: Path) -> bool:
     return False
 
 
+def _read_exception_policy_violations(path: Path) -> list[str]:
+    tree = ast.parse(path.read_text(encoding="utf-8"))
+    violations: list[str] = []
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.ExceptHandler):
+            continue
+        if not isinstance(node.type, ast.Name) or str(node.type.id or "") != "Exception":
+            continue
+        has_exception_binding = bool(getattr(node, "name", None))
+        has_warning_call = False
+        has_reason_code_literal = False
+        for subnode in ast.walk(node):
+            if isinstance(subnode, ast.Call) and isinstance(subnode.func, ast.Attribute) and subnode.func.attr == "warning":
+                has_warning_call = True
+            if isinstance(subnode, ast.Constant) and isinstance(subnode.value, str) and subnode.value == "reason_code":
+                has_reason_code_literal = True
+        missing: list[str] = []
+        if not has_exception_binding:
+            missing.append("missing_exception_binding")
+        if not has_warning_call:
+            missing.append("missing_warning_call")
+        if not has_reason_code_literal:
+            missing.append("missing_reason_code_context")
+        if missing:
+            violations.append(
+                f"{path.relative_to(ROOT)}:{int(getattr(node, 'lineno', 0))}:"
+                + ",".join(sorted(missing))
+            )
+    return violations
+
+
 def test_answer_endpoint_dependency_gate_forbidden_internal_imports():
     endpoint_path = ROOT / "src/api/endpoints/answer.py"
     _assert_no_forbidden_imports(
@@ -146,6 +177,21 @@ def test_answer_soft_failure_gate_no_silent_except_pass_in_a253_scoped_runtime_m
     ]
     violations = [str(path.relative_to(ROOT)) for path in answer_paths if _has_silent_except_pass(path)]
     assert not violations, "answer_soft_failure_gate_detected_silent_except_pass:\n" + "\n".join(sorted(violations))
+
+
+def test_answer_exception_policy_gate_scoped_handlers_require_warning_and_reason_code_context():
+    scoped_paths = [
+        ROOT / "src/services/answer/orchestrator.py",
+        ROOT / "src/services/answer/response_assembly.py",
+        ROOT / "src/services/answer/post_orchestration.py",
+        ROOT / "src/services/answer/diagnostics_merge.py",
+    ]
+    violations: list[str] = []
+    for path in scoped_paths:
+        violations.extend(_read_exception_policy_violations(path))
+    assert not violations, (
+        "answer_exception_policy_gate_scoped_handler_contract_violations:\n" + "\n".join(sorted(violations))
+    )
 
 
 class _DummyState:

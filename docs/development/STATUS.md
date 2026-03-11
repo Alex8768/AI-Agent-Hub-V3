@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-Active Anchor Execution — A2.54 patch 3 complete (soft-failure policy guardrail coverage expansion)
+Active Anchor Execution — A2.54 patch 4 complete (exception policy enforcement hardening)
 
 ## Last Completed Anchor
 
@@ -28,6 +28,7 @@ Current progress:
 - A2.54 patch 1 complete (inventory + scope lock for diagnostics contract surfaces).
 - A2.54 patch 2 complete (diagnostics keyset stability guardrail across proactive flag modes).
 - A2.54 patch 3 complete (soft-failure reason-code/flag visibility coverage for diagnostics and memory fallback paths).
+- A2.54 patch 4 complete (AST/static scoped exception-handler contract gate with deterministic violation reporting).
 - baseline guardrails from A2.53 remain intact and green.
 - patch plan locked: snapshot expansion, policy-coverage expansion, enforcement hardening, closure.
 - A2.51 + post-A2.51 guardrail maintenance remain green and protected by existing quality gates.
