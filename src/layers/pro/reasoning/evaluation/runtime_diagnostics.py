@@ -160,3 +160,124 @@ def build_fallback_planner_observations(
         "planner_current_action": planner_current_action,
         "fallback_plan_steps": fallback_plan_steps,
     }
+
+
+def apply_fallback_runtime_diagnostics(
+    *,
+    diagnostics: dict[str, object],
+    warnings: list[str],
+    fallback_reason: str | None,
+    planner_current_action: str,
+    planner_current_step: int,
+    provenance: list,
+    answer_text: str,
+    request_query: str,
+    fallback_plan_steps: list[str],
+    planner_step_results: list[dict[str, object]],
+    evidence_contract_version: str,
+    evidence_summary_fn: object,
+    evidence_contract_status_fn: object,
+    evidence_contract_gate_reason_fn: object,
+    self_check_fn: object,
+    verify_preflight_fn: object,
+    planner_runtime_parity_fn: object,
+    execution_policy_builder: object,
+    reasoning_quality_builder: object,
+    reasoning_optimization_builder: object,
+    enterprise_productization_builder: object,
+    meta_cognition_builder: object,
+    warning_flags_applier: object,
+) -> tuple[dict[str, object], list[str]]:
+    diag = dict(diagnostics or {})
+    diag["fallback_reason"] = fallback_reason
+    diag.setdefault("agent_current_action", str(planner_current_action or ""))
+    diag.setdefault("agent_current_step", int(planner_current_step or 0))
+    diag.setdefault("planner_path_used", False)
+    diag.setdefault("evidence_summary", evidence_summary_fn(provenance))
+    diag.setdefault("evidence_contract_version", str(evidence_contract_version or ""))
+    contract = dict(evidence_contract_status_fn(provenance) or {})
+    diag.setdefault("evidence_contract", contract)
+    diag.setdefault("evidence_contract_valid_minimal", bool(contract.get("valid_minimal", False)))
+    diag.setdefault("evidence_contract_missing_minimal_fields", list(contract.get("missing_minimal_fields") or []))
+    diag.setdefault("evidence_contract_missing_minimal_count", int(len(contract.get("missing_minimal_fields") or [])))
+    diag.setdefault("evidence_contract_minimal_coverage_score", float(contract.get("minimal_coverage_score") or 0.0))
+    diag.setdefault("evidence_contract_gate_reason", evidence_contract_gate_reason_fn(contract))
+    diag.setdefault("self_check", self_check_fn(contract))
+    execution_policy = execution_policy_builder()
+    diag.setdefault("reasoning_execution_policy", dict(execution_policy))
+    diag.setdefault(
+        "reasoning_quality",
+        reasoning_quality_builder(
+            answer_text=answer_text,
+            provenance=provenance,
+            contract=contract,
+            max_retries=int(execution_policy.get("max_retries", 0) or 0),
+        ),
+    )
+    self_check = dict(diag.get("self_check") or {})
+    diag.setdefault(
+        "verify",
+        verify_preflight_fn(
+            planner_path_used=False,
+            self_check=self_check,
+        ),
+    )
+    verify = dict(diag.get("verify") or {})
+    diag.setdefault(
+        "planner_runtime_parity",
+        planner_runtime_parity_fn(
+            planner_path_used=False,
+            planner_step_count=int(len(fallback_plan_steps)),
+            observed_action=str(diag.get("agent_current_action", "") or ""),
+            observed_step=int(diag.get("agent_current_step", 0) or 0),
+        ),
+    )
+    diag.setdefault(
+        "reasoning_trace",
+        build_reasoning_trace_diagnostics(
+            query=str(request_query or ""),
+            answer_text=answer_text,
+            quality=dict(diag.get("reasoning_quality") or {}),
+            plan_steps=fallback_plan_steps,
+            step_results=list(planner_step_results or []),
+        ),
+    )
+    diag.setdefault(
+        "reasoning_benchmark",
+        build_reasoning_benchmark_diagnostics(
+            suite_name="reasoning_runtime_fallback",
+            step_results=list(planner_step_results or []),
+        ),
+    )
+    diag.setdefault(
+        "reasoning_optimization",
+        reasoning_optimization_builder(
+            diagnostics=diag,
+            warnings=list(warnings or []),
+        ),
+    )
+    diag.setdefault(
+        "enterprise_productization",
+        enterprise_productization_builder(
+            diagnostics=diag,
+            warnings=list(warnings or []),
+        ),
+    )
+    diag.setdefault(
+        "meta_cognition",
+        meta_cognition_builder(
+            diagnostics=diag,
+            warnings=list(warnings or []),
+        ),
+    )
+    diag.setdefault(
+        "reasoning_timeline",
+        dict((dict(diag.get("reasoning_trace") or {}).get("timeline") or {})),
+    )
+    runtime_warnings = warning_flags_applier(
+        warnings=list(warnings or []),
+        verify=verify,
+        self_check=self_check,
+        contract=contract,
+    )
+    return diag, runtime_warnings
