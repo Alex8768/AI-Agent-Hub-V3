@@ -61,7 +61,7 @@
 
 - [x] Patch 1 - inventory + scope lock
 - [x] Patch 2 - Answer extraction phase-3
-- [ ] Patch 3 - Reasoning extraction phase-3
+- [x] Patch 3 - Reasoning extraction phase-3
 - [ ] Patch 4 - Guardrail threshold recalibration and coverage expansion
 - [ ] Patch 5 - guardrails + parity + closure
 

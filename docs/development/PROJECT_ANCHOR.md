@@ -55,6 +55,13 @@ Patch 2 artifacts:
 - extract next bounded clusters from `reasoning/engine.py` (optimization/enterprise/meta-cognition helpers),
 - preserve reasoning diagnostics contract behavior.
 
+Patch 3 artifacts:
+- runtime productization diagnostics extraction:
+  - `_build_reasoning_optimization_diagnostics`
+  - `_build_enterprise_productization_diagnostics`
+  - `_build_meta_cognition_diagnostics`
+  - moved to `src/layers/pro/reasoning/evaluation/runtime_productization.py`
+
 #### Patch 4 - Guardrail threshold recalibration and coverage expansion
 - recalibrate no-growth thresholds to new post-extraction baselines,
 - expand deterministic checks for extraction-path coverage and guardrail drift prevention,
@@ -67,7 +74,7 @@ Patch 2 artifacts:
 
 - [x] Patch 1 — inventory + scope lock
 - [x] Patch 2 - Answer extraction phase-3
-- [ ] Patch 3 - Reasoning extraction phase-3
+- [x] Patch 3 - Reasoning extraction phase-3
 - [ ] Patch 4 - Guardrail threshold recalibration and coverage expansion
 - [ ] Patch 5 - guardrails + parity + closure
 
