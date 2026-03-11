@@ -2,7 +2,7 @@
 
 ## Active Anchor
 
-A2.59 - Monolith Burn-Down Phase 3 (Answer/Reasoning)
+A2.59 - Monolith Burn-Down Phase 3 (Answer/Reasoning) (Closed)
 
 ### Goal
 
@@ -85,7 +85,7 @@ Patch 4 artifacts:
 - [x] Patch 2 - Answer extraction phase-3
 - [x] Patch 3 - Reasoning extraction phase-3
 - [x] Patch 4 - Guardrail threshold recalibration and coverage expansion
-- [ ] Patch 5 - guardrails + parity + closure
+- [x] Patch 5 - guardrails + parity + closure
 
 ### Non-Negotiable Rules
 

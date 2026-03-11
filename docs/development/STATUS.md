@@ -2,16 +2,16 @@
 
 ## Current Phase
 
-A2.59 patch 4 complete (no-growth threshold recalibration + extraction-path coverage expansion)
+Anchor Closed - A2.59 complete (monolith burn-down phase-3 closure)
 
 ## Last Completed Anchor
 
-A2.58 - Thin Facade Completion (Answer/Reasoning)
+A2.59 - Monolith Burn-Down Phase 3 (Answer/Reasoning)
 
-A2.58 closed with:
-- answer phase-2 helper extraction completed with behavior/API parity preserved
-- reasoning phase-2 runtime evaluation diagnostics extraction completed with wrapper parity
-- no-growth line-budget quality-gate enforced for answer/reasoning monolith targets
+A2.59 closed with:
+- answer runtime diagnostics wiring extraction completed with behavior/API parity preserved
+- reasoning runtime productization diagnostics extraction completed with compatibility wrappers preserved
+- no-growth budgets recalibrated and extraction-path seam coverage gates expanded
 - focused and full-suite checks green at closure
 
 Legacy closure markers retained for A2.56 docs quality-gate compatibility:
@@ -20,10 +20,10 @@ Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 
 ## Current Active Anchor
 
-A2.59 - Monolith Burn-Down Phase 3 (Answer/Reasoning)
+TBD - Post-A2.59 planning
 
 Current focus:
-- execute patch-5 closure checks (focused + full-suite) and docs finalization
+- define next technical anchor after A2.59 closure
 - preserve answer/reasoning decomposition and no-growth guardrail baseline
 - continue one-patch-one-reason execution discipline
 
