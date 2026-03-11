@@ -59,6 +59,14 @@ Patch 2 artifacts:
 - extract next bounded clusters from `reasoning/engine.py` (evaluation/self-check/synthesis helpers),
 - preserve reasoning diagnostics contract behavior.
 
+Patch 3 artifacts:
+- runtime evaluation diagnostics helper extraction:
+  - `_reasoning_quality_diagnostics`
+  - `_build_reasoning_trace_diagnostics`
+  - `_build_reasoning_benchmark_diagnostics`
+  - moved to `src/layers/pro/reasoning/evaluation/runtime_diagnostics.py`
+- `ReasoningEngine` static methods retain compatibility wrappers delegating to extracted helpers.
+
 #### Patch 4 - Decomposition guardrail quality-gate expansion
 - expand deterministic checks for thin-facade budgets and no-growth constraints,
 - keep failure messages actionable for CI.
@@ -70,7 +78,7 @@ Patch 2 artifacts:
 
 - [x] Patch 1 — inventory + scope lock
 - [x] Patch 2 - Answer extraction phase-2
-- [ ] Patch 3 - Reasoning extraction phase-2
+- [x] Patch 3 - Reasoning extraction phase-2
 - [ ] Patch 4 - Decomposition guardrail quality-gate expansion
 - [ ] Patch 5 - guardrails + parity + closure
 

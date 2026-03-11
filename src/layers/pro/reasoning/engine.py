@@ -13,9 +13,6 @@ from src.layers.pro.reasoning.contracts import (
 from src.layers.pro.reasoning.confidence import compute_confidence
 from src.layers.pro.reasoning.evidence_normalizer import normalize_retrieval_result
 from src.layers.pro.reasoning.context_packer import pack_context
-from src.layers.pro.reasoning.quality_claims import extract_claims
-from src.layers.pro.reasoning.quality_confidence import compute_reasoning_quality_confidence
-from src.layers.pro.reasoning.quality_coverage import score_claim_coverage
 from src.layers.pro.reasoning.quality_retry import decide_reasoning_quality_retry
 from src.layers.pro.reasoning.control.execution_policy import build_reasoning_execution_policy
 from src.layers.pro.reasoning.control.loop_guard import (
@@ -31,11 +28,10 @@ from src.layers.pro.reasoning.multi_agent.coordination_model import (
     build_multi_agent_coordination_plan,
 )
 from src.layers.pro.reasoning.multi_agent.handoff_router import route_multi_agent_handoffs
-from src.layers.pro.reasoning.evaluation.benchmark_registry import (
-    build_reasoning_benchmark_suite,
-)
-from src.layers.pro.reasoning.evaluation.benchmark_runner import (
-    run_reasoning_benchmark_suite,
+from src.layers.pro.reasoning.evaluation.runtime_diagnostics import (
+    build_reasoning_benchmark_diagnostics as _build_reasoning_benchmark_diagnostics,
+    build_reasoning_trace_diagnostics as _build_reasoning_trace_diagnostics,
+    reasoning_quality_diagnostics as _reasoning_quality_diagnostics,
 )
 from src.layers.pro.reasoning.optimization.optimization_decision_model import (
     decide_reasoning_optimization_action,
@@ -60,7 +56,6 @@ from src.layers.pro.meta_cognition.reflection import build_reflection_report
 from src.layers.pro.meta_cognition.uncertainty import build_uncertainty_summary
 from src.layers.pro.reasoning.kernel import build_reasoning_planner_runtime
 from src.layers.pro.reasoning.tool_safety.runtime_guard import apply_tool_safety_runtime_guard
-from src.layers.pro.reasoning.trace.trace_collector import collect_reasoning_trace
 from src.layers.pro.reasoning.diagnostics.runtime_contracts import (
     build_planner_runtime_parity_diagnostics as _build_planner_runtime_parity_diagnostics,
     evidence_contract_gate_reason as _evidence_contract_gate_reason,
@@ -131,32 +126,13 @@ class ReasoningEngine:
         contract: dict[str, object],
         max_retries: int,
     ) -> dict[str, object]:
-        claims = extract_claims(reasoning_output=str(answer_text or ""))
-        coverage = score_claim_coverage(
-            claims=claims,
-            provenance=list(provenance or []),
+        return _reasoning_quality_diagnostics(
+            answer_text=answer_text,
+            provenance=provenance,
+            contract=contract,
+            max_retries=max_retries,
+            retry_decider=decide_reasoning_quality_retry,
         )
-        unsupported_claims = int(coverage.get("claims_uncovered") or 0)
-        missing_claims = int(contract.get("missing_minimal_count") or 0)
-        confidence = compute_reasoning_quality_confidence(
-            coverage_score=float(coverage.get("coverage_score") or 0.0),
-            unsupported_claims=unsupported_claims,
-            missing_claims=missing_claims,
-        )
-        retry = decide_reasoning_quality_retry(
-            confidence_score=float(confidence.get("confidence_score") or 0.0),
-            attempt=0,
-            threshold=0.6,
-            max_retries=int(max_retries),
-        )
-        return {
-            "version": "v1",
-            "claims_total": int(len(claims)),
-            "claims_sample": list(claims[:5]),
-            "coverage": coverage,
-            "confidence": confidence,
-            "retry": retry,
-        }
 
     @staticmethod
     def _build_reasoning_trace_diagnostics(
@@ -167,12 +143,12 @@ class ReasoningEngine:
         plan_steps: list[str],
         step_results: list[dict[str, object]],
     ) -> dict[str, object]:
-        return collect_reasoning_trace(
+        return _build_reasoning_trace_diagnostics(
             query=query,
-            plan={"steps": [{"description": str(x or "")} for x in list(plan_steps or [])]},
-            step_results=list(step_results or []),
-            quality=dict(quality or {}),
-            answer=answer_text,
+            answer_text=answer_text,
+            quality=quality,
+            plan_steps=plan_steps,
+            step_results=step_results,
         )
 
     @staticmethod
@@ -181,48 +157,9 @@ class ReasoningEngine:
         suite_name: str,
         step_results: list[dict[str, object]],
     ) -> dict[str, object]:
-        indexed: dict[str, dict[str, object]] = {}
-        cases: list[dict[str, object]] = []
-        for idx, row in enumerate(list(step_results or [])):
-            result = dict(row or {})
-            case_id = f"step_{idx}"
-            indexed[case_id] = result
-            cases.append(
-                {
-                    "case_id": case_id,
-                    "query": str(result.get("step_description", "") or ""),
-                    "expected_signals": ["verify_pass"],
-                    "tags": ["runtime_step"],
-                    "weight": 1.0,
-                }
-            )
-        suite = build_reasoning_benchmark_suite(
+        return _build_reasoning_benchmark_diagnostics(
             suite_name=suite_name,
-            owner="reasoning_engine",
-            tags=["runtime", "diagnostics"],
-            cases=cases,
-        )
-
-        def _evaluate(case: dict[str, object]) -> dict[str, object]:
-            cid = str(case.get("case_id", "") or "")
-            row = dict(indexed.get(cid) or {})
-            verify_status = str(row.get("verify_status", "") or "")
-            passed = verify_status == "pass"
-            if "arbitration_score" in row:
-                score = float(row.get("arbitration_score", 0.0) or 0.0)
-            else:
-                score = 1.0 if passed else 0.0
-            reasons = [str(x) for x in list(row.get("verify_reasons") or [])]
-            return {
-                "score": score,
-                "passed": passed,
-                "reasons": reasons,
-                "latency_ms": int(idx if (idx := int(row.get("step_index", 0) or 0)) >= 0 else 0),
-            }
-
-        return run_reasoning_benchmark_suite(
-            suite=suite,
-            evaluate_case=_evaluate,
+            step_results=step_results,
         )
 
     @staticmethod
