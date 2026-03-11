@@ -94,7 +94,16 @@ Patch 3 artifacts:
 - keep failure messages actionable for CI.
 
 Patch 4 artifacts:
-- pending.
+- no-growth threshold recalibration applied in
+  `tests/unit/services/answer/test_answer_orchestration_quality_gate.py`:
+  - `answer_service_max_lines`: `2183 -> 2100`
+  - `reasoning_engine_max_lines`: `352 -> 313`
+- facade import-budget guard verified against current extraction baselines:
+  - answer local imports: `15` (budget `<= 15`)
+  - reasoning local imports: `14` (budget `<= 17`)
+- deterministic guardrail suite remained green after recalibration:
+  - `tests/unit/services/answer/test_answer_orchestration_quality_gate.py`
+  - result: `16 passed`
 
 #### Patch 5 - Guardrails + parity + closure
 - run focused and full-suite checks and close A2.74 with docs sync.
@@ -107,7 +116,7 @@ Patch 5 artifacts:
 - [x] Patch 1 — inventory + scope lock
 - [x] Patch 2 - Answer extraction phase-18
 - [x] Patch 3 - Reasoning extraction phase-18
-- [ ] Patch 4 - Guardrail threshold recalibration and import-budget expansion
+- [x] Patch 4 - Guardrail threshold recalibration and import-budget expansion
 - [ ] Patch 5 - guardrails + parity + closure
 
 ### Non-Negotiable Rules
