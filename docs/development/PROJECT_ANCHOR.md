@@ -58,7 +58,13 @@ Patch 1 artifacts:
 - reduce facade branching and preserve endpoint/debug contract behavior.
 
 Patch 2 artifacts:
-- pending.
+- assistant execution orchestration seam extracted into
+  `src/services/answer/execution/durable_keys.py`:
+  - `run_assistant_execution_orchestration_seam`
+- `src/services/answer/answer_service.py` retains thin compatibility wrapper:
+  - `_run_assistant_execution_orchestration_seam` delegates to impl with dependency injection
+- facade reduction: `answer_service.py` `2183 -> 2100` lines
+- focused parity/guardrail checks green: `74 passed`
 
 #### Patch 3 - Reasoning extraction phase-18
 - extract next bounded clusters from `reasoning/engine.py` (runtime fallback / diagnostics helper seams),
@@ -76,7 +82,7 @@ Patch 4 artifacts:
 - pending.
 
 #### Patch 5 - Guardrails + parity + closure
-- run focused and full-suite checks and close A2.73 with docs sync.
+- run focused and full-suite checks and close A2.74 with docs sync.
 
 Patch 5 artifacts:
 - pending.
@@ -84,7 +90,7 @@ Patch 5 artifacts:
 ### Progress
 
 - [x] Patch 1 — inventory + scope lock
-- [ ] Patch 2 - Answer extraction phase-18
+- [x] Patch 2 - Answer extraction phase-18
 - [ ] Patch 3 - Reasoning extraction phase-18
 - [ ] Patch 4 - Guardrail threshold recalibration and import-budget expansion
 - [ ] Patch 5 - guardrails + parity + closure

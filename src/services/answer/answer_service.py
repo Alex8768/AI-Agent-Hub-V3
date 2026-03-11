@@ -12,7 +12,6 @@ from src.layers.pro.anticipatory import (
     build_proactive_suggestion_bundle,
 )
 from src.layers.pro.reasoning.execution_plane.request_boundary import (
-    build_execution_request_boundary_bundle,
     normalize_execution_request,
 )
 from src.layers.pro.reasoning.kernel import build_reasoning_response_style_runtime
@@ -85,6 +84,7 @@ from src.services.answer.execution.durable_keys import (
     build_safe_mode_execution_gateway as _build_safe_mode_execution_gateway_impl,
     load_durable_records as _load_durable_records_impl,
     persist_durable_records as _persist_durable_records_impl,
+    run_assistant_execution_orchestration_seam as _run_assistant_execution_orchestration_seam_impl,
     run_execution_pilot_runtime as _run_execution_pilot_runtime_impl,
 )
 from src.services.answer.observability.event_logger import log_observability
@@ -1027,112 +1027,29 @@ def _run_assistant_execution_orchestration_seam(
     assistant_mode_enabled: bool,
     assistant_actions_enabled: bool,
 ) -> dict[str, object]:
-    anticipatory = dict(diagnostics.get("anticipatory") or {})
-    draft_actions = dict(anticipatory.get("draft_actions") or {})
-    handshake = _build_execution_handshake_bundle(
+    return _run_assistant_execution_orchestration_seam_impl(
+        req=req,
+        diagnostics=diagnostics,
         plan_bundle=plan_bundle,
-        draft_actions_bundle=draft_actions,
+        workspace_id=workspace_id,
+        request_id=request_id,
         assistant_mode_enabled=assistant_mode_enabled,
-        actions_enabled=assistant_actions_enabled,
+        assistant_actions_enabled=assistant_actions_enabled,
+        build_handshake_fn=_build_execution_handshake_bundle,
+        build_transition_policy_fn=_build_transition_policy_contract,
+        apply_handshake_transition_policy_fn=_apply_handshake_transition_policy,
+        extract_handshake_transition_input_fn=_extract_handshake_transition_input,
+        apply_execution_idempotency_guard_fn=_apply_execution_idempotency_guard,
+        apply_handshake_transition_fn=_apply_handshake_transition,
+        apply_rollback_contract_guard_fn=_apply_rollback_contract_guard,
+        run_execution_pilot_runtime_fn=_run_execution_pilot_runtime,
+        build_execution_receipt_stub_fn=_build_execution_receipt_stub,
+        build_safe_mode_execution_gateway_fn=_build_safe_mode_execution_gateway,
+        build_execution_pilot_bundle_fn=_build_execution_pilot_bundle,
+        build_approval_session_bundle_fn=_build_approval_session_bundle,
+        build_durable_approval_session_record_fn=_build_durable_approval_session_record,
+        build_idempotency_record_snapshot_fn=_build_idempotency_record_snapshot,
     )
-    transition_policy = _build_transition_policy_contract()
-    transition_input, transition_policy_eval = _apply_handshake_transition_policy(
-        transition_input=_extract_handshake_transition_input(req),
-        draft_actions_bundle=draft_actions,
-        policy_contract=transition_policy,
-    )
-    execution_request_boundary = build_execution_request_boundary_bundle(
-        execution_request=transition_input,
-        transition_policy=transition_policy_eval,
-    )
-    transition_input, execution_idempotency = _apply_execution_idempotency_guard(
-        transition_input=transition_input,
-        workspace_id=str(workspace_id or ""),
-        plan_id=str(plan_bundle.get("plan_id", "") or ""),
-        persist=False,
-    )
-    handshake = _apply_handshake_transition(
-        handshake_bundle=handshake,
-        transition_input=transition_input,
-        draft_actions_bundle=draft_actions,
-    )
-    handshake, rollback_contract_eval = _apply_rollback_contract_guard(
-        handshake_bundle=handshake,
-        draft_actions_bundle=draft_actions,
-    )
-    transition_policy_eval["rollback_contract_status"] = str(
-        rollback_contract_eval.get("status", "not_evaluated") or "not_evaluated"
-    )
-    transition_policy_eval["rollback_missing_action_ids"] = [
-        str(x) for x in list(rollback_contract_eval.get("rollback_missing_action_ids") or []) if str(x)
-    ]
-    transition_policy_eval["applied_reason_codes"] = sorted(
-        set(
-            [str(x) for x in list(transition_policy_eval.get("applied_reason_codes") or []) if str(x)]
-            + [str(x) for x in list(rollback_contract_eval.get("reason_codes") or []) if str(x)]
-        )
-    )
-    executed_action_ids, pilot_runtime_reasons = _run_execution_pilot_runtime(
-        handshake_bundle=handshake,
-        draft_actions_bundle=draft_actions,
-        actions_enabled=assistant_actions_enabled,
-    )
-    transition_policy_eval["applied_reason_codes"] = sorted(
-        set(
-            [str(x) for x in list(transition_policy_eval.get("applied_reason_codes") or []) if str(x)]
-            + [str(x) for x in list(pilot_runtime_reasons or []) if str(x)]
-        )
-    )
-    receipt = _build_execution_receipt_stub(
-        handshake_bundle=handshake,
-        plan_bundle=plan_bundle,
-        draft_actions_bundle=draft_actions,
-        workspace_id=str(workspace_id or ""),
-        request_id=str(request_id or ""),
-        executed_action_ids=executed_action_ids,
-    )
-    execution_gateway = _build_safe_mode_execution_gateway(
-        handshake_bundle=handshake,
-        receipt_bundle=receipt,
-        actions_enabled=assistant_actions_enabled,
-    )
-    execution_pilot = _build_execution_pilot_bundle(
-        handshake_bundle=handshake,
-        draft_actions_bundle=draft_actions,
-        receipt_bundle=receipt,
-        actions_enabled=assistant_actions_enabled,
-    )
-    approval_session = _build_approval_session_bundle(
-        handshake_bundle=handshake,
-        plan_bundle=plan_bundle,
-        workspace_id=str(workspace_id or ""),
-        request_id=str(request_id or ""),
-    )
-    durable_approval_record = _build_durable_approval_session_record(
-        approval_session_bundle=approval_session,
-        session_id=str(getattr(req, "session_id", "") or "default"),
-        confirmation_token=str(handshake.get("confirmation_token", "") or ""),
-        transition_input=transition_input,
-        previous_record={},
-    )
-    idempotency_record = _build_idempotency_record_snapshot(
-        execution_idempotency_bundle=execution_idempotency,
-        workspace_id=str(workspace_id or ""),
-        plan_id=str(plan_bundle.get("plan_id", "") or ""),
-        transition_input=transition_input,
-    )
-    return {
-        "handshake": handshake,
-        "execution_transition_policy": transition_policy_eval,
-        "execution_request_boundary": execution_request_boundary,
-        "execution_idempotency": execution_idempotency,
-        "execution_receipt": receipt,
-        "execution_gateway": execution_gateway,
-        "execution_pilot": execution_pilot,
-        "approval_session": approval_session,
-        "durable_approval_session": durable_approval_record,
-        "idempotency_record": idempotency_record,
-    }
 
 
 async def _apply_diagnostics(
