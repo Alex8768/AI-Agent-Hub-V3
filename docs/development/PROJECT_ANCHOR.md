@@ -51,6 +51,12 @@ Patch 2 artifacts:
 - extract next bounded clusters from `reasoning/engine.py` (multi-agent/dry-run/runtime helper seams),
 - preserve reasoning diagnostics contract behavior.
 
+Patch 3 artifacts:
+- runtime multi-agent helper seam extraction:
+  - `_build_multi_agent_coordination_plan_for_runtime`
+  - `_enrich_step_results_with_multi_agent_contract`
+  - moved to `src/layers/pro/reasoning/multi_agent/runtime_contracts.py`
+
 #### Patch 4 - Guardrail threshold recalibration and import-budget expansion
 - recalibrate no-growth thresholds to new post-extraction baselines,
 - expand deterministic checks for seam wiring + import-budget drift prevention,
@@ -63,7 +69,7 @@ Patch 2 artifacts:
 
 - [x] Patch 1 — inventory + scope lock
 - [x] Patch 2 - Answer extraction phase-4
-- [ ] Patch 3 - Reasoning extraction phase-4
+- [x] Patch 3 - Reasoning extraction phase-4
 - [ ] Patch 4 - Guardrail threshold recalibration and import-budget expansion
 - [ ] Patch 5 - guardrails + parity + closure
 
