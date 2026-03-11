@@ -55,7 +55,7 @@
 
 ## Next
 
-- [ ] Post-A2.51 anchor planning
+- [x] Post-A2.51 guardrail maintenance closure
 
 ## Post-A2.51 Guardrail Maintenance
 
@@ -63,6 +63,7 @@
 - [x] M2 — AnswerService soft-failure guardrail tests for durable-persist path
 - [x] M3 — AnswerService soft-failure guardrail tests for durable-hydration path
 - [x] M4 — AnswerService soft-failure guardrail tests for post-orchestration path
+- [x] M5 — closure sync across anchor/status/checklist/features docs
 
 ## Later
 

@@ -2,7 +2,7 @@
 
 ## Active Anchor
 
-A2.51 — Answer Orchestration Decomposition
+Post-A2.51 — Guardrail Maintenance (Closed)
 
 ### Goal
 
@@ -96,6 +96,7 @@ Exact filenames may vary if existing structure suggests a cleaner fit.
 - [x] Post-A2.51 M2 — guardrail tests for AnswerService soft-failure reason-codes
 - [x] Post-A2.51 M3 — guardrail test for AnswerService durable-hydration soft-failure reason-code
 - [x] Post-A2.51 M4 — guardrail test for AnswerService post-orchestration soft-failure reason-code
+- [x] Post-A2.51 M5 — closure sync across anchor/status/checklist/features docs
 
 ### Non-Negotiable Rules
 

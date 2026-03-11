@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-Anchor Transition — Post-A2.51 planning
+Anchor Transition — Post-A2.51 guardrail maintenance closed
 
 ## Last Completed Anchor
 
@@ -16,12 +16,12 @@ Answer-path decomposition completed with:
 
 ## Current Active Anchor
 
-TBD — Post-A2.51 planning
+None (maintenance anchor closed)
 
 Current focus:
-- define and scope the next anchor after A2.51 closure
 - keep answer-path layering guardrails active
 - preserve answer/debug output parity baselines
+- define and scope the next anchor
 
 Current progress:
 - A2.51 patch set complete (patches 1-5).
@@ -30,6 +30,7 @@ Current progress:
 - post-A2.51 guardrail maintenance M1/M2 completed for answer-path soft-failure observability and tests.
 - post-A2.51 guardrail maintenance M3 completed for durable-hydration soft-failure guardrail coverage.
 - post-A2.51 guardrail maintenance M4 completed for post-orchestration soft-failure guardrail coverage.
+- post-A2.51 guardrail maintenance M5 completed; maintenance anchor is closed.
 
 Execution discipline:
 - no net-new intelligence features
