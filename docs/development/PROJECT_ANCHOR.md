@@ -2,97 +2,67 @@
 
 ## Active Anchor
 
-A2.57 - Application Decomposition Regime (Answer/Reasoning No-Growth) (Closed)
+A2.58 - Thin Facade Completion (Answer/Reasoning)
 
 ### Goal
 
-Introduce a strict application-level decomposition regime that stops monolith growth and
-enforces bounded modules for Answer and Reasoning orchestration paths.
+Complete phase-2 thin-facade decomposition for `answer_service` and `reasoning/engine`
+so orchestration entrypoints remain thin and bounded modules own policy/diagnostics logic.
 
 ### Why Now
 
-A2.56 is closed and operational guardrails are stabilized.
-The main residual architecture risk is centripetal growth of large files in answer/reasoning
-orchestration paths without hard no-growth enforcement.
+A2.57 established governance and first extraction seams.
+Residual risk remains concentrated in large facade/orchestrator files where policy and
+diagnostics logic still coexist with flow wiring.
 
 ### Architecture Position
 
-Target A2.57 boundaries:
+Target A2.58 boundaries:
 
-- **Decomposition Regime**
-  - enforce facade/orchestrator/policy/mapper/assembler/diagnostics separation,
-  - prevent new feature logic from entering monolith files.
+- **Answer thin-facade completion**
+  - continue extracting heavy clusters from `src/services/answer/answer_service.py`,
+  - keep behavior/API/diagnostics parity unchanged.
 
-- **Answer Path Structure**
-  - structure bounded subpackages under `src/services/answer/`,
-  - keep facade thin and orchestration-only.
+- **Reasoning thin-engine completion**
+  - continue extracting bounded helpers from `src/layers/pro/reasoning/engine.py`,
+  - keep `ReasoningEngine` as compatibility facade.
 
-- **Reasoning Engine Structure**
-  - structure bounded subpackages under `src/layers/pro/reasoning/`,
-  - keep engine file as a thin facade with delegated responsibilities.
-
-- **Governance**
-  - enforce size/dependency budgets and no-growth rules via docs + quality gates.
+- **Guardrails and quality**
+  - enforce no-growth rule from `docs/architecture/refactoring-guardrails.md`,
+  - keep deterministic focused + full-suite green checks.
 
 ### Patch Plan
 
 #### Patch 1 — Inventory + scope lock
-- inventory current responsibility clusters and file-size hotspots,
-- lock scope to extraction-only and thin-facade-only changes,
-- publish governance baseline in `docs/architecture/refactoring-guardrails.md`.
+- inventory remaining heavy clusters and line-budget hotspots in answer/reasoning facades,
+- lock scope to extraction-only changes with strict parity constraints.
 
-#### Patch 2 - Answer move-map and package scaffolding
-- define exact move map for `src/services/answer/answer_service.py`,
-- add target subpackage scaffolding for context/retrieval/reasoning/execution/diagnostics/response/observability,
-- keep behavior unchanged.
+#### Patch 2 - Answer extraction phase-2
+- extract next bounded clusters from `answer_service.py` (diagnostics/response/execution flow helpers),
+- reduce facade branching and preserve endpoint/debug contract behavior.
 
-Patch 2 artifacts:
-- Move map document: `docs/architecture/answer-decomposition-move-map-a2.57.md`
-- Scaffolding baseline created under `src/services/answer/`:
-  - `facade.py`, `models.py`, `types.py`, `constants.py`
-  - `context/`, `retrieval/`, `reasoning/`, `execution/`, `diagnostics/`, `response/`, `observability/`
+#### Patch 3 - Reasoning extraction phase-2
+- extract next bounded clusters from `reasoning/engine.py` (evaluation/self-check/synthesis helpers),
+- preserve reasoning diagnostics contract behavior.
 
-#### Patch 3 - Answer heavy-cluster extraction
-- extract diagnostics, response assembly, execution guards, and context resolvers into bounded modules,
-- shrink monolith toward orchestration-only facade.
-
-Patch 3 phase-1 extraction completed:
-- context helper extracted:
-  - `answer_service._clip_text` -> `src/services/answer/context/session_text.py::clip_text`
-- execution durable key builders extracted:
-  - `answer_service._durable_approval_record_key` -> `src/services/answer/execution/durable_keys.py::durable_approval_record_key`
-  - `answer_service._durable_idempotency_record_key` -> `src/services/answer/execution/durable_keys.py::durable_idempotency_record_key`
-- diagnostics reason-code merge helper extracted:
-  - `answer_service._append_planning_reason_codes` -> `src/services/answer/diagnostics/reason_codes.py::append_planning_reason_codes`
-- observability logging helper extracted:
-  - `answer_service.log_observability` -> `src/services/answer/observability/event_logger.py::log_observability`
-
-#### Patch 4 - Reasoning engine move-map and first extraction
-- define and execute first safe extraction from `src/layers/pro/reasoning/engine.py`,
-- prioritize evaluation/self-check/diagnostics clusters with parity preserved.
-
-Patch 4 artifacts:
-- Move map document: `docs/architecture/reasoning-decomposition-move-map-a2.57.md`
-- First safe extraction delivered:
-  - `engine.py` diagnostics/evaluation runtime-contract helpers extracted to
-    `src/layers/pro/reasoning/diagnostics/runtime_contracts.py`
-  - `ReasoningEngine` keeps compatibility wrappers delegating to extracted helpers
+#### Patch 4 - Decomposition guardrail quality-gate expansion
+- expand deterministic checks for thin-facade budgets and no-growth constraints,
+- keep failure messages actionable for CI.
 
 #### Patch 5 - Guardrails + parity + closure
-- add/update deterministic guardrails for decomposition constraints,
-- run focused and full-suite checks and close A2.57 with docs sync.
+- run focused and full-suite checks and close A2.58 with docs sync.
 
 ### Progress
 
 - [x] Patch 1 — inventory + scope lock
-- [x] Patch 2 - Answer move-map and package scaffolding
-- [x] Patch 3 - Answer heavy-cluster extraction
-- [x] Patch 4 - Reasoning engine move-map and first extraction
-- [x] Patch 5 - guardrails + parity + closure
+- [ ] Patch 2 - Answer extraction phase-2
+- [ ] Patch 3 - Reasoning extraction phase-2
+- [ ] Patch 4 - Decomposition guardrail quality-gate expansion
+- [ ] Patch 5 - guardrails + parity + closure
 
 ### Non-Negotiable Rules
 
-- No net-new user-facing features during A2.57
+- No net-new user-facing features during A2.58
 - Preserve answer/debug runtime/API parity
 - No new business logic additions inside monolith files
 - Extraction-only and thin-facade-only changes in monolith targets
@@ -101,7 +71,7 @@ Patch 4 artifacts:
 
 ### Out of Scope
 
-Do NOT modify during A2.57:
+Do NOT modify during A2.58:
 
 - unrelated product feature logic
 - endpoint contract shape
@@ -110,11 +80,11 @@ Do NOT modify during A2.57:
 
 ### Definition of Done
 
-A2.57 is complete when:
+A2.58 is complete when:
 
-- answer and reasoning monolith growth is explicitly frozen by governance rules
-- extraction move maps are completed for targeted responsibility clusters
-- target facades are thinner and orchestration-focused
+- answer and reasoning thin-facade extraction phase-2 is completed with parity
+- no-growth and size-budget guardrails are reinforced with deterministic checks
+- target facades are further reduced and orchestration-focused
 - focused and full quality checks remain green
 - no answer/debug parity regressions are introduced
 
@@ -136,7 +106,7 @@ A2.56 policy markers are retained for deterministic docs quality gates:
 
 ## Next Anchor
 
-TBD - Post-A2.57 planning
+TBD - Post-A2.58 planning
 
 ## Post-A2.56 Maintenance
 

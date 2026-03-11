@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-Anchor Closed - A2.57 complete (application decomposition regime closure)
+A2.58 patch 1 complete - thin-facade completion inventory and scope lock
 
 ## Last Completed Anchor
 
@@ -21,11 +21,11 @@ Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 
 ## Current Active Anchor
 
-TBD - Post-A2.57 planning
+A2.58 - Thin Facade Completion (Answer/Reasoning)
 
 Current focus:
-- define next technical anchor after A2.57 closure
-- preserve answer/reasoning decomposition parity baseline
+- inventory remaining heavy clusters in answer/reasoning facades
+- lock phase-2 extraction scope with strict parity constraints
 - continue one-patch-one-reason execution discipline
 
 Execution discipline:
@@ -36,7 +36,7 @@ Execution discipline:
 
 ## Next Anchor
 
-TBD - Post-A2.57 planning
+TBD - Post-A2.58 planning
 
 ## CI Status
 
