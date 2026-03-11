@@ -62,6 +62,18 @@ Patch 3 artifacts:
 - expand deterministic checks for seam wiring + import-budget drift prevention,
 - keep failure messages actionable for CI.
 
+Patch 4 artifacts:
+- no-growth line-budget gate recalibrated for latest monolith baselines:
+  - `src/services/answer/answer_service.py` -> `3464` lines max
+  - `src/layers/pro/reasoning/engine.py` -> `686` lines max
+- seam/import-budget coverage gate expansion:
+  - require `src.services.answer.reasoning.llm_planner_policy` import in answer facade
+  - require `src.layers.pro.reasoning.multi_agent.runtime_contracts` import in reasoning facade
+  - enforce no-growth local import budgets:
+    - `src.services.answer.*` imports in answer facade <= `15`
+    - `src.layers.pro.reasoning.*` imports in reasoning facade <= `17`
+  - gate location: `tests/unit/services/answer/test_answer_orchestration_quality_gate.py`
+
 #### Patch 5 - Guardrails + parity + closure
 - run focused and full-suite checks and close A2.60 with docs sync.
 
@@ -70,7 +82,7 @@ Patch 3 artifacts:
 - [x] Patch 1 — inventory + scope lock
 - [x] Patch 2 - Answer extraction phase-4
 - [x] Patch 3 - Reasoning extraction phase-4
-- [ ] Patch 4 - Guardrail threshold recalibration and import-budget expansion
+- [x] Patch 4 - Guardrail threshold recalibration and import-budget expansion
 - [ ] Patch 5 - guardrails + parity + closure
 
 ### Non-Negotiable Rules

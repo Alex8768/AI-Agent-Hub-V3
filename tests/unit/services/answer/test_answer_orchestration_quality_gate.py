@@ -41,6 +41,15 @@ def _assert_no_forbidden_imports(path: Path, forbidden_prefixes: list[str], gate
     assert not violations, f"{gate_name} violations detected:\n" + "\n".join(sorted(violations))
 
 
+def _count_imports_with_prefix(path: Path, prefix: str) -> int:
+    modules = _read_import_modules(path)
+    return sum(
+        1
+        for mod in modules
+        if mod == prefix or mod.startswith(f"{prefix}.")
+    )
+
+
 def _read_function_calls(path: Path, function_name: str) -> list[str]:
     tree = ast.parse(path.read_text(encoding="utf-8"))
     target: ast.FunctionDef | ast.AsyncFunctionDef | None = None
@@ -177,6 +186,46 @@ def test_reasoning_engine_facade_gate_requires_extracted_runtime_productization_
     assert not missing, "reasoning_engine_missing_runtime_productization_seam:\n" + "\n".join(missing)
 
 
+def test_answer_service_facade_gate_requires_extracted_llm_planner_policy_seam_import():
+    answer_service_path = ROOT / "src/services/answer/answer_service.py"
+    modules = _read_import_modules(answer_service_path)
+    required = {
+        "src.services.answer.reasoning.llm_planner_policy",
+    }
+    missing = sorted(mod for mod in required if mod not in modules)
+    assert not missing, "answer_service_missing_llm_planner_policy_seam:\n" + "\n".join(missing)
+
+
+def test_reasoning_engine_facade_gate_requires_extracted_multi_agent_runtime_seam_import():
+    reasoning_engine_path = ROOT / "src/layers/pro/reasoning/engine.py"
+    modules = _read_import_modules(reasoning_engine_path)
+    required = {
+        "src.layers.pro.reasoning.multi_agent.runtime_contracts",
+    }
+    missing = sorted(mod for mod in required if mod not in modules)
+    assert not missing, "reasoning_engine_missing_multi_agent_runtime_seam:\n" + "\n".join(missing)
+
+
+def test_facade_import_budget_no_growth_gate_answer_and_reasoning():
+    answer_service_path = ROOT / "src/services/answer/answer_service.py"
+    reasoning_engine_path = ROOT / "src/layers/pro/reasoning/engine.py"
+
+    answer_local_import_budget = 15
+    reasoning_local_import_budget = 17
+
+    answer_local_imports = _count_imports_with_prefix(answer_service_path, "src.services.answer")
+    reasoning_local_imports = _count_imports_with_prefix(reasoning_engine_path, "src.layers.pro.reasoning")
+
+    assert answer_local_imports <= answer_local_import_budget, (
+        "decomposition_import_budget_gate_answer_service_exceeded:"
+        f" {answer_local_imports} > {answer_local_import_budget}"
+    )
+    assert reasoning_local_imports <= reasoning_local_import_budget, (
+        "decomposition_import_budget_gate_reasoning_engine_exceeded:"
+        f" {reasoning_local_imports} > {reasoning_local_import_budget}"
+    )
+
+
 def test_answer_service_facade_gate_handle_contract_pipeline_calls():
     answer_service_path = ROOT / "src/services/answer/answer_service.py"
     calls = _read_function_calls(answer_service_path, "handle_contract")
@@ -219,12 +268,12 @@ def test_answer_exception_policy_gate_scoped_handlers_require_warning_and_reason
 
 
 def test_decomposition_no_growth_gate_answer_and_reasoning_monolith_line_budgets():
-    # A2.59 patch 4: no-growth guardrail budgets recalibrated to latest reduced baselines.
+    # A2.60 patch 4: no-growth guardrail budgets recalibrated to latest reduced baselines.
     answer_service_path = ROOT / "src/services/answer/answer_service.py"
     reasoning_engine_path = ROOT / "src/layers/pro/reasoning/engine.py"
 
-    answer_service_max_lines = 3535
-    reasoning_engine_max_lines = 743
+    answer_service_max_lines = 3464
+    reasoning_engine_max_lines = 686
 
     answer_service_lines = _line_count(answer_service_path)
     reasoning_engine_lines = _line_count(reasoning_engine_path)

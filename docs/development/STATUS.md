@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-A2.60 patch 3 complete (reasoning multi-agent runtime helper seam extraction with parity)
+A2.60 patch 4 complete (guardrail threshold recalibration + seam/import-budget coverage expansion)
 
 ## Last Completed Anchor
 
@@ -23,7 +23,7 @@ Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 A2.60 - Facade Convergence Phase 4 (Answer/Reasoning)
 
 Current focus:
-- execute patch-4 guardrail threshold recalibration and import-budget expansion
+- execute patch-5 closure checks (focused + full-suite) and docs finalization
 - preserve answer/reasoning decomposition and no-growth guardrail baseline
 - continue one-patch-one-reason execution discipline
 
