@@ -209,6 +209,7 @@ AI-Agent-Hub-V3 is a modular AI platform for production-grade agent systems with
 - [x] A2.53 exception-policy quality gate scope expansion + parity/full-suite closure sync (patch 5)
 - [x] A2.54 diagnostics-contract guardrails inventory/scope-lock (snapshot/policy/parity constraints) (patch 1)
 - [x] A2.54 diagnostics snapshot guardrail expansion for cross-mode keyset stability (patch 2)
+- [x] A2.54 soft-failure policy guardrail expansion for diagnostics reason-code/flag visibility (patch 3)
 
 ### 7) Interface Layer
 

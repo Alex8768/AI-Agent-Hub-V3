@@ -71,7 +71,7 @@ Target A2.54 boundaries:
 
 - [x] Patch 1 — inventory + scope lock
 - [x] Patch 2 — diagnostics snapshot contract expansion
-- [ ] Patch 3 — soft-failure policy guardrail coverage expansion
+- [x] Patch 3 — soft-failure policy guardrail coverage expansion
 - [ ] Patch 4 — exception policy enforcement hardening
 - [ ] Patch 5 — guardrails + parity + closure
 

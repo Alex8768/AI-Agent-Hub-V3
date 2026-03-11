@@ -471,6 +471,91 @@ async def test_answer_service_writes_soft_failure_reason_code_for_apply_diagnost
 
 
 @pytest.mark.asyncio
+async def test_answer_service_writes_soft_failure_reason_code_for_retriever_stats_diagnostics(monkeypatch):
+    class _BrokenRetriever:
+        @property
+        def last_stats(self):
+            raise RuntimeError("retriever-stats-read-failed")
+
+    req = AnswerRequest(query="q", session_id="s1", filters={})
+    resp = SimpleNamespace(
+        answer="ok",
+        diagnostics={"planning_reason_codes": []},
+        provenance=[],
+        used_chunks=[],
+        used_nodes=[],
+        used_edges=[],
+    )
+    http = SimpleNamespace(state=SimpleNamespace(request_id="rid-soft"), headers={})
+
+    await _apply_diagnostics(
+        resp=resp,
+        req=req,
+        http=http,
+        workspace_id="default",
+        retriever=_BrokenRetriever(),
+        llm=None,
+        llm_enabled=False,
+        llm_provider_name="",
+        llm_model="",
+        llm_error="",
+        assistant_mode_enabled=False,
+        assistant_proactive_enabled=False,
+        assistant_actions_enabled=False,
+        assistant_response_language="auto",
+        session_memory_loaded=False,
+        session_memory_hit=False,
+        durable_approval_record_loaded=False,
+        durable_idempotency_record_loaded=False,
+    )
+
+    diag = dict(getattr(resp, "diagnostics", None) or {})
+    assert "answer_service_retriever_stats_soft_failure" in list(diag.get("planning_reason_codes") or [])
+
+
+@pytest.mark.asyncio
+async def test_answer_service_writes_soft_failure_reason_code_for_evidence_type_counts_diagnostics():
+    class _BadEvidenceTypeCounts:
+        def __iter__(self):
+            raise RuntimeError("evidence-type-counts-bad-iter")
+
+    req = AnswerRequest(query="q", session_id="s1", filters={})
+    resp = SimpleNamespace(
+        answer="ok",
+        diagnostics={"planning_reason_codes": [], "evidence_type_counts": _BadEvidenceTypeCounts()},
+        provenance=[],
+        used_chunks=[],
+        used_nodes=[],
+        used_edges=[],
+    )
+    http = SimpleNamespace(state=SimpleNamespace(request_id="rid-soft"), headers={})
+
+    await _apply_diagnostics(
+        resp=resp,
+        req=req,
+        http=http,
+        workspace_id="default",
+        retriever=SimpleNamespace(last_stats={}),
+        llm=None,
+        llm_enabled=False,
+        llm_provider_name="",
+        llm_model="",
+        llm_error="",
+        assistant_mode_enabled=False,
+        assistant_proactive_enabled=False,
+        assistant_actions_enabled=False,
+        assistant_response_language="auto",
+        session_memory_loaded=False,
+        session_memory_hit=True,
+        durable_approval_record_loaded=False,
+        durable_idempotency_record_loaded=False,
+    )
+
+    diag = dict(getattr(resp, "diagnostics", None) or {})
+    assert "answer_service_evidence_type_counts_soft_failure" in list(diag.get("planning_reason_codes") or [])
+
+
+@pytest.mark.asyncio
 async def test_answer_service_save_session_memory_does_not_raise_when_failure_diagnostics_fails():
     class _FailingDiagnosticsResp:
         def __init__(self):
@@ -499,6 +584,31 @@ async def test_answer_service_save_session_memory_does_not_raise_when_failure_di
         workspace_id="default",
         get_memory_store=lambda: _Mem(),
     )
+
+
+@pytest.mark.asyncio
+async def test_answer_service_save_session_memory_sets_failure_flag_when_persist_fails():
+    class _Resp:
+        def __init__(self):
+            self.answer = "ok"
+            self.diagnostics = {}
+
+    class _Mem:
+        async def put(self, **kwargs):
+            _ = kwargs
+            raise RuntimeError("memory-put-failed")
+
+    req = AnswerRequest(query="q", session_id="s1", filters={})
+    resp = _Resp()
+
+    await _save_session_memory(
+        req=req,
+        resp=resp,
+        workspace_id="default",
+        get_memory_store=lambda: _Mem(),
+    )
+
+    assert dict(getattr(resp, "diagnostics", None) or {}).get("session_memory_saved") is False
 
 
 def test_answer_service_log_observability_does_not_raise_when_logger_fails(monkeypatch):
