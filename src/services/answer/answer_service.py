@@ -49,6 +49,10 @@ from src.services.answer.interface_contract import (
     build_answer_service_request_contract,
 )
 from src.services.answer.orchestrator import run_answer_orchestration_core
+from src.services.answer.post_orchestration import (
+    AnswerPostOrchestrationDeps,
+    run_answer_post_orchestration_flow,
+)
 from src.services.answer.response_assembly import run_answer_response_assembly
 
 SESSION_MEMORY_MAX_CHARS = 4000
@@ -3796,309 +3800,48 @@ class AnswerService:
             normalize_low_evidence_friendliness=_normalize_low_evidence_friendliness,
             build_conversational_runtime_parity_bundle=_build_conversational_runtime_parity_bundle,
         )
-        try:
-            if assistant_proactive_enabled:
-                anticipatory = await _run_anticipatory_safe_mode(
-                    req=req,
-                    resp=resp,
-                    workspace_id=workspace_id,
-                    get_memory_store=get_memory_store,
-                )
-                anticipatory = dict(anticipatory or {})
-                anticipatory["proactive_suggestions"] = _rank_proactive_bundle(
-                    dict(anticipatory.get("proactive_suggestions") or {})
-                )
-                anticipatory["draft_actions"] = _build_draft_action_bundle(
-                    proactive_bundle=dict(anticipatory.get("proactive_suggestions") or {}),
-                    language=str(assistant_response_language or "auto"),
-                    actions_enabled=assistant_actions_enabled,
-                )
-                diag = dict(getattr(resp, "diagnostics", None) or {})
-                diag = _wire_runtime_diagnostics(diagnostics=diag)
-                anticipatory["draft_actions"] = _bridge_plan_to_draft_actions(
-                    plan_bundle=dict(diag.get("assistant_plan") or {}),
-                    draft_actions_bundle=dict(anticipatory.get("draft_actions") or {}),
-                    language=str(assistant_response_language or "auto"),
-                    actions_enabled=assistant_actions_enabled,
-                )
-                resp.diagnostics = dict(getattr(resp, "diagnostics", None) or {})
-                resp.diagnostics["anticipatory"] = anticipatory
-                resp.diagnostics = _wire_runtime_diagnostics(diagnostics=resp.diagnostics)
-                plan_bundle = dict(resp.diagnostics.get("assistant_plan") or {})
-                handshake = _build_execution_handshake_bundle(
-                    plan_bundle=plan_bundle,
-                    draft_actions_bundle=dict(anticipatory.get("draft_actions") or {}),
-                    assistant_mode_enabled=assistant_mode_enabled,
-                    actions_enabled=assistant_actions_enabled,
-                )
-                transition_policy = _build_transition_policy_contract()
-                transition_input, transition_policy_eval = _apply_handshake_transition_policy(
-                    transition_input=_extract_handshake_transition_input(req),
-                    draft_actions_bundle=dict(anticipatory.get("draft_actions") or {}),
-                    policy_contract=transition_policy,
-                )
-                transition_input, token_guard_reasons = _apply_durable_confirmation_token_guards(
-                    transition_input=transition_input,
-                    durable_approval_record=loaded_durable_approval,
-                )
-                transition_policy_eval["applied_reason_codes"] = sorted(
-                    set(
-                        [str(x) for x in list(transition_policy_eval.get("applied_reason_codes") or []) if str(x)]
-                        + list(token_guard_reasons or [])
-                    )
-                )
-                transition_input, execution_idempotency = _apply_execution_idempotency_guard(
-                    transition_input=transition_input,
-                    workspace_id=str(workspace_id or ""),
-                    plan_id=str(plan_bundle.get("plan_id", "") or ""),
-                    prior_record=loaded_durable_idempotency,
-                )
-                handshake = _apply_handshake_transition(
-                    handshake_bundle=handshake,
-                    transition_input=transition_input,
-                    draft_actions_bundle=dict(anticipatory.get("draft_actions") or {}),
-                )
-                handshake, rollback_contract_eval = _apply_rollback_contract_guard(
-                    handshake_bundle=handshake,
-                    draft_actions_bundle=dict(anticipatory.get("draft_actions") or {}),
-                )
-                transition_policy_eval["rollback_contract_status"] = str(
-                    rollback_contract_eval.get("status", "not_evaluated") or "not_evaluated"
-                )
-                transition_policy_eval["rollback_missing_action_ids"] = [
-                    str(x) for x in list(rollback_contract_eval.get("rollback_missing_action_ids") or []) if str(x)
-                ]
-                transition_policy_eval["applied_reason_codes"] = sorted(
-                    set(
-                        [str(x) for x in list(transition_policy_eval.get("applied_reason_codes") or []) if str(x)]
-                        + [str(x) for x in list(rollback_contract_eval.get("reason_codes") or []) if str(x)]
-                    )
-                )
-                resp.diagnostics["assistant_execution_handshake"] = handshake
-                resp.diagnostics["execution_transition_policy"] = transition_policy_eval
-                resp.diagnostics["execution_idempotency"] = execution_idempotency
-                executed_action_ids, pilot_runtime_reasons = _run_execution_pilot_runtime(
-                    handshake_bundle=handshake,
-                    draft_actions_bundle=dict(anticipatory.get("draft_actions") or {}),
-                    actions_enabled=assistant_actions_enabled,
-                )
-                resp.diagnostics["execution_transition_policy"]["applied_reason_codes"] = sorted(
-                    set(
-                        [
-                            str(x)
-                            for x in list(
-                                (dict(resp.diagnostics.get("execution_transition_policy") or {})).get(
-                                    "applied_reason_codes", []
-                                )
-                                or []
-                            )
-                            if str(x)
-                        ]
-                        + [str(x) for x in list(pilot_runtime_reasons or []) if str(x)]
-                    )
-                )
-                resp.diagnostics["assistant_execution_receipt"] = _build_execution_receipt_stub(
-                    handshake_bundle=handshake,
-                    plan_bundle=plan_bundle,
-                    draft_actions_bundle=dict(anticipatory.get("draft_actions") or {}),
-                    workspace_id=str(workspace_id or ""),
-                    request_id=str(get_request_id(http) or ""),
-                    executed_action_ids=executed_action_ids,
-                )
-                resp.diagnostics["execution_gateway_contract_version"] = EXECUTION_GATEWAY_CONTRACT_VERSION
-                resp.diagnostics["assistant_execution_gateway"] = _build_safe_mode_execution_gateway(
-                    handshake_bundle=handshake,
-                    receipt_bundle=dict(resp.diagnostics.get("assistant_execution_receipt") or {}),
-                    actions_enabled=assistant_actions_enabled,
-                )
-                resp.diagnostics["execution_pilot_contract_version"] = EXECUTION_PILOT_CONTRACT_VERSION
-                resp.diagnostics["assistant_execution_pilot"] = _build_execution_pilot_bundle(
-                    handshake_bundle=handshake,
-                    draft_actions_bundle=dict(anticipatory.get("draft_actions") or {}),
-                    receipt_bundle=dict(resp.diagnostics.get("assistant_execution_receipt") or {}),
-                    actions_enabled=assistant_actions_enabled,
-                )
-                resp.diagnostics["assistant_approval_session"] = _build_approval_session_bundle(
-                    handshake_bundle=handshake,
-                    plan_bundle=plan_bundle,
-                    workspace_id=str(workspace_id or ""),
-                    request_id=str(get_request_id(http) or ""),
-                )
-                resp.diagnostics["durable_approval_session_contract_version"] = DURABLE_APPROVAL_SESSION_CONTRACT_VERSION
-                resp.diagnostics["assistant_durable_approval_session"] = _build_durable_approval_session_record(
-                    approval_session_bundle=dict(resp.diagnostics.get("assistant_approval_session") or {}),
-                    session_id=str(getattr(req, "session_id", "") or "default"),
-                    confirmation_token=str(handshake.get("confirmation_token", "") or ""),
-                    transition_input=transition_input,
-                    previous_record=loaded_durable_approval,
-                )
-                resp.diagnostics["idempotency_record_contract_version"] = IDEMPOTENCY_RECORD_CONTRACT_VERSION
-                resp.diagnostics["assistant_idempotency_record"] = _build_idempotency_record_snapshot(
-                    execution_idempotency_bundle=execution_idempotency,
-                    workspace_id=str(workspace_id or ""),
-                    plan_id=str(plan_bundle.get("plan_id", "") or ""),
-                    transition_input=transition_input,
-                )
-            else:
-                resp.diagnostics = dict(getattr(resp, "diagnostics", None) or {})
-                base = dict(resp.diagnostics.get("anticipatory") or {})
-                proactive = dict(base.get("proactive_suggestions") or {})
-                reason_codes = sorted(
-                    set(
-                        [
-                            str(x)
-                            for x in list(proactive.get("reason_codes") or [])
-                            if str(x or "").strip()
-                        ]
-                        + ["assistant_proactive_disabled"]
-                    )
-                )
-                proactive["reason_codes"] = reason_codes
-                base["proactive_suggestions"] = proactive
-                base["draft_actions"] = _build_draft_action_bundle(
-                    proactive_bundle=proactive,
-                    language=str(assistant_response_language or "auto"),
-                    actions_enabled=False,
-                )
-                diag = dict(resp.diagnostics or {})
-                diag = _wire_runtime_diagnostics(diagnostics=diag)
-                base["draft_actions"] = _bridge_plan_to_draft_actions(
-                    plan_bundle=dict(diag.get("assistant_plan") or {}),
-                    draft_actions_bundle=dict(base.get("draft_actions") or {}),
-                    language=str(assistant_response_language or "auto"),
-                    actions_enabled=assistant_actions_enabled,
-                )
-                resp.diagnostics["anticipatory"] = base
-                resp.diagnostics = _wire_runtime_diagnostics(diagnostics=resp.diagnostics)
-                plan_bundle = dict(resp.diagnostics.get("assistant_plan") or {})
-                handshake = _build_execution_handshake_bundle(
-                    plan_bundle=plan_bundle,
-                    draft_actions_bundle=dict(base.get("draft_actions") or {}),
-                    assistant_mode_enabled=assistant_mode_enabled,
-                    actions_enabled=assistant_actions_enabled,
-                )
-                transition_policy = _build_transition_policy_contract()
-                transition_input, transition_policy_eval = _apply_handshake_transition_policy(
-                    transition_input=_extract_handshake_transition_input(req),
-                    draft_actions_bundle=dict(base.get("draft_actions") or {}),
-                    policy_contract=transition_policy,
-                )
-                transition_input, token_guard_reasons = _apply_durable_confirmation_token_guards(
-                    transition_input=transition_input,
-                    durable_approval_record=loaded_durable_approval,
-                )
-                transition_policy_eval["applied_reason_codes"] = sorted(
-                    set(
-                        [str(x) for x in list(transition_policy_eval.get("applied_reason_codes") or []) if str(x)]
-                        + list(token_guard_reasons or [])
-                    )
-                )
-                transition_input, execution_idempotency = _apply_execution_idempotency_guard(
-                    transition_input=transition_input,
-                    workspace_id=str(workspace_id or ""),
-                    plan_id=str(plan_bundle.get("plan_id", "") or ""),
-                    prior_record=loaded_durable_idempotency,
-                )
-                handshake = _apply_handshake_transition(
-                    handshake_bundle=handshake,
-                    transition_input=transition_input,
-                    draft_actions_bundle=dict(base.get("draft_actions") or {}),
-                )
-                handshake, rollback_contract_eval = _apply_rollback_contract_guard(
-                    handshake_bundle=handshake,
-                    draft_actions_bundle=dict(base.get("draft_actions") or {}),
-                )
-                transition_policy_eval["rollback_contract_status"] = str(
-                    rollback_contract_eval.get("status", "not_evaluated") or "not_evaluated"
-                )
-                transition_policy_eval["rollback_missing_action_ids"] = [
-                    str(x) for x in list(rollback_contract_eval.get("rollback_missing_action_ids") or []) if str(x)
-                ]
-                transition_policy_eval["applied_reason_codes"] = sorted(
-                    set(
-                        [str(x) for x in list(transition_policy_eval.get("applied_reason_codes") or []) if str(x)]
-                        + [str(x) for x in list(rollback_contract_eval.get("reason_codes") or []) if str(x)]
-                    )
-                )
-                resp.diagnostics["assistant_execution_handshake"] = handshake
-                resp.diagnostics["execution_transition_policy"] = transition_policy_eval
-                resp.diagnostics["execution_idempotency"] = execution_idempotency
-                executed_action_ids, pilot_runtime_reasons = _run_execution_pilot_runtime(
-                    handshake_bundle=handshake,
-                    draft_actions_bundle=dict(base.get("draft_actions") or {}),
-                    actions_enabled=assistant_actions_enabled,
-                )
-                resp.diagnostics["execution_transition_policy"]["applied_reason_codes"] = sorted(
-                    set(
-                        [
-                            str(x)
-                            for x in list(
-                                (dict(resp.diagnostics.get("execution_transition_policy") or {})).get(
-                                    "applied_reason_codes", []
-                                )
-                                or []
-                            )
-                            if str(x)
-                        ]
-                        + [str(x) for x in list(pilot_runtime_reasons or []) if str(x)]
-                    )
-                )
-                resp.diagnostics["assistant_execution_receipt"] = _build_execution_receipt_stub(
-                    handshake_bundle=handshake,
-                    plan_bundle=plan_bundle,
-                    draft_actions_bundle=dict(base.get("draft_actions") or {}),
-                    workspace_id=str(workspace_id or ""),
-                    request_id=str(get_request_id(http) or ""),
-                    executed_action_ids=executed_action_ids,
-                )
-                resp.diagnostics["execution_gateway_contract_version"] = EXECUTION_GATEWAY_CONTRACT_VERSION
-                resp.diagnostics["assistant_execution_gateway"] = _build_safe_mode_execution_gateway(
-                    handshake_bundle=handshake,
-                    receipt_bundle=dict(resp.diagnostics.get("assistant_execution_receipt") or {}),
-                    actions_enabled=assistant_actions_enabled,
-                )
-                resp.diagnostics["execution_pilot_contract_version"] = EXECUTION_PILOT_CONTRACT_VERSION
-                resp.diagnostics["assistant_execution_pilot"] = _build_execution_pilot_bundle(
-                    handshake_bundle=handshake,
-                    draft_actions_bundle=dict(base.get("draft_actions") or {}),
-                    receipt_bundle=dict(resp.diagnostics.get("assistant_execution_receipt") or {}),
-                    actions_enabled=assistant_actions_enabled,
-                )
-                resp.diagnostics["assistant_approval_session"] = _build_approval_session_bundle(
-                    handshake_bundle=handshake,
-                    plan_bundle=plan_bundle,
-                    workspace_id=str(workspace_id or ""),
-                    request_id=str(get_request_id(http) or ""),
-                )
-                resp.diagnostics["durable_approval_session_contract_version"] = DURABLE_APPROVAL_SESSION_CONTRACT_VERSION
-                resp.diagnostics["assistant_durable_approval_session"] = _build_durable_approval_session_record(
-                    approval_session_bundle=dict(resp.diagnostics.get("assistant_approval_session") or {}),
-                    session_id=str(getattr(req, "session_id", "") or "default"),
-                    confirmation_token=str(handshake.get("confirmation_token", "") or ""),
-                    transition_input=transition_input,
-                    previous_record=loaded_durable_approval,
-                )
-                resp.diagnostics["idempotency_record_contract_version"] = IDEMPOTENCY_RECORD_CONTRACT_VERSION
-                resp.diagnostics["assistant_idempotency_record"] = _build_idempotency_record_snapshot(
-                    execution_idempotency_bundle=execution_idempotency,
-                    workspace_id=str(workspace_id or ""),
-                    plan_id=str(plan_bundle.get("plan_id", "") or ""),
-                    transition_input=transition_input,
-                )
-        except Exception as exc:
-            resp.diagnostics = _append_planning_reason_codes(
-                diagnostics=dict(getattr(resp, "diagnostics", None) or {}),
-                reason_codes=["answer_service_post_orchestration_soft_failure"],
-            )
-            _LOGGER.warning(
-                "Answer service soft-failure: post-orchestration wiring skipped",
-                context={
-                    "workspace_id": str(workspace_id or ""),
-                    "error": str(exc),
-                    "error_type": type(exc).__name__,
-                    "reason_code": "answer_service_post_orchestration_soft_failure",
-                },
-            )
+        resp = await run_answer_post_orchestration_flow(
+            req=req,
+            http=http,
+            resp=resp,
+            workspace_id=workspace_id,
+            assistant_mode_enabled=assistant_mode_enabled,
+            assistant_proactive_enabled=assistant_proactive_enabled,
+            assistant_actions_enabled=assistant_actions_enabled,
+            assistant_response_language=assistant_response_language,
+            loaded_durable_approval=loaded_durable_approval,
+            loaded_durable_idempotency=loaded_durable_idempotency,
+            get_memory_store=get_memory_store,
+            deps=AnswerPostOrchestrationDeps(
+                run_anticipatory_safe_mode=_run_anticipatory_safe_mode,
+                rank_proactive_bundle=_rank_proactive_bundle,
+                build_draft_action_bundle=_build_draft_action_bundle,
+                wire_runtime_diagnostics=_wire_runtime_diagnostics,
+                bridge_plan_to_draft_actions=_bridge_plan_to_draft_actions,
+                build_execution_handshake_bundle=_build_execution_handshake_bundle,
+                build_transition_policy_contract=_build_transition_policy_contract,
+                apply_handshake_transition_policy=_apply_handshake_transition_policy,
+                extract_handshake_transition_input=_extract_handshake_transition_input,
+                apply_durable_confirmation_token_guards=_apply_durable_confirmation_token_guards,
+                apply_execution_idempotency_guard=_apply_execution_idempotency_guard,
+                apply_handshake_transition=_apply_handshake_transition,
+                apply_rollback_contract_guard=_apply_rollback_contract_guard,
+                run_execution_pilot_runtime=_run_execution_pilot_runtime,
+                build_execution_receipt_stub=_build_execution_receipt_stub,
+                build_safe_mode_execution_gateway=_build_safe_mode_execution_gateway,
+                build_execution_pilot_bundle=_build_execution_pilot_bundle,
+                build_approval_session_bundle=_build_approval_session_bundle,
+                build_durable_approval_session_record=_build_durable_approval_session_record,
+                build_idempotency_record_snapshot=_build_idempotency_record_snapshot,
+                append_planning_reason_codes=_append_planning_reason_codes,
+                get_request_id=get_request_id,
+                logger=_LOGGER,
+                durable_approval_session_contract_version=DURABLE_APPROVAL_SESSION_CONTRACT_VERSION,
+                idempotency_record_contract_version=IDEMPOTENCY_RECORD_CONTRACT_VERSION,
+                execution_gateway_contract_version=EXECUTION_GATEWAY_CONTRACT_VERSION,
+                execution_pilot_contract_version=EXECUTION_PILOT_CONTRACT_VERSION,
+            ),
+        )
 
         try:
             resp.diagnostics = dict(getattr(resp, "diagnostics", None) or {})
