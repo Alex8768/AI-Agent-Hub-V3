@@ -6,7 +6,18 @@ from typing import Any
 
 from fastapi import HTTPException, Request
 
+from src.adapters.logging_adapter import get_logger
 from src.observability.request_context import get_request_id
+
+_LOGGER = get_logger()
+
+
+def _append_planning_reason_codes(*, resp: object, reason_codes: list[str]) -> None:
+    diag = dict(getattr(resp, "diagnostics", None) or {})
+    merged_codes = [str(x) for x in list(diag.get("planning_reason_codes") or []) if str(x or "").strip()]
+    merged_codes.extend(str(x) for x in list(reason_codes or []) if str(x or "").strip())
+    diag["planning_reason_codes"] = sorted(set(merged_codes))
+    resp.diagnostics = diag
 
 
 @dataclass(slots=True)
@@ -42,6 +53,7 @@ async def run_answer_orchestration_core(
     build_assistant_fallback_answer: object,
     apply_diagnostics: object,
 ) -> AnswerOrchestrationResult:
+    soft_failure_reason_codes: list[str] = []
     llm, llm_enabled, llm_provider_name, llm_model, llm_error = await build_llm_adapter(settings=settings)
     assistant_mode_enabled = bool(runtime_context.get("assistant_mode_enabled", False))
     assistant_proactive_enabled = bool(runtime_context.get("assistant_proactive_enabled", False))
@@ -79,17 +91,52 @@ async def run_answer_orchestration_core(
 
     try:
         resp.request_id = get_request_id(http) or ""
-    except Exception:
-        resp.request_id = ""
+    except Exception as exc:
+        try:
+            object.__setattr__(resp, "request_id", "")
+        except Exception:
+            pass
+        soft_failure_reason_codes.append("answer_orchestrator_request_id_assignment_failed")
+        _LOGGER.warning(
+            "Answer orchestrator soft-failure: request_id assignment failed",
+            context={
+                "workspace_id": str(workspace_id or ""),
+                "error": str(exc),
+                "error_type": type(exc).__name__,
+                "reason_code": "answer_orchestrator_request_id_assignment_failed",
+            },
+        )
     try:
         resp.workspace_id = workspace_id or ""
-    except Exception:
-        resp.workspace_id = ""
+    except Exception as exc:
+        try:
+            object.__setattr__(resp, "workspace_id", "")
+        except Exception:
+            pass
+        soft_failure_reason_codes.append("answer_orchestrator_workspace_id_assignment_failed")
+        _LOGGER.warning(
+            "Answer orchestrator soft-failure: workspace_id assignment failed",
+            context={
+                "workspace_id": str(workspace_id or ""),
+                "error": str(exc),
+                "error_type": type(exc).__name__,
+                "reason_code": "answer_orchestrator_workspace_id_assignment_failed",
+            },
+        )
     try:
         resp.timings = dict(resp.timings or {})
         resp.timings.setdefault("total_ms", float(total_ms))
-    except Exception:
-        pass
+    except Exception as exc:
+        soft_failure_reason_codes.append("answer_orchestrator_timing_assignment_failed")
+        _LOGGER.warning(
+            "Answer orchestrator soft-failure: timings assignment failed",
+            context={
+                "workspace_id": str(workspace_id or ""),
+                "error": str(exc),
+                "error_type": type(exc).__name__,
+                "reason_code": "answer_orchestrator_timing_assignment_failed",
+            },
+        )
 
     await apply_diagnostics(
         resp=resp,
@@ -111,6 +158,8 @@ async def run_answer_orchestration_core(
         durable_approval_record_loaded=bool(loaded_durable_approval),
         durable_idempotency_record_loaded=bool(loaded_durable_idempotency),
     )
+    if soft_failure_reason_codes:
+        _append_planning_reason_codes(resp=resp, reason_codes=soft_failure_reason_codes)
 
     return AnswerOrchestrationResult(
         resp=resp,

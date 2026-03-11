@@ -8,6 +8,7 @@ from typing import Any
 
 from fastapi import Request
 
+from src.adapters.logging_adapter import get_logger
 from src.layers.pro.anticipatory import (
     OpportunityScanner,
     WhisperRunner,
@@ -67,6 +68,7 @@ _LLM_PLANNER_ALLOWED_INTENTS: tuple[str, ...] = (
     "general_chat",
     "general_query",
 )
+_LOGGER = get_logger()
 
 
 def _clip_text(value: object, *, max_chars: int = SESSION_MEMORY_MAX_CHARS) -> str:
@@ -1171,6 +1173,18 @@ def _build_conversational_runtime_parity_bundle(
         },
         "reason_codes": sorted(set(reason_codes)),
     }
+
+
+def _append_planning_reason_codes(
+    *,
+    diagnostics: dict[str, object],
+    reason_codes: list[str],
+) -> dict[str, object]:
+    diag = dict(diagnostics or {})
+    merged = [str(x) for x in list(diag.get("planning_reason_codes") or []) if str(x or "").strip()]
+    merged.extend(str(x) for x in list(reason_codes or []) if str(x or "").strip())
+    diag["planning_reason_codes"] = sorted(set(merged))
+    return diag
 
 
 def _build_feedback_learning_bundle(
@@ -4071,8 +4085,20 @@ class AnswerService:
                     plan_id=str(plan_bundle.get("plan_id", "") or ""),
                     transition_input=transition_input,
                 )
-        except Exception:
-            pass
+        except Exception as exc:
+            resp.diagnostics = _append_planning_reason_codes(
+                diagnostics=dict(getattr(resp, "diagnostics", None) or {}),
+                reason_codes=["answer_service_post_orchestration_soft_failure"],
+            )
+            _LOGGER.warning(
+                "Answer service soft-failure: post-orchestration wiring skipped",
+                context={
+                    "workspace_id": str(workspace_id or ""),
+                    "error": str(exc),
+                    "error_type": type(exc).__name__,
+                    "reason_code": "answer_service_post_orchestration_soft_failure",
+                },
+            )
 
         try:
             resp.diagnostics = dict(getattr(resp, "diagnostics", None) or {})
@@ -4081,8 +4107,20 @@ class AnswerService:
                 loaded_approval=loaded_durable_approval,
                 loaded_idempotency=loaded_durable_idempotency,
             )
-        except Exception:
-            pass
+        except Exception as exc:
+            resp.diagnostics = _append_planning_reason_codes(
+                diagnostics=dict(getattr(resp, "diagnostics", None) or {}),
+                reason_codes=["answer_service_durable_hydration_soft_failure"],
+            )
+            _LOGGER.warning(
+                "Answer service soft-failure: durable diagnostics hydration skipped",
+                context={
+                    "workspace_id": str(workspace_id or ""),
+                    "error": str(exc),
+                    "error_type": type(exc).__name__,
+                    "reason_code": "answer_service_durable_hydration_soft_failure",
+                },
+            )
 
         try:
             await _persist_durable_records(
@@ -4091,8 +4129,20 @@ class AnswerService:
                 workspace_id=workspace_id,
                 get_memory_store=get_memory_store,
             )
-        except Exception:
-            pass
+        except Exception as exc:
+            resp.diagnostics = _append_planning_reason_codes(
+                diagnostics=dict(getattr(resp, "diagnostics", None) or {}),
+                reason_codes=["answer_service_durable_persist_soft_failure"],
+            )
+            _LOGGER.warning(
+                "Answer service soft-failure: durable records persist skipped",
+                context={
+                    "workspace_id": str(workspace_id or ""),
+                    "error": str(exc),
+                    "error_type": type(exc).__name__,
+                    "reason_code": "answer_service_durable_persist_soft_failure",
+                },
+            )
 
         await _save_session_memory(
             req=req,

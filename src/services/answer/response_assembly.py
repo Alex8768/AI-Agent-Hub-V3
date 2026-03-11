@@ -2,6 +2,10 @@ from __future__ import annotations
 
 from typing import Any
 
+from src.adapters.logging_adapter import get_logger
+
+_LOGGER = get_logger()
+
 
 async def run_answer_response_assembly(
     *,
@@ -69,6 +73,18 @@ async def run_answer_response_assembly(
         reason_codes.extend(list(conversational_runtime_parity.get("reason_codes") or []))
         diag["planning_reason_codes"] = sorted(set(reason_codes))
         resp.diagnostics = diag
-    except Exception:
-        pass
+    except Exception as exc:
+        diag = dict(getattr(resp, "diagnostics", None) or {})
+        reason_codes = [str(x) for x in list(diag.get("planning_reason_codes") or []) if str(x or "").strip()]
+        reason_codes.append("answer_response_assembly_soft_failure")
+        diag["planning_reason_codes"] = sorted(set(reason_codes))
+        resp.diagnostics = diag
+        _LOGGER.warning(
+            "Answer response assembly soft-failure handled",
+            context={
+                "error": str(exc),
+                "error_type": type(exc).__name__,
+                "reason_code": "answer_response_assembly_soft_failure",
+            },
+        )
     return resp
