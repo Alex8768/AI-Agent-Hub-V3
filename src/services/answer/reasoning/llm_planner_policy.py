@@ -363,3 +363,67 @@ def build_transition_policy_contract(
         "enforce_allowlisted_action_types": True,
         "allowed_decisions": ["approve", "cancel"],
     }
+
+
+def build_assistant_recovery_policy_contract() -> dict[str, object]:
+    return {
+        "mode": "assistant_chat_recovery_guarded",
+        "allow_low_evidence_only": True,
+        "allowed_intents": ["general_chat", "general_query"],
+        "block_greeting_queries": True,
+        "allowed_languages": ["ru", "en"],
+        "require_assistant_mode": True,
+        "fallback_on_policy_violation": True,
+    }
+
+
+def apply_assistant_recovery_policy_guards(
+    *,
+    policy_contract: dict[str, object],
+    assistant_mode_enabled: bool,
+    has_evidence: bool,
+    plan_intent: str,
+    query: str,
+    target_language: str,
+    normalize_language_tag_fn: object,
+    is_simple_greeting_query_fn: object,
+) -> tuple[bool, dict[str, object]]:
+    policy = dict(policy_contract or {})
+    allowed_intents = {str(x).strip() for x in list(policy.get("allowed_intents") or []) if str(x).strip()}
+    allowed_languages = {str(x).strip() for x in list(policy.get("allowed_languages") or []) if str(x).strip()}
+    allow_low_evidence_only = bool(policy.get("allow_low_evidence_only", True))
+    block_greetings = bool(policy.get("block_greeting_queries", True))
+    require_assistant_mode = bool(policy.get("require_assistant_mode", True))
+    fallback_on_violation = bool(policy.get("fallback_on_policy_violation", True))
+
+    normalized_intent = str(plan_intent or "general_query").strip() or "general_query"
+    if callable(normalize_language_tag_fn):
+        normalized_language = str(normalize_language_tag_fn(target_language, query=query) or "")
+    else:
+        normalized_language = str(target_language or "").strip().lower() or "auto"
+    violations: list[str] = []
+    applied_reason_codes: list[str] = []
+
+    if require_assistant_mode and not assistant_mode_enabled:
+        violations.append("assistant_chat_recovery_assistant_mode_disabled")
+    if allow_low_evidence_only and has_evidence:
+        violations.append("assistant_chat_recovery_requires_low_evidence")
+    if normalized_intent not in allowed_intents:
+        violations.append("assistant_chat_recovery_intent_not_allowlisted")
+    if block_greetings and callable(is_simple_greeting_query_fn) and bool(is_simple_greeting_query_fn(query)):
+        violations.append("assistant_chat_recovery_greeting_blocked")
+    if normalized_language not in allowed_languages:
+        violations.append("assistant_chat_recovery_language_not_allowlisted")
+
+    allow_recovery = not violations
+    if violations and fallback_on_violation:
+        allow_recovery = False
+        applied_reason_codes.append("assistant_chat_recovery_policy_forced_fallback")
+
+    policy_eval = {
+        **policy,
+        "target_language": normalized_language,
+        "violations": sorted(set(violations)),
+        "applied_reason_codes": sorted(set(applied_reason_codes)),
+    }
+    return allow_recovery, policy_eval

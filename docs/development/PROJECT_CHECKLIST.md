@@ -65,7 +65,7 @@
 ## Current Work — A2.64 Facade Convergence Phase 8 (Answer/Reasoning)
 
 - [x] Patch 1 - inventory + scope lock
-- [ ] Patch 2 - Answer extraction phase-8
+- [x] Patch 2 - Answer extraction phase-8
 - [ ] Patch 3 - Reasoning extraction phase-8
 - [ ] Patch 4 - Guardrail threshold recalibration and import-budget expansion
 - [ ] Patch 5 - guardrails + parity + closure

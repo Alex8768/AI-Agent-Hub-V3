@@ -85,10 +85,12 @@ from src.services.answer.reasoning.runtime_adapter import (
     build_reasoning_runtime_adapter as _build_reasoning_runtime_adapter,
 )
 from src.services.answer.reasoning.llm_planner_policy import (
+    apply_assistant_recovery_policy_guards as _apply_assistant_recovery_policy_guards_impl,
     apply_feedback_adaptation_policy_guards as _apply_feedback_adaptation_policy_guards,
     apply_feedback_policy_guards as _apply_feedback_policy_guards,
     apply_llm_planner_policy_guards as _apply_llm_planner_policy_guards,
     apply_tool_selection_policy_guards as _apply_tool_selection_policy_guards,
+    build_assistant_recovery_policy_contract as _build_assistant_recovery_policy_contract_impl,
     build_transition_policy_contract as _build_transition_policy_contract_impl,
     build_feedback_adaptation_policy_contract as _build_feedback_adaptation_policy_contract,
     build_feedback_policy_contract as _build_feedback_policy_contract,
@@ -289,15 +291,7 @@ _normalize_low_evidence_friendliness = _RESPONSE_STYLE_RUNTIME["normalize_low_ev
 
 
 def _build_assistant_recovery_policy_contract() -> dict[str, object]:
-    return {
-        "mode": "assistant_chat_recovery_guarded",
-        "allow_low_evidence_only": True,
-        "allowed_intents": ["general_chat", "general_query"],
-        "block_greeting_queries": True,
-        "allowed_languages": ["ru", "en"],
-        "require_assistant_mode": True,
-        "fallback_on_policy_violation": True,
-    }
+    return _build_assistant_recovery_policy_contract_impl()
 
 
 def _apply_assistant_recovery_policy_guards(
@@ -309,42 +303,16 @@ def _apply_assistant_recovery_policy_guards(
     query: str,
     target_language: str,
 ) -> tuple[bool, dict[str, object]]:
-    policy = dict(policy_contract or {})
-    allowed_intents = {str(x).strip() for x in list(policy.get("allowed_intents") or []) if str(x).strip()}
-    allowed_languages = {str(x).strip() for x in list(policy.get("allowed_languages") or []) if str(x).strip()}
-    allow_low_evidence_only = bool(policy.get("allow_low_evidence_only", True))
-    block_greetings = bool(policy.get("block_greeting_queries", True))
-    require_assistant_mode = bool(policy.get("require_assistant_mode", True))
-    fallback_on_violation = bool(policy.get("fallback_on_policy_violation", True))
-
-    normalized_intent = str(plan_intent or "general_query").strip() or "general_query"
-    normalized_language = _normalize_language_tag(target_language, query=query)
-    violations: list[str] = []
-    applied_reason_codes: list[str] = []
-
-    if require_assistant_mode and not assistant_mode_enabled:
-        violations.append("assistant_chat_recovery_assistant_mode_disabled")
-    if allow_low_evidence_only and has_evidence:
-        violations.append("assistant_chat_recovery_requires_low_evidence")
-    if normalized_intent not in allowed_intents:
-        violations.append("assistant_chat_recovery_intent_not_allowlisted")
-    if block_greetings and _is_simple_greeting_query(query):
-        violations.append("assistant_chat_recovery_greeting_blocked")
-    if normalized_language not in allowed_languages:
-        violations.append("assistant_chat_recovery_language_not_allowlisted")
-
-    allow_recovery = not violations
-    if violations and fallback_on_violation:
-        allow_recovery = False
-        applied_reason_codes.append("assistant_chat_recovery_policy_forced_fallback")
-
-    policy_eval = {
-        **policy,
-        "target_language": normalized_language,
-        "violations": sorted(set(violations)),
-        "applied_reason_codes": sorted(set(applied_reason_codes)),
-    }
-    return allow_recovery, policy_eval
+    return _apply_assistant_recovery_policy_guards_impl(
+        policy_contract=policy_contract,
+        assistant_mode_enabled=assistant_mode_enabled,
+        has_evidence=has_evidence,
+        plan_intent=plan_intent,
+        query=query,
+        target_language=target_language,
+        normalize_language_tag_fn=_normalize_language_tag,
+        is_simple_greeting_query_fn=_is_simple_greeting_query,
+    )
 
 
 def _rank_proactive_bundle(bundle: dict[str, object]) -> dict[str, object]:
