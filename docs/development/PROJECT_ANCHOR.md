@@ -71,6 +71,13 @@ Patch 3 phase-1 extraction completed:
 - define and execute first safe extraction from `src/layers/pro/reasoning/engine.py`,
 - prioritize evaluation/self-check/diagnostics clusters with parity preserved.
 
+Patch 4 artifacts:
+- Move map document: `docs/architecture/reasoning-decomposition-move-map-a2.57.md`
+- First safe extraction delivered:
+  - `engine.py` diagnostics/evaluation runtime-contract helpers extracted to
+    `src/layers/pro/reasoning/diagnostics/runtime_contracts.py`
+  - `ReasoningEngine` keeps compatibility wrappers delegating to extracted helpers
+
 #### Patch 5 - Guardrails + parity + closure
 - add/update deterministic guardrails for decomposition constraints,
 - run focused and full-suite checks and close A2.57 with docs sync.
@@ -80,7 +87,7 @@ Patch 3 phase-1 extraction completed:
 - [x] Patch 1 — inventory + scope lock
 - [x] Patch 2 - Answer move-map and package scaffolding
 - [x] Patch 3 - Answer heavy-cluster extraction
-- [ ] Patch 4 - Reasoning engine move-map and first extraction
+- [x] Patch 4 - Reasoning engine move-map and first extraction
 - [ ] Patch 5 - guardrails + parity + closure
 
 ### Non-Negotiable Rules

@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-A2.57 patch 3 complete - answer heavy-cluster extraction phase 1
+A2.57 patch 4 complete - reasoning engine move-map and first extraction
 
 ## Last Completed Anchor
 
@@ -21,7 +21,7 @@ A2.56 closed with:
 A2.57 - Application Decomposition Regime (Answer/Reasoning No-Growth)
 
 Current focus:
-- start reasoning engine move-map and first safe extraction
+- complete A2.57 closure guardrails and full parity verification
 - keep answer and reasoning behavior/API contracts unchanged
 - continue extraction-only and thin-facade-only decomposition flow
 
