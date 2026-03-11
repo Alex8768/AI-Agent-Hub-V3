@@ -59,7 +59,20 @@ Patch 1 artifacts:
 - reduce facade branching and preserve endpoint/debug contract behavior.
 
 Patch 2 artifacts:
-- pending.
+- retrieval runtime adapter seam extracted into
+  `src/services/answer/retrieval/adapter.py`:
+  - `RetrieverAdapter`
+- `src/services/answer/answer_service.py` now retains thin compatibility wrapper:
+  - local `RetrieverAdapter` delegates to extracted retrieval adapter implementation
+- `src/services/answer/retrieval/__init__.py` exports extracted adapter seam
+- facade reduction achieved:
+  - `src/services/answer/answer_service.py`: `1896 -> 1807` lines
+- focused parity/guardrail checks green:
+  - `tests/unit/services/answer/test_answer_service_debug_snapshot.py`
+  - `tests/unit/services/answer/test_answer_soft_failure_observability.py`
+  - `tests/unit/services/answer/test_answer_orchestration_quality_gate.py`
+  - `tests/unit/layers/pro/test_reasoning_anticipatory_quality_gate.py`
+  - result: `77 passed`
 
 #### Patch 3 - Reasoning extraction phase-23
 - extract next bounded clusters from `reasoning/engine.py` (runtime fallback / diagnostics helper seams),
@@ -85,7 +98,7 @@ Patch 5 artifacts:
 ### Progress
 
 - [x] Patch 1 — inventory + scope lock
-- [ ] Patch 2 - Answer extraction phase-23
+- [x] Patch 2 - Answer extraction phase-23
 - [ ] Patch 3 - Reasoning extraction phase-23
 - [ ] Patch 4 - Guardrail threshold recalibration and import-budget expansion
 - [ ] Patch 5 - guardrails + parity + closure

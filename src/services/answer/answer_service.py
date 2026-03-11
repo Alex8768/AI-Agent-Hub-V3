@@ -1692,97 +1692,24 @@ async def _build_llm_adapter(*, settings: object) -> tuple[object | None, bool, 
 
 
 class RetrieverAdapter:
+    """Compatibility wrapper for extracted retrieval runtime adapter."""
+
     def __init__(self, *, engine: object, hybrid: object, workspace_id: str):
-        self._engine = engine
-        self._hybrid = hybrid
-        self._workspace_id = workspace_id
-        self.last_stats: dict[str, object] = {}
-        self.last_top_evidence: list[str] = []
+        import importlib
+
+        impl_cls = getattr(importlib.import_module("src.services.answer.retrieval.adapter"), "RetrieverAdapter")
+        self._impl = impl_cls(engine=engine, hybrid=hybrid, workspace_id=workspace_id)
+
+    @property
+    def last_stats(self) -> dict[str, object]:
+        return dict(getattr(self._impl, "last_stats", {}) or {})
+
+    @property
+    def last_top_evidence(self) -> list[str]:
+        return list(getattr(self._impl, "last_top_evidence", []) or [])
 
     async def retrieve(self, request: AnswerRequest):
-        out = await self._hybrid.retrieve(
-            engine=self._engine,
-            workspace_id=self._workspace_id,
-            query=request.query,
-            k=request.k,
-            filters=request.filters,
-            similarity_threshold=0.0,
-            graph_depth=request.graph_depth,
-            evidence_max_total=int(getattr(request, "evidence_max_total", 50) or 50),
-            evidence_max_chunks=getattr(request, "evidence_max_chunks", None),
-            evidence_max_memory=getattr(request, "evidence_max_memory", None),
-            evidence_max_edges=getattr(request, "evidence_max_edges", None),
-            evidence_dedupe=bool(getattr(request, "evidence_dedupe", True)),
-            evidence_rerank=bool(getattr(request, "evidence_rerank", True)),
-        )
-
-        graph = getattr(out, "graph", None)
-        evidence = getattr(out, "evidence", None)
-        results = getattr(out, "results", None)
-
-        if isinstance(out, dict):
-            graph = out.get("graph")
-            evidence = out.get("evidence")
-            results = out.get("results")
-
-        graph = graph or {"nodes": [], "edges": []}
-        evidence = list(evidence or [])
-        results = list(results or [])
-
-        # merge retriever stats (best-effort)
-        try:
-            stats = out.get("stats") if isinstance(out, dict) else getattr(out, "stats", None)
-            if isinstance(stats, dict) and stats:
-                self.last_stats = dict(self.last_stats or {})
-                for k, v in stats.items():
-                    self.last_stats.setdefault(str(k), v)
-        except Exception as exc:
-            _LOGGER.warning(
-                "Answer service soft-failure: retriever adapter stats merge skipped",
-                context={
-                    "workspace_id": str(self.workspace_id or ""),
-                    "error": str(exc),
-                    "error_type": type(exc).__name__,
-                    "reason_code": "answer_service_retriever_adapter_stats_merge_soft_failure",
-                },
-            )
-
-        # Hybrid retriever owns evidence policy in A1.5. Keep adapter diagnostics additive only.
-        self.last_stats = dict(self.last_stats or {})
-        try:
-            self.last_stats.setdefault("vector_candidates_count", int(len(results or [])))
-            self.last_stats.setdefault("graph_nodes_count", int(len((graph or {}).get("nodes") or [])))
-            self.last_stats.setdefault("graph_edges_count", int(len((graph or {}).get("edges") or [])))
-            self.last_stats.setdefault("evidence_after_policy_count", int(len(evidence or [])))
-        except Exception as exc:
-            _LOGGER.warning(
-                "Answer service soft-failure: retriever adapter additive stats skipped",
-                context={
-                    "workspace_id": str(self.workspace_id or ""),
-                    "error": str(exc),
-                    "error_type": type(exc).__name__,
-                    "reason_code": "answer_service_retriever_adapter_additive_stats_soft_failure",
-                },
-            )
-
-
-        # Build debug "top_evidence" list (best-effort). Test expects at least one "chunk:*" when evidence exists.
-        try:
-            tops: list[str] = []
-            for item in (evidence or [])[:10]:
-                if isinstance(item, dict):
-                    cid = item.get("chunk_id") or item.get("id") or item.get("doc_id")
-                    if cid:
-                        tops.append(f"chunk:{cid}")
-                else:
-                    # If evidence is already a string/id-like, keep it as chunk reference
-                    s = str(item)
-                    if s:
-                        tops.append(f"chunk:{s}")
-            self.last_top_evidence = tops
-        except Exception:
-            self.last_top_evidence = []
-        return {"results": results, "graph": graph, "evidence": evidence}
+        return await self._impl.retrieve(request=request)
 
 
 class LLMGenerateAdapter:
