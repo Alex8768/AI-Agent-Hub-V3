@@ -325,6 +325,7 @@ AI-Agent-Hub-V3 is a modular AI platform for production-grade agent systems with
 - [x] A2.76 answer phase-20 plan-to-draft bridge seam extraction into llm-planner-policy module (patch 2)
 - [x] A2.76 reasoning phase-20 fallback answer-text adapter seam extraction into runtime-productization module (patch 3)
 - [x] A2.76 no-growth threshold recalibration + import-budget verification for reduced answer/reasoning facades (patch 4)
+- [x] A2.76 guardrails/parity closure with focused + full-suite green (patch 5)
 
 ### 7) Interface Layer
 
