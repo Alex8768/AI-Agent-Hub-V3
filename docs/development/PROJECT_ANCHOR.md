@@ -65,7 +65,19 @@ Patch 1 artifacts:
 - reduce facade branching and preserve endpoint/debug contract behavior.
 
 Patch 2 artifacts:
-- pending.
+- proactive ranking seam extracted into:
+  - `src/services/answer/response/proactive_ranking.py`
+  - `rank_proactive_bundle`
+- `src/services/answer/answer_service.py` now retains thin compatibility wrapper:
+  - `_rank_proactive_bundle` delegates to extracted seam via dynamic import
+- facade reduction achieved:
+  - `src/services/answer/answer_service.py`: `1781 -> 1737` lines
+- focused parity/guardrail checks green:
+  - `tests/unit/services/answer/test_answer_service_debug_snapshot.py`
+  - `tests/unit/services/answer/test_answer_soft_failure_observability.py`
+  - `tests/unit/services/answer/test_answer_orchestration_quality_gate.py`
+  - `tests/unit/layers/pro/test_reasoning_anticipatory_quality_gate.py`
+  - result: `77 passed`
 
 #### Patch 3 - Reasoning extraction phase-25
 - extract next bounded clusters from `reasoning/engine.py` (runtime fallback / diagnostics helper seams),
@@ -91,7 +103,7 @@ Patch 5 artifacts:
 ### Progress
 
 - [x] Patch 1 — inventory + scope lock
-- [ ] Patch 2 - Answer extraction phase-25
+- [x] Patch 2 - Answer extraction phase-25
 - [ ] Patch 3 - Reasoning extraction phase-25
 - [ ] Patch 4 - Guardrail threshold recalibration and import-budget expansion
 - [ ] Patch 5 - guardrails + parity + closure
