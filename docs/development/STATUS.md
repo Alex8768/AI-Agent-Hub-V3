@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-Anchor Closure — A2.52 complete (AnswerService facade slimming + guardrails/parity closure)
+Active Anchor Execution — A2.53 patch 1 complete (answer-path exception policy inventory + scope lock)
 
 ## Last Completed Anchor
 
@@ -17,20 +17,18 @@ Answer-path facade slimming completed with:
 
 ## Current Active Anchor
 
-A2.52 — AnswerService Facade Slimming
+A2.53 — Answer-Path Exception Policy Hardening
 
 Current focus:
-- anchor closure completed; preparing post-A2.52 planning
+- remove remaining silent `except ...: pass` in scoped answer-path runtime modules
+- enforce soft-failure reason-code/logging policy with parity-safe behavior
 - preserve answer/debug output parity baselines
 - keep one-patch-one-reason execution discipline
 
 Current progress:
-- A2.52 patch 1 complete (inventory + scope lock).
-- A2.52 patch 2 complete (post-orchestration seam extraction to dedicated module).
-- A2.52 patch 3 complete (diagnostics merge seam extraction to dedicated module).
-- A2.52 patch 4 complete (facade pipeline cleanup to explicit helper-driven pipeline).
-- A2.52 patch 5 complete (guardrails + parity + closure sync).
-- extraction targets locked: post-orchestration seam, diagnostics merge seam, facade pipeline cleanup.
+- A2.53 patch 1 complete (inventory + scope lock for scoped silent exception sites).
+- inventory confirms remaining silent handlers in `answer_service` and `orchestrator`.
+- patch plan locked: orchestrator remediation, answer_service remediation (phase 1/2), guardrails closure.
 - A2.51 + post-A2.51 guardrail maintenance remain green and protected by existing quality gates.
 
 Execution discipline:
@@ -41,7 +39,7 @@ Execution discipline:
 
 ## Next Anchor
 
-TBD — Post-A2.52 planning
+TBD — Post-A2.53 planning
 
 ## CI Status
 

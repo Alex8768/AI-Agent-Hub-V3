@@ -2,92 +2,90 @@
 
 ## Active Anchor
 
-A2.52 — AnswerService Facade Slimming
+A2.53 — Answer-Path Exception Policy Hardening
 
 ### Goal
 
-Complete the next decomposition stage after A2.51 so that `AnswerService.handle_contract()`
-is a short, explicit facade pipeline and no longer owns large post-orchestration flow blocks.
+Eliminate remaining silent exception swallowing in answer-path runtime code and
+standardize soft-failure diagnostics/logging policy without changing answer/debug behavior.
 
-The intent of this anchor is structural and safety-focused:
+The intent of this anchor is reliability and observability focused:
 - preserve runtime/API parity,
-- make post-orchestration ownership explicit,
-- keep diagnostics and fallback behavior deterministic and testable.
+- remove silent failure paths (`except ...: pass`) from active answer runtime,
+- enforce deterministic soft-failure reason-code propagation and warning logs.
 
 ### Why Now
 
-A2.51 closed the primary facade/orchestrator/response-assembly seams, and post-A2.51
-maintenance hardened soft-failure observability and guardrails.
+A2.52 closed facade slimming and seam guardrails, but inventory still shows legacy
+silent `except ...: pass` blocks in active answer-path modules.
 
-The next concentration point is the remaining size/complexity in `AnswerService`,
-especially post-orchestration wiring and diagnostics merge steps.
+These blocks reduce diagnosability and can hide degradations in production.
 
-A2.52 focuses on finishing facade slimming without behavior changes.
+A2.53 focuses on exception-policy hardening with strict runtime parity.
 
 ### Architecture Position
 
-Target A2.52 boundaries:
+Target A2.53 boundaries:
 
-- **Answer Facade (`AnswerService`)**
-  - request contract normalization
-  - orchestration + assembly invocation
-  - short post-processing pipeline via extracted helpers
+- **Answer Runtime Modules (`answer_service`, `orchestrator`)**
+  - replace silent `except ...: pass` in active runtime paths
+  - keep best-effort semantics where required, but always emit reason codes + warning logs
+  - keep critical stages fail-fast with controlled exceptions
 
-- **Post-Orchestration Flow Module (new seam)**
-  - anticipatory/handshake/approval/idempotency wiring
-  - no endpoint contract shaping
+- **Soft-Failure Policy Contract**
+  - reason-code naming consistency
+  - diagnostics key policy consistency (`planning_reason_codes` and counters)
+  - deterministic fallback visibility contract
 
-- **Diagnostics Merge Module (new seam)**
-  - deterministic diagnostics wiring/merge/fallback reason-code propagation
-  - no runtime flow coordination
+- **Quality Gates**
+  - AST/static gate for forbidden silent `except ...: pass` in scoped modules
+  - parity gate to ensure no user-facing behavior regression
 
 ### Patch Plan
 
 #### Patch 1 — Inventory + scope lock
-- Build explicit inventory of remaining `AnswerService` responsibilities after A2.51.
-- Define extraction targets for:
-  - post-orchestration flow,
-  - diagnostics merge/wiring,
-  - fallback/recovery helpers.
-- Define allowed/forbidden dependency directions for new seams.
+- Build explicit inventory of remaining silent `except ...: pass` in answer-path runtime.
+- Classify each site:
+  - best-effort fallback (must log + reason-code),
+  - critical stage (must not swallow exception).
+- Define reason-code/logging policy and no-regression constraints.
 
-#### Patch 2 — Post-orchestration seam extraction
-- Extract anticipatory/handshake/approval/idempotency wiring block from facade.
-- Keep output parity and existing reason-code behavior.
+#### Patch 2 — `orchestrator` silent-except removal
+- Replace scoped silent handlers with structured warning logs + diagnostics reason-codes.
+- Preserve existing runtime contracts and fallback outputs.
 
-#### Patch 3 — Diagnostics merge seam extraction
-- Extract diagnostics wiring/merge logic into dedicated helper/module.
-- Keep deterministic diagnostics key-set parity.
+#### Patch 3 — `answer_service` silent-except removal (phase 1)
+- Replace low-risk, best-effort silent handlers with policy-compliant soft-failure wiring.
+- Keep answer/debug parity and avoid opportunistic refactors.
 
-#### Patch 4 — Facade pipeline cleanup
-- Reduce `handle_contract()` to short readable pipeline (5-8 explicit steps).
-- Keep orchestrator and response assembly responsibilities unchanged.
+#### Patch 4 — `answer_service` silent-except removal (phase 2)
+- Finish remaining scoped sites and normalize reason-code/counter behavior.
+- Keep fallback behavior deterministic and observable.
 
 #### Patch 5 — Guardrails + parity + closure
-- Add/extend quality gates for new seams and exception policy.
+- Extend quality gates to enforce exception policy scope.
 - Run parity-focused tests and full suite.
-- Close docs/checklist/status/features sync for A2.52.
+- Close docs/checklist/status/features sync for A2.53.
 
 ### Progress
 
 - [x] Patch 1 — inventory + scope lock
-- [x] Patch 2 — post-orchestration seam extraction
-- [x] Patch 3 — diagnostics merge seam extraction
-- [x] Patch 4 — facade pipeline cleanup
-- [x] Patch 5 — guardrails + parity + closure
+- [ ] Patch 2 — `orchestrator` silent-except removal
+- [ ] Patch 3 — `answer_service` silent-except removal (phase 1)
+- [ ] Patch 4 — `answer_service` silent-except removal (phase 2)
+- [ ] Patch 5 — guardrails + parity + closure
 
 ### Non-Negotiable Rules
 
-- No net-new intelligence features during A2.52
+- No net-new intelligence features during A2.53
 - Preserve answer/debug output parity
-- Keep `AnswerService` thin
-- Orchestrator coordinates but does not format API/debug output
-- Response assembly shapes output but does not own runtime flow
+- No silent `except ...: pass` in scoped active runtime modules after closure
+- Critical stages must not swallow exceptions
 - One patch = one reason
 
 ### Out of Scope
 
-Do NOT modify during A2.52:
+Do NOT modify during A2.53:
 
 - planner/kernel topology
 - new tool safety capabilities
@@ -99,20 +97,16 @@ Do NOT modify during A2.52:
 
 ### Definition of Done
 
-A2.52 is complete when:
+A2.53 is complete when:
 
-- remaining `AnswerService` responsibilities are explicitly zoned
-- post-orchestration and diagnostics merge seams are extracted
-- `handle_contract()` is a short facade pipeline
+- remaining scoped silent exception sites are removed/replaced
+- soft-failure policy is deterministic and test-covered
 - answer/debug output parity is preserved
-- dependency and parity quality gates cover the new seams
-
-Closure status:
-- A2.52 closed; all patch milestones completed.
+- quality gates enforce scoped exception policy
 
 ## Next Anchor
 
-TBD — Post-A2.52 planning
+TBD — Post-A2.53 planning
 
 ### Discipline
 
