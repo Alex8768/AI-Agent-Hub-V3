@@ -70,6 +70,19 @@ Patch 2 artifacts:
 - extract next bounded clusters from `reasoning/engine.py` (runtime fallback / diagnostics helper seams),
 - preserve reasoning diagnostics contract behavior.
 
+Patch 3 artifacts:
+- graph runtime diagnostics seam extraction into existing evaluation diagnostics module:
+  - moved graph-path diagnostics assembly from `ReasoningEngine.synthesize` to
+    `src/layers/pro/reasoning/evaluation/runtime_diagnostics.py` as
+    `apply_graph_runtime_diagnostics`
+  - `src/layers/pro/reasoning/engine.py` now delegates graph runtime diagnostics/warning enrichment
+    to extracted evaluation seam with compatibility callables
+- compatibility parity preserved:
+  - patched call path keeps `build_reasoning_execution_policy` and
+    `_reasoning_quality_diagnostics` injectable/monkeypatchable via engine-level callables
+- monolith reduction after extraction:
+  - `src/layers/pro/reasoning/engine.py`: `535 -> 481` lines
+
 #### Patch 4 - Guardrail threshold recalibration and import-budget expansion
 - recalibrate no-growth thresholds to new post-extraction baselines,
 - expand deterministic checks for seam wiring + import-budget drift prevention,
@@ -82,7 +95,7 @@ Patch 2 artifacts:
 
 - [x] Patch 1 — inventory + scope lock
 - [x] Patch 2 - Answer extraction phase-11
-- [ ] Patch 3 - Reasoning extraction phase-11
+- [x] Patch 3 - Reasoning extraction phase-11
 - [ ] Patch 4 - Guardrail threshold recalibration and import-budget expansion
 - [ ] Patch 5 - guardrails + parity + closure
 

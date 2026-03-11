@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-A2.67 patch 2 complete (Answer extraction phase-11 feedback/tool-selection bundle seams)
+A2.67 patch 3 complete (Reasoning extraction phase-11 graph runtime diagnostics seam)
 
 ## Last Completed Anchor
 
@@ -23,7 +23,7 @@ Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 A2.67 - Facade Convergence Phase 11 (Answer/Reasoning)
 
 Current focus:
-- execute A2.67 patch 3 reasoning extraction phase-11
+- execute A2.67 patch 4 guardrail recalibration and import-budget refresh
 - preserve answer/reasoning no-growth guardrail baseline through extraction-only changes
 - continue one-patch-one-reason execution discipline
 

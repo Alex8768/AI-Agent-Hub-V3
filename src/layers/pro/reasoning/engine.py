@@ -28,8 +28,8 @@ from src.layers.pro.reasoning.multi_agent.runtime_contracts import (
 )
 from src.layers.pro.reasoning.evaluation.runtime_diagnostics import (
     apply_fallback_runtime_diagnostics as _apply_fallback_runtime_diagnostics,
+    apply_graph_runtime_diagnostics as _apply_graph_runtime_diagnostics,
     build_fallback_planner_observations as _build_fallback_planner_observations,
-    build_runtime_step_results_from_planner_actions as _build_runtime_step_results_from_planner_actions,
     build_reasoning_benchmark_diagnostics as _build_reasoning_benchmark_diagnostics,
     build_reasoning_trace_diagnostics as _build_reasoning_trace_diagnostics,
     reasoning_quality_diagnostics as _reasoning_quality_diagnostics,
@@ -324,89 +324,35 @@ class ReasoningEngine:
 
         # Добавляем диагностику
         try:
-            diag = dict(getattr(resp, "diagnostics", None) or {})
-            diag["agent_iterations"] = final_state.iteration_count
-            diag["agent_actions"] = final_state.plan
-            diag["agent_current_action"] = str(getattr(final_state, "current_action", "") or "")
-            diag["agent_current_step"] = int(getattr(final_state, "current_step", 0) or 0)
-            diag["planner_path_used"] = True
-            diag["session_id"] = str(getattr(final_state, "session_id", "") or "")
-            diag["evidence_summary"] = self._evidence_summary(final_state.provenance)
-            diag["evidence_contract_version"] = EVIDENCE_CONTRACT_VERSION
-            contract = self._evidence_contract_status(final_state.provenance)
-            diag["evidence_contract"] = contract
-            diag["evidence_contract_valid_minimal"] = bool(contract.get("valid_minimal", False))
-            diag["evidence_contract_missing_minimal_fields"] = list(
-                contract.get("missing_minimal_fields") or []
-            )
-            diag["evidence_contract_missing_minimal_count"] = int(
-                len(contract.get("missing_minimal_fields") or [])
-            )
-            diag["evidence_contract_minimal_coverage_score"] = float(
-                contract.get("minimal_coverage_score") or 0.0
-            )
-            diag["evidence_contract_gate_reason"] = self._evidence_contract_gate_reason(contract)
-            self_check = self._self_check_diagnostics(contract)
-            diag["self_check"] = self_check
-            execution_policy = build_reasoning_execution_policy()
-            diag["reasoning_execution_policy"] = dict(execution_policy)
-            diag["reasoning_quality"] = self._reasoning_quality_diagnostics(
-                answer_text=answer_text,
-                provenance=final_state.provenance,
-                contract=contract,
-                max_retries=int(execution_policy.get("max_retries", 0) or 0),
-            )
-            diag["verify"] = self._verify_diagnostics_preflight(
-                planner_path_used=True,
-                self_check=self_check,
-            )
-            verify = dict(diag.get("verify") or {})
             planner_actions = [str(x or "") for x in list(getattr(final_state, "plan", []) or [])]
-            diag["planner_runtime_parity"] = self._build_planner_runtime_parity_diagnostics(
-                planner_path_used=True,
-                planner_step_count=int(len(planner_actions)),
-                observed_action=str(diag.get("agent_current_action", "") or ""),
-                observed_step=int(diag.get("agent_current_step", 0) or 0),
-            )
-            per_step_results = _build_runtime_step_results_from_planner_actions(
+            diag, runtime_warnings = _apply_graph_runtime_diagnostics(
+                diagnostics=dict(getattr(resp, "diagnostics", None) or {}),
+                warnings=list(getattr(resp, "warnings", []) or []),
+                iteration_count=int(getattr(final_state, "iteration_count", 0) or 0),
                 planner_actions=planner_actions,
+                planner_current_action=str(getattr(final_state, "current_action", "") or ""),
+                planner_current_step=int(getattr(final_state, "current_step", 0) or 0),
+                session_id=str(getattr(final_state, "session_id", "") or ""),
+                provenance=list(getattr(final_state, "provenance", []) or []),
                 answer_text=answer_text,
-                verify=verify,
+                request_query=str(getattr(request, "query", "") or ""),
+                evidence_contract_version=EVIDENCE_CONTRACT_VERSION,
+                evidence_summary_fn=self._evidence_summary,
+                evidence_contract_status_fn=self._evidence_contract_status,
+                evidence_contract_gate_reason_fn=self._evidence_contract_gate_reason,
+                self_check_fn=self._self_check_diagnostics,
+                verify_preflight_fn=self._verify_diagnostics_preflight,
+                planner_runtime_parity_fn=self._build_planner_runtime_parity_diagnostics,
+                execution_policy_builder=build_reasoning_execution_policy,
+                reasoning_quality_builder=self._reasoning_quality_diagnostics,
+                reasoning_optimization_builder=self._build_reasoning_optimization_diagnostics,
+                enterprise_productization_builder=self._build_enterprise_productization_diagnostics,
+                meta_cognition_builder=self._build_meta_cognition_diagnostics,
+                warning_flags_applier=_apply_reasoning_runtime_warning_flags,
             )
-            diag["reasoning_trace"] = self._build_reasoning_trace_diagnostics(
-                query=str(getattr(request, "query", "") or ""),
-                answer_text=answer_text,
-                quality=dict(diag.get("reasoning_quality") or {}),
-                plan_steps=planner_actions,
-                step_results=per_step_results,
-            )
-            diag["reasoning_benchmark"] = self._build_reasoning_benchmark_diagnostics(
-                suite_name="reasoning_runtime_graph",
-                step_results=per_step_results,
-            )
-            diag["reasoning_optimization"] = self._build_reasoning_optimization_diagnostics(
-                diagnostics=diag,
-                warnings=list(getattr(resp, "warnings", []) or []),
-            )
-            diag["enterprise_productization"] = self._build_enterprise_productization_diagnostics(
-                diagnostics=diag,
-                warnings=list(getattr(resp, "warnings", []) or []),
-            )
-            diag["meta_cognition"] = self._build_meta_cognition_diagnostics(
-                diagnostics=diag,
-                warnings=list(getattr(resp, "warnings", []) or []),
-            )
-            diag["reasoning_timeline"] = dict(
-                (dict(diag.get("reasoning_trace") or {}).get("timeline") or {})
-            )
-            resp.warnings = _apply_reasoning_runtime_warning_flags(
-                warnings=list(getattr(resp, "warnings", []) or []),
-                verify=verify,
-                self_check=self_check,
-                contract=contract,
-            )
-            if final_state.error:
-                diag["agent_error"] = final_state.error
+            resp.warnings = list(runtime_warnings or [])
+            if getattr(final_state, "error", None):
+                diag["agent_error"] = str(getattr(final_state, "error", "") or "")
             resp.diagnostics = diag
         except Exception:
             pass
