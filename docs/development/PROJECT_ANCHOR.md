@@ -2,140 +2,117 @@
 
 ## Active Anchor
 
-A2.56 — Operational Guardrails for Soft-Failure KPIs (Closed)
+A2.57 - Application Decomposition Regime (Answer/Reasoning No-Growth)
 
 ### Goal
 
-Introduce deterministic operational guardrails for answer-path soft-failure/fallback health
-signals so degradation risk is observable, trendable, and alertable without API regressions.
-
-The intent of this anchor is observability-policy and operations focused:
-- define KPI contracts for healthy answer-path requests,
-- establish fallback/soft-failure rate visibility and thresholds,
-- preserve runtime/API parity while improving operational triage signals.
+Introduce a strict application-level decomposition regime that stops monolith growth and
+enforces bounded modules for Answer and Reasoning orchestration paths.
 
 ### Why Now
 
-A2.55 is closed and documentation state is synchronized.
-
-The main residual risk is operational blind spots: soft-failure and fallback paths are visible
-per request, but policy-level KPI/threshold guardrails for sustained degradation are not yet explicit.
-
-A2.56 focuses on operational policy closure for ongoing answer-path reliability.
+A2.56 is closed and operational guardrails are stabilized.
+The main residual architecture risk is centripetal growth of large files in answer/reasoning
+orchestration paths without hard no-growth enforcement.
 
 ### Architecture Position
 
-Target A2.56 boundaries:
+Target A2.57 boundaries:
 
-- **KPI Contract Surface**
-  - define healthy-path KPI (`soft_failures_count == 0`)
-  - define fallback-rate denominator/numerator contract
-  - define deterministic threshold policy wording for alertability
+- **Decomposition Regime**
+  - enforce facade/orchestrator/policy/mapper/assembler/diagnostics separation,
+  - prevent new feature logic from entering monolith files.
 
-- **Operational Diagnostics Policy**
-  - codify soft-failure/fallback visibility expectations
-  - classify warning vs critical operational states
-  - keep scoped to answer-path diagnostics surface
+- **Answer Path Structure**
+  - structure bounded subpackages under `src/services/answer/`,
+  - keep facade thin and orchestration-only.
 
-- **Quality Gates**
-  - preserve docs and full-suite green status
-  - ensure policy assertions are deterministic and CI-triable
+- **Reasoning Engine Structure**
+  - structure bounded subpackages under `src/layers/pro/reasoning/`,
+  - keep engine file as a thin facade with delegated responsibilities.
+
+- **Governance**
+  - enforce size/dependency budgets and no-growth rules via docs + quality gates.
 
 ### Patch Plan
 
 #### Patch 1 — Inventory + scope lock
-- Build explicit inventory of current soft-failure/fallback diagnostics surfaces and gaps.
-- Classify operational guardrail targets:
-  - KPI definition,
-  - threshold/alert policy wording,
-  - diagnostics exposure and reporting scope.
-- Define no-regression constraints and allowed edit scope.
+- inventory current responsibility clusters and file-size hotspots,
+- lock scope to extraction-only and thin-facade-only changes,
+- publish governance baseline in `docs/architecture/refactoring-guardrails.md`.
 
-#### Patch 2 — KPI policy contract introduction
-- Introduce explicit KPI wording/contracts in docs for healthy-path and fallback-rate policy.
-- Keep scope operational-policy first (no product behavior changes).
+#### Patch 2 - Answer move-map and package scaffolding
+- define exact move map for `src/services/answer/answer_service.py`,
+- add target subpackage scaffolding for context/retrieval/reasoning/execution/diagnostics/response/observability,
+- keep behavior unchanged.
 
-KPI policy contract baseline for A2.56:
-- `healthy_request_kpi`: request is healthy when `soft_failures_count == 0`.
-- `fallback_rate_kpi`: `requests_with_fallback / total_answer_requests` over a fixed window.
-- `soft_failure_rate_kpi`: `requests_with_soft_failures / total_answer_requests` over a fixed window.
-- Threshold policy classes:
-  - `healthy`: fallback/soft-failure rates below warning thresholds,
-  - `warning`: any rate above warning threshold,
-  - `critical`: any rate above critical threshold.
-- Alertability policy:
-  - thresholds must be explicitly documented with denominator/window,
-  - all KPI terms must map to diagnostics fields used by answer-path runtime.
+#### Patch 3 - Answer heavy-cluster extraction
+- extract diagnostics, response assembly, execution guards, and context resolvers into bounded modules,
+- shrink monolith toward orchestration-only facade.
 
-#### Patch 3 — Diagnostics surface mapping and reporting contract
-- Document which diagnostics fields/panels/reports represent KPI components.
-- Ensure deterministic mapping from runtime diagnostics to operational policy terms.
+#### Patch 4 - Reasoning engine move-map and first extraction
+- define and execute first safe extraction from `src/layers/pro/reasoning/engine.py`,
+- prioritize evaluation/self-check/diagnostics clusters with parity preserved.
 
-Diagnostics-to-KPI mapping contract (A2.56):
-- `requests_with_soft_failures` source:
-  - `planning_reason_codes` contains any entry matching `*_soft_failure*`
-    or `*_assignment_failed`.
-- `requests_with_fallback` source:
-  - `response_mode == "assistant_fallback"` OR
-  - `planning_reason_codes` contains any entry with `fallback`.
-- `healthy_request_kpi` source:
-  - request is healthy when neither soft-failure nor fallback predicates are true.
-- `soft_failures_count` reporting contract:
-  - computed as `len(filtered_soft_failure_codes)` from `planning_reason_codes`
-    for each request.
-- `fallback_count` reporting contract:
-  - computed as `1` when fallback predicate is true, otherwise `0`.
-- Panel/report mapping:
-  - source-of-truth diagnostics surface is answer debug diagnostics payload;
-    operational dashboards/alerts must derive KPI numerators from this payload
-    without introducing alternate definitions.
-
-#### Patch 4 — Guardrail test/policy enforcement hardening
-- Add/expand deterministic tests or quality gates for operational policy wording/contracts.
-- Ensure failure messages are actionable for CI triage.
-
-#### Patch 5 — Guardrails + parity + closure
-- Run focused + full checks and finalize closure sync.
-- Close A2.56 with docs and quality-gate parity preserved.
+#### Patch 5 - Guardrails + parity + closure
+- add/update deterministic guardrails for decomposition constraints,
+- run focused and full-suite checks and close A2.57 with docs sync.
 
 ### Progress
 
 - [x] Patch 1 — inventory + scope lock
-- [x] Patch 2 — KPI policy contract introduction
-- [x] Patch 3 — diagnostics surface mapping and reporting contract
-- [x] Patch 4 — guardrail test/policy enforcement hardening
-- [x] Patch 5 — guardrails + parity + closure
+- [ ] Patch 2 - Answer move-map and package scaffolding
+- [ ] Patch 3 - Answer heavy-cluster extraction
+- [ ] Patch 4 - Reasoning engine move-map and first extraction
+- [ ] Patch 5 - guardrails + parity + closure
 
 ### Non-Negotiable Rules
 
-- No net-new user-facing features during A2.56
+- No net-new user-facing features during A2.57
 - Preserve answer/debug runtime/API parity
-- Keep operational policy changes deterministic and scoped
-- No opportunistic refactors beyond operational guardrails scope
+- No new business logic additions inside monolith files
+- Extraction-only and thin-facade-only changes in monolith targets
+- Keep decomposition changes deterministic and scoped
 - One patch = one reason
 
 ### Out of Scope
 
-Do NOT modify during A2.56:
+Do NOT modify during A2.57:
 
-- planner/kernel topology
 - unrelated product feature logic
 - endpoint contract shape
-- non-doc production code
-- unrelated UI or infra features
+- non-target services outside answer/reasoning decomposition scope
+- opportunistic cross-domain cleanups
 
 ### Definition of Done
 
-A2.56 is complete when:
+A2.57 is complete when:
 
-- operational KPI/threshold policy is explicitly documented
-- diagnostics-to-policy mapping is stable and deterministic
+- answer and reasoning monolith growth is explicitly frozen by governance rules
+- extraction move maps are completed for targeted responsibility clusters
+- target facades are thinner and orchestration-focused
 - focused and full quality checks remain green
 - no answer/debug parity regressions are introduced
 
+## A2.56 Operational Guardrails Snapshot (Closed)
+
+A2.56 policy markers are retained for deterministic docs quality gates:
+
+- `healthy_request_kpi`
+- `fallback_rate_kpi`
+- `soft_failure_rate_kpi`
+- `requests_with_soft_failures`
+- `requests_with_fallback`
+- `response_mode == "assistant_fallback"`
+- `planning_reason_codes`
+- `soft_failures_count`
+- `fallback_count`
+- `warning`
+- `critical`
+
 ## Next Anchor
 
-TBD — Post-A2.56 planning
+TBD - Post-A2.57 planning
 
 ## Post-A2.56 Maintenance
 

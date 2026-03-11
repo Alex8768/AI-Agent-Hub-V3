@@ -53,8 +53,17 @@
 - [x] A2.54 — Diagnostics Contract Guardrails
 - [x] A2.55 — Documentation Consistency Cleanup
 - [x] A2.56 — Operational Guardrails for Soft-Failure KPIs
+- [ ] A2.57 - Application Decomposition Regime (Answer/Reasoning No-Growth)
 
-## Current Work — A2.56 Operational Guardrails for Soft-Failure KPIs
+## Current Work — A2.57 Application Decomposition Regime (Answer/Reasoning No-Growth)
+
+- [x] Patch 1 - inventory + scope lock
+- [ ] Patch 2 - Answer move-map and package scaffolding
+- [ ] Patch 3 - Answer heavy-cluster extraction
+- [ ] Patch 4 - Reasoning engine move-map and first extraction
+- [ ] Patch 5 - guardrails + parity + closure
+
+## A2.56 Historical Work - Operational Guardrails for Soft-Failure KPIs
 
 - [x] Patch 1 — inventory + scope lock
 - [x] Patch 2 — KPI policy contract introduction
@@ -84,6 +93,7 @@
 - Validate locally before commit
 - Commit only files relevant to the active task
 - Preserve runtime parity during decomposition
+- No growth of monolith targets (extraction-only and thin-facade-only changes)
 - No net-new intelligence features during A2.51
 
 ## Roadmap Policy

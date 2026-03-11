@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-Post-A2.56 Maintenance — M1 complete (quality-gate closed-status compatibility)
+A2.57 patch 1 complete - decomposition regime inventory and scope lock
 
 ## Last Completed Anchor
 
@@ -14,15 +14,16 @@ A2.56 closed with:
 - deterministic docs quality-gate enforcement added for policy markers
 - focused and full-suite checks green at closure
 - post-closure guardrail compatibility fix applied for status-marker quality gate
+- Post-A2.56 Maintenance — M1 complete (quality-gate closed-status compatibility)
 
 ## Current Active Anchor
 
-TBD — Post-A2.56 planning
+A2.57 - Application Decomposition Regime (Answer/Reasoning No-Growth)
 
 Current focus:
-- define next technical anchor after operational guardrails closure
-- preserve current diagnostics and parity baselines
-- continue one-patch-one-reason execution discipline
+- freeze monolith growth for answer/reasoning orchestration files
+- enforce extraction-only and thin-facade-only decomposition flow
+- establish move-map-first execution before behavioral changes
 
 Execution discipline:
 - no net-new intelligence features
@@ -32,7 +33,7 @@ Execution discipline:
 
 ## Next Anchor
 
-TBD — Post-A2.56 planning
+TBD - Post-A2.57 planning
 
 ## CI Status
 
