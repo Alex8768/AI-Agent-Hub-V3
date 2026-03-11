@@ -810,6 +810,73 @@ def build_tool_selection_bundle(
     }
 
 
+def bridge_plan_to_draft_actions(
+    *,
+    plan_bundle: dict[str, object],
+    draft_actions_bundle: dict[str, object],
+    language: str,
+    actions_enabled: bool,
+) -> dict[str, object]:
+    if not actions_enabled:
+        return dict(draft_actions_bundle or {})
+
+    current = dict(draft_actions_bundle or {})
+    existing_actions = list(current.get("actions") or [])
+    if existing_actions:
+        return current
+
+    steps = [dict(step or {}) for step in list(plan_bundle.get("steps") or [])]
+    if not steps:
+        return current
+
+    plan_id = str(plan_bundle.get("plan_id", "") or "")
+    bridged_actions: list[dict[str, object]] = []
+    for idx, step in enumerate(steps, start=1):
+        step_id = str(step.get("step_id", "") or f"step:{idx}")
+        step_action = str(step.get("action", "prepare_step_draft") or "prepare_step_draft")
+        step_role = str(step.get("role", "assistant") or "assistant")
+        if language == "ru":
+            summary = f"Черновик шага плана: {step_action} ({step_role})."
+            rollback = "Откат не требуется: создан только черновик шага."
+        else:
+            summary = f"Draft plan step prepared: {step_action} ({step_role})."
+            rollback = "No rollback required: draft-only plan step."
+        bridged_actions.append(
+            {
+                "action_id": f"draft_action:{plan_id}:{step_id}" if plan_id else f"draft_action:{step_id}",
+                "action_type": "prepare_plan_step_draft",
+                "status": "draft",
+                "requires_confirmation": True,
+                "estimated_impact": "low",
+                "parameters": {
+                    "plan_id": plan_id,
+                    "step_id": step_id,
+                    "role": step_role,
+                    "action": step_action,
+                },
+                "preview": {
+                    "title": step_action,
+                    "summary": summary,
+                    "rank": idx,
+                },
+                "rollback_plan": rollback,
+            }
+        )
+
+    reason_codes = sorted(
+        set([str(x) for x in list(current.get("reason_codes") or []) if str(x or "").strip()])
+        | {"draft_actions_from_plan_bridge"}
+    )
+    return {
+        "status": "ready",
+        "actions": bridged_actions,
+        "top_action_id": str((bridged_actions[0] or {}).get("action_id", "") or ""),
+        "requires_confirmation": bool(bridged_actions),
+        "reason_codes": reason_codes,
+        "warnings": list(current.get("warnings") or []),
+    }
+
+
 def build_transition_policy_contract(
     *,
     max_approved_action_ids: int,
