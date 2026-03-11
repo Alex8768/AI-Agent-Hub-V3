@@ -157,6 +157,26 @@ def test_answer_service_facade_gate_requires_seam_imports():
     assert not missing, "answer_service_missing_required_seams:\n" + "\n".join(missing)
 
 
+def test_answer_service_facade_gate_requires_extracted_runtime_wiring_seam_import():
+    answer_service_path = ROOT / "src/services/answer/answer_service.py"
+    modules = _read_import_modules(answer_service_path)
+    required = {
+        "src.services.answer.diagnostics.runtime_wiring",
+    }
+    missing = sorted(mod for mod in required if mod not in modules)
+    assert not missing, "answer_service_missing_runtime_wiring_seam:\n" + "\n".join(missing)
+
+
+def test_reasoning_engine_facade_gate_requires_extracted_runtime_productization_seam_import():
+    reasoning_engine_path = ROOT / "src/layers/pro/reasoning/engine.py"
+    modules = _read_import_modules(reasoning_engine_path)
+    required = {
+        "src.layers.pro.reasoning.evaluation.runtime_productization",
+    }
+    missing = sorted(mod for mod in required if mod not in modules)
+    assert not missing, "reasoning_engine_missing_runtime_productization_seam:\n" + "\n".join(missing)
+
+
 def test_answer_service_facade_gate_handle_contract_pipeline_calls():
     answer_service_path = ROOT / "src/services/answer/answer_service.py"
     calls = _read_function_calls(answer_service_path, "handle_contract")
@@ -199,12 +219,12 @@ def test_answer_exception_policy_gate_scoped_handlers_require_warning_and_reason
 
 
 def test_decomposition_no_growth_gate_answer_and_reasoning_monolith_line_budgets():
-    # A2.58 patch 4: no-growth guardrail budgets pinned to latest reduced baselines.
+    # A2.59 patch 4: no-growth guardrail budgets recalibrated to latest reduced baselines.
     answer_service_path = ROOT / "src/services/answer/answer_service.py"
     reasoning_engine_path = ROOT / "src/layers/pro/reasoning/engine.py"
 
-    answer_service_max_lines = 3862
-    reasoning_engine_max_lines = 972
+    answer_service_max_lines = 3535
+    reasoning_engine_max_lines = 743
 
     answer_service_lines = _line_count(answer_service_path)
     reasoning_engine_lines = _line_count(reasoning_engine_path)

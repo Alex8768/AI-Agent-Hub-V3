@@ -67,6 +67,15 @@ Patch 3 artifacts:
 - expand deterministic checks for extraction-path coverage and guardrail drift prevention,
 - keep failure messages actionable for CI.
 
+Patch 4 artifacts:
+- no-growth line-budget gate recalibrated for latest monolith baselines:
+  - `src/services/answer/answer_service.py` -> `3535` lines max
+  - `src/layers/pro/reasoning/engine.py` -> `743` lines max
+- extraction-path seam coverage gate expansion:
+  - require `src.services.answer.diagnostics.runtime_wiring` import in answer facade
+  - require `src.layers.pro.reasoning.evaluation.runtime_productization` import in reasoning facade
+  - gate location: `tests/unit/services/answer/test_answer_orchestration_quality_gate.py`
+
 #### Patch 5 - Guardrails + parity + closure
 - run focused and full-suite checks and close A2.59 with docs sync.
 
@@ -75,7 +84,7 @@ Patch 3 artifacts:
 - [x] Patch 1 — inventory + scope lock
 - [x] Patch 2 - Answer extraction phase-3
 - [x] Patch 3 - Reasoning extraction phase-3
-- [ ] Patch 4 - Guardrail threshold recalibration and coverage expansion
+- [x] Patch 4 - Guardrail threshold recalibration and coverage expansion
 - [ ] Patch 5 - guardrails + parity + closure
 
 ### Non-Negotiable Rules

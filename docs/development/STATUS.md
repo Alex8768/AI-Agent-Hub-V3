@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-A2.59 patch 3 complete (reasoning phase-3 runtime productization diagnostics extraction with parity)
+A2.59 patch 4 complete (no-growth threshold recalibration + extraction-path coverage expansion)
 
 ## Last Completed Anchor
 
@@ -23,7 +23,7 @@ Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 A2.59 - Monolith Burn-Down Phase 3 (Answer/Reasoning)
 
 Current focus:
-- execute patch-4 guardrail threshold recalibration and coverage expansion
+- execute patch-5 closure checks (focused + full-suite) and docs finalization
 - preserve answer/reasoning decomposition and no-growth guardrail baseline
 - continue one-patch-one-reason execution discipline
 
