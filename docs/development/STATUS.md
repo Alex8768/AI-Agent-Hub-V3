@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-A2.62 patch 1 complete (inventory + scope lock baseline for facade convergence phase 6)
+A2.62 patch 2 complete (Answer extraction phase-6 tool-selection policy seam)
 
 ## Last Completed Anchor
 
@@ -23,7 +23,7 @@ Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 A2.62 - Facade Convergence Phase 6 (Answer/Reasoning)
 
 Current focus:
-- execute phase-6 extraction inventory and scope-locked convergence for answer/reasoning facades
+- execute A2.62 patch 3 reasoning extraction phase-6 (next bounded runtime seam)
 - preserve answer/reasoning decomposition and no-growth guardrail baseline
 - continue one-patch-one-reason execution discipline
 
