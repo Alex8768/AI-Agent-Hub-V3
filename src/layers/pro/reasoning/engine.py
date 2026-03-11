@@ -34,13 +34,12 @@ from src.layers.pro.reasoning.evaluation.runtime_productization import (
     build_dry_run_answer_from_parts as _build_dry_run_answer_from_parts,
     build_dry_run_answer_from_state as _build_dry_run_answer_from_state,
     build_enterprise_productization_diagnostics as _build_enterprise_productization_diagnostics,
-    execute_fallback_planner_steps_mvp as _execute_fallback_planner_steps_mvp,
     synthesize_with_graph_runtime as _synthesize_with_graph_runtime,
     synthesize_graph_response as _synthesize_graph_response,
     build_meta_cognition_diagnostics as _build_meta_cognition_diagnostics,
     build_reasoning_optimization_diagnostics as _build_reasoning_optimization_diagnostics,
     run_graph_runtime_with_state_contract as _run_graph_runtime_with_state_contract,
-    synthesize_fallback_with_runtime_and_text_adapter as _synthesize_fallback_with_runtime_and_text_adapter,
+    synthesize_fallback_with_full_runtime_dependencies as _synthesize_fallback_with_full_runtime_dependencies,
 )
 from src.layers.pro.reasoning.kernel import build_reasoning_planner_runtime
 from src.layers.pro.reasoning.tool_safety.runtime_guard import apply_tool_safety_runtime_guard
@@ -184,20 +183,6 @@ class ReasoningEngine:
             warnings=warnings,
         )
 
-    async def _execute_planner_steps_mvp(self, *, request: AnswerRequest) -> list[dict[str, object]]:
-        """A2.11 Patch 4: execute deterministic planner steps inside engine fallback."""
-        return await _execute_fallback_planner_steps_mvp(
-            request=request,
-            create_reasoning_plan_fn=create_reasoning_plan,
-            build_reasoning_execution_policy_fn=build_reasoning_execution_policy,
-            build_controlled_plan_steps_fn=build_controlled_plan_steps,
-            build_bounded_plan_steps_with_loop_guard_fn=_build_bounded_plan_steps_with_loop_guard,
-            execute_plan_steps_fn=execute_plan_steps,
-            apply_tool_safety_runtime_guard_fn=apply_tool_safety_runtime_guard,
-            build_multi_agent_coordination_plan_for_runtime_fn=_build_multi_agent_coordination_plan_for_runtime,
-            enrich_step_results_with_multi_agent_contract_fn=_enrich_step_results_with_multi_agent_contract,
-        )
-
     async def synthesize(self, request: AnswerRequest) -> AnswerResponse:
         """Synthesize an answer using agentic graph."""
         from time import perf_counter
@@ -236,7 +221,7 @@ class ReasoningEngine:
 
     async def _synthesize_fallback(self, request: AnswerRequest, error: str | None = None) -> AnswerResponse:
         """Fallback к старому однопроходному режиму (если нет LLM или ошибка графа)."""
-        return await _synthesize_fallback_with_runtime_and_text_adapter(
+        return await _synthesize_fallback_with_full_runtime_dependencies(
             request=request,
             retriever=self.retriever,
             error=error,
@@ -245,7 +230,14 @@ class ReasoningEngine:
             llm_timeout_s=float(self.llm_timeout_s),
             build_prompt_fn=build_reasoning_prompt,
             dry_run_builder_fn=self._build_dry_run_answer_from_parts,
-            execute_planner_steps_mvp_fn=self._execute_planner_steps_mvp,
+            create_reasoning_plan_fn=create_reasoning_plan,
+            build_reasoning_execution_policy_fn=build_reasoning_execution_policy,
+            build_controlled_plan_steps_fn=build_controlled_plan_steps,
+            build_bounded_plan_steps_with_loop_guard_fn=_build_bounded_plan_steps_with_loop_guard,
+            execute_plan_steps_fn=execute_plan_steps,
+            apply_tool_safety_runtime_guard_fn=apply_tool_safety_runtime_guard,
+            build_multi_agent_coordination_plan_for_runtime_fn=_build_multi_agent_coordination_plan_for_runtime,
+            enrich_step_results_with_multi_agent_contract_fn=_enrich_step_results_with_multi_agent_contract,
             build_fallback_planner_observations_fn=_build_fallback_planner_observations,
             build_fallback_answer_response_fn=_build_fallback_answer_response,
             apply_fallback_response_diagnostics_fn=_apply_fallback_response_diagnostics,
@@ -258,7 +250,6 @@ class ReasoningEngine:
             self_check_fn=self._self_check_diagnostics,
             verify_preflight_fn=self._verify_diagnostics_preflight,
             planner_runtime_parity_fn=self._build_planner_runtime_parity_diagnostics,
-            execution_policy_builder_fn=build_reasoning_execution_policy,
             reasoning_quality_builder_fn=self._reasoning_quality_diagnostics,
             reasoning_optimization_builder_fn=self._build_reasoning_optimization_diagnostics,
             enterprise_productization_builder_fn=self._build_enterprise_productization_diagnostics,
