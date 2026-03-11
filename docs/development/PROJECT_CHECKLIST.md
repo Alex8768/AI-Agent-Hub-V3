@@ -74,7 +74,7 @@
 - [x] A2.75 - Facade Convergence Phase 19 (Answer/Reasoning)
 - [x] A2.76 - Facade Convergence Phase 20 (Answer/Reasoning)
 - [x] A2.77 - Facade Convergence Phase 21 (Answer/Reasoning)
-- [ ] A2.78 - Facade Convergence Phase 22 (Answer/Reasoning)
+- [x] A2.78 - Facade Convergence Phase 22 (Answer/Reasoning)
 
 ## Current Work — A2.78 Facade Convergence Phase 22 (Answer/Reasoning)
 
@@ -82,7 +82,7 @@
 - [x] Patch 2 - Answer extraction phase-22
 - [x] Patch 3 - Reasoning extraction phase-22
 - [x] Patch 4 - Guardrail threshold recalibration and import-budget expansion
-- [ ] Patch 5 - guardrails + parity + closure
+- [x] Patch 5 - guardrails + parity + closure
 
 ## A2.74 Historical Work - Facade Convergence Phase 18 (Answer/Reasoning)
 

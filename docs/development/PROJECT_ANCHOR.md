@@ -2,7 +2,7 @@
 
 ## Active Anchor
 
-A2.78 - Facade Convergence Phase 22 (Answer/Reasoning)
+TBD - Post-A2.78 planning
 
 ### Goal
 
@@ -123,7 +123,23 @@ Patch 4 artifacts:
 - run focused and full-suite checks and close A2.78 with docs sync.
 
 Patch 5 artifacts:
-- pending.
+- full-suite checks green:
+  - `uv run pytest`
+  - result: `576 passed, 3 skipped`
+- focused closure regression checks green (compatibility restoration for
+  `ReasoningEngine._execute_planner_steps_mvp`):
+  - `tests/unit/layers/pro/test_reasoning_multi_agent_coordination_quality_gate.py`
+  - `tests/unit/layers/pro/test_reasoning_multi_agent_runtime_integration.py`
+  - `tests/unit/services/answer/test_answer_orchestration_quality_gate.py::test_decomposition_no_growth_gate_answer_and_reasoning_monolith_line_budgets`
+  - result: `8 passed`
+- facade baseline preserved at closure:
+  - `src/services/answer/answer_service.py`: `1896` lines
+  - `src/layers/pro/reasoning/engine.py`: `283` lines
+- mandatory docs sync completed across:
+  - `docs/development/PROJECT_ANCHOR.md`
+  - `docs/development/PROJECT_CHECKLIST.md`
+  - `docs/development/STATUS.md`
+  - `docs/architecture/PLATFORM_FEATURES.md`
 
 ### Progress
 
@@ -131,7 +147,7 @@ Patch 5 artifacts:
 - [x] Patch 2 - Answer extraction phase-22
 - [x] Patch 3 - Reasoning extraction phase-22
 - [x] Patch 4 - Guardrail threshold recalibration and import-budget expansion
-- [ ] Patch 5 - guardrails + parity + closure
+- [x] Patch 5 - guardrails + parity + closure
 
 ### Non-Negotiable Rules
 
@@ -183,7 +199,7 @@ TBD - Post-A2.78 planning
 
 ## Anchor Closed
 
-A2.77 complete - Facade Convergence Phase 21 closed with extraction + guardrails + parity.
+A2.78 complete - Facade Convergence Phase 22 closed with extraction + guardrails + parity.
 
 ## Post-A2.56 Maintenance
 

@@ -2,17 +2,18 @@
 
 ## Current Phase
 
-A2.78 in progress (Patch 4 complete)
+A2.78 complete
 
 ## Last Completed Anchor
 
-A2.77 - Facade Convergence Phase 21 (Answer/Reasoning)
+A2.78 - Facade Convergence Phase 22 (Answer/Reasoning)
 
-A2.77 closed with:
-- answer assistant-intent inference seam extraction into llm-planner-policy module
-- reasoning fallback runtime+text adapter seam extraction into evaluation runtime-productization module
-- no-growth baselines recalibrated to latest reduced facade budgets (`1953`/`292`)
-- focused and full-suite checks green at closure (`130 passed`; `576 passed, 3 skipped`)
+A2.78 closed with:
+- answer anticipatory safe-mode runtime seam extraction into anticipatory runtime module
+- reasoning fallback planner-dependency runtime seam extraction into evaluation runtime-productization module
+- no-growth baselines recalibrated and preserved at closure (`1896`/`283`) with import budgets (`15`/`14`)
+- compatibility wrapper restored for `_execute_planner_steps_mvp` to preserve runtime/test parity
+- focused and full-suite checks green at closure (`33 passed`; `576 passed, 3 skipped`)
 
 Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 - Anchor Closed — A2.56 complete (operational guardrails policy closure)
@@ -20,11 +21,11 @@ Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 
 ## Current Active Anchor
 
-A2.78 - Facade Convergence Phase 22 (Answer/Reasoning)
+TBD - Post-A2.78 planning
 
 Current focus:
-- execute guardrails + parity + closure flow (A2.78 patch 5)
-- preserve no-growth guardrail discipline from updated baselines (`1896`/`283`) and import budgets (`15`/`14`)
+- define next extraction inventory and scope lock (A2.79 planning)
+- preserve no-growth guardrail discipline from latest baselines (`1896`/`283`) and import budgets (`15`/`14`)
 - maintain one-patch-one-reason execution discipline
 
 Execution discipline:
