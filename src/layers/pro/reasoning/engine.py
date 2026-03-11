@@ -30,7 +30,7 @@ from src.layers.pro.reasoning.evaluation.runtime_diagnostics import (
 )
 from src.layers.pro.reasoning.evaluation.runtime_productization import (
     build_fallback_answer_response as _build_fallback_answer_response,
-    build_fallback_answer_text as _build_fallback_answer_text,
+    build_fallback_answer_text_with_runtime_adapter as _build_fallback_answer_text_with_runtime_adapter,
     build_graph_answer_response as _build_graph_answer_response,
     build_dry_run_answer_from_parts as _build_dry_run_answer_from_parts,
     build_dry_run_answer_from_state as _build_dry_run_answer_from_state,
@@ -291,13 +291,13 @@ class ReasoningEngine:
         provenance: list,
         dry_run: bool,
     ) -> str:
-        return await _build_fallback_answer_text(
+        return await _build_fallback_answer_text_with_runtime_adapter(
             llm=self.llm,
-            dry_run=dry_run,
-            llm_timeout_s=float(self.llm_timeout_s),
+            llm_timeout_s=self.llm_timeout_s,
             request=request,
             context_preview=context_preview,
             provenance=provenance,
+            dry_run=dry_run,
             build_prompt_fn=build_reasoning_prompt,
             dry_run_builder_fn=self._build_dry_run_answer_from_parts,
         )

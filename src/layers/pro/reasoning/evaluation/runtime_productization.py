@@ -325,6 +325,29 @@ async def build_fallback_answer_text(
     return "(reasoning layer stub)"
 
 
+async def build_fallback_answer_text_with_runtime_adapter(
+    *,
+    llm: object | None,
+    llm_timeout_s: float,
+    request: object,
+    context_preview: str,
+    provenance: list,
+    dry_run: bool,
+    build_prompt_fn: object,
+    dry_run_builder_fn: object,
+) -> str:
+    return await build_fallback_answer_text(
+        llm=llm,
+        dry_run=dry_run,
+        llm_timeout_s=float(llm_timeout_s),
+        request=request,
+        context_preview=context_preview,
+        provenance=provenance,
+        build_prompt_fn=build_prompt_fn,
+        dry_run_builder_fn=dry_run_builder_fn,
+    )
+
+
 async def execute_fallback_planner_steps_mvp(
     *,
     request: object,
