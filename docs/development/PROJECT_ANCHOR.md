@@ -110,7 +110,24 @@ Patch 3 artifacts:
 - keep failure messages actionable for CI.
 
 Patch 4 artifacts:
-- pending.
+- no-growth thresholds recalibrated in
+  `tests/unit/services/answer/test_answer_orchestration_quality_gate.py`:
+  - `answer_service_max_lines: 1781 -> 1737`
+  - `reasoning_engine_max_lines: 262 -> 241`
+- facade import-budget no-growth gates preserved at reduced baselines:
+  - `answer_local_import_budget`: `15`
+  - `reasoning_local_import_budget`: `14`
+- focused guardrail + parity checks green:
+  - `tests/unit/services/answer/test_answer_orchestration_quality_gate.py`
+  - `tests/unit/layers/pro/test_reasoning_engine_synthesize.py`
+  - `tests/unit/layers/pro/test_reasoning_engine_synthesize_llm.py`
+  - `tests/unit/layers/pro/test_reasoning_engine_synthesize_llm_fallback.py`
+  - `tests/unit/layers/pro/test_reasoning_engine_synthesize_llm_timeout.py`
+  - `tests/unit/layers/pro/test_reasoning_multi_agent_coordination_quality_gate.py`
+  - `tests/unit/layers/pro/test_reasoning_multi_agent_runtime_integration.py`
+  - `tests/unit/layers/pro/test_reasoning_enterprise_productization_quality_gate.py`
+  - `tests/unit/layers/pro/test_reasoning_anticipatory_quality_gate.py`
+  - result: `40 passed`
 
 #### Patch 5 - Guardrails + parity + closure
 - run focused and full-suite checks and close A2.81 with docs sync.
@@ -123,7 +140,7 @@ Patch 5 artifacts:
 - [x] Patch 1 — inventory + scope lock
 - [x] Patch 2 - Answer extraction phase-25
 - [x] Patch 3 - Reasoning extraction phase-25
-- [ ] Patch 4 - Guardrail threshold recalibration and import-budget expansion
+- [x] Patch 4 - Guardrail threshold recalibration and import-budget expansion
 - [ ] Patch 5 - guardrails + parity + closure
 
 ### Non-Negotiable Rules
