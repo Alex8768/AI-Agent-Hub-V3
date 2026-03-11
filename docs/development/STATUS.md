@@ -2,36 +2,26 @@
 
 ## Current Phase
 
-Active Anchor Execution — A2.54 patch 4 complete (exception policy enforcement hardening)
+Anchor Closed — A2.54 complete (diagnostics contract guardrails closure)
 
 ## Last Completed Anchor
 
-A2.53 — Answer-Path Exception Policy Hardening
+A2.54 — Diagnostics Contract Guardrails
 
-Answer-path exception policy hardening completed with:
-- scoped silent `except ...: pass` removed from `answer_service` and `orchestrator`
-- diagnostics/observability soft-failure reason-codes normalized for best-effort paths
-- quality gate scope extended to enforce no silent pass in scoped runtime modules
-- parity-focused and full-suite checks green
+A2.54 closed with:
+- diagnostics keyset snapshot guardrails expanded for cross-mode stability
+- soft-failure reason-code/flag visibility guardrails expanded for fallback paths
+- scoped AST exception-policy handler contract gate hardened (binding + warning + reason_code context)
+- parity-focused and full-suite checks green at closure
 
 ## Current Active Anchor
 
-A2.54 — Diagnostics Contract Guardrails
+TBD — Post-A2.54 planning
 
 Current focus:
-- strengthen diagnostics snapshot/contract guardrails for answer-path runtime
-- enforce deterministic policy coverage for soft-failure visibility
-- preserve answer/debug output parity baselines
-- keep one-patch-one-reason execution discipline
-
-Current progress:
-- A2.54 patch 1 complete (inventory + scope lock for diagnostics contract surfaces).
-- A2.54 patch 2 complete (diagnostics keyset stability guardrail across proactive flag modes).
-- A2.54 patch 3 complete (soft-failure reason-code/flag visibility coverage for diagnostics and memory fallback paths).
-- A2.54 patch 4 complete (AST/static scoped exception-handler contract gate with deterministic violation reporting).
-- baseline guardrails from A2.53 remain intact and green.
-- patch plan locked: snapshot expansion, policy-coverage expansion, enforcement hardening, closure.
-- A2.51 + post-A2.51 guardrail maintenance remain green and protected by existing quality gates.
+- define next anchor scope after diagnostics-contract closure
+- preserve current answer/debug parity and guardrail baselines
+- continue one-patch-one-reason execution discipline
 
 Execution discipline:
 - no net-new intelligence features

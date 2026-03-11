@@ -58,7 +58,7 @@
 - [x] Post-A2.51 guardrail maintenance closure
 - [x] A2.52 — AnswerService Facade Slimming
 - [x] A2.53 — Answer-Path Exception Policy Hardening
-- [ ] A2.54 — Diagnostics Contract Guardrails
+- [x] A2.54 — Diagnostics Contract Guardrails
 
 ## Current Work — A2.52 AnswerService Facade Slimming
 
@@ -82,7 +82,7 @@
 - [x] Patch 2 — diagnostics snapshot contract expansion
 - [x] Patch 3 — soft-failure policy guardrail coverage expansion
 - [x] Patch 4 — exception policy enforcement hardening
-- [ ] Patch 5 — guardrails + parity + closure
+- [x] Patch 5 — guardrails + parity + closure
 
 ## Post-A2.51 Guardrail Maintenance
 

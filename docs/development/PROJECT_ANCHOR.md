@@ -2,7 +2,7 @@
 
 ## Active Anchor
 
-A2.54 — Diagnostics Contract Guardrails
+A2.54 — Diagnostics Contract Guardrails (Closed)
 
 ### Goal
 
@@ -73,7 +73,7 @@ Target A2.54 boundaries:
 - [x] Patch 2 — diagnostics snapshot contract expansion
 - [x] Patch 3 — soft-failure policy guardrail coverage expansion
 - [x] Patch 4 — exception policy enforcement hardening
-- [ ] Patch 5 — guardrails + parity + closure
+- [x] Patch 5 — guardrails + parity + closure
 
 ### Non-Negotiable Rules
 
