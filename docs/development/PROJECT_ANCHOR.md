@@ -2,28 +2,28 @@
 
 ## Active Anchor
 
-A2.60 - Facade Convergence Phase 4 (Answer/Reasoning) (Closed)
+A2.61 - Facade Convergence Phase 5 (Answer/Reasoning)
 
 ### Goal
 
-Continue extraction-only convergence of answer/reasoning facades so orchestration entrypoints
-move closer to guardrail budgets with parity-safe responsibility boundaries.
+Continue extraction-only convergence of answer/reasoning facades to reduce remaining
+runtime-helper concentration and approach orchestrator/facade budget targets with parity.
 
 ### Why Now
 
-A2.59 closed with major helper extractions and recalibrated no-growth gates.
-Residual risk still exists in oversized facade/orchestrator files relative to target budgets,
-so another bounded phase is required before declaring convergence.
+A2.60 closed with additional policy/runtime seam extraction and stronger import-budget gates.
+Residual complexity remains concentrated in large facade files that still exceed target budget
+ranges, requiring one more bounded burn-down phase.
 
 ### Architecture Position
 
-Target A2.60 boundaries:
+Target A2.61 boundaries:
 
-- **Answer convergence phase 4**
+- **Answer convergence phase 5**
   - continue extracting bounded helper clusters from `src/services/answer/answer_service.py`,
   - keep behavior/API/diagnostics parity unchanged.
 
-- **Reasoning convergence phase 4**
+- **Reasoning convergence phase 5**
   - continue extracting bounded helper clusters from `src/layers/pro/reasoning/engine.py`,
   - keep `ReasoningEngine` as compatibility facade.
 
@@ -37,57 +37,33 @@ Target A2.60 boundaries:
 - inventory remaining high-density helper clusters and line-budget hotspots in answer/reasoning facades,
 - lock scope to extraction-only changes with strict parity constraints.
 
-#### Patch 2 - Answer extraction phase-4
-- extract next bounded clusters from `answer_service.py` (planning/execution gateway/helper-policy seams),
+#### Patch 2 - Answer extraction phase-5
+- extract next bounded clusters from `answer_service.py` (policy/adapter/runtime-fallback helper seams),
 - reduce facade branching and preserve endpoint/debug contract behavior.
 
-Patch 2 artifacts:
-- llm planner policy seam extraction:
-  - `_build_llm_planner_policy_contract`
-  - `_apply_llm_planner_policy_guards`
-  - moved to `src/services/answer/reasoning/llm_planner_policy.py`
-
-#### Patch 3 - Reasoning extraction phase-4
-- extract next bounded clusters from `reasoning/engine.py` (multi-agent/dry-run/runtime helper seams),
+#### Patch 3 - Reasoning extraction phase-5
+- extract next bounded clusters from `reasoning/engine.py` (runtime fallback / planning helper seams),
 - preserve reasoning diagnostics contract behavior.
-
-Patch 3 artifacts:
-- runtime multi-agent helper seam extraction:
-  - `_build_multi_agent_coordination_plan_for_runtime`
-  - `_enrich_step_results_with_multi_agent_contract`
-  - moved to `src/layers/pro/reasoning/multi_agent/runtime_contracts.py`
 
 #### Patch 4 - Guardrail threshold recalibration and import-budget expansion
 - recalibrate no-growth thresholds to new post-extraction baselines,
 - expand deterministic checks for seam wiring + import-budget drift prevention,
 - keep failure messages actionable for CI.
 
-Patch 4 artifacts:
-- no-growth line-budget gate recalibrated for latest monolith baselines:
-  - `src/services/answer/answer_service.py` -> `3464` lines max
-  - `src/layers/pro/reasoning/engine.py` -> `686` lines max
-- seam/import-budget coverage gate expansion:
-  - require `src.services.answer.reasoning.llm_planner_policy` import in answer facade
-  - require `src.layers.pro.reasoning.multi_agent.runtime_contracts` import in reasoning facade
-  - enforce no-growth local import budgets:
-    - `src.services.answer.*` imports in answer facade <= `15`
-    - `src.layers.pro.reasoning.*` imports in reasoning facade <= `17`
-  - gate location: `tests/unit/services/answer/test_answer_orchestration_quality_gate.py`
-
 #### Patch 5 - Guardrails + parity + closure
-- run focused and full-suite checks and close A2.60 with docs sync.
+- run focused and full-suite checks and close A2.61 with docs sync.
 
 ### Progress
 
 - [x] Patch 1 — inventory + scope lock
-- [x] Patch 2 - Answer extraction phase-4
-- [x] Patch 3 - Reasoning extraction phase-4
-- [x] Patch 4 - Guardrail threshold recalibration and import-budget expansion
-- [x] Patch 5 - guardrails + parity + closure
+- [ ] Patch 2 - Answer extraction phase-5
+- [ ] Patch 3 - Reasoning extraction phase-5
+- [ ] Patch 4 - Guardrail threshold recalibration and import-budget expansion
+- [ ] Patch 5 - guardrails + parity + closure
 
 ### Non-Negotiable Rules
 
-- No net-new user-facing features during A2.60
+- No net-new user-facing features during A2.61
 - Preserve answer/debug runtime/API parity
 - No new business logic additions inside monolith files
 - Extraction-only and thin-facade-only changes in monolith targets
@@ -96,7 +72,7 @@ Patch 4 artifacts:
 
 ### Out of Scope
 
-Do NOT modify during A2.60:
+Do NOT modify during A2.61:
 
 - unrelated product feature logic
 - endpoint contract shape
@@ -105,9 +81,9 @@ Do NOT modify during A2.60:
 
 ### Definition of Done
 
-A2.60 is complete when:
+A2.61 is complete when:
 
-- answer and reasoning convergence phase-4 extraction is completed with parity
+- answer and reasoning convergence phase-5 extraction is completed with parity
 - no-growth thresholds and import-budget constraints are updated to latest baselines and enforced in CI
 - target facades are further reduced and orchestration-focused
 - focused and full quality checks remain green
@@ -131,7 +107,7 @@ A2.56 policy markers are retained for deterministic docs quality gates:
 
 ## Next Anchor
 
-TBD - Post-A2.60 planning
+TBD - Post-A2.61 planning
 
 ## Post-A2.56 Maintenance
 
