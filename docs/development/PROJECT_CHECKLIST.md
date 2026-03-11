@@ -58,8 +58,17 @@
 - [x] A2.59 - Monolith Burn-Down Phase 3 (Answer/Reasoning)
 - [x] A2.60 - Facade Convergence Phase 4 (Answer/Reasoning)
 - [x] A2.61 - Facade Convergence Phase 5 (Answer/Reasoning)
+- [ ] A2.62 - Facade Convergence Phase 6 (Answer/Reasoning)
 
-## Current Work — A2.61 Facade Convergence Phase 5 (Answer/Reasoning)
+## Current Work — A2.62 Facade Convergence Phase 6 (Answer/Reasoning)
+
+- [x] Patch 1 - inventory + scope lock
+- [ ] Patch 2 - Answer extraction phase-6
+- [ ] Patch 3 - Reasoning extraction phase-6
+- [ ] Patch 4 - Guardrail threshold recalibration and import-budget expansion
+- [ ] Patch 5 - guardrails + parity + closure
+
+## A2.61 Historical Work - Facade Convergence Phase 5 (Answer/Reasoning)
 
 - [x] Patch 1 - inventory + scope lock
 - [x] Patch 2 - Answer extraction phase-5
