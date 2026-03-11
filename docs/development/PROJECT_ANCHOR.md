@@ -2,105 +2,83 @@
 
 ## Active Anchor
 
-Post-A2.51 — Guardrail Maintenance (Closed)
+A2.52 — AnswerService Facade Slimming
 
 ### Goal
 
-Decompose the current answer path into explicit orchestration layers so that `AnswerService`
-becomes a thin facade rather than a concentration point for interface shaping,
-runtime orchestration, diagnostics formatting, and response assembly.
+Complete the next decomposition stage after A2.51 so that `AnswerService.handle_contract()`
+is a short, explicit facade pipeline and no longer owns large post-orchestration flow blocks.
 
-The intent of this anchor is structural:
-- keep runtime behavior stable,
-- preserve current answer/debug contracts,
-- make ownership inside the answer path explicit and testable.
+The intent of this anchor is structural and safety-focused:
+- preserve runtime/API parity,
+- make post-orchestration ownership explicit,
+- keep diagnostics and fallback behavior deterministic and testable.
 
 ### Why Now
 
-The platform has already completed:
+A2.51 closed the primary facade/orchestrator/response-assembly seams, and post-A2.51
+maintenance hardened soft-failure observability and guardrails.
 
-- kernel / extensions / execution-plane topology hardening
-- planner / composition residual decoupling
-- governance and execution boundary formalization
+The next concentration point is the remaining size/complexity in `AnswerService`,
+especially post-orchestration wiring and diagnostics merge steps.
 
-The next highest-complexity concentration point is the answer path.
-
-A2.51 addresses that by separating:
-- request normalization / facade concerns
-- orchestration flow
-- response shaping / diagnostics exposure
+A2.52 focuses on finishing facade slimming without behavior changes.
 
 ### Architecture Position
 
-Target answer-path topology:
+Target A2.52 boundaries:
 
-- **Answer Facade**
-  - accepts request DTO
-  - performs minimal validation / normalization
-  - delegates to orchestrator
-  - returns normalized response DTO
+- **Answer Facade (`AnswerService`)**
+  - request contract normalization
+  - orchestration + assembly invocation
+  - short post-processing pipeline via extracted helpers
 
-- **Answer Orchestrator**
-  - coordinates knowledge / reasoning / execution-plane flow
-  - does not own API formatting concerns
-  - produces normalized answer outcome
+- **Post-Orchestration Flow Module (new seam)**
+  - anticipatory/handshake/approval/idempotency wiring
+  - no endpoint contract shaping
 
-- **Answer Response Assembly**
-  - confidence shaping
-  - warnings shaping
-  - diagnostics/debug snapshot shaping
-  - response DTO mapping
-
-Planned files/modules (conceptual):
-- `src/services/answer/answer_service.py` (thin facade target)
-- `src/services/answer/orchestrator.py`
-- `src/services/answer/response_assembly.py`
-
-Exact filenames may vary if existing structure suggests a cleaner fit.
+- **Diagnostics Merge Module (new seam)**
+  - deterministic diagnostics wiring/merge/fallback reason-code propagation
+  - no runtime flow coordination
 
 ### Patch Plan
 
-#### Patch 1 — Answer path inventory + scope lock
-- Create an inventory of current answer-path responsibilities.
-- Assign each current responsibility to target home:
-  - facade
-  - orchestrator
-  - response assembly
-- Define allowed / forbidden dependencies for the answer path.
+#### Patch 1 — Inventory + scope lock
+- Build explicit inventory of remaining `AnswerService` responsibilities after A2.51.
+- Define extraction targets for:
+  - post-orchestration flow,
+  - diagnostics merge/wiring,
+  - fallback/recovery helpers.
+- Define allowed/forbidden dependency directions for new seams.
 
-#### Patch 2 — Orchestrator seam extraction
-- Extract runtime orchestration flow into an explicit orchestrator component.
-- Ensure the facade no longer owns flow coordination details.
+#### Patch 2 — Post-orchestration seam extraction
+- Extract anticipatory/handshake/approval/idempotency wiring block from facade.
+- Keep output parity and existing reason-code behavior.
 
-#### Patch 3 — Response assembly extraction
-- Extract confidence / warnings / diagnostics shaping into response-assembly logic.
-- Keep API/debug output parity stable.
+#### Patch 3 — Diagnostics merge seam extraction
+- Extract diagnostics wiring/merge logic into dedicated helper/module.
+- Keep deterministic diagnostics key-set parity.
 
-#### Patch 4 — Interface contract cleanup
-- Ensure endpoint/service boundary depends only on stable request/response contracts.
-- Remove accidental runtime-detail leakage into API-facing layer.
+#### Patch 4 — Facade pipeline cleanup
+- Reduce `handle_contract()` to short readable pipeline (5-8 explicit steps).
+- Keep orchestrator and response assembly responsibilities unchanged.
 
-#### Patch 5 — Dependency / parity / quality gates
-- Add deterministic guardrails for answer-path layering.
-- Add parity tests to ensure no behavioral drift in answer/debug outputs.
-- Close docs/checklist/status for A2.51.
+#### Patch 5 — Guardrails + parity + closure
+- Add/extend quality gates for new seams and exception policy.
+- Run parity-focused tests and full suite.
+- Close docs/checklist/status/features sync for A2.52.
 
 ### Progress
 
-- [x] Patch 1 — answer path inventory + scope lock
-- [x] Patch 2 — orchestrator seam extraction
-- [x] Patch 3 — response assembly extraction
-- [x] Patch 4 — interface contract cleanup
-- [x] Patch 5 — dependency / parity / quality gates
-- [x] Post-A2.51 M1 — soft-failure observability hardening in answer path
-- [x] Post-A2.51 M2 — guardrail tests for AnswerService soft-failure reason-codes
-- [x] Post-A2.51 M3 — guardrail test for AnswerService durable-hydration soft-failure reason-code
-- [x] Post-A2.51 M4 — guardrail test for AnswerService post-orchestration soft-failure reason-code
-- [x] Post-A2.51 M5 — closure sync across anchor/status/checklist/features docs
+- [x] Patch 1 — inventory + scope lock
+- [ ] Patch 2 — post-orchestration seam extraction
+- [ ] Patch 3 — diagnostics merge seam extraction
+- [ ] Patch 4 — facade pipeline cleanup
+- [ ] Patch 5 — guardrails + parity + closure
 
 ### Non-Negotiable Rules
 
-- No net-new intelligence features during A2.51
+- No net-new intelligence features during A2.52
 - Preserve answer/debug output parity
 - Keep `AnswerService` thin
 - Orchestrator coordinates but does not format API/debug output
@@ -109,7 +87,7 @@ Exact filenames may vary if existing structure suggests a cleaner fit.
 
 ### Out of Scope
 
-Do NOT modify during A2.51:
+Do NOT modify during A2.52:
 
 - planner/kernel topology
 - new tool safety capabilities
@@ -121,18 +99,17 @@ Do NOT modify during A2.51:
 
 ### Definition of Done
 
-A2.51 is complete when:
+A2.52 is complete when:
 
-- answer-path responsibilities are explicitly zoned
-- `AnswerService` is reduced to thin facade responsibilities
-- orchestration flow is isolated in explicit orchestrator logic
-- response shaping / diagnostics shaping are isolated from runtime flow
-- endpoint-facing layer depends only on stable contracts
-- dependency and parity tests protect the decomposition from regression
+- remaining `AnswerService` responsibilities are explicitly zoned
+- post-orchestration and diagnostics merge seams are extracted
+- `handle_contract()` is a short facade pipeline
+- answer/debug output parity is preserved
+- dependency and parity quality gates cover the new seams
 
 ## Next Anchor
 
-TBD — Post-A2.51 planning
+TBD — Post-A2.52 planning
 
 ### Discipline
 

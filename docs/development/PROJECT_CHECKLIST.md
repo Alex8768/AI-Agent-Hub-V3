@@ -56,6 +56,15 @@
 ## Next
 
 - [x] Post-A2.51 guardrail maintenance closure
+- [ ] A2.52 — AnswerService Facade Slimming
+
+## Current Work — A2.52 AnswerService Facade Slimming
+
+- [x] Patch 1 — inventory + scope lock
+- [ ] Patch 2 — post-orchestration seam extraction
+- [ ] Patch 3 — diagnostics merge seam extraction
+- [ ] Patch 4 — facade pipeline cleanup
+- [ ] Patch 5 — guardrails + parity + closure
 
 ## Post-A2.51 Guardrail Maintenance
 

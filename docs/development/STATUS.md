@@ -2,11 +2,11 @@
 
 ## Current Phase
 
-Anchor Transition — Post-A2.51 guardrail maintenance closed
+Active Anchor Execution — A2.52 patch 1 (inventory + scope lock)
 
 ## Last Completed Anchor
 
-A2.51 — Answer Orchestration Decomposition
+A2.51 — Answer Orchestration Decomposition (+ post-A2.51 guardrail maintenance M1-M5)
 
 Answer-path decomposition completed with:
 - orchestrator seam extraction and facade thinning
@@ -16,21 +16,17 @@ Answer-path decomposition completed with:
 
 ## Current Active Anchor
 
-None (maintenance anchor closed)
+A2.52 — AnswerService Facade Slimming
 
 Current focus:
-- keep answer-path layering guardrails active
+- lock A2.52 extraction scope and dependency boundaries
 - preserve answer/debug output parity baselines
-- define and scope the next anchor
+- keep one-patch-one-reason execution discipline
 
 Current progress:
-- A2.51 patch set complete (patches 1-5).
-- dependency and parity quality gates are in place.
-- CI/release-gate coverage includes answer orchestration quality gate.
-- post-A2.51 guardrail maintenance M1/M2 completed for answer-path soft-failure observability and tests.
-- post-A2.51 guardrail maintenance M3 completed for durable-hydration soft-failure guardrail coverage.
-- post-A2.51 guardrail maintenance M4 completed for post-orchestration soft-failure guardrail coverage.
-- post-A2.51 guardrail maintenance M5 completed; maintenance anchor is closed.
+- A2.52 patch 1 complete (inventory + scope lock).
+- extraction targets locked: post-orchestration seam, diagnostics merge seam, facade pipeline cleanup.
+- A2.51 + post-A2.51 guardrail maintenance remain green and protected by existing quality gates.
 
 Execution discipline:
 - no net-new intelligence features
@@ -40,7 +36,7 @@ Execution discipline:
 
 ## Next Anchor
 
-TBD — Post-A2.51 planning
+TBD — Post-A2.52 planning
 
 ## CI Status
 
