@@ -72,7 +72,7 @@ Target A2.52 boundaries:
 
 - [x] Patch 1 — inventory + scope lock
 - [x] Patch 2 — post-orchestration seam extraction
-- [ ] Patch 3 — diagnostics merge seam extraction
+- [x] Patch 3 — diagnostics merge seam extraction
 - [ ] Patch 4 — facade pipeline cleanup
 - [ ] Patch 5 — guardrails + parity + closure
 

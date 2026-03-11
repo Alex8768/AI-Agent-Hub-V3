@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-Active Anchor Execution — A2.52 patch 2 (post-orchestration seam extraction)
+Active Anchor Execution — A2.52 patch 3 (diagnostics merge seam extraction)
 
 ## Last Completed Anchor
 
@@ -19,13 +19,14 @@ Answer-path decomposition completed with:
 A2.52 — AnswerService Facade Slimming
 
 Current focus:
-- extract post-orchestration flow seam from `AnswerService`
+- extract diagnostics merge flow seam from `AnswerService`
 - preserve answer/debug output parity baselines
 - keep one-patch-one-reason execution discipline
 
 Current progress:
 - A2.52 patch 1 complete (inventory + scope lock).
 - A2.52 patch 2 complete (post-orchestration seam extraction to dedicated module).
+- A2.52 patch 3 complete (diagnostics merge seam extraction to dedicated module).
 - extraction targets locked: post-orchestration seam, diagnostics merge seam, facade pipeline cleanup.
 - A2.51 + post-A2.51 guardrail maintenance remain green and protected by existing quality gates.
 

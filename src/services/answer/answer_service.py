@@ -48,6 +48,10 @@ from src.services.answer.interface_contract import (
     AnswerServiceRequestContract,
     build_answer_service_request_contract,
 )
+from src.services.answer.diagnostics_merge import (
+    AnswerDiagnosticsMergeDeps,
+    run_answer_diagnostics_merge_flow,
+)
 from src.services.answer.orchestrator import run_answer_orchestration_core
 from src.services.answer.post_orchestration import (
     AnswerPostOrchestrationDeps,
@@ -3843,55 +3847,20 @@ class AnswerService:
             ),
         )
 
-        try:
-            resp.diagnostics = dict(getattr(resp, "diagnostics", None) or {})
-            _hydrate_durable_records_into_diagnostics(
-                diagnostics=resp.diagnostics,
-                loaded_approval=loaded_durable_approval,
-                loaded_idempotency=loaded_durable_idempotency,
-            )
-        except Exception as exc:
-            resp.diagnostics = _append_planning_reason_codes(
-                diagnostics=dict(getattr(resp, "diagnostics", None) or {}),
-                reason_codes=["answer_service_durable_hydration_soft_failure"],
-            )
-            _LOGGER.warning(
-                "Answer service soft-failure: durable diagnostics hydration skipped",
-                context={
-                    "workspace_id": str(workspace_id or ""),
-                    "error": str(exc),
-                    "error_type": type(exc).__name__,
-                    "reason_code": "answer_service_durable_hydration_soft_failure",
-                },
-            )
-
-        try:
-            await _persist_durable_records(
-                req=req,
-                resp=resp,
-                workspace_id=workspace_id,
-                get_memory_store=get_memory_store,
-            )
-        except Exception as exc:
-            resp.diagnostics = _append_planning_reason_codes(
-                diagnostics=dict(getattr(resp, "diagnostics", None) or {}),
-                reason_codes=["answer_service_durable_persist_soft_failure"],
-            )
-            _LOGGER.warning(
-                "Answer service soft-failure: durable records persist skipped",
-                context={
-                    "workspace_id": str(workspace_id or ""),
-                    "error": str(exc),
-                    "error_type": type(exc).__name__,
-                    "reason_code": "answer_service_durable_persist_soft_failure",
-                },
-            )
-
-        await _save_session_memory(
+        resp = await run_answer_diagnostics_merge_flow(
             req=req,
             resp=resp,
             workspace_id=workspace_id,
+            loaded_durable_approval=loaded_durable_approval,
+            loaded_durable_idempotency=loaded_durable_idempotency,
             get_memory_store=get_memory_store,
+            deps=AnswerDiagnosticsMergeDeps(
+                hydrate_durable_records_into_diagnostics=_hydrate_durable_records_into_diagnostics,
+                persist_durable_records=_persist_durable_records,
+                save_session_memory=_save_session_memory,
+                append_planning_reason_codes=_append_planning_reason_codes,
+                logger=_LOGGER,
+            ),
         )
 
         return resp
