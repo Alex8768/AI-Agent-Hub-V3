@@ -195,6 +195,7 @@ AI-Agent-Hub-V3 is a modular AI platform for production-grade agent systems with
 - [x] Answer-path dependency/parity quality gates with CI release-gate wiring (A2.51 patch 5)
 - [x] Post-A2.51 answer-path soft-failure observability hardening + guardrail tests (M1/M2)
 - [x] Post-A2.51 answer-path guardrail coverage for durable-hydration soft-failure path (M3)
+- [x] Post-A2.51 answer-path guardrail coverage for post-orchestration soft-failure path (M4)
 
 ### 7) Interface Layer
 

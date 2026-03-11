@@ -275,3 +275,71 @@ async def test_answer_service_writes_soft_failure_reason_code_for_durable_hydrat
     resp = await AnswerService().handle_contract(contract)
     diag = dict(getattr(resp, "diagnostics", None) or {})
     assert "answer_service_durable_hydration_soft_failure" in list(diag.get("planning_reason_codes") or [])
+
+
+@pytest.mark.asyncio
+async def test_answer_service_writes_soft_failure_reason_code_for_post_orchestration(monkeypatch):
+    class _S:
+        feature_reasoning = True
+        feature_graphrag = True
+
+    monkeypatch.setattr("src.core.config.get_settings", lambda: _S())
+    monkeypatch.setattr("src.core.providers.get_reasoning_engine", lambda **kwargs: None)
+    monkeypatch.setattr("src.core.providers.get_memory_store", lambda: None)
+
+    async def _fake_orchestration(**kwargs):
+        _ = kwargs
+        resp = SimpleNamespace(
+            answer="ok",
+            diagnostics={"planning_reason_codes": []},
+            timings={},
+            provenance=[],
+            used_chunks=[],
+            used_nodes=[],
+            used_edges=[],
+        )
+        return SimpleNamespace(
+            resp=resp,
+            llm=None,
+            assistant_mode_enabled=False,
+            assistant_proactive_enabled=False,
+            assistant_actions_enabled=False,
+            assistant_response_language="en",
+            loaded_durable_approval={},
+            loaded_durable_idempotency={},
+        )
+
+    async def _fake_response_assembly(**kwargs):
+        return kwargs["resp"]
+
+    def _raise_runtime_diagnostics(**kwargs):
+        _ = kwargs
+        raise RuntimeError("runtime-diagnostics-failed")
+
+    async def _noop_persist(**kwargs):
+        _ = kwargs
+        return None
+
+    async def _noop_save(**kwargs):
+        _ = kwargs
+        return None
+
+    monkeypatch.setattr("src.services.answer.answer_service.run_answer_orchestration_core", _fake_orchestration)
+    monkeypatch.setattr("src.services.answer.answer_service.run_answer_response_assembly", _fake_response_assembly)
+    monkeypatch.setattr("src.services.answer.answer_service._wire_runtime_diagnostics", _raise_runtime_diagnostics)
+    monkeypatch.setattr("src.services.answer.answer_service._persist_durable_records", _noop_persist)
+    monkeypatch.setattr("src.services.answer.answer_service._save_session_memory", _noop_save)
+
+    req = AnswerRequest(query="q", session_id="s1", filters={})
+    http = _DummyHTTP(request_id="rid-1", rag_engine=object(), hybrid_retriever=object())
+    contract = build_answer_service_request_contract(
+        http=http,
+        req=req,
+        workspace_id="default",
+        engine=object(),
+        retriever=object(),
+    )
+
+    resp = await AnswerService().handle_contract(contract)
+    diag = dict(getattr(resp, "diagnostics", None) or {})
+    assert "answer_service_post_orchestration_soft_failure" in list(diag.get("planning_reason_codes") or [])
