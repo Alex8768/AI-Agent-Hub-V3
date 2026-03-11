@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 from time import perf_counter
 from typing import Any
 
@@ -78,11 +77,12 @@ from src.services.answer.execution.durable_keys import (
     build_approval_session_bundle as _build_approval_session_bundle_impl,
     build_durable_approval_session_record as _build_durable_approval_session_record_impl,
     build_execution_handshake_bundle as _build_execution_handshake_bundle_impl,
+    build_idempotency_record_snapshot as _build_idempotency_record_snapshot_impl,
     build_execution_pilot_bundle as _build_execution_pilot_bundle_impl,
     build_execution_receipt_stub as _build_execution_receipt_stub_impl,
     build_safe_mode_execution_gateway as _build_safe_mode_execution_gateway_impl,
-    durable_approval_record_key as _durable_approval_record_key,
-    durable_idempotency_record_key as _durable_idempotency_record_key,
+    load_durable_records as _load_durable_records_impl,
+    persist_durable_records as _persist_durable_records_impl,
     run_execution_pilot_runtime as _run_execution_pilot_runtime_impl,
 )
 from src.services.answer.observability.event_logger import log_observability
@@ -1069,18 +1069,13 @@ def _build_idempotency_record_snapshot(
     plan_id: str,
     transition_input: dict[str, object],
 ) -> dict[str, object]:
-    idem = dict(execution_idempotency_bundle or {})
-    return {
-        "contract_version": IDEMPOTENCY_RECORD_CONTRACT_VERSION,
-        "idempotency_key": str(idem.get("idempotency_key", "") or ""),
-        "workspace_id": str(workspace_id or ""),
-        "plan_id": str(plan_id or ""),
-        "operation_fingerprint": str(idem.get("operation_fingerprint", "") or ""),
-        "status": str(idem.get("status", "none") or "none"),
-        "confirmation_token": str(transition_input.get("confirmation_token", "") or ""),
-        "decision": str(transition_input.get("decision", "") or ""),
-        "reason_codes": ["durable_record_not_persisted_yet"],
-    }
+    return _build_idempotency_record_snapshot_impl(
+        execution_idempotency_bundle=execution_idempotency_bundle,
+        workspace_id=workspace_id,
+        plan_id=plan_id,
+        transition_input=transition_input,
+        idempotency_record_contract_version=IDEMPOTENCY_RECORD_CONTRACT_VERSION,
+    )
 
 
 async def _load_durable_records(
@@ -1089,41 +1084,11 @@ async def _load_durable_records(
     workspace_id: str,
     get_memory_store: object,
 ) -> tuple[dict[str, object], dict[str, object]]:
-    sid = str(getattr(req, "session_id", "") or "default")
-    mem = get_memory_store()
-    approval_raw = ""
-    try:
-        mem_get = getattr(mem, "get", None)
-        if callable(mem_get):
-            approval_raw = await mem_get(
-                workspace_id=workspace_id,
-                key=_durable_approval_record_key(session_id=sid),
-            )
-    except Exception:
-        approval_raw = ""
-    approval_loaded: dict[str, object] = {}
-    try:
-        approval_loaded = dict(json.loads(str(approval_raw or "")) or {})
-    except Exception:
-        approval_loaded = {}
-
-    idem_from_filters = str((dict(getattr(req, "filters", {}) or {})).get("handshake_idempotency_key", "") or "")
-    idem_raw = ""
-    try:
-        mem_get = getattr(mem, "get", None)
-        if callable(mem_get):
-            idem_raw = await mem_get(
-                workspace_id=workspace_id,
-                key=_durable_idempotency_record_key(session_id=sid, idempotency_key=idem_from_filters),
-            )
-    except Exception:
-        idem_raw = ""
-    idempotency_loaded: dict[str, object] = {}
-    try:
-        idempotency_loaded = dict(json.loads(str(idem_raw or "")) or {})
-    except Exception:
-        idempotency_loaded = {}
-    return approval_loaded, idempotency_loaded
+    return await _load_durable_records_impl(
+        req=req,
+        workspace_id=workspace_id,
+        get_memory_store=get_memory_store,
+    )
 
 
 def _hydrate_durable_records_into_diagnostics(
@@ -1159,23 +1124,11 @@ async def _persist_durable_records(
     workspace_id: str,
     get_memory_store: object,
 ) -> None:
-    diag = dict(getattr(resp, "diagnostics", None) or {})
-    approval_record = dict(diag.get("assistant_durable_approval_session") or {})
-    idempotency_record = dict(diag.get("assistant_idempotency_record") or {})
-    sid = str(getattr(req, "session_id", "") or "default")
-    mem = get_memory_store()
-    await mem.put(
+    await _persist_durable_records_impl(
+        req=req,
+        resp=resp,
         workspace_id=workspace_id,
-        key=_durable_approval_record_key(session_id=sid),
-        value=json.dumps(approval_record, ensure_ascii=True, sort_keys=True),
-        metadata={"session_id": sid, "kind": "durable_approval_session_record"},
-    )
-    idem_key = str(idempotency_record.get("idempotency_key", "") or "")
-    await mem.put(
-        workspace_id=workspace_id,
-        key=_durable_idempotency_record_key(session_id=sid, idempotency_key=idem_key),
-        value=json.dumps(idempotency_record, ensure_ascii=True, sort_keys=True),
-        metadata={"session_id": sid, "kind": "durable_idempotency_record"},
+        get_memory_store=get_memory_store,
     )
 
 

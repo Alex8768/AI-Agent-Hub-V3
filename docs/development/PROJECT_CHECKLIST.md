@@ -72,7 +72,7 @@
 ## Current Work — A2.71 Facade Convergence Phase 15 (Answer/Reasoning)
 
 - [x] Patch 1 - inventory + scope lock
-- [ ] Patch 2 - Answer extraction phase-15
+- [x] Patch 2 - Answer extraction phase-15
 - [ ] Patch 3 - Reasoning extraction phase-15
 - [ ] Patch 4 - Guardrail threshold recalibration and import-budget expansion
 - [ ] Patch 5 - guardrails + parity + closure
