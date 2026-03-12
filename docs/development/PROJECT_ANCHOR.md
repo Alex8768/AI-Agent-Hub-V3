@@ -2,12 +2,12 @@
 
 ## Active Anchor
 
-TBD - Post-A2.81 planning
+TBD - Post-A2.82 planning
 
 ### Goal
 
-Continue extraction-only convergence of answer/reasoning facades after A2.80 closure,
-reducing residual high-density helper concentration while preserving runtime parity.
+Close the answer facade convergence cycle after major ownership extraction, recalibrate
+guardrails to the latest reduced baselines, and preserve full runtime parity.
 
 ### Why Now
 
@@ -203,11 +203,11 @@ A2.56 policy markers are retained for deterministic docs quality gates:
 
 ## Next Anchor
 
-TBD - Post-A2.82 planning
+TBD - Post-A2.83 planning
 
 ## Anchor Closed
 
-A2.81 complete - Facade Convergence Phase 25 closed with extraction + guardrails + parity.
+A2.82 complete - Facade Convergence Phase 26 closed with answer facade stabilization, guardrails, and parity.
 
 ## Post-A2.56 Maintenance
 
