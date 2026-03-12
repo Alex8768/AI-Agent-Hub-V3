@@ -162,28 +162,53 @@ class _AnswerFacadePipelineState:
         self.loaded_durable_idempotency = dict(loaded_durable_idempotency or {})
 
 
+
+def _execution_runtime_helpers():
+    import importlib
+
+    return importlib.import_module("src.services.answer.execution.runtime_helpers")
+
+
+def _build_transition_policy_contract() -> dict[str, object]:
+    return _execution_runtime_helpers().build_transition_policy_contract()
+
+
+def _apply_handshake_transition_policy(
+    *,
+    transition_input: dict[str, object],
+    draft_actions_bundle: dict[str, object],
+    policy_contract: dict[str, object],
+) -> tuple[dict[str, object], dict[str, object]]:
+    return _execution_runtime_helpers().apply_handshake_transition_policy(
+        transition_input=transition_input,
+        draft_actions_bundle=draft_actions_bundle,
+        policy_contract=policy_contract,
+    )
+
+
 def _build_post_orchestration_deps() -> AnswerPostOrchestrationDeps:
+    execution = _execution_runtime_helpers()
     return AnswerPostOrchestrationDeps(
         run_anticipatory_safe_mode=_run_anticipatory_safe_mode,
         rank_proactive_bundle=_rank_proactive_bundle,
         build_draft_action_bundle=_build_draft_action_bundle,
         wire_runtime_diagnostics=_wire_runtime_diagnostics,
         bridge_plan_to_draft_actions=_bridge_plan_to_draft_actions,
-        build_execution_handshake_bundle=_build_execution_handshake_bundle,
-        build_transition_policy_contract=_build_transition_policy_contract,
-        apply_handshake_transition_policy=_apply_handshake_transition_policy,
-        extract_handshake_transition_input=_extract_handshake_transition_input,
-        apply_durable_confirmation_token_guards=_apply_durable_confirmation_token_guards,
-        apply_execution_idempotency_guard=_apply_execution_idempotency_guard,
-        apply_handshake_transition=_apply_handshake_transition,
-        apply_rollback_contract_guard=_apply_rollback_contract_guard,
-        run_execution_pilot_runtime=_run_execution_pilot_runtime,
-        build_execution_receipt_stub=_build_execution_receipt_stub,
-        build_safe_mode_execution_gateway=_build_safe_mode_execution_gateway,
-        build_execution_pilot_bundle=_build_execution_pilot_bundle,
-        build_approval_session_bundle=_build_approval_session_bundle,
-        build_durable_approval_session_record=_build_durable_approval_session_record,
-        build_idempotency_record_snapshot=_build_idempotency_record_snapshot,
+        build_execution_handshake_bundle=execution.build_execution_handshake_bundle,
+        build_transition_policy_contract=execution.build_transition_policy_contract,
+        apply_handshake_transition_policy=execution.apply_handshake_transition_policy,
+        extract_handshake_transition_input=execution.extract_handshake_transition_input,
+        apply_durable_confirmation_token_guards=execution.apply_durable_confirmation_token_guards,
+        apply_execution_idempotency_guard=execution.apply_execution_idempotency_guard,
+        apply_handshake_transition=execution.apply_handshake_transition,
+        apply_rollback_contract_guard=execution.apply_rollback_contract_guard,
+        run_execution_pilot_runtime=execution.run_execution_pilot_runtime,
+        build_execution_receipt_stub=execution.build_execution_receipt_stub,
+        build_safe_mode_execution_gateway=execution.build_safe_mode_execution_gateway,
+        build_execution_pilot_bundle=execution.build_execution_pilot_bundle,
+        build_approval_session_bundle=execution.build_approval_session_bundle,
+        build_durable_approval_session_record=execution.build_durable_approval_session_record,
+        build_idempotency_record_snapshot=execution.build_idempotency_record_snapshot,
         append_planning_reason_codes=_append_planning_reason_codes,
         get_request_id=get_request_id,
         logger=_LOGGER,
@@ -510,229 +535,6 @@ def _bridge_plan_to_draft_actions(
     )
 
 
-def _build_execution_handshake_bundle(
-    *,
-    plan_bundle: dict[str, object],
-    draft_actions_bundle: dict[str, object],
-    assistant_mode_enabled: bool,
-    actions_enabled: bool,
-) -> dict[str, object]:
-    return _build_execution_handshake_bundle_impl(
-        plan_bundle=plan_bundle,
-        draft_actions_bundle=draft_actions_bundle,
-        assistant_mode_enabled=assistant_mode_enabled,
-        actions_enabled=actions_enabled,
-        handshake_contract_version=HANDSHAKE_CONTRACT_VERSION,
-    )
-
-
-def _extract_handshake_transition_input(req: AnswerRequest) -> dict[str, object]:
-    filters = dict(getattr(req, "filters", {}) or {})
-    return normalize_execution_request(filters=filters)
-
-
-def _apply_handshake_transition(
-    *,
-    handshake_bundle: dict[str, object],
-    transition_input: dict[str, object],
-    draft_actions_bundle: dict[str, object],
-) -> dict[str, object]:
-    return _apply_handshake_transition_impl(
-        handshake_bundle=handshake_bundle,
-        transition_input=transition_input,
-        draft_actions_bundle=draft_actions_bundle,
-    )
-
-
-def _apply_execution_idempotency_guard(
-    *,
-    transition_input: dict[str, object],
-    workspace_id: str,
-    plan_id: str,
-    prior_record: dict[str, object] | None = None,
-    persist: bool = True,
-) -> tuple[dict[str, object], dict[str, object]]:
-    return _apply_execution_idempotency_guard_impl(
-        transition_input=transition_input,
-        workspace_id=workspace_id,
-        plan_id=plan_id,
-        prior_record=prior_record,
-        persist=persist,
-        execution_idempotency_contract_version=EXECUTION_IDEMPOTENCY_CONTRACT_VERSION,
-        seen_store=_EXECUTION_IDEMPOTENCY_SEEN,
-    )
-
-
-def _build_transition_policy_contract() -> dict[str, object]:
-    return _build_transition_policy_contract_impl(
-        max_approved_action_ids=EXECUTION_PILOT_MAX_APPROVED_ACTION_IDS,
-        allowlisted_action_types=EXECUTION_PILOT_ALLOWLISTED_ACTION_TYPES,
-        allowlisted_action_pattern=EXECUTION_PILOT_ALLOWLISTED_ACTION_PATTERN,
-    )
-
-
-def _is_allowlisted_pilot_action_type(action_type: str, allowlisted_action_types: set[str]) -> bool:
-    normalized = str(action_type or "").strip()
-    if not normalized:
-        return False
-    if normalized in allowlisted_action_types:
-        return True
-    return normalized.startswith("prepare_") and normalized.endswith("_draft")
-
-
-def _apply_handshake_transition_policy(
-    *,
-    transition_input: dict[str, object],
-    draft_actions_bundle: dict[str, object],
-    policy_contract: dict[str, object],
-) -> tuple[dict[str, object], dict[str, object]]:
-    return _apply_handshake_transition_policy_impl(
-        transition_input=transition_input,
-        draft_actions_bundle=draft_actions_bundle,
-        policy_contract=policy_contract,
-        is_allowlisted_action_type_fn=_is_allowlisted_pilot_action_type,
-    )
-
-
-def _apply_durable_confirmation_token_guards(
-    *,
-    transition_input: dict[str, object],
-    durable_approval_record: dict[str, object],
-) -> tuple[dict[str, object], list[str]]:
-    return _apply_durable_confirmation_token_guards_impl(
-        transition_input=transition_input,
-        durable_approval_record=durable_approval_record,
-    )
-
-
-def _apply_rollback_contract_guard(
-    *,
-    handshake_bundle: dict[str, object],
-    draft_actions_bundle: dict[str, object],
-) -> tuple[dict[str, object], dict[str, object]]:
-    return _apply_rollback_contract_guard_impl(
-        handshake_bundle=handshake_bundle,
-        draft_actions_bundle=draft_actions_bundle,
-    )
-
-
-def _run_execution_pilot_runtime(
-    *,
-    handshake_bundle: dict[str, object],
-    draft_actions_bundle: dict[str, object],
-    actions_enabled: bool,
-) -> tuple[list[str], list[str]]:
-    return _run_execution_pilot_runtime_impl(
-        handshake_bundle=handshake_bundle,
-        draft_actions_bundle=draft_actions_bundle,
-        actions_enabled=actions_enabled,
-        execution_pilot_allowlisted_action_types=EXECUTION_PILOT_ALLOWLISTED_ACTION_TYPES,
-        execution_pilot_max_approved_action_ids=EXECUTION_PILOT_MAX_APPROVED_ACTION_IDS,
-        is_allowlisted_action_type_fn=_is_allowlisted_pilot_action_type,
-    )
-
-
-def _build_execution_receipt_stub(
-    *,
-    handshake_bundle: dict[str, object],
-    plan_bundle: dict[str, object],
-    draft_actions_bundle: dict[str, object],
-    workspace_id: str,
-    request_id: str,
-    executed_action_ids: list[str] | None = None,
-) -> dict[str, object]:
-    return _build_execution_receipt_stub_impl(
-        handshake_bundle=handshake_bundle,
-        plan_bundle=plan_bundle,
-        draft_actions_bundle=draft_actions_bundle,
-        workspace_id=workspace_id,
-        request_id=request_id,
-        executed_action_ids=executed_action_ids,
-        execution_receipt_contract_version=EXECUTION_RECEIPT_CONTRACT_VERSION,
-    )
-
-
-def _build_safe_mode_execution_gateway(
-    *,
-    handshake_bundle: dict[str, object],
-    receipt_bundle: dict[str, object],
-    actions_enabled: bool,
-) -> dict[str, object]:
-    return _build_safe_mode_execution_gateway_impl(
-        handshake_bundle=handshake_bundle,
-        receipt_bundle=receipt_bundle,
-        actions_enabled=actions_enabled,
-        execution_gateway_contract_version=EXECUTION_GATEWAY_CONTRACT_VERSION,
-    )
-
-
-def _build_execution_pilot_bundle(
-    *,
-    handshake_bundle: dict[str, object],
-    draft_actions_bundle: dict[str, object],
-    receipt_bundle: dict[str, object],
-    actions_enabled: bool,
-) -> dict[str, object]:
-    return _build_execution_pilot_bundle_impl(
-        handshake_bundle=handshake_bundle,
-        draft_actions_bundle=draft_actions_bundle,
-        receipt_bundle=receipt_bundle,
-        actions_enabled=actions_enabled,
-        execution_pilot_contract_version=EXECUTION_PILOT_CONTRACT_VERSION,
-        execution_pilot_allowlisted_action_types=EXECUTION_PILOT_ALLOWLISTED_ACTION_TYPES,
-        execution_pilot_max_approved_action_ids=EXECUTION_PILOT_MAX_APPROVED_ACTION_IDS,
-        is_allowlisted_action_type_fn=_is_allowlisted_pilot_action_type,
-    )
-
-
-def _build_approval_session_bundle(
-    *,
-    handshake_bundle: dict[str, object],
-    plan_bundle: dict[str, object],
-    workspace_id: str,
-    request_id: str,
-) -> dict[str, object]:
-    return _build_approval_session_bundle_impl(
-        handshake_bundle=handshake_bundle,
-        plan_bundle=plan_bundle,
-        workspace_id=workspace_id,
-        request_id=request_id,
-        approval_session_contract_version=APPROVAL_SESSION_CONTRACT_VERSION,
-    )
-
-
-def _build_durable_approval_session_record(
-    *,
-    approval_session_bundle: dict[str, object],
-    session_id: str,
-    confirmation_token: str,
-    transition_input: dict[str, object],
-    previous_record: dict[str, object] | None = None,
-) -> dict[str, object]:
-    return _build_durable_approval_session_record_impl(
-        approval_session_bundle=approval_session_bundle,
-        session_id=session_id,
-        confirmation_token=confirmation_token,
-        transition_input=transition_input,
-        previous_record=previous_record,
-        durable_approval_session_contract_version=DURABLE_APPROVAL_SESSION_CONTRACT_VERSION,
-    )
-
-
-def _build_idempotency_record_snapshot(
-    *,
-    execution_idempotency_bundle: dict[str, object],
-    workspace_id: str,
-    plan_id: str,
-    transition_input: dict[str, object],
-) -> dict[str, object]:
-    return _build_idempotency_record_snapshot_impl(
-        execution_idempotency_bundle=execution_idempotency_bundle,
-        workspace_id=workspace_id,
-        plan_id=plan_id,
-        transition_input=transition_input,
-        idempotency_record_contract_version=IDEMPOTENCY_RECORD_CONTRACT_VERSION,
-    )
 
 
 async def _load_durable_records(
@@ -799,6 +601,7 @@ def _run_assistant_execution_orchestration_seam(
     assistant_mode_enabled: bool,
     assistant_actions_enabled: bool,
 ) -> dict[str, object]:
+    execution = _execution_runtime_helpers()
     return _run_assistant_execution_orchestration_seam_impl(
         req=req,
         diagnostics=diagnostics,
@@ -807,20 +610,20 @@ def _run_assistant_execution_orchestration_seam(
         request_id=request_id,
         assistant_mode_enabled=assistant_mode_enabled,
         assistant_actions_enabled=assistant_actions_enabled,
-        build_handshake_fn=_build_execution_handshake_bundle,
-        build_transition_policy_fn=_build_transition_policy_contract,
-        apply_handshake_transition_policy_fn=_apply_handshake_transition_policy,
-        extract_handshake_transition_input_fn=_extract_handshake_transition_input,
-        apply_execution_idempotency_guard_fn=_apply_execution_idempotency_guard,
-        apply_handshake_transition_fn=_apply_handshake_transition,
-        apply_rollback_contract_guard_fn=_apply_rollback_contract_guard,
-        run_execution_pilot_runtime_fn=_run_execution_pilot_runtime,
-        build_execution_receipt_stub_fn=_build_execution_receipt_stub,
-        build_safe_mode_execution_gateway_fn=_build_safe_mode_execution_gateway,
-        build_execution_pilot_bundle_fn=_build_execution_pilot_bundle,
-        build_approval_session_bundle_fn=_build_approval_session_bundle,
-        build_durable_approval_session_record_fn=_build_durable_approval_session_record,
-        build_idempotency_record_snapshot_fn=_build_idempotency_record_snapshot,
+        build_handshake_fn=execution.build_execution_handshake_bundle,
+        build_transition_policy_fn=execution.build_transition_policy_contract,
+        apply_handshake_transition_policy_fn=execution.apply_handshake_transition_policy,
+        extract_handshake_transition_input_fn=execution.extract_handshake_transition_input,
+        apply_execution_idempotency_guard_fn=execution.apply_execution_idempotency_guard,
+        apply_handshake_transition_fn=execution.apply_handshake_transition,
+        apply_rollback_contract_guard_fn=execution.apply_rollback_contract_guard,
+        run_execution_pilot_runtime_fn=execution.run_execution_pilot_runtime,
+        build_execution_receipt_stub_fn=execution.build_execution_receipt_stub,
+        build_safe_mode_execution_gateway_fn=execution.build_safe_mode_execution_gateway,
+        build_execution_pilot_bundle_fn=execution.build_execution_pilot_bundle,
+        build_approval_session_bundle_fn=execution.build_approval_session_bundle,
+        build_durable_approval_session_record_fn=execution.build_durable_approval_session_record,
+        build_idempotency_record_snapshot_fn=execution.build_idempotency_record_snapshot,
     )
 
 
