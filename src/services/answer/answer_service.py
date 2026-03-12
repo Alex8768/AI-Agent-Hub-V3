@@ -463,15 +463,20 @@ def _build_conversational_runtime_parity_bundle(
     )
 
 
+def _feedback_runtime_helpers():
+    import importlib
+
+    return importlib.import_module("src.services.answer.feedback.runtime_helpers")
+
+
 def _build_feedback_learning_bundle(
     *,
     req: AnswerRequest,
     assistant_mode_enabled: bool,
 ) -> dict[str, object]:
-    return _build_feedback_learning_bundle_impl(
+    return _feedback_runtime_helpers().build_feedback_learning_bundle(
         req=req,
         assistant_mode_enabled=assistant_mode_enabled,
-        feedback_contract_version=FEEDBACK_CONTRACT_VERSION,
     )
 
 
@@ -482,13 +487,11 @@ def _build_feedback_adaptation_bundle(
     plan_bundle: dict[str, object],
     assistant_mode_enabled: bool,
 ) -> dict[str, object]:
-    return _build_feedback_adaptation_bundle_impl(
+    return _feedback_runtime_helpers().build_feedback_adaptation_bundle(
         feedback_bundle=feedback_bundle,
         intent_bundle=intent_bundle,
         plan_bundle=plan_bundle,
         assistant_mode_enabled=assistant_mode_enabled,
-        adaptation_contract_version=ADAPTATION_CONTRACT_VERSION,
-        allowed_intents=_LLM_PLANNER_ALLOWED_INTENTS,
     )
 
 
@@ -498,27 +501,15 @@ def _build_tool_selection_bundle(
     assistant_mode_enabled: bool,
     mcp_tools: list[dict[str, object]] | None = None,
 ) -> dict[str, object]:
-    return _build_tool_selection_bundle_impl(
+    return _feedback_runtime_helpers().build_tool_selection_bundle(
         plan_bundle=plan_bundle,
         assistant_mode_enabled=assistant_mode_enabled,
         mcp_tools=mcp_tools,
-        tool_selection_contract_version=TOOL_SELECTION_CONTRACT_VERSION,
     )
 
 
 def _load_mcp_tools_from_runtime(http: Request) -> list[dict[str, object]]:
-    state = getattr(getattr(http, "app", None), "state", None)
-    registry = getattr(state, "mcp_registry", None) if state is not None else None
-    if registry is None:
-        return []
-    try:
-        list_tools = getattr(registry, "list_tools", None)
-        if not callable(list_tools):
-            return []
-        rows = list(list_tools(enabled_only=True) or [])
-        return [dict(row or {}) for row in rows]
-    except Exception:
-        return []
+    return _feedback_runtime_helpers().load_mcp_tools_from_runtime(http)
 
 
 def _bridge_plan_to_draft_actions(
