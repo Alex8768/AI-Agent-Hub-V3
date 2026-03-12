@@ -365,6 +365,12 @@ def _apply_assistant_recovery_policy_guards(
     )
 
 
+def _planner_runtime_helpers():
+    import importlib
+
+    return importlib.import_module("src.services.answer.planner.runtime_helpers")
+
+
 def _rank_proactive_bundle(bundle: dict[str, object]) -> dict[str, object]:
     import importlib
 
@@ -389,7 +395,7 @@ def _build_draft_action_bundle(
 
 
 def _infer_assistant_intent(*, query: str, assistant_mode_enabled: bool) -> dict[str, object]:
-    return _infer_assistant_intent_impl(
+    return _planner_runtime_helpers().infer_assistant_intent(
         query=query,
         assistant_mode_enabled=assistant_mode_enabled,
     )
@@ -401,19 +407,15 @@ def _build_deterministic_plan(
     intent_payload: dict[str, object],
     assistant_mode_enabled: bool,
 ) -> dict[str, object]:
-    return _build_deterministic_plan_impl(
+    return _planner_runtime_helpers().build_deterministic_plan(
         query=query,
         intent_payload=intent_payload,
         assistant_mode_enabled=assistant_mode_enabled,
-        plan_contract_version=PLAN_CONTRACT_VERSION,
     )
 
 
 def _parse_llm_planner_intent(raw_text: str) -> str:
-    return _parse_llm_planner_intent_impl(
-        raw_text,
-        allowed_intents=_LLM_PLANNER_ALLOWED_INTENTS,
-    )
+    return _planner_runtime_helpers().parse_llm_planner_intent(raw_text)
 
 
 async def _build_planner_with_fallback(
@@ -426,7 +428,7 @@ async def _build_planner_with_fallback(
     llm_model: str,
     llm_error: str,
 ) -> tuple[dict[str, object], dict[str, object], dict[str, object]]:
-    return await _build_planner_with_fallback_impl(
+    return await _planner_runtime_helpers().build_planner_with_fallback(
         query=query,
         intent_payload=intent_payload,
         assistant_mode_enabled=assistant_mode_enabled,
@@ -436,7 +438,6 @@ async def _build_planner_with_fallback(
         llm_error=llm_error,
         deterministic_plan_builder=_build_deterministic_plan,
         parse_intent_fn=_parse_llm_planner_intent,
-        llm_planner_contract_version=LLM_PLANNER_CONTRACT_VERSION,
     )
 
 
