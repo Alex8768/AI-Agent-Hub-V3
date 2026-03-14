@@ -6,9 +6,10 @@ import { useAppContext } from '../context/AppContext';
 interface ChatPanelProps {
   workspaceId: string;
   sessionId: string;
+  onSessionUsed?: (workspaceId: string, sessionId: string) => void;
 }
 
-const ChatPanel: React.FC<ChatPanelProps> = ({ workspaceId, sessionId }) => {
+const ChatPanel: React.FC<ChatPanelProps> = ({ workspaceId, sessionId, onSessionUsed }) => {
   const [query, setQuery] = useState('');
   const [answer, setAnswer] = useState<AnswerResponseDto | null>(null);
   const [loading, setLoading] = useState(false);
@@ -40,6 +41,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ workspaceId, sessionId }) => {
     setAnswer(null);
     setStreamEvents([]);
     setLastGraph({ nodes: [], edges: [] }); // reset graph
+    onSessionUsed?.(normalizedWorkspaceId, normalizedSessionId);
 
     // Connect to SSE stream for this session
     if (eventSourceRef.current) {
