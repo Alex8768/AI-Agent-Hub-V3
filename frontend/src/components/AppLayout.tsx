@@ -17,7 +17,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({
   rightVisible = true,
 }) => {
   return (
-    <Group orientation="horizontal" style={{ height: '100vh', width: '100%' }}>
+    <Group orientation="horizontal" style={{ height: '100%', width: '100%' }}>
       {leftVisible && (
         <>
           <Panel defaultSize={20} minSize={15} maxSize={30}>

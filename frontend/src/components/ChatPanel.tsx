@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { askAnswer, API_BASE } from '../lib/apiClient';
 import type { AnswerResponseDto } from '../contracts/api';
+import { useAppContext } from '../context/AppContext';
 
 interface ChatPanelProps {
   workspaceId: string;
@@ -15,6 +16,11 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ workspaceId, sessionId }) => {
   const [streamEvents, setStreamEvents] = useState<string[]>([]);
   const [showDiagnostics, setShowDiagnostics] = useState(false);
   const eventSourceRef = useRef<EventSource | null>(null);
+  const { setLastAnswer, setLastGraph } = useAppContext();
+  const normalizedWorkspaceId = workspaceId.trim() || 'default';
+  const normalizedSessionId = sessionId.trim() || 'default';
+  // Streaming endpoint is keyed by session_id only, so scope session by workspace.
+  const scopedSessionId = `${normalizedWorkspaceId}:${normalizedSessionId}`;
 
   // Cleanup SSE on unmount
   useEffect(() => {
@@ -33,12 +39,13 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ workspaceId, sessionId }) => {
     setError('');
     setAnswer(null);
     setStreamEvents([]);
+    setLastGraph({ nodes: [], edges: [] }); // reset graph
 
     // Connect to SSE stream for this session
     if (eventSourceRef.current) {
       eventSourceRef.current.close();
     }
-    const es = new EventSource(`${API_BASE}/api/v1/stream/${sessionId}?once=0`);
+    const es = new EventSource(`${API_BASE}/api/v1/stream/${encodeURIComponent(scopedSessionId)}?once=0`);
     eventSourceRef.current = es;
 
     es.onmessage = (event) => {
@@ -53,21 +60,23 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ workspaceId, sessionId }) => {
     };
 
     es.onerror = () => {
-      // will reconnect automatically, but we can show a warning
+      // will reconnect automatically
     };
 
     try {
       const resp = await askAnswer(
-        { query: query.trim(), k: 8, graph_depth: 1, session_id: sessionId },
-        { workspaceId }
+        { query: query.trim(), k: 8, graph_depth: 1, session_id: scopedSessionId },
+        { workspaceId: normalizedWorkspaceId }
       );
       setAnswer(resp);
+      setLastAnswer(resp);
+      
+      // Graph will be populated later when we add hybrid search
+      // For now, we keep graph empty
     } catch (err) {
       setError(String(err));
     } finally {
       setLoading(false);
-      // Close SSE after answer is complete (or keep open for future)
-      // We can keep it open, but for simplicity close after answer
       if (eventSourceRef.current) {
         eventSourceRef.current.close();
         eventSourceRef.current = null;
@@ -92,7 +101,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ workspaceId, sessionId }) => {
           </button>
         </div>
         <div style={{ marginTop: '0.5rem', fontSize: '0.9rem', color: '#666' }}>
-          Workspace: {workspaceId} | Session: {sessionId}
+          Workspace: {normalizedWorkspaceId} | Session: {normalizedSessionId}
         </div>
       </form>
 

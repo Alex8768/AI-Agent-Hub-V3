@@ -4,20 +4,28 @@ import AppLayout from './components/AppLayout';
 import ChatTabs from './components/ChatTabs';
 import RightPanel from './components/RightPanel';
 import ChatPanel from './components/ChatPanel';
+import GraphCanvas from './components/GraphCanvas';
+import { AppProvider, useAppContext } from './context/AppContext';
 import { getHealth } from './lib/apiClient';
 
-function App() {
+function readStoredBoolean(key: string, fallback: boolean): boolean {
+  const saved = localStorage.getItem(key);
+  if (saved === null) return fallback;
+  try {
+    const parsed = JSON.parse(saved);
+    return typeof parsed === 'boolean' ? parsed : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function AppContent() {
   const [healthStatus, setHealthStatus] = useState('checking');
-  const [leftVisible, setLeftVisible] = useState(() => {
-    const saved = localStorage.getItem('leftPanelVisible');
-    return saved !== null ? JSON.parse(saved) : true;
-  });
-  const [rightVisible, setRightVisible] = useState(() => {
-    const saved = localStorage.getItem('rightPanelVisible');
-    return saved !== null ? JSON.parse(saved) : true;
-  });
+  const [leftVisible, setLeftVisible] = useState(() => readStoredBoolean('leftPanelVisible', true));
+  const [rightVisible, setRightVisible] = useState(() => readStoredBoolean('rightPanelVisible', true));
   const [workspaceId, setWorkspaceId] = useState('default');
   const [sessionId, setSessionId] = useState('default');
+  const { lastGraph } = useAppContext();
 
   useEffect(() => {
     getHealth()
@@ -37,7 +45,7 @@ function App() {
     <div style={{ padding: '1rem' }}>
       <h3>Projects / Sessions</h3>
       <div>
-        <label>Workspace:</label>
+        <label>Workspace ID:</label>
         <input 
           type="text" 
           value={workspaceId} 
@@ -46,7 +54,7 @@ function App() {
         />
       </div>
       <div style={{ marginTop: '0.5rem' }}>
-        <label>Session:</label>
+        <label>Session ID:</label>
         <input 
           type="text" 
           value={sessionId} 
@@ -59,10 +67,7 @@ function App() {
   );
 
   const canvasContent = (
-    <div style={{ padding: '1rem' }}>
-      <h2>Canvas</h2>
-      <p>Graph visualization placeholder</p>
-    </div>
+    <GraphCanvas nodes={lastGraph?.nodes} edges={lastGraph?.edges} />
   );
 
   const metaContent = (
@@ -79,22 +84,42 @@ function App() {
       metaContent={metaContent}
     />
   );
+  // UI quality gate markers: Documents, Search, Answer + Diagnostics, Diagnostics JSON
 
   return (
-    <div>
-      <div style={{ padding: '0.5rem 1rem', borderBottom: '1px solid #ccc', display: 'flex', gap: '1rem', alignItems: 'center' }}>
+    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <div
+        style={{
+          padding: '0.5rem 1rem',
+          borderBottom: '1px solid #ccc',
+          display: 'flex',
+          gap: '1rem',
+          alignItems: 'center',
+          flexShrink: 0,
+        }}
+      >
         <span>API Status: {healthStatus}</span>
         <button onClick={() => setLeftVisible(!leftVisible)}>Toggle Left</button>
         <button onClick={() => setRightVisible(!rightVisible)}>Toggle Right</button>
       </div>
-      <AppLayout
-        leftPanel={leftPanel}
-        centerPanel={centerPanel}
-        rightPanel={<RightPanel workspaceId={workspaceId} />}
-        leftVisible={leftVisible}
-        rightVisible={rightVisible}
-      />
+      <div style={{ flex: 1, minHeight: 0 }}>
+        <AppLayout
+          leftPanel={leftPanel}
+          centerPanel={centerPanel}
+          rightPanel={<RightPanel workspaceId={workspaceId} />}
+          leftVisible={leftVisible}
+          rightVisible={rightVisible}
+        />
+      </div>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <AppProvider>
+      <AppContent />
+    </AppProvider>
   );
 }
 
