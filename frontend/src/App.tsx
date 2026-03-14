@@ -5,6 +5,7 @@ import ChatTabs from './components/ChatTabs';
 import RightPanel from './components/RightPanel';
 import ChatPanel from './components/ChatPanel';
 import GraphCanvas from './components/GraphCanvas';
+import MetaPanel from './components/MetaPanel';
 import { AppProvider, useAppContext } from './context/AppContext';
 import { getHealth } from './lib/apiClient';
 
@@ -51,7 +52,7 @@ function AppContent() {
   const [workspaceId, setWorkspaceId] = useState('default');
   const [sessionId, setSessionId] = useState('default');
   const [sessionHistory, setSessionHistory] = useState<SessionHistoryItem[]>(() => readSessionHistory());
-  const { lastGraph } = useAppContext();
+  const { lastGraph, lastAnswer } = useAppContext();
 
   useEffect(() => {
     getHealth()
@@ -135,12 +136,11 @@ function AppContent() {
     <GraphCanvas nodes={lastGraph?.nodes} edges={lastGraph?.edges} />
   );
 
-  const metaContent = (
-    <div style={{ padding: '1rem' }}>
-      <h2>Meta / Self-Evolution</h2>
-      <p>Optimization proposals, gaps, etc.</p>
-    </div>
-  );
+  const diagnostics =
+    lastAnswer && typeof lastAnswer.diagnostics === 'object' && lastAnswer.diagnostics
+      ? (lastAnswer.diagnostics as Record<string, unknown>)
+      : null;
+  const metaContent = <MetaPanel diagnostics={diagnostics} />;
 
   const centerPanel = (
     <ChatTabs
