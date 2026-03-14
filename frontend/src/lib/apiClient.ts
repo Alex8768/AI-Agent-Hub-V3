@@ -8,6 +8,7 @@ import type {
   SearchResultDto,
   ToolDiscoveryDto,
   ToolInvokeResponseDto,
+  ToolSchemaDto,
 } from '../contracts/api'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000'
@@ -117,6 +118,13 @@ export async function invokeTool(
     body: JSON.stringify({ arguments: argumentsPayload }),
   })
   return parseJson<ToolInvokeResponseDto>(response)
+}
+
+export async function getToolSchema(toolName: string, ctx: RequestContext = {}): Promise<ToolSchemaDto> {
+  const response = await fetch(`${API_BASE}/api/v1/tools/${encodeURIComponent(toolName)}`, {
+    headers: buildWorkspaceHeaders(ctx.workspaceId),
+  })
+  return parseJson<ToolSchemaDto>(response)
 }
 
 export { API_BASE }

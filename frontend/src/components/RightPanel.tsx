@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import * as Tabs from '@radix-ui/react-tabs';
-import { listDocuments, uploadDocument, deleteDocument, listTools, invokeTool } from '../lib/apiClient';
-import type { DocumentItem, ToolItemDto } from '../contracts/api';
+import { listDocuments, uploadDocument, deleteDocument, listTools, invokeTool, getToolSchema } from '../lib/apiClient';
+import type { DocumentItem, ToolItemDto, ToolSchemaDto } from '../contracts/api';
 
 interface RightPanelProps {
   workspaceId: string;
@@ -15,10 +15,43 @@ const RightPanel: React.FC<RightPanelProps> = ({ workspaceId }) => {
   const [toolsLoading, setToolsLoading] = useState(false);
   const [error, setError] = useState('');
   const [selectedTool, setSelectedTool] = useState<ToolItemDto | null>(null);
+  const [selectedToolSchema, setSelectedToolSchema] = useState<ToolSchemaDto | null>(null);
+  const [schemaLoading, setSchemaLoading] = useState(false);
   const [invokeArgsText, setInvokeArgsText] = useState('{}');
   const [invokeResult, setInvokeResult] = useState<string>('');
   const [invokeError, setInvokeError] = useState('');
   const [invokeLoading, setInvokeLoading] = useState(false);
+
+  const buildTemplateFromSchema = (schema: unknown): Record<string, unknown> => {
+    if (!schema || typeof schema !== 'object' || Array.isArray(schema)) return {};
+    const row = schema as Record<string, unknown>;
+    const properties =
+      row.properties && typeof row.properties === 'object' && !Array.isArray(row.properties)
+        ? (row.properties as Record<string, unknown>)
+        : {};
+    const required = Array.isArray(row.required)
+      ? row.required.map((x) => String(x || '')).filter((x) => x.length > 0)
+      : [];
+
+    const inferDefault = (value: unknown): unknown => {
+      if (!value || typeof value !== 'object' || Array.isArray(value)) return '';
+      const spec = value as Record<string, unknown>;
+      if (spec.default !== undefined) return spec.default;
+      const type = String(spec.type || '').toLowerCase();
+      if (type === 'number' || type === 'integer') return 0;
+      if (type === 'boolean') return false;
+      if (type === 'array') return [];
+      if (type === 'object') return {};
+      return '';
+    };
+
+    const keys = required.length > 0 ? required : Object.keys(properties);
+    const output: Record<string, unknown> = {};
+    keys.forEach((key) => {
+      output[key] = inferDefault(properties[key]);
+    });
+    return output;
+  };
 
   // Load documents on mount and workspace change
   useEffect(() => {
@@ -84,15 +117,29 @@ const RightPanel: React.FC<RightPanelProps> = ({ workspaceId }) => {
     }
   };
 
-  const openInvokeModal = (tool: ToolItemDto) => {
+  const openInvokeModal = async (tool: ToolItemDto) => {
     setSelectedTool(tool);
+    setSelectedToolSchema(null);
     setInvokeArgsText('{}');
     setInvokeResult('');
     setInvokeError('');
+    setSchemaLoading(true);
+    try {
+      const schema = await getToolSchema(tool.tool_name, { workspaceId });
+      setSelectedToolSchema(schema);
+      const template = buildTemplateFromSchema(schema.input_schema);
+      setInvokeArgsText(JSON.stringify(template, null, 2));
+    } catch (err) {
+      setInvokeError(`Failed to load schema: ${String(err)}`);
+    } finally {
+      setSchemaLoading(false);
+    }
   };
 
   const closeInvokeModal = () => {
     setSelectedTool(null);
+    setSelectedToolSchema(null);
+    setSchemaLoading(false);
     setInvokeLoading(false);
   };
 
@@ -121,6 +168,12 @@ const RightPanel: React.FC<RightPanelProps> = ({ workspaceId }) => {
     } finally {
       setInvokeLoading(false);
     }
+  };
+
+  const applySchemaTemplate = () => {
+    if (!selectedToolSchema) return;
+    const template = buildTemplateFromSchema(selectedToolSchema.input_schema);
+    setInvokeArgsText(JSON.stringify(template, null, 2));
   };
 
   return (
@@ -165,7 +218,7 @@ const RightPanel: React.FC<RightPanelProps> = ({ workspaceId }) => {
             <li key={tool.tool_name} style={{ marginBottom: '1rem', border: '1px solid #eee', padding: '0.5rem' }}>
               <strong>{tool.tool_name}</strong> <span style={{ color: '#666' }}>({tool.server_name})</span>
               <p style={{ margin: '0.25rem 0' }}>{tool.description}</p>
-              <button onClick={() => openInvokeModal(tool)}>Invoke</button>
+              <button onClick={() => void openInvokeModal(tool)}>Invoke</button>
             </li>
           ))}
         </ul>
@@ -186,6 +239,15 @@ const RightPanel: React.FC<RightPanelProps> = ({ workspaceId }) => {
       >
         <div style={{ width: 'min(640px, 92vw)', background: '#fff', borderRadius: '8px', padding: '1rem' }}>
           <h3 style={{ marginTop: 0 }}>Invoke Tool: {selectedTool.tool_name}</h3>
+          {schemaLoading && <p style={{ marginTop: 0 }}>Loading schema...</p>}
+          {selectedToolSchema?.input_schema && (
+            <details style={{ marginBottom: '0.75rem' }}>
+              <summary style={{ cursor: 'pointer' }}>Input schema</summary>
+              <pre style={{ marginTop: '0.5rem', maxHeight: '180px', overflow: 'auto' }}>
+                {JSON.stringify(selectedToolSchema.input_schema, null, 2)}
+              </pre>
+            </details>
+          )}
           <form onSubmit={onInvoke}>
             <label style={{ display: 'block', marginBottom: '0.5rem' }}>Arguments (JSON object)</label>
             <textarea
@@ -196,6 +258,9 @@ const RightPanel: React.FC<RightPanelProps> = ({ workspaceId }) => {
             />
             {invokeError && <div style={{ color: 'red', marginTop: '0.5rem' }}>Error: {invokeError}</div>}
             <div style={{ marginTop: '0.75rem', display: 'flex', gap: '0.5rem' }}>
+              <button type="button" onClick={applySchemaTemplate} disabled={schemaLoading || invokeLoading}>
+                Use schema template
+              </button>
               <button type="submit" disabled={invokeLoading}>
                 {invokeLoading ? 'Invoking...' : 'Run'}
               </button>

@@ -61,11 +61,16 @@ export interface ToolItemDto {
   tool_name: string
   server_name?: string
   description?: string
+  input_schema?: Record<string, unknown>
+  tags?: string[]
+  enabled?: boolean
 }
 
 export interface ToolDiscoveryDto {
   tools: ToolItemDto[]
   servers?: Array<Record<string, unknown>>
+  total_tools?: number
+  total_servers?: number
 }
 
 export interface ToolInvokeResponseDto {
@@ -74,4 +79,6 @@ export interface ToolInvokeResponseDto {
   error?: string
   [key: string]: unknown
 }
+
+export type ToolSchemaDto = ToolItemDto
 
