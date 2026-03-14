@@ -13,8 +13,8 @@ type HealthState = 'checking' | 'healthy' | 'unreachable';
 
 function AppContent() {
   const [healthStatus, setHealthStatus] = useState<HealthState>('checking');
-  const [leftVisible, setLeftVisible] = useState(true);
-  const [rightVisible, setRightVisible] = useState(true);
+  const [leftVisible, setLeftVisible] = useState(false);
+  const [rightVisible, setRightVisible] = useState(false);
   const [workspaceId, setWorkspaceId] = useState('default');
   const [sessionId, setSessionId] = useState('default');
   const [lastUsedSession, setLastUsedSession] = useState('No requests yet');
@@ -100,6 +100,8 @@ function AppContent() {
         <AppLayout
           leftVisible={leftVisible}
           rightVisible={rightVisible}
+          onToggleLeft={() => setLeftVisible((v) => !v)}
+          onToggleRight={() => setRightVisible((v) => !v)}
           leftPanel={leftPanel}
           centerPanel={
             <ChatTabs
@@ -120,27 +122,12 @@ function AppContent() {
 
       <footer className="status-bar">
         <div className="status-section">
-          <button
-            className={`status-btn ${leftVisible ? 'is-active' : ''}`}
-            onClick={() => setLeftVisible(!leftVisible)}
-            type="button"
-          >
-            Sidebar
-          </button>
-
-          <button
-            className={`status-btn ${rightVisible ? 'is-active' : ''}`}
-            onClick={() => setRightVisible(!rightVisible)}
-            type="button"
-          >
-            Tools
-          </button>
-        </div>
-
-        <div className="status-section">
           <div className="status-indicator">
             Scope: {(workspaceId.trim() || 'default')} / {(sessionId.trim() || 'default')}
           </div>
+        </div>
+
+        <div className="status-section">
           <div className={`status-indicator ${healthStatus}`}>
             ● {healthLabel}
           </div>
