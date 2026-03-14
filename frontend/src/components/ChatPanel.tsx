@@ -1,152 +1,280 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { askAnswer, API_BASE } from '../lib/apiClient';
-import type { AnswerResponseDto } from '../contracts/api';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import ReactMarkdown from 'react-markdown';
+import './ChatPanel.css';
+import { sendMessage } from '../lib/apiClient';
 import { useAppContext } from '../context/AppContext';
+
+interface Message {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  thoughts?: string;
+  error?: boolean;
+}
+
+interface GraphNodeLike {
+  id?: string;
+  name?: string;
+  type?: string;
+}
+
+interface GraphEdgeLike {
+  id?: string;
+  src_id?: string;
+  dst_id?: string;
+  source?: string;
+  target?: string;
+  rel_type?: string;
+}
+
+interface GraphDataLike {
+  nodes: GraphNodeLike[];
+  edges: GraphEdgeLike[];
+}
 
 interface ChatPanelProps {
   workspaceId: string;
   sessionId: string;
-  onSessionUsed?: (workspaceId: string, sessionId: string) => void;
+  onSessionUsed: (ws: string, sid: string) => void;
 }
 
-const ChatPanel: React.FC<ChatPanelProps> = ({ workspaceId, sessionId, onSessionUsed }) => {
-  const [query, setQuery] = useState('');
-  const [answer, setAnswer] = useState<AnswerResponseDto | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [streamEvents, setStreamEvents] = useState<string[]>([]);
-  const [showDiagnostics, setShowDiagnostics] = useState(false);
-  const eventSourceRef = useRef<EventSource | null>(null);
+function makeMessageId(): string {
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+export default function ChatPanel({ workspaceId, sessionId, onSessionUsed }: ChatPanelProps) {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [requestError, setRequestError] = useState<string>('');
   const { setLastAnswer, setLastGraph } = useAppContext();
-  const normalizedWorkspaceId = workspaceId.trim() || 'default';
-  const normalizedSessionId = sessionId.trim() || 'default';
-  // Streaming endpoint is keyed by session_id only, so scope session by workspace.
-  const scopedSessionId = `${normalizedWorkspaceId}:${normalizedSessionId}`;
 
-  // Cleanup SSE on unmount
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const readThoughts = (value: unknown): string | undefined => {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
+    const thoughts = (value as Record<string, unknown>).thoughts;
+    return typeof thoughts === 'string' && thoughts.trim().length > 0 ? thoughts : undefined;
+  };
+
+  const readGraph = (value: unknown): GraphDataLike | null => {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+    const row = value as Record<string, unknown>;
+
+    const nodes = Array.isArray(row.nodes)
+      ? row.nodes.map((node) => {
+          const item =
+            node && typeof node === 'object' && !Array.isArray(node)
+              ? (node as Record<string, unknown>)
+              : {};
+          return {
+            id: item.id !== undefined ? String(item.id) : undefined,
+            name: item.name !== undefined ? String(item.name) : undefined,
+            type: item.type !== undefined ? String(item.type) : undefined,
+          };
+        })
+      : [];
+
+    const edges = Array.isArray(row.edges)
+      ? row.edges.map((edge) => {
+          const item =
+            edge && typeof edge === 'object' && !Array.isArray(edge)
+              ? (edge as Record<string, unknown>)
+              : {};
+          return {
+            id: item.id !== undefined ? String(item.id) : undefined,
+            src_id: item.src_id !== undefined ? String(item.src_id) : undefined,
+            dst_id: item.dst_id !== undefined ? String(item.dst_id) : undefined,
+            source: item.source !== undefined ? String(item.source) : undefined,
+            target: item.target !== undefined ? String(item.target) : undefined,
+            rel_type: item.rel_type !== undefined ? String(item.rel_type) : undefined,
+          };
+        })
+      : [];
+
+    if (nodes.length === 0 && edges.length === 0) return null;
+    return { nodes, edges };
+  };
+
   useEffect(() => {
-    return () => {
-      if (eventSourceRef.current) {
-        eventSourceRef.current.close();
-      }
-    };
-  }, []);
+    if (!scrollRef.current) return;
+    scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+  }, [messages, isLoading]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!query.trim()) return;
+  useEffect(() => {
+    if (!textareaRef.current) return;
+    textareaRef.current.style.height = '0px';
+    textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 220)}px`;
+  }, [input]);
 
-    setLoading(true);
-    setError('');
-    setAnswer(null);
-    setStreamEvents([]);
-    setLastGraph({ nodes: [], edges: [] }); // reset graph
-    onSessionUsed?.(normalizedWorkspaceId, normalizedSessionId);
+  const canSend = useMemo(() => input.trim().length > 0 && !isLoading, [input, isLoading]);
 
-    // Connect to SSE stream for this session
-    if (eventSourceRef.current) {
-      eventSourceRef.current.close();
-    }
-    const es = new EventSource(`${API_BASE}/api/v1/stream/${encodeURIComponent(scopedSessionId)}?once=0`);
-    eventSourceRef.current = es;
+  const handleSend = async () => {
+    const trimmed = input.trim();
+    if (!trimmed || isLoading) return;
 
-    es.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        if (data.event === 'thought') {
-          setStreamEvents(prev => [...prev, `[${new Date().toLocaleTimeString()}] ${data.data.content}`]);
-        }
-      } catch {
-        // ignore non-JSON or keepalive
-      }
+    const userMsg: Message = {
+      id: makeMessageId(),
+      role: 'user',
+      content: trimmed,
     };
 
-    es.onerror = () => {
-      // will reconnect automatically
-    };
+    setMessages((prev) => [...prev, userMsg]);
+    setInput('');
+    setIsLoading(true);
+    setRequestError('');
+    onSessionUsed(workspaceId, sessionId);
 
     try {
-      const resp = await askAnswer(
-        { query: query.trim(), k: 8, graph_depth: 1, session_id: scopedSessionId },
-        { workspaceId: normalizedWorkspaceId }
+      const response = await sendMessage(workspaceId, sessionId, trimmed);
+
+      const assistantMsg: Message = {
+        id: makeMessageId(),
+        role: 'assistant',
+        content: response.answer,
+        thoughts: readThoughts(response.diagnostics),
+      };
+
+      setMessages((prev) => [...prev, assistantMsg]);
+      setLastAnswer(response);
+
+      const graph = readGraph(
+        response.diagnostics && typeof response.diagnostics === 'object'
+          ? (response.diagnostics as Record<string, unknown>).graph
+          : null,
       );
-      setAnswer(resp);
-      setLastAnswer(resp);
-      
-      // Graph will be populated later when we add hybrid search
-      // For now, we keep graph empty
-    } catch (err) {
-      setError(String(err));
-    } finally {
-      setLoading(false);
-      if (eventSourceRef.current) {
-        eventSourceRef.current.close();
-        eventSourceRef.current = null;
+
+      if (graph) {
+        setLastGraph(graph);
       }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      setRequestError(message);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: makeMessageId(),
+          role: 'assistant',
+          content: `Request failed.\n\n${message}`,
+          error: true,
+        },
+      ]);
+      console.error('Failed to send message:', err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <form onSubmit={handleSubmit} style={{ padding: '1rem', borderBottom: '1px solid #ccc' }}>
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Ask a question..."
-            style={{ flex: 1, padding: '0.5rem' }}
-            disabled={loading}
-          />
-          <button type="submit" disabled={loading || !query.trim()}>
-            {loading ? 'Asking...' : 'Ask'}
-          </button>
-        </div>
-        <div style={{ marginTop: '0.5rem', fontSize: '0.9rem', color: '#666' }}>
-          Workspace: {normalizedWorkspaceId} | Session: {normalizedSessionId}
-        </div>
-      </form>
-
-      {error && (
-        <div style={{ padding: '1rem', color: 'red' }}>
-          Error: {error}
-        </div>
-      )}
-
-      <div style={{ flex: 1, overflow: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        {/* Streaming thoughts */}
-        {streamEvents.length > 0 && (
-          <div style={{ background: '#f5f5f5', padding: '0.5rem', borderRadius: '4px' }}>
-            <h4>Agent thoughts</h4>
-            <div style={{ maxHeight: '200px', overflow: 'auto', fontSize: '0.9rem' }}>
-              {streamEvents.map((ev, idx) => (
-                <div key={idx} style={{ marginBottom: '0.25rem' }}>{ev}</div>
-              ))}
+    <div className="chat-container">
+      <div className="messages-list" ref={scrollRef}>
+        {messages.length === 0 && !isLoading && (
+          <div className="chat-empty-state">
+            <div className="chat-empty-badge">Agent Console</div>
+            <h2>Ready for the next query</h2>
+            <p>
+              Ask about documents, run tool-assisted tasks, inspect graph context, or work inside a
+              specific workspace and session.
+            </p>
+            <div className="chat-empty-hints">
+              <span>Workspace-aware</span>
+              <span>Graph-ready</span>
+              <span>Tool-capable</span>
             </div>
           </div>
         )}
 
-        {/* Answer */}
-        {answer && (
-          <div style={{ background: '#e3f2fd', padding: '1rem', borderRadius: '4px' }}>
-            <h3>Answer</h3>
-            <p style={{ whiteSpace: 'pre-wrap' }}>{answer.answer}</p>
-            <div style={{ marginTop: '0.5rem', fontSize: '0.9rem' }}>
-              <strong>Confidence:</strong> {answer.confidence.toFixed(2)}
+        {messages.map((msg) => (
+          <div
+            key={msg.id}
+            className={`message-row ${msg.role} ${msg.error ? 'is-error' : ''}`}
+          >
+            <div className="message-avatar">
+              {msg.role === 'user' ? 'You' : 'AI'}
             </div>
-            <button onClick={() => setShowDiagnostics(!showDiagnostics)} style={{ marginTop: '0.5rem' }}>
-              {showDiagnostics ? 'Hide' : 'Show'} Diagnostics
-            </button>
-            {showDiagnostics && (
-              <pre style={{ background: '#fff', padding: '0.5rem', marginTop: '0.5rem', overflow: 'auto' }}>
-                {JSON.stringify(answer.diagnostics, null, 2)}
-              </pre>
-            )}
+
+            <div className="message-card">
+              <div className="message-header">
+                <span className="message-role">{msg.role === 'user' ? 'You' : 'Agent'}</span>
+                {msg.error && <span className="message-state">Error</span>}
+              </div>
+
+              {msg.thoughts && (
+                <details className="agent-thoughts">
+                  <summary>Reasoning notes</summary>
+                  <div className="agent-thoughts-body">{msg.thoughts}</div>
+                </details>
+              )}
+
+              <div className="message-content">
+                <ReactMarkdown>{msg.content}</ReactMarkdown>
+              </div>
+            </div>
+          </div>
+        ))}
+
+        {isLoading && (
+          <div className="message-row assistant">
+            <div className="message-avatar">AI</div>
+            <div className="message-card is-loading">
+              <div className="message-header">
+                <span className="message-role">Agent</span>
+              </div>
+              <div className="message-loading">
+                <span className="loading-dot" />
+                <span className="loading-dot" />
+                <span className="loading-dot" />
+              </div>
+            </div>
           </div>
         )}
       </div>
+
+      <div className="chat-input-area">
+        {requestError && (
+          <div className="chat-request-error">
+            Last request failed. Check backend/API availability and try again.
+          </div>
+        )}
+
+        <div className="input-shell">
+          <div className="input-context-row">
+            <span className="input-context-pill">Workspace: {workspaceId || 'default'}</span>
+            <span className="input-context-pill">Session: {sessionId || 'default'}</span>
+          </div>
+
+          <div className="input-wrapper">
+            <textarea
+              ref={textareaRef}
+              className="chat-input"
+              rows={1}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  void handleSend();
+                }
+              }}
+              placeholder="Message the agent…"
+            />
+            <button
+              className="send-btn"
+              onClick={() => void handleSend()}
+              disabled={!canSend}
+              type="button"
+            >
+              {isLoading ? 'Working…' : 'Send'}
+            </button>
+          </div>
+
+          <div className="input-footer">
+            <span>Enter to send</span>
+            <span>Shift + Enter for newline</span>
+          </div>
+        </div>
+      </div>
     </div>
   );
-};
-
-export default ChatPanel;
+}

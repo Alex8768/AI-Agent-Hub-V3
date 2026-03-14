@@ -9,20 +9,20 @@ interface ChatTabsProps {
 
 const ChatTabs: React.FC<ChatTabsProps> = ({ chatContent, canvasContent, metaContent }) => {
   return (
-    <Tabs.Root defaultValue="chat" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <Tabs.List style={{ display: 'flex', gap: '1rem', borderBottom: '1px solid #ccc', padding: '0 1rem' }}>
-        <Tabs.Trigger value="chat" style={{ padding: '0.5rem 0', border: 'none', background: 'none', cursor: 'pointer' }}>Chat</Tabs.Trigger>
-        <Tabs.Trigger value="canvas" style={{ padding: '0.5rem 0', border: 'none', background: 'none', cursor: 'pointer' }}>Canvas</Tabs.Trigger>
-        {metaContent && <Tabs.Trigger value="meta" style={{ padding: '0.5rem 0', border: 'none', background: 'none', cursor: 'pointer' }}>Meta</Tabs.Trigger>}
+    <Tabs.Root defaultValue="chat" className="tabs-root">
+      <Tabs.List className="tabs-list">
+        <Tabs.Trigger value="chat" className="tabs-trigger">Chat</Tabs.Trigger>
+        <Tabs.Trigger value="canvas" className="tabs-trigger">Canvas</Tabs.Trigger>
+        {metaContent && <Tabs.Trigger value="meta" className="tabs-trigger">Meta</Tabs.Trigger>}
       </Tabs.List>
-      <Tabs.Content value="chat" style={{ flex: 1, overflow: 'auto', padding: '1rem' }}>
+      <Tabs.Content value="chat" className="tabs-content">
         {chatContent}
       </Tabs.Content>
-      <Tabs.Content value="canvas" style={{ flex: 1, overflow: 'auto', padding: '1rem' }}>
+      <Tabs.Content value="canvas" className="tabs-content">
         {canvasContent}
       </Tabs.Content>
       {metaContent && (
-        <Tabs.Content value="meta" style={{ flex: 1, overflow: 'auto', padding: '1rem' }}>
+        <Tabs.Content value="meta" className="tabs-content">
           {metaContent}
         </Tabs.Content>
       )}

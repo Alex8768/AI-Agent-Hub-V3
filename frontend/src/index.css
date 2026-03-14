@@ -1,18 +1,105 @@
 :root {
-  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-  color: #111827;
-  background-color: #f3f4f6;
+  color-scheme: dark;
 
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  /* Core palette: light graphite / Cursor-like */
+  --bg-app: #1f2125;
+  --bg-main: #25282d;
+  --bg-panel: #2b2f36;
+  --bg-panel-alt: #31363f;
+  --bg-sidebar: #23262b;
+  --bg-elevated: #383e47;
+  --bg-hover: #3f4652;
+  --bg-active: #4a5361;
+
+  --border-subtle: #3a404a;
+  --border-strong: #4b5360;
+
+  --text-main: #eef2f7;
+  --text-soft: #d7dde7;
+  --text-muted: #9ca6b5;
+
+  --accent: #5aa2ff;
+  --accent-strong: #7bb5ff;
+  --accent-soft: rgba(90, 162, 255, 0.16);
+
+  --danger: #ff7b72;
+  --danger-soft: rgba(255, 123, 114, 0.14);
+  --success: #7bd88f;
+  --success-soft: rgba(123, 216, 143, 0.14);
+  --warning: #f2c879;
+
+  --shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.18);
+
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+
+  --font-mono: 'SF Mono', 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#root {
+  height: 100%;
 }
 
 body {
-  margin: 0;
-  min-width: 320px;
-  min-height: 100vh;
+  background: var(--bg-app);
+  color: var(--text-main);
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  overflow: hidden;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  color: inherit;
+}
+
+input,
+textarea,
+select {
+  background: var(--bg-panel-alt);
+  color: var(--text-main);
+}
+
+::selection {
+  background: rgba(90, 162, 255, 0.28);
+}
+
+*:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #4b5360;
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #606977;
+  background-clip: padding-box;
 }

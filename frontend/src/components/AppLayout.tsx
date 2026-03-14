@@ -21,21 +21,25 @@ const AppLayout: React.FC<AppLayoutProps> = ({
       {leftVisible && (
         <>
           <Panel defaultSize={20} minSize={15} maxSize={30}>
-            <div style={{ height: '100%', overflow: 'auto', borderRight: '1px solid #ccc' }}>
+            <div className="layout-panel layout-panel-left">
               {leftPanel}
             </div>
           </Panel>
-          <Separator style={{ width: '4px', background: '#888', cursor: 'col-resize' }} />
+          <Separator className="layout-separator" />
         </>
       )}
+
       <Panel minSize={30}>
-        <div style={{ height: '100%', overflow: 'auto' }}>{centerPanel}</div>
+        <div className="layout-panel layout-panel-center">
+          {centerPanel}
+        </div>
       </Panel>
+
       {rightVisible && (
         <>
-          <Separator style={{ width: '4px', background: '#888', cursor: 'col-resize' }} />
+          <Separator className="layout-separator" />
           <Panel defaultSize={25} minSize={15} maxSize={35}>
-            <div style={{ height: '100%', overflow: 'auto', borderLeft: '1px solid #ccc' }}>
+            <div className="layout-panel layout-panel-right">
               {rightPanel}
             </div>
           </Panel>
