@@ -3,6 +3,7 @@ import './App.css';
 import AppLayout from './components/AppLayout';
 import ChatTabs from './components/ChatTabs';
 import RightPanel from './components/RightPanel';
+import ChatPanel from './components/ChatPanel';
 import { getHealth } from './lib/apiClient';
 
 function App() {
@@ -57,30 +58,26 @@ function App() {
     </div>
   );
 
-  const chatContent = (
-    <div>
-      <h2>Chat</h2>
-      <p>Question form will be here</p>
-      <p>Answer area with streaming</p>
-    </div>
-  );
-
   const canvasContent = (
-    <div>
+    <div style={{ padding: '1rem' }}>
       <h2>Canvas</h2>
       <p>Graph visualization placeholder</p>
     </div>
   );
 
   const metaContent = (
-    <div>
+    <div style={{ padding: '1rem' }}>
       <h2>Meta / Self-Evolution</h2>
       <p>Optimization proposals, gaps, etc.</p>
     </div>
   );
 
   const centerPanel = (
-    <ChatTabs chatContent={chatContent} canvasContent={canvasContent} metaContent={metaContent} />
+    <ChatTabs
+      chatContent={<ChatPanel workspaceId={workspaceId} sessionId={sessionId} />}
+      canvasContent={canvasContent}
+      metaContent={metaContent}
+    />
   );
 
   return (
