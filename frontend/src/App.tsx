@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import './App.css';
 import AppLayout from './components/AppLayout';
 import ChatTabs from './components/ChatTabs';
+import RightPanel from './components/RightPanel';
 import { getHealth } from './lib/apiClient';
 
 function App() {
@@ -14,6 +15,8 @@ function App() {
     const saved = localStorage.getItem('rightPanelVisible');
     return saved !== null ? JSON.parse(saved) : true;
   });
+  const [workspaceId, setWorkspaceId] = useState('default');
+  const [sessionId, setSessionId] = useState('default');
 
   useEffect(() => {
     getHealth()
@@ -32,9 +35,25 @@ function App() {
   const leftPanel = (
     <div style={{ padding: '1rem' }}>
       <h3>Projects / Sessions</h3>
-      <p>Workspace: default</p>
-      <p>Session: default</p>
-      <button onClick={() => setLeftVisible(false)}>Hide</button>
+      <div>
+        <label>Workspace:</label>
+        <input 
+          type="text" 
+          value={workspaceId} 
+          onChange={(e) => setWorkspaceId(e.target.value)}
+          style={{ marginLeft: '0.5rem' }}
+        />
+      </div>
+      <div style={{ marginTop: '0.5rem' }}>
+        <label>Session:</label>
+        <input 
+          type="text" 
+          value={sessionId} 
+          onChange={(e) => setSessionId(e.target.value)}
+          style={{ marginLeft: '0.5rem' }}
+        />
+      </div>
+      <button onClick={() => setLeftVisible(false)} style={{ marginTop: '1rem' }}>Hide</button>
     </div>
   );
 
@@ -64,14 +83,6 @@ function App() {
     <ChatTabs chatContent={chatContent} canvasContent={canvasContent} metaContent={metaContent} />
   );
 
-  const rightPanel = (
-    <div style={{ padding: '1rem' }}>
-      <h3>Resources</h3>
-      <p>Files and Tools</p>
-      <button onClick={() => setRightVisible(false)}>Hide</button>
-    </div>
-  );
-
   return (
     <div>
       <div style={{ padding: '0.5rem 1rem', borderBottom: '1px solid #ccc', display: 'flex', gap: '1rem', alignItems: 'center' }}>
@@ -82,7 +93,7 @@ function App() {
       <AppLayout
         leftPanel={leftPanel}
         centerPanel={centerPanel}
-        rightPanel={rightPanel}
+        rightPanel={<RightPanel workspaceId={workspaceId} />}
         leftVisible={leftVisible}
         rightVisible={rightVisible}
       />
