@@ -57,3 +57,21 @@ export interface DeleteDocumentResponseDto {
   document_id: string
 }
 
+export interface ToolItemDto {
+  tool_name: string
+  server_name?: string
+  description?: string
+}
+
+export interface ToolDiscoveryDto {
+  tools: ToolItemDto[]
+  servers?: Array<Record<string, unknown>>
+}
+
+export interface ToolInvokeResponseDto {
+  receipt?: Record<string, unknown>
+  result?: unknown
+  error?: string
+  [key: string]: unknown
+}
+

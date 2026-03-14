@@ -6,6 +6,8 @@ import type {
   HealthDto,
   SearchRequestDto,
   SearchResultDto,
+  ToolDiscoveryDto,
+  ToolInvokeResponseDto,
 } from '../contracts/api'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000'
@@ -93,6 +95,28 @@ export async function askAnswer(payload: AnswerRequestDto, ctx: RequestContext =
     }),
   })
   return parseJson<AnswerResponseDto>(response)
+}
+
+export async function listTools(ctx: RequestContext = {}): Promise<ToolDiscoveryDto> {
+  const response = await fetch(`${API_BASE}/api/v1/tools`, {
+    headers: buildWorkspaceHeaders(ctx.workspaceId),
+  })
+  return parseJson<ToolDiscoveryDto>(response)
+}
+
+export async function invokeTool(
+  toolName: string,
+  argumentsPayload: Record<string, unknown>,
+  ctx: RequestContext = {},
+): Promise<ToolInvokeResponseDto> {
+  const headers = buildWorkspaceHeaders(ctx.workspaceId)
+  headers['Content-Type'] = 'application/json'
+  const response = await fetch(`${API_BASE}/api/v1/tools/${encodeURIComponent(toolName)}/invoke`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ arguments: argumentsPayload }),
+  })
+  return parseJson<ToolInvokeResponseDto>(response)
 }
 
 export { API_BASE }

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import * as Tabs from '@radix-ui/react-tabs';
-import { listDocuments, uploadDocument, deleteDocument, API_BASE } from '../lib/apiClient';
-import type { DocumentItem } from '../contracts/api';
+import { listDocuments, uploadDocument, deleteDocument, listTools, invokeTool } from '../lib/apiClient';
+import type { DocumentItem, ToolItemDto } from '../contracts/api';
 
 interface RightPanelProps {
   workspaceId: string;
@@ -11,9 +11,14 @@ const RightPanel: React.FC<RightPanelProps> = ({ workspaceId }) => {
   const [documents, setDocuments] = useState<DocumentItem[]>([]);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [documentsLoading, setDocumentsLoading] = useState(false);
-  const [tools, setTools] = useState<any[]>([]);
+  const [tools, setTools] = useState<ToolItemDto[]>([]);
   const [toolsLoading, setToolsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [selectedTool, setSelectedTool] = useState<ToolItemDto | null>(null);
+  const [invokeArgsText, setInvokeArgsText] = useState('{}');
+  const [invokeResult, setInvokeResult] = useState<string>('');
+  const [invokeError, setInvokeError] = useState('');
+  const [invokeLoading, setInvokeLoading] = useState(false);
 
   // Load documents on mount and workspace change
   useEffect(() => {
@@ -34,8 +39,7 @@ const RightPanel: React.FC<RightPanelProps> = ({ workspaceId }) => {
   useEffect(() => {
     let alive = true;
     setToolsLoading(true);
-    fetch(`${API_BASE}/api/v1/tools`)
-      .then(res => res.json())
+    listTools({ workspaceId })
       .then(data => {
         if (alive) setTools(data.tools || []);
       })
@@ -44,7 +48,7 @@ const RightPanel: React.FC<RightPanelProps> = ({ workspaceId }) => {
         if (alive) setToolsLoading(false);
       });
     return () => { alive = false; };
-  }, []);
+  }, [workspaceId]);
 
   const onFileSelected = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSelectedFile(event.target.files?.[0] ?? null);
@@ -80,7 +84,47 @@ const RightPanel: React.FC<RightPanelProps> = ({ workspaceId }) => {
     }
   };
 
+  const openInvokeModal = (tool: ToolItemDto) => {
+    setSelectedTool(tool);
+    setInvokeArgsText('{}');
+    setInvokeResult('');
+    setInvokeError('');
+  };
+
+  const closeInvokeModal = () => {
+    setSelectedTool(null);
+    setInvokeLoading(false);
+  };
+
+  const onInvoke = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!selectedTool?.tool_name) return;
+    setInvokeLoading(true);
+    setInvokeError('');
+    setInvokeResult('');
+    try {
+      let parsed: unknown = {};
+      if (invokeArgsText.trim().length > 0) {
+        parsed = JSON.parse(invokeArgsText);
+      }
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+        throw new Error('Arguments must be a JSON object');
+      }
+      const result = await invokeTool(
+        selectedTool.tool_name,
+        parsed as Record<string, unknown>,
+        { workspaceId },
+      );
+      setInvokeResult(JSON.stringify(result, null, 2));
+    } catch (err) {
+      setInvokeError(String(err));
+    } finally {
+      setInvokeLoading(false);
+    }
+  };
+
   return (
+    <>
     <Tabs.Root defaultValue="files" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <Tabs.List style={{ display: 'flex', gap: '1rem', borderBottom: '1px solid #ccc', padding: '0 1rem' }}>
         <Tabs.Trigger value="files" style={{ padding: '0.5rem 0', border: 'none', background: 'none', cursor: 'pointer' }}>Files</Tabs.Trigger>
@@ -121,12 +165,55 @@ const RightPanel: React.FC<RightPanelProps> = ({ workspaceId }) => {
             <li key={tool.tool_name} style={{ marginBottom: '1rem', border: '1px solid #eee', padding: '0.5rem' }}>
               <strong>{tool.tool_name}</strong> <span style={{ color: '#666' }}>({tool.server_name})</span>
               <p style={{ margin: '0.25rem 0' }}>{tool.description}</p>
-              <button>Invoke</button>
+              <button onClick={() => openInvokeModal(tool)}>Invoke</button>
             </li>
           ))}
         </ul>
       </Tabs.Content>
     </Tabs.Root>
+    {selectedTool && (
+      <div
+        role="dialog"
+        aria-modal="true"
+        style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0,0,0,0.35)',
+          display: 'grid',
+          placeItems: 'center',
+          zIndex: 1000,
+        }}
+      >
+        <div style={{ width: 'min(640px, 92vw)', background: '#fff', borderRadius: '8px', padding: '1rem' }}>
+          <h3 style={{ marginTop: 0 }}>Invoke Tool: {selectedTool.tool_name}</h3>
+          <form onSubmit={onInvoke}>
+            <label style={{ display: 'block', marginBottom: '0.5rem' }}>Arguments (JSON object)</label>
+            <textarea
+              value={invokeArgsText}
+              onChange={(e) => setInvokeArgsText(e.target.value)}
+              rows={8}
+              style={{ width: '100%', fontFamily: 'monospace' }}
+            />
+            {invokeError && <div style={{ color: 'red', marginTop: '0.5rem' }}>Error: {invokeError}</div>}
+            <div style={{ marginTop: '0.75rem', display: 'flex', gap: '0.5rem' }}>
+              <button type="submit" disabled={invokeLoading}>
+                {invokeLoading ? 'Invoking...' : 'Run'}
+              </button>
+              <button type="button" onClick={closeInvokeModal} disabled={invokeLoading}>
+                Close
+              </button>
+            </div>
+          </form>
+          {invokeResult && (
+            <div style={{ marginTop: '0.75rem' }}>
+              <h4 style={{ margin: '0 0 0.25rem 0' }}>Result</h4>
+              <pre style={{ margin: 0, maxHeight: '280px', overflow: 'auto' }}>{invokeResult}</pre>
+            </div>
+          )}
+        </div>
+      </div>
+    )}
+    </>
   );
 };
 
