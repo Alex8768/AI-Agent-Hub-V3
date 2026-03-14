@@ -98,6 +98,27 @@ export async function askAnswer(payload: AnswerRequestDto, ctx: RequestContext =
   return parseJson<AnswerResponseDto>(response)
 }
 
+
+export async function sendMessage(
+  workspaceId: string,
+  sessionId: string,
+  query: string,
+): Promise<AnswerResponseDto> {
+  const normalizedWorkspace = (workspaceId || '').trim() || 'default'
+  const normalizedSession = (sessionId || '').trim() || 'default'
+  const scopedSessionId = `${normalizedWorkspace}:${normalizedSession}`
+
+  return askAnswer(
+    {
+      query: query.trim(),
+      k: 8,
+      graph_depth: 1,
+      session_id: scopedSessionId,
+    },
+    { workspaceId: normalizedWorkspace },
+  )
+}
+
 export async function listTools(ctx: RequestContext = {}): Promise<ToolDiscoveryDto> {
   const response = await fetch(`${API_BASE}/api/v1/tools`, {
     headers: buildWorkspaceHeaders(ctx.workspaceId),
