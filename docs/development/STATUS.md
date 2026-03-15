@@ -35,7 +35,7 @@ Execution discipline:
 
 ## Next Anchor
 
-A2.83 Step 0.5 - Patch 4 (response presenter seam)
+A2.83 Step 0.5 - Patch 5 (guardrails + parity + closure)
 
 ## CI Status
 

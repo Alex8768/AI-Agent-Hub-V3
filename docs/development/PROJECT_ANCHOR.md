@@ -91,7 +91,19 @@ Patch 3 artifacts:
 - split compact response shape from full diagnostics payload for UI clarity and runtime efficiency.
 
 Patch 4 artifacts:
-- pending
+- response presenter seam extracted to:
+  - `src/services/answer/response_presenter.py`
+  - `present_answer_response`
+- `AnswerService.handle_contract` now routes final response through presenter seam
+  after mode/failure handling.
+- compact diagnostics mode introduced (opt-in via request filters):
+  - `filters.response_presentation=compact`
+  - keeps core response fields and removes selected verbose diagnostics keys
+    while exposing presenter metadata in `diagnostics.presentation`.
+- focused checks green:
+  - `tests/unit/services/answer/test_answer_response_presenter.py`
+  - `tests/unit/services/answer/test_answer_orchestration_quality_gate.py`
+  - result: `21 passed`
 
 #### Patch 5 — Guardrails + parity + closure
 - run focused checks for mode router, failure policy and compact/full response seams,
@@ -105,7 +117,7 @@ Patch 5 artifacts:
 - [x] Patch 1 — inventory + scope lock
 - [x] Patch 2 — mode router seam
 - [x] Patch 3 — failure policy seam
-- [ ] Patch 4 — response presenter seam
+- [x] Patch 4 — response presenter seam
 - [ ] Patch 5 — guardrails + closure
 
 ### Non-Negotiable Rules

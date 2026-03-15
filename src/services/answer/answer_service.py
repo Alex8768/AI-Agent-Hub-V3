@@ -805,6 +805,7 @@ class AnswerService:
         import importlib
         runtime_mode_router = importlib.import_module("src.services.answer.mode_router")
         failure_policy = importlib.import_module("src.services.answer.failure_policy")
+        response_presenter = importlib.import_module("src.services.answer.response_presenter")
         runtime_mode_route = runtime_mode_router.resolve_answer_runtime_mode(req=req, runtime_context=runtime_context)
 
         engine = engine or getattr(http.app.state, "rag_engine", None)
@@ -847,5 +848,6 @@ class AnswerService:
                 route=runtime_mode_route,
             )
         runtime_mode_router.apply_runtime_mode_diagnostics(resp=resp, route=runtime_mode_route)
+        resp = response_presenter.present_answer_response(req=req, resp=resp)
 
         return resp
