@@ -2,17 +2,17 @@
 
 ## Current Phase
 
-A2.88 in progress
+A2.88 complete
 
 ## Last Completed Anchor
 
-A2.87 - Durable Approval State Persistence Hardening
+A2.88 - Write Confirm TTL Cleanup + Observability Metrics
 
-A2.87 closed with:
-- durable write-confirm state store seam for pending/idempotency record persistence
-- confirm-flow runtime wired to durable state load/save paths with restart resilience
-- continuity tests proving pending write approvals can be restored from durable store
-- focused and full-suite checks green at closure (`594 passed, 3 skipped`)
+A2.88 closed with:
+- deterministic TTL lifecycle cleanup for pending and idempotency write-confirm records
+- act runtime diagnostics include cleanup/state observability metrics (`store_stats`)
+- continuity tests for expiry behavior and cleanup metric reporting
+- focused and full-suite checks green at closure (`596 passed, 3 skipped`)
 
 Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 - Anchor Closed — A2.56 complete (operational guardrails policy closure)
@@ -20,12 +20,11 @@ Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 
 ## Current Active Anchor
 
-A2.88 - Write Confirm TTL Cleanup + Observability Metrics
+A2.88 closed - awaiting next anchor selection
 
 Current focus:
-- add deterministic TTL cleanup for confirm-flow state records
-- surface cleanup/state observability metrics in runtime diagnostics
-- preserve write-confirm contract behavior and endpoint stability
+- keep A2.88 closure state stable and prepare next anchor scope selection
+- preserve cleanup lifecycle and observability metric contract continuity
 - continue one-patch-one-reason execution discipline
 
 Execution discipline:
@@ -36,7 +35,7 @@ Execution discipline:
 
 ## Next Anchor
 
-A2.88 - Patch 5 (guardrails + parity + closure)
+TBD - Post-A2.88 planning
 
 ## CI Status
 

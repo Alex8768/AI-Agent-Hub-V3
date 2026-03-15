@@ -138,7 +138,28 @@ Patch 4 artifacts:
 - run focused + full-suite checks, sync mandatory docs, close A2.88.
 
 Patch 5 artifacts:
-- pending
+- focused closure checks green:
+  - `tests/unit/services/answer/test_act_write_state_store.py`
+  - `tests/unit/services/answer/test_act_read_only_runtime.py`
+  - `tests/unit/services/answer/test_policy_profiles.py`
+  - `tests/unit/services/answer/test_reason_code_policy.py`
+  - `tests/unit/services/answer/test_answer_response_presenter.py`
+  - `tests/unit/services/answer/test_answer_orchestration_quality_gate.py`
+  - `tests/unit/services/answer/test_answer_service_debug_snapshot.py`
+  - `tests/unit/api/test_answer_endpoint_debug_snapshot.py`
+  - `tests/unit/docs`
+  - result: `121 passed`
+- full-suite parity check green:
+  - `uv run pytest`
+  - result: `596 passed, 3 skipped`
+- frontend closure build check green:
+  - `frontend: npm run build`
+  - result: success
+- mandatory docs synchronized for A2.88 closure:
+  - `docs/development/PROJECT_ANCHOR.md`
+  - `docs/development/PROJECT_CHECKLIST.md`
+  - `docs/development/STATUS.md`
+  - `docs/architecture/PLATFORM_FEATURES.md`
 
 ### Progress
 
@@ -146,7 +167,7 @@ Patch 5 artifacts:
 - [x] Patch 2 — TTL lifecycle state-store seam
 - [x] Patch 3 — runtime cleanup + observability wiring
 - [x] Patch 4 — continuity tests for cleanup and metrics
-- [ ] Patch 5 — guardrails + closure
+- [x] Patch 5 — guardrails + closure
 
 ### Non-Negotiable Rules
 
@@ -203,7 +224,7 @@ TBD - Post-A2.88 planning
 
 ## Anchor Closed
 
-A2.87 complete - durable approval state persistence hardening closure.
+A2.88 complete - write confirm TTL cleanup and observability metrics closure.
 
 ## Post-A2.56 Maintenance
 

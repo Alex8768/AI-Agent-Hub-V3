@@ -80,7 +80,7 @@ AI-Agent-Hub-V3 is a modular AI platform for production-grade agent systems with
 - [x] Runtime policy profiles (`prod_strict` / `dev_guided` / `dev_full`) for action/tool governance (A2.85 patch 2)
 - [x] Controlled write action execution via confirm-flow approval handshake (A2.86)
 - [x] Durable persistence for write confirm-flow pending/idempotency state (A2.87)
-- [ ] Write confirm-flow TTL cleanup lifecycle and runtime observability metrics (A2.88)
+- [x] Write confirm-flow TTL cleanup lifecycle and runtime observability metrics (A2.88)
 
 ### 6) Platform/Operations
 

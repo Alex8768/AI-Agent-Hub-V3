@@ -87,7 +87,7 @@
 - [x] A2.85 - Managed Action Profiles + Compact Diagnostics UX
 - [x] A2.86 - Controlled Write Actions via Confirm Flow
 - [x] A2.87 - Durable Approval State Persistence Hardening
-- [ ] A2.88 - Write Confirm TTL Cleanup + Observability Metrics
+- [x] A2.88 - Write Confirm TTL Cleanup + Observability Metrics
 
 ## Current Work — A2.88 Write Confirm TTL Cleanup + Observability Metrics
 
@@ -95,7 +95,7 @@
 - [x] Patch 2 - TTL lifecycle state-store seam
 - [x] Patch 3 - runtime cleanup + observability wiring
 - [x] Patch 4 - continuity tests for cleanup and metrics
-- [ ] Patch 5 - guardrails + parity + closure
+- [x] Patch 5 - guardrails + parity + closure
 
 ## A2.74 Historical Work - Facade Convergence Phase 18 (Answer/Reasoning)
 
