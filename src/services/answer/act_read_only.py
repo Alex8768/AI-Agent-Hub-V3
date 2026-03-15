@@ -50,6 +50,7 @@ def _build_runtime_diag(
     tool_name: str = "",
     confirmation: dict[str, object] | None = None,
     result: dict[str, object] | None = None,
+    store_stats: dict[str, object] | None = None,
     replayed: bool = False,
     error_type: str = "",
 ) -> dict[str, object]:
@@ -66,6 +67,8 @@ def _build_runtime_diag(
         payload["confirmation"] = dict(confirmation)
     if result is not None:
         payload["result"] = dict(result)
+    if store_stats:
+        payload["store_stats"] = dict(store_stats)
     if replayed:
         payload["replayed"] = True
     if error_type:
@@ -117,6 +120,11 @@ async def apply_act_read_only_runtime(
         write_policy = str(policy_profile.get("act_write_policy", "blocked") or "blocked")
         scope_key = _build_scope_key(req=req, workspace_id=workspace_id)
         session_id = str(getattr(req, "session_id", "default") or "default")
+        store_stats = await act_write_state_store.cleanup_expired_write_state(
+            scope_key=scope_key,
+            session_id=session_id,
+            workspace_id=str(workspace_id or ""),
+        )
         filters = dict(getattr(req, "filters", None) or {})
         decision = str(filters.get("act_confirm_decision", "") or "").strip().lower()
         token = str(filters.get("act_confirmation_token", "") or "").strip()
@@ -136,6 +144,7 @@ async def apply_act_read_only_runtime(
                 workspace_id=workspace_id,
                 reason_codes=["act_write_blocked_by_policy_profile"],
                 tool_name=tool_name,
+                store_stats=store_stats,
             )
             diagnostics["runtime_policy_profile"] = dict(policy_profile)
             setattr(resp, "diagnostics", diagnostics)
@@ -165,6 +174,7 @@ async def apply_act_read_only_runtime(
                     workspace_id=workspace_id,
                     reason_codes=["act_write_confirmation_required"],
                     tool_name=tool_name,
+                    store_stats=store_stats,
                     confirmation={
                         "token": issued_token,
                         "expires_at": expires_at,
@@ -182,6 +192,7 @@ async def apply_act_read_only_runtime(
                     workspace_id=workspace_id,
                     reason_codes=["act_write_confirmation_token_missing"],
                     tool_name=tool_name,
+                    store_stats=store_stats,
                 )
                 diagnostics["runtime_policy_profile"] = dict(policy_profile)
                 setattr(resp, "diagnostics", diagnostics)
@@ -194,6 +205,7 @@ async def apply_act_read_only_runtime(
                     workspace_id=workspace_id,
                     reason_codes=["act_write_confirmation_token_invalid"],
                     tool_name=tool_name,
+                    store_stats=store_stats,
                 )
                 diagnostics["runtime_policy_profile"] = dict(policy_profile)
                 setattr(resp, "diagnostics", diagnostics)
@@ -206,6 +218,7 @@ async def apply_act_read_only_runtime(
                     workspace_id=workspace_id,
                     reason_codes=["act_write_confirmation_token_consumed"],
                     tool_name=tool_name,
+                    store_stats=store_stats,
                 )
                 diagnostics["runtime_policy_profile"] = dict(policy_profile)
                 setattr(resp, "diagnostics", diagnostics)
@@ -218,6 +231,7 @@ async def apply_act_read_only_runtime(
                     workspace_id=workspace_id,
                     reason_codes=["act_write_confirmation_token_expired"],
                     tool_name=tool_name,
+                    store_stats=store_stats,
                 )
                 diagnostics["runtime_policy_profile"] = dict(policy_profile)
                 setattr(resp, "diagnostics", diagnostics)
@@ -230,6 +244,7 @@ async def apply_act_read_only_runtime(
                     workspace_id=workspace_id,
                     reason_codes=["act_write_confirmation_tool_mismatch"],
                     tool_name=tool_name,
+                    store_stats=store_stats,
                 )
                 diagnostics["runtime_policy_profile"] = dict(policy_profile)
                 setattr(resp, "diagnostics", diagnostics)
@@ -249,6 +264,7 @@ async def apply_act_read_only_runtime(
                     workspace_id=workspace_id,
                     reason_codes=["act_write_confirmation_cancelled"],
                     tool_name=tool_name,
+                    store_stats=store_stats,
                 )
                 diagnostics["runtime_policy_profile"] = dict(policy_profile)
                 setattr(resp, "diagnostics", diagnostics)
@@ -275,6 +291,7 @@ async def apply_act_read_only_runtime(
                         workspace_id=workspace_id,
                         reason_codes=["act_write_confirmation_replayed"],
                         tool_name=tool_name,
+                        store_stats=store_stats,
                         result=dict(prior.get("result", {}) or {}),
                         replayed=True,
                     )
@@ -384,6 +401,7 @@ async def apply_act_read_only_runtime(
             workspace_id=workspace_id,
             reason_codes=[reason_code],
             tool_name=tool_name,
+            store_stats=store_stats,
             result=runtime_result,
         )
     else:

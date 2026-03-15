@@ -93,7 +93,7 @@
 
 - [x] Patch 1 - inventory + scope lock
 - [x] Patch 2 - TTL lifecycle state-store seam
-- [ ] Patch 3 - runtime cleanup + observability wiring
+- [x] Patch 3 - runtime cleanup + observability wiring
 - [ ] Patch 4 - continuity tests for cleanup and metrics
 - [ ] Patch 5 - guardrails + parity + closure
 

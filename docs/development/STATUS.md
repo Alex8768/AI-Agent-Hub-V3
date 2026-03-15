@@ -36,7 +36,7 @@ Execution discipline:
 
 ## Next Anchor
 
-A2.88 - Patch 3 (runtime cleanup + observability wiring)
+A2.88 - Patch 4 (continuity tests for cleanup and metrics)
 
 ## CI Status
 

@@ -131,6 +131,7 @@ async def test_act_write_runtime_requires_confirmation_in_dev_guided(monkeypatch
     diag = dict(resp.diagnostics.get("act_runtime") or {})
     assert diag.get("status") == "pending_confirmation"
     assert "act_write_confirmation_required" in list(diag.get("reason_codes") or [])
+    assert isinstance(diag.get("store_stats"), dict)
     confirmation = dict(diag.get("confirmation") or {})
     assert str(confirmation.get("token", "")).startswith("act-confirm:")
 
