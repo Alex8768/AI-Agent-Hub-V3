@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-A2.86 complete
+A2.87 in progress
 
 ## Last Completed Anchor
 
@@ -20,11 +20,11 @@ Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 
 ## Current Active Anchor
 
-A2.86 closed - awaiting next anchor selection
+A2.87 - Durable Approval State Persistence Hardening
 
 Current focus:
-- keep A2.86 closure state stable and prepare next anchor scope selection
-- preserve controlled write confirm-flow behavior and runtime diagnostics transparency
+- harden write confirm-flow with durable state persistence and restart resilience
+- preserve existing reason-code and diagnostics contracts while shifting state storage
 - continue one-patch-one-reason execution discipline
 
 Execution discipline:
@@ -35,7 +35,7 @@ Execution discipline:
 
 ## Next Anchor
 
-TBD - Post-A2.86 planning
+A2.87 - Patch 2 (durable write state store seam)
 
 ## CI Status
 

@@ -2,33 +2,33 @@
 
 ## Active Anchor
 
-A2.86 - Controlled Write Actions via Confirm Flow
+A2.87 - Durable Approval State Persistence Hardening
 
 ### Goal
 
-Enable managed write-capable actions through explicit confirmation flow and profile-aware
-policy gating without reintroducing uncontrolled side effects.
+Harden write-confirm runtime by persisting approval/idempotency state in durable memory
+store so confirmation flow survives process restarts and remains deterministic.
 
 ### Why Now
 
-A2.85 completed profile diagnostics and diagnostics UX controls; the next bottleneck is
-safe write execution enablement under deterministic confirmation and policy contracts.
+A2.86 introduced controlled write execution and UI approvals, but pending/idempotency
+state still relied on process memory fallback paths that can be lost on restart.
 
 ### Architecture Position
 
-Target A2.86 boundaries:
+Target A2.87 boundaries:
 
-- **Write action governance**
-  - allow write-capable tool path only behind confirmation gate,
-  - enforce profile-aware policy behavior with deterministic reason-codes.
+- **Durable state persistence seam**
+  - isolate write-confirm pending/idempotency state access behind a dedicated store seam,
+  - persist and reload state via memory store with safe in-process fallback.
 
-- **Confirmation flow hardening**
-  - require explicit tokenized approval before side-effectful execution,
-  - preserve idempotency and replay protection.
+- **Confirm-flow restart resilience**
+  - preserve pending confirmations and idempotency replay after process restart,
+  - keep token validation semantics deterministic.
 
-- **UI approval ergonomics**
-  - surface pending write approvals with explicit approve/cancel controls,
-  - preserve runtime/profile/reason transparency from A2.85.
+- **Diagnostics continuity**
+  - preserve existing runtime reason-code transparency contract,
+  - expose deterministic durable-state load/save behavior through tests.
 
 - **Guardrails and quality**
   - maintain one patch = one reason discipline,
@@ -37,165 +37,88 @@ Target A2.86 boundaries:
 ### Patch Plan
 
 #### Patch 1 — Inventory + scope lock
-- inventory write-action runtime touchpoints:
-  tool policy profile checks, confirmation token lifecycle, idempotency replay path,
-  execution receipt diagnostics, and UI approval interaction path,
-- lock scope to controlled write actions via confirm-flow only,
-- define deterministic reason-code contract for policy, approval, and execution states.
+- inventory write-confirm state touchpoints:
+  pending confirmation record lifecycle, idempotency replay record lifecycle,
+  memory-store integration points, and fallback behavior boundaries,
+- lock scope to durable-state hardening only (no net-new write tool expansion),
+- define deterministic persistence contract for load/save/replay semantics.
 
 Patch 1 artifacts:
 - runtime boundary inventory captured:
-  - write policy profile decision path,
-  - confirmation handshake and token validation path,
-  - execution gateway/idempotency replay path,
-  - UI approval action path and status rendering,
+  - write-confirm pending record read/write path,
+  - idempotency replay record read/write path,
+  - memory-store best-effort integration and fallback path,
+  - runtime diagnostics contract continuity path,
 - scope lock affirmed:
-  - no ungated write execution path in A2.86,
+  - no ungated write execution path in A2.87,
   - no endpoint shape breakage,
   - no global refactor,
   - no opportunistic feature drift.
 
-#### Patch 2 — Profile-aware write policy seam
-- enforce write-action policy matrix (`prod_strict`/`dev_guided`/`dev_full`) and
-  deterministic policy reason-codes.
+#### Patch 2 — Durable write state store seam
+- extract and wire durable pending/idempotency state store seam for write-confirm runtime.
 
 Patch 2 artifacts:
-- policy profile seam extended with explicit write policy contract:
-  - `src/services/answer/policy_profiles.py`
-  - `act_write_policy`: `blocked` / `confirm_required` / `direct_allowed`
-- profile-to-write-policy matrix now deterministic:
-  - `prod_strict` -> `blocked`
-  - `dev_guided` -> `confirm_required`
-  - `dev_full` -> `direct_allowed`
-- unit coverage expanded for profile write policy expectations:
-  - `tests/unit/services/answer/test_policy_profiles.py`
-- focused checks green:
-  - `tests/unit/services/answer/test_policy_profiles.py`
-  - `tests/unit/services/answer/test_answer_orchestration_quality_gate.py`
-  - `tests/unit/services/answer/test_answer_service_debug_snapshot.py`
-  - `tests/unit/api/test_answer_endpoint_debug_snapshot.py`
-  - `tests/unit/docs`
-  - result: `107 passed`
+- pending
 
-#### Patch 3 — Confirm-flow write execution seam
-- route write-capable tool execution through approval handshake with deterministic
-  token/idempotency/replay behavior.
+#### Patch 3 — Restart-resilient confirm-flow runtime wiring
+- adapt write-confirm runtime to load/save/consume durable state store records.
 
 Patch 3 artifacts:
-- Act runtime write-confirm seam implemented in:
-  - `src/services/answer/act_read_only.py`
-- write-capable tool path introduced for `save_file` with profile-aware behavior:
-  - `blocked` -> deterministic block reason-codes
-  - `confirm_required` -> pending confirmation token flow
-  - `direct_allowed` -> direct execution path
-- deterministic confirm-flow contracts added:
-  - pending token issuance (`act-confirm:*`) + ttl metadata
-  - approve/cancel transition handling
-  - token validation (missing/invalid/expired/consumed/tool mismatch)
-  - idempotency replay for approved writes (`act_idempotency_key`)
-- diagnostics expanded for write flow transparency:
-  - `diagnostics.act_runtime.confirmation`
-  - explicit write reason-codes (`act_write_*`)
-- runtime test coverage expanded:
-  - `tests/unit/services/answer/test_act_read_only_runtime.py`
-- focused checks green:
-  - `tests/unit/services/answer/test_act_read_only_runtime.py`
-  - `tests/unit/services/answer/test_policy_profiles.py`
-  - `tests/unit/services/answer/test_answer_orchestration_quality_gate.py`
-  - `tests/unit/services/answer/test_answer_service_debug_snapshot.py`
-  - `tests/unit/api/test_answer_endpoint_debug_snapshot.py`
-  - `tests/unit/docs`
-  - result: `112 passed`
+- pending
 
-#### Patch 4 — UI approval controls for write actions
-- add pending-approval controls (approve/cancel) and execution status surfaces in UI.
+#### Patch 4 — Runtime diagnostics continuity + tests
+- validate durable storage behavior and preserve diagnostic contract surfaces.
 
 Patch 4 artifacts:
-- UI approval interaction added in:
-  - `frontend/src/components/ChatPanel.tsx`
-  - `frontend/src/components/ChatPanel.css`
-- write confirmation controls now rendered when runtime reports pending write approval:
-  - `Approve Write` / `Cancel` actions on runtime info card
-  - preserved runtime mode/act/profile/reason-code visibility
-- frontend request wiring updated for approval actions:
-  - `frontend/src/lib/apiClient.ts`
-  - `sendMessage(..., extraFilters)` now forwards confirm-flow filters
-- approval actions send deterministic act filters:
-  - `runtime_mode=act`
-  - `act_tool_name`
-  - `act_confirm_decision`
-  - `act_confirmation_token`
-  - `act_idempotency_key` (approve path)
-- frontend compile verification green:
-  - `frontend: npm run build`
-  - result: `vite build` success
+- pending
 
 #### Patch 5 — Guardrails + parity + closure
-- run focused + full-suite checks, sync mandatory docs, close A2.86.
+- run focused + full-suite checks, sync mandatory docs, close A2.87.
 
 Patch 5 artifacts:
-- focused closure checks green:
-  - `tests/unit/services/answer/test_policy_profiles.py`
-  - `tests/unit/services/answer/test_act_read_only_runtime.py`
-  - `tests/unit/services/answer/test_reason_code_policy.py`
-  - `tests/unit/services/answer/test_answer_response_presenter.py`
-  - `tests/unit/services/answer/test_answer_orchestration_quality_gate.py`
-  - `tests/unit/services/answer/test_answer_service_debug_snapshot.py`
-  - `tests/unit/api/test_answer_endpoint_debug_snapshot.py`
-  - `tests/unit/docs`
-  - result: `116 passed`
-- full-suite parity check green:
-  - `uv run pytest`
-  - result: `591 passed, 3 skipped`
-- frontend closure build check green:
-  - `frontend: npm run build`
-  - result: success
-- mandatory docs synchronized for A2.86 closure:
-  - `docs/development/PROJECT_ANCHOR.md`
-  - `docs/development/PROJECT_CHECKLIST.md`
-  - `docs/development/STATUS.md`
-  - `docs/architecture/PLATFORM_FEATURES.md`
+- pending
 
 ### Progress
 
 - [x] Patch 1 — inventory + scope lock
-- [x] Patch 2 — profile-aware write policy seam
-- [x] Patch 3 — confirm-flow write execution seam
-- [x] Patch 4 — UI approval controls for write actions
-- [x] Patch 5 — guardrails + closure
+- [ ] Patch 2 — durable write state store seam
+- [ ] Patch 3 — restart-resilient confirm-flow runtime wiring
+- [ ] Patch 4 — runtime diagnostics continuity + tests
+- [ ] Patch 5 — guardrails + closure
 
 ### Non-Negotiable Rules
 
-- Keep ungated write execution disabled in A2.86.
+- Keep ungated write execution disabled in A2.87.
 - Preserve `/answer` contract compatibility and controlled fallback behavior.
 - Keep diagnostics deterministic with explicit reason-codes.
 - One patch = one reason.
 
 ### Out of Scope
 
-Do NOT modify during A2.86:
+Do NOT modify during A2.87:
 
 - EvolutionAgent loop implementation,
 - unrelated product or architecture refactors.
 
 ### Definition of Done
 
-A2.86 is complete when:
+A2.87 is complete when:
 
-- write actions execute only through deterministic confirmation path,
-- profile matrix behavior is deterministic and observable in diagnostics,
-- UI surfaces approval intent/status and supports approve/cancel flow,
+- pending/idempotency write-confirm state is persisted and reloadable from durable store,
+- runtime behavior is restart-resilient without contract regressions,
+- diagnostics and reason-code behavior remain stable,
 - focused and full quality checks remain green,
 - mandatory docs are synchronized.
 
-## A2.85 Snapshot (Closed)
+## A2.86 Snapshot (Closed)
 
-A2.85 closure markers retained for continuity:
+A2.86 closure markers retained for continuity:
 
-- runtime policy profile seam (`prod_strict` / `dev_guided` / `dev_full`),
-- diagnostics presentation contract normalization (`requested_mode`/`resolved_mode`),
-- UI compact/expanded diagnostics toggle,
-- full-suite parity: `589 passed, 3 skipped`.
+- profile-aware write policy contract (`blocked` / `confirm_required` / `direct_allowed`),
+- Act write confirm-flow runtime with token validation and idempotency replay,
+- UI approve/cancel controls for pending write actions,
+- full-suite parity: `591 passed, 3 skipped`.
 
 ## A2.56 Operational Guardrails Snapshot (Closed)
 
@@ -215,7 +138,7 @@ A2.56 policy markers are retained for deterministic docs quality gates:
 
 ## Next Anchor
 
-TBD - Post-A2.86 planning
+TBD - Post-A2.87 planning
 
 ## Anchor Closed
 
