@@ -36,7 +36,7 @@ Execution discipline:
 
 ## Next Anchor
 
-A2.86 - Patch 4 (UI approval controls for write actions)
+A2.86 - Patch 5 (guardrails + parity + closure)
 
 ## CI Status
 

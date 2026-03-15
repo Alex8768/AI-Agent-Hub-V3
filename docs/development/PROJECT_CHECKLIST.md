@@ -92,7 +92,7 @@
 - [x] Patch 1 - inventory + scope lock
 - [x] Patch 2 - profile-aware write policy seam
 - [x] Patch 3 - confirm-flow write execution seam
-- [ ] Patch 4 - UI approval controls for write actions
+- [x] Patch 4 - UI approval controls for write actions
 - [ ] Patch 5 - guardrails + parity + closure
 
 ## A2.74 Historical Work - Facade Convergence Phase 18 (Answer/Reasoning)

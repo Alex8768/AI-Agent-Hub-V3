@@ -270,6 +270,41 @@
   color: var(--text-soft);
 }
 
+.runtime-approval-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.runtime-approval-btn {
+  appearance: none;
+  border: 1px solid var(--border-subtle);
+  border-radius: 0;
+  background: #252a31;
+  color: var(--text-soft);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 5px 8px;
+  cursor: pointer;
+}
+
+.runtime-approval-btn.is-approve {
+  border-color: #2f8f5c;
+  background: #214433;
+  color: #d5ffe9;
+}
+
+.runtime-approval-btn.is-cancel {
+  border-color: #7a3a3a;
+  background: #412424;
+  color: #ffd7d4;
+}
+
+.runtime-approval-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .message-loading {
   display: inline-flex;
   align-items: center;

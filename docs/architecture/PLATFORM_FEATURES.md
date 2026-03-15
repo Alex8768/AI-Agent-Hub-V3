@@ -364,6 +364,7 @@ AI-Agent-Hub-V3 is a modular AI platform for production-grade agent systems with
 - [x] UI deterministic quality gate + CI interface smoke wiring (A2.28 patch 5)
 - [x] Runtime mode visibility and policy-block reason UI surfacing (A2.84 complete)
 - [x] Compact/expanded diagnostics UX toggle with contract-safe answer payload (A2.85 patch 4)
+- [x] Pending write approval UI controls with deterministic approve/cancel flow (A2.86 patch 4)
 
 ---
 

@@ -19,6 +19,9 @@ interface RuntimeInfo {
   actStatus: string;
   diagnosticsMode: string;
   reasonCodes: string[];
+  toolName: string;
+  confirmationToken: string;
+  canConfirmWrite: boolean;
 }
 
 interface GraphNodeLike {
@@ -126,6 +129,10 @@ export default function ChatPanel({ workspaceId, sessionId, onSessionUsed }: Cha
       row.act_runtime && typeof row.act_runtime === 'object' && !Array.isArray(row.act_runtime)
         ? (row.act_runtime as Record<string, unknown>)
         : {};
+    const confirmation =
+      actRuntime.confirmation && typeof actRuntime.confirmation === 'object' && !Array.isArray(actRuntime.confirmation)
+        ? (actRuntime.confirmation as Record<string, unknown>)
+        : {};
     const presentation =
       row.presentation && typeof row.presentation === 'object' && !Array.isArray(row.presentation)
         ? (row.presentation as Record<string, unknown>)
@@ -142,6 +149,9 @@ export default function ChatPanel({ workspaceId, sessionId, onSessionUsed }: Cha
     const selectedMode = String(runtimeMode.selected_mode ?? requestedMode);
     const actStatus = String(actRuntime.status ?? 'n/a');
     const diagnosticsMode = String(presentation.mode ?? 'full');
+    const toolName = String(actRuntime.tool_name ?? '');
+    const confirmationToken = String(confirmation.token ?? '');
+    const canConfirmWrite = actStatus === 'pending_confirmation' && toolName.length > 0 && confirmationToken.length > 0;
     const hasSignals =
       reasonCodes.length > 0 ||
       requestedMode !== 'answer' ||
@@ -149,7 +159,7 @@ export default function ChatPanel({ workspaceId, sessionId, onSessionUsed }: Cha
       actStatus !== 'n/a' ||
       diagnosticsMode !== 'full';
     if (!hasSignals) return undefined;
-    return { requestedMode, selectedMode, actStatus, diagnosticsMode, reasonCodes };
+    return { requestedMode, selectedMode, actStatus, diagnosticsMode, reasonCodes, toolName, confirmationToken, canConfirmWrite };
   };
 
   useEffect(() => {
@@ -228,6 +238,50 @@ export default function ChatPanel({ workspaceId, sessionId, onSessionUsed }: Cha
     }
   };
 
+  const handleWriteApproval = async (msg: Message, decision: 'approve' | 'cancel') => {
+    if (isLoading || !msg.runtimeInfo?.canConfirmWrite) return;
+    setIsLoading(true);
+    setRequestError('');
+    try {
+      const response = await sendMessage(
+        workspaceId,
+        sessionId,
+        decision === 'approve' ? 'Approve write action' : 'Cancel write action',
+        diagnosticsView,
+        {
+          runtime_mode: 'act',
+          act_tool_name: msg.runtimeInfo.toolName,
+          act_confirm_decision: decision,
+          act_confirmation_token: msg.runtimeInfo.confirmationToken,
+          act_idempotency_key: decision === 'approve' ? `ui-approve:${msg.id}` : '',
+        },
+      );
+      const assistantMsg: Message = {
+        id: makeMessageId(),
+        role: 'assistant',
+        content: response.answer,
+        thoughts: readThoughts(response.diagnostics),
+        runtimeInfo: readRuntimeInfo(response.diagnostics),
+      };
+      setMessages((prev) => [...prev, assistantMsg]);
+      setLastAnswer(response);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      setRequestError(message);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: makeMessageId(),
+          role: 'assistant',
+          content: `Approval request failed.\n\n${message}`,
+          error: true,
+        },
+      ]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="chat-container">
       <div className="messages-list" ref={scrollRef}>
@@ -294,6 +348,26 @@ export default function ChatPanel({ workspaceId, sessionId, onSessionUsed }: Cha
                       {msg.runtimeInfo.reasonCodes.map((code) => (
                         <code key={`${msg.id}-${code}`}>{code}</code>
                       ))}
+                    </div>
+                  )}
+                  {msg.runtimeInfo.canConfirmWrite && (
+                    <div className="runtime-approval-actions">
+                      <button
+                        className="runtime-approval-btn is-approve"
+                        type="button"
+                        onClick={() => void handleWriteApproval(msg, 'approve')}
+                        disabled={isLoading}
+                      >
+                        Approve Write
+                      </button>
+                      <button
+                        className="runtime-approval-btn is-cancel"
+                        type="button"
+                        onClick={() => void handleWriteApproval(msg, 'cancel')}
+                        disabled={isLoading}
+                      >
+                        Cancel
+                      </button>
                     </div>
                   )}
                 </div>

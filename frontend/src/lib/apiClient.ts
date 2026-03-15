@@ -111,6 +111,7 @@ export async function sendMessage(
   sessionId: string,
   query: string,
   diagnosticsView: 'compact' | 'full' = 'compact',
+  extraFilters: Record<string, unknown> = {},
 ): Promise<AnswerResponseDto> {
   const normalizedWorkspace = (workspaceId || '').trim() || 'default'
   const normalizedSession = (sessionId || '').trim() || 'default'
@@ -123,6 +124,7 @@ export async function sendMessage(
       graph_depth: 1,
       session_id: scopedSessionId,
       diagnostics_view: diagnosticsView,
+      filters: extraFilters,
     },
     { workspaceId: normalizedWorkspace },
   )

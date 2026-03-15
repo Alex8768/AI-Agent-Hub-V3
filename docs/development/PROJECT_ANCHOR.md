@@ -111,7 +111,24 @@ Patch 3 artifacts:
 - add pending-approval controls (approve/cancel) and execution status surfaces in UI.
 
 Patch 4 artifacts:
-- pending
+- UI approval interaction added in:
+  - `frontend/src/components/ChatPanel.tsx`
+  - `frontend/src/components/ChatPanel.css`
+- write confirmation controls now rendered when runtime reports pending write approval:
+  - `Approve Write` / `Cancel` actions on runtime info card
+  - preserved runtime mode/act/profile/reason-code visibility
+- frontend request wiring updated for approval actions:
+  - `frontend/src/lib/apiClient.ts`
+  - `sendMessage(..., extraFilters)` now forwards confirm-flow filters
+- approval actions send deterministic act filters:
+  - `runtime_mode=act`
+  - `act_tool_name`
+  - `act_confirm_decision`
+  - `act_confirmation_token`
+  - `act_idempotency_key` (approve path)
+- frontend compile verification green:
+  - `frontend: npm run build`
+  - result: `vite build` success
 
 #### Patch 5 — Guardrails + parity + closure
 - run focused + full-suite checks, sync mandatory docs, close A2.86.
@@ -124,7 +141,7 @@ Patch 5 artifacts:
 - [x] Patch 1 — inventory + scope lock
 - [x] Patch 2 — profile-aware write policy seam
 - [x] Patch 3 — confirm-flow write execution seam
-- [ ] Patch 4 — UI approval controls for write actions
+- [x] Patch 4 — UI approval controls for write actions
 - [ ] Patch 5 — guardrails + closure
 
 ### Non-Negotiable Rules
