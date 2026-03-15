@@ -96,7 +96,7 @@
 - [x] Patch 1 - inventory + scope lock
 - [x] Patch 2 - theme + locale preference seam
 - [x] Patch 3 - chat/layout UX refresh
-- [ ] Patch 4 - runtime transparency UX simplification
+- [x] Patch 4 - runtime transparency UX simplification
 - [ ] Patch 5 - guardrails + parity + closure
 
 ## A2.74 Historical Work - Facade Convergence Phase 18 (Answer/Reasoning)

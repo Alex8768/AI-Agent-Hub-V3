@@ -97,6 +97,9 @@ Patch 4 artifacts:
   - related style tokens/classes.
 - preserve existing action controls:
   - write approve/cancel flow remains explicit and deterministic.
+- focused frontend check green:
+  - `frontend: npm run build`
+  - result: success
 
 #### Patch 5 — Guardrails + parity + closure
 - run frontend lint/build + backend regression parity checks, sync mandatory docs, close A2.90.
@@ -130,7 +133,7 @@ Patch 5 artifacts:
 - [x] Patch 1 — inventory + scope lock
 - [x] Patch 2 — theme + locale preference seam
 - [x] Patch 3 — chat/layout UX refresh
-- [ ] Patch 4 — runtime transparency UX simplification
+- [x] Patch 4 — runtime transparency UX simplification
 - [ ] Patch 5 — guardrails + closure
 
 ### Non-Negotiable Rules

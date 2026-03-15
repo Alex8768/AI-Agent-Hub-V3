@@ -55,6 +55,33 @@ function makeMessageId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+function toHumanReason(raw: string, locale: 'en' | 'ru'): string {
+  const key = String(raw || '').trim();
+  const mapEn: Record<string, string> = {
+    act_write_confirmation_required: 'Write requires your confirmation',
+    act_write_pending_quota_exceeded: 'Too many pending write confirmations',
+    act_write_idempotency_quota_exceeded: 'Write replay limit reached',
+    act_write_decision_rate_limited: 'Too many confirmation decisions in a short time',
+    act_write_blocked_by_policy_profile: 'Write actions are blocked by profile',
+    act_read_only_tool_not_allowlisted: 'Requested tool is not allowlisted',
+    runtime_mode_act_disabled_fallback_answer: 'Action mode was downgraded to answer',
+  };
+  const mapRu: Record<string, string> = {
+    act_write_confirmation_required: 'Запись требует вашего подтверждения',
+    act_write_pending_quota_exceeded: 'Слишком много ожидающих подтверждений записи',
+    act_write_idempotency_quota_exceeded: 'Достигнут лимит повторов записи',
+    act_write_decision_rate_limited: 'Слишком много подтверждений за короткое время',
+    act_write_blocked_by_policy_profile: 'Профиль блокирует операции записи',
+    act_read_only_tool_not_allowlisted: 'Инструмент не входит в allowlist',
+    runtime_mode_act_disabled_fallback_answer: 'Режим действий понижен до обычного ответа',
+  };
+  const mapped = locale === 'ru' ? mapRu[key] : mapEn[key];
+  if (mapped) return mapped;
+  const normalized = key.replaceAll('_', ' ').trim();
+  if (!normalized) return locale === 'ru' ? 'Нет дополнительных сигналов' : 'No additional signals';
+  return normalized[0].toUpperCase() + normalized.slice(1);
+}
+
 export default function ChatPanel({ workspaceId, sessionId, onSessionUsed, locale = 'en' }: ChatPanelProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -199,6 +226,8 @@ export default function ChatPanel({ workspaceId, sessionId, onSessionUsed, local
             requested: 'Запрошено',
             action: 'Действие',
             diag: 'Диаг',
+            signals: 'Сигналы',
+            technicalCodes: 'Технические коды',
             approveWrite: 'Подтвердить запись',
             cancel: 'Отмена',
             requestFailed: 'Запрос завершился ошибкой.',
@@ -228,6 +257,8 @@ export default function ChatPanel({ workspaceId, sessionId, onSessionUsed, local
             requested: 'Requested',
             action: 'Act',
             diag: 'Diag',
+            signals: 'Signals',
+            technicalCodes: 'Technical codes',
             approveWrite: 'Approve Write',
             cancel: 'Cancel',
             requestFailed: 'Request failed.',
@@ -408,9 +439,23 @@ export default function ChatPanel({ workspaceId, sessionId, onSessionUsed, local
                   </div>
                   {msg.runtimeInfo.reasonCodes.length > 0 && (
                     <div className="runtime-reasons">
-                      {msg.runtimeInfo.reasonCodes.map((code) => (
-                        <code key={`${msg.id}-${code}`}>{code}</code>
+                      <span className="runtime-reasons-label">{ui.signals}:</span>
+                      {msg.runtimeInfo.reasonCodes.slice(0, 2).map((code) => (
+                        <span key={`${msg.id}-${code}`} className="runtime-reason-pill">
+                          {toHumanReason(code, locale)}
+                        </span>
                       ))}
+                      {msg.runtimeInfo.reasonCodes.length > 2 && (
+                        <span className="runtime-reason-pill">+{msg.runtimeInfo.reasonCodes.length - 2}</span>
+                      )}
+                      <details className="runtime-reason-codes">
+                        <summary>{ui.technicalCodes}</summary>
+                        <div className="runtime-reason-codes-list">
+                          {msg.runtimeInfo.reasonCodes.map((code) => (
+                            <code key={`${msg.id}-${code}`}>{code}</code>
+                          ))}
+                        </div>
+                      </details>
                     </div>
                   )}
                   {msg.runtimeInfo.canConfirmWrite && (
