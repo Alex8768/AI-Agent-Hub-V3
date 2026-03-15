@@ -272,6 +272,7 @@ async def _run_answer_primary_pipeline(
         normalize_low_evidence_friendliness=_normalize_low_evidence_friendliness,
         build_conversational_runtime_parity_bundle=_build_conversational_runtime_parity_bundle,
         build_truthfulness_guard_bundle=getattr(_response_runtime_parity_helpers(), "build_truthfulness_guard_bundle"),
+        calibrate_confidence_with_truthfulness_guard=getattr(_response_runtime_parity_helpers(), "calibrate_confidence_with_truthfulness_guard"),
     )
     return _AnswerFacadePipelineState(
         resp=resp,

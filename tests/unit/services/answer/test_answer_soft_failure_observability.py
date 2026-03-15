@@ -120,6 +120,10 @@ async def test_response_assembly_writes_soft_failure_reason_code():
         normalize_low_evidence_friendliness=lambda **kwargs: str(kwargs.get("answer", "") or ""),
         build_conversational_runtime_parity_bundle=_raise_parity,
         build_truthfulness_guard_bundle=lambda **kwargs: {"status": "ok", "reason_codes": ["truthfulness_guard_evaluated"]},
+        calibrate_confidence_with_truthfulness_guard=lambda **kwargs: (
+            float(kwargs.get("confidence", 0.0) or 0.0),
+            {"reason_codes": ["truthfulness_guard_confidence_calibrated"]},
+        ),
     )
 
     diag = dict(getattr(out, "diagnostics", None) or {})

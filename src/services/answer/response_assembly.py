@@ -20,6 +20,7 @@ async def run_answer_response_assembly(
     normalize_low_evidence_friendliness: object,
     build_conversational_runtime_parity_bundle: object,
     build_truthfulness_guard_bundle: object,
+    calibrate_confidence_with_truthfulness_guard: object,
 ) -> object:
     try:
         diag = dict(getattr(resp, "diagnostics", None) or {})
@@ -83,6 +84,23 @@ async def run_answer_response_assembly(
             for x in list((dict(truthfulness_guard or {})).get("reason_codes") or [])
             if str(x or "").strip() and str(x) != "truthfulness_guard_evaluated"
         ]
+        calibrated_confidence, confidence_calibration = calibrate_confidence_with_truthfulness_guard(
+            confidence=getattr(resp, "confidence", 0.0),
+            truthfulness_guard_bundle=truthfulness_guard,
+        )
+        if float(calibrated_confidence) != float(getattr(resp, "confidence", 0.0) or 0.0):
+            resp.confidence = float(calibrated_confidence)
+        diag["truthfulness_guard"] = {
+            **dict(diag.get("truthfulness_guard") or {}),
+            **dict(confidence_calibration or {}),
+        }
+        truthfulness_reasons.extend(
+            [
+                str(x)
+                for x in list((dict(confidence_calibration or {})).get("reason_codes") or [])
+                if str(x or "").strip() and str(x) != "truthfulness_guard_confidence_calibrated"
+            ]
+        )
         reason_codes.extend(truthfulness_reasons)
         diag["planning_reason_codes"] = sorted(set(reason_codes))
         resp.diagnostics = diag

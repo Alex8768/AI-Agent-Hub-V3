@@ -97,7 +97,7 @@
 
 - [x] Patch 1 - inventory + scope lock
 - [x] Patch 2 - confidence calibration seam
-- [ ] Patch 3 - runtime wiring + explainability
+- [x] Patch 3 - runtime wiring + explainability
 - [ ] Patch 4 - continuity tests
 - [ ] Patch 5 - guardrails + parity + closure
 

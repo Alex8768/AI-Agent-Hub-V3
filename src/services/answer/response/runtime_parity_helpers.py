@@ -85,3 +85,17 @@ def build_truthfulness_guard_bundle(
         "build_truthfulness_guard_bundle",
     )
     return impl(query=query, answer=answer, diagnostics=diagnostics)
+
+
+def calibrate_confidence_with_truthfulness_guard(
+    *,
+    confidence: float | int | None,
+    truthfulness_guard_bundle: dict[str, object] | None,
+) -> tuple[float, dict[str, object]]:
+    import importlib
+
+    impl = getattr(
+        importlib.import_module("src.services.answer.diagnostics.truthfulness_guard"),
+        "calibrate_confidence_with_truthfulness_guard",
+    )
+    return impl(confidence=confidence, truthfulness_guard_bundle=truthfulness_guard_bundle)
