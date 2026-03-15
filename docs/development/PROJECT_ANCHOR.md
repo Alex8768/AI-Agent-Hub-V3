@@ -103,7 +103,24 @@ Patch 3 artifacts:
 - validate durable storage behavior and preserve diagnostic contract surfaces.
 
 Patch 4 artifacts:
-- pending
+- runtime continuity coverage expanded:
+  - `tests/unit/services/answer/test_act_write_state_store.py`
+  - `tests/unit/services/answer/test_act_read_only_runtime.py`
+- added restart-resilience runtime test:
+  - pending write confirmation can be restored from durable memory store after
+    process-local cache reset and still complete approve flow deterministically
+- diagnostics compatibility preserved:
+  - no endpoint shape changes
+  - existing `act_runtime` / reason-code surfaces remain contract-safe
+- focused checks green:
+  - `tests/unit/services/answer/test_act_write_state_store.py`
+  - `tests/unit/services/answer/test_act_read_only_runtime.py`
+  - `tests/unit/services/answer/test_policy_profiles.py`
+  - `tests/unit/services/answer/test_answer_orchestration_quality_gate.py`
+  - `tests/unit/services/answer/test_answer_service_debug_snapshot.py`
+  - `tests/unit/api/test_answer_endpoint_debug_snapshot.py`
+  - `tests/unit/docs`
+  - result: `115 passed`
 
 #### Patch 5 — Guardrails + parity + closure
 - run focused + full-suite checks, sync mandatory docs, close A2.87.
@@ -116,7 +133,7 @@ Patch 5 artifacts:
 - [x] Patch 1 — inventory + scope lock
 - [x] Patch 2 — durable write state store seam
 - [x] Patch 3 — restart-resilient confirm-flow runtime wiring
-- [ ] Patch 4 — runtime diagnostics continuity + tests
+- [x] Patch 4 — runtime diagnostics continuity + tests
 - [ ] Patch 5 — guardrails + closure
 
 ### Non-Negotiable Rules

@@ -35,7 +35,7 @@ Execution discipline:
 
 ## Next Anchor
 
-A2.87 - Patch 4 (runtime diagnostics continuity + tests)
+A2.87 - Patch 5 (guardrails + parity + closure)
 
 ## CI Status
 
