@@ -168,7 +168,11 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
     assert "confidence_before" in truthfulness_guard
     assert "confidence_after" in truthfulness_guard
     assert "confidence_cap_applied" in truthfulness_guard
+    assert "logic_consistency" in truthfulness_guard
+    assert "trust_summary" in truthfulness_guard
     assert isinstance(truthfulness_guard.get("confidence_cap_applied"), bool)
+    assert isinstance(dict(truthfulness_guard.get("logic_consistency") or {}), dict)
+    assert isinstance(str(truthfulness_guard.get("trust_summary", "")), str)
     memory_consistency = dict(diag.get("memory_consistency") or {})
     assert set(memory_consistency.keys()) == {
         "contract_version",

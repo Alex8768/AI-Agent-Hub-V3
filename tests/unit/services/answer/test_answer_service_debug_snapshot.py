@@ -236,7 +236,11 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
     assert "confidence_before" in truthfulness_guard
     assert "confidence_after" in truthfulness_guard
     assert "confidence_cap_applied" in truthfulness_guard
+    assert "logic_consistency" in truthfulness_guard
+    assert "trust_summary" in truthfulness_guard
     assert isinstance(truthfulness_guard.get("confidence_cap_applied"), bool)
+    assert isinstance(dict(truthfulness_guard.get("logic_consistency") or {}), dict)
+    assert isinstance(str(truthfulness_guard.get("trust_summary", "")), str)
     intent = dict(diag.get("assistant_intent") or {})
     assert set(intent.keys()) == {
         "intent",
