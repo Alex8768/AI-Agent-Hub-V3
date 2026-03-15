@@ -83,14 +83,15 @@
 ## Next
 
 - [x] A2.83 - Step 0.5 Facade Stabilization Before Act/Evolve
+- [ ] A2.84 - Act Read-Only Runtime + UX Transparency
 
-## Current Work — A2.83 Step 0.5 Facade Stabilization
+## Current Work — A2.84 Act Read-Only Runtime + UX Transparency
 
 - [x] Patch 1 - inventory + scope lock
-- [x] Patch 2 - mode router seam
-- [x] Patch 3 - failure policy seam
-- [x] Patch 4 - response presenter seam
-- [x] Patch 5 - guardrails + parity + closure
+- [ ] Patch 2 - Act read-only execution seam
+- [ ] Patch 3 - failure-policy and reason-code closure
+- [ ] Patch 4 - UI mode/block transparency
+- [ ] Patch 5 - guardrails + parity + closure
 
 ## A2.74 Historical Work - Facade Convergence Phase 18 (Answer/Reasoning)
 

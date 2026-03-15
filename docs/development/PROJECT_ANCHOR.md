@@ -2,161 +2,126 @@
 
 ## Active Anchor
 
-A2.83 Step 0.5 - Facade Stabilization Before Act/Evolve
+A2.84 - Act Read-Only Runtime + UX Transparency
 
 ### Goal
 
-Stabilize `AnswerService` as a strict facade before enabling Act/Evolve runtime tracks,
-so new capabilities do not increase coupling or reintroduce unstable `/answer` failures.
+Deliver the first user-visible Act runtime path with read-only workspace tools and
+explicit UI-visible block reasons, while preserving controlled `/answer` behavior.
 
 ### Why Now
 
-Current user-facing issues are runtime-behavioral (intermittent `500`, over-guarded tool
-path in assistant mode, oversized response payload), not monolith-size issues.
-Without a clean facade boundary, Act/Evolve additions will compound instability.
+A2.83 established the facade seams (mode routing, failure policy, response presenter),
+so the next highest-impact step is enabling practical read-only actions and making
+policy/runtime decisions transparent to users.
 
 ### Architecture Position
 
-Target A2.83 Step 0.5 boundaries:
+Target A2.84 boundaries:
 
-- **Facade-first answer runtime**
-  - keep `src/services/answer/answer_service.py` as thin orchestration entry,
-  - separate mode routing / failure policy / response presentation seams.
+- **Act read-only runtime enablement**
+  - allow only `list_files` and `read_file` execution path in Act mode,
+  - block side-effecting tools with deterministic policy reason-codes.
 
-- **No-regression path to Act/Evolve**
-  - prepare read-only Act route (`list_files`, `read_file`) without mixing execution policy
-    into answer synthesis core,
-  - preserve existing contract compatibility while adding deterministic reason-codes.
+- **No-uncontrolled-failure answer path**
+  - preserve non-500 controlled fallback guarantees on user path,
+  - keep mode/policy diagnostics explicit and machine-consumable.
+
+- **UX transparency contract**
+  - surface runtime mode and policy block reasons in UI instead of opaque errors,
+  - keep default response contract backward compatible.
 
 - **Guardrails and quality**
-  - maintain one-patch-one-reason execution,
-  - keep docs + runtime quality gates green after each patch.
+  - maintain one patch = one reason discipline,
+  - keep focused + docs + full-suite closure checks green.
 
 ### Patch Plan
 
-#### Patch 1 — Inventory + scope lock (Step 0.5)
-- inventory current `AnswerService` responsibilities by runtime concern:
-  mode routing, synthesis path, tool path, failure handling, response shaping,
-- lock scope to facade stabilization seams only (no net-new intelligence behavior),
-- define patch contract for Step 0.5 patches 2-5.
+#### Patch 1 — Inventory + scope lock
+- inventory all current Act/Tool runtime touchpoints and UI diagnostics touchpoints:
+  answer mode routing, policy blocks, tool execution filters, response diagnostics mapping,
+- lock scope to read-only Act enablement + diagnostics transparency only,
+- define deterministic reason-code contract for mode/policy decisions.
 
 Patch 1 artifacts:
-- facade boundary inventory captured:
-  - synthesis orchestration path,
-  - tool selection/execution entry path,
-  - soft-failure policy path,
-  - response presentation path (compact vs diagnostics-heavy),
+- runtime boundary inventory captured:
+  - Act-mode routing seam usage path,
+  - tool-allowlist/policy enforcement path,
+  - controlled fallback and reason-code emission path,
+  - UI diagnostics consumption path for mode/block visibility,
 - scope lock affirmed:
-  - seam-first changes only,
+  - read-only tools only (`list_files`, `read_file`),
+  - no write/side-effect execution in A2.84,
+  - no endpoint shape breakage,
   - no global refactor,
-  - no opportunistic feature drift outside Step 0.5 goals.
+  - no opportunistic feature drift.
 
-#### Patch 2 — Mode router seam
-- introduce explicit answer/act mode router seam while preserving endpoint contract.
+#### Patch 2 — Act read-only execution seam
+- wire deterministic read-only tool execution path for Act mode with explicit allowlist.
 
 Patch 2 artifacts:
-- mode router seam extracted to:
-  - `src/services/answer/mode_router.py`
-  - `resolve_answer_runtime_mode`
-  - `apply_runtime_mode_diagnostics`
-- `AnswerService.handle_contract` now resolves runtime mode explicitly before orchestration
-  and records selected/requested mode diagnostics after merge flow.
-- deterministic fallback behavior introduced for unsupported/disabled modes:
-  - `runtime_mode_unsupported_fallback_answer`
-  - `runtime_mode_act_disabled_fallback_answer`
-- focused checks green:
-  - `tests/unit/services/answer/test_answer_mode_router.py`
-  - `tests/unit/services/answer/test_answer_orchestration_quality_gate.py`
-  - `tests/unit/docs`
-  - result: `59 passed`
+- pending
 
-#### Patch 3 — Failure policy seam
-- enforce controlled fallback for user-path errors (`/answer`) with deterministic reason-codes.
+#### Patch 3 — Failure-policy and reason-code closure
+- guarantee controlled fallback + reason-codes for policy/runtime blocks across `/answer`.
 
 Patch 3 artifacts:
-- failure policy seam extracted to:
-  - `src/services/answer/failure_policy.py`
-  - `build_controlled_answer_fallback`
-- `AnswerService.handle_contract` now applies guarded exception handling around
-  primary orchestration and returns controlled fallback response instead of bubbling
-  runtime exceptions to endpoint-level `500`.
-- deterministic fallback reason-code introduced:
-  - `answer_runtime_controlled_fallback`
-- focused checks green:
-  - `tests/unit/services/answer/test_answer_failure_policy.py`
-  - `tests/unit/services/answer/test_answer_orchestration_quality_gate.py`
-  - result: `19 passed`
+- pending
 
-#### Patch 4 — Response presenter seam
-- split compact response shape from full diagnostics payload for UI clarity and runtime efficiency.
+#### Patch 4 — UI mode/block transparency
+- surface `runtime_mode` and policy block reasons in UI (meta/chat surfaces).
 
 Patch 4 artifacts:
-- response presenter seam extracted to:
-  - `src/services/answer/response_presenter.py`
-  - `present_answer_response`
-- `AnswerService.handle_contract` now routes final response through presenter seam
-  after mode/failure handling.
-- compact diagnostics mode introduced (opt-in via request filters):
-  - `filters.response_presentation=compact`
-  - keeps core response fields and removes selected verbose diagnostics keys
-    while exposing presenter metadata in `diagnostics.presentation`.
-- focused checks green:
-  - `tests/unit/services/answer/test_answer_response_presenter.py`
-  - `tests/unit/services/answer/test_answer_orchestration_quality_gate.py`
-  - result: `21 passed`
+- pending
 
 #### Patch 5 — Guardrails + parity + closure
-- run focused checks for mode router, failure policy and compact/full response seams,
-- sync mandatory docs and close Step 0.5.
+- run focused + full-suite checks, sync mandatory docs, close A2.84.
 
 Patch 5 artifacts:
-- focused closure checks green:
-  - `tests/unit/services/answer/test_answer_orchestration_quality_gate.py`
-  - `tests/unit/services/answer/test_answer_mode_router.py`
-  - `tests/unit/services/answer/test_answer_failure_policy.py`
-  - `tests/unit/services/answer/test_answer_response_presenter.py`
-  - `tests/unit/docs`
-  - result: `62 passed`
-- full-suite parity check green:
-  - `uv run pytest`
-  - result: `581 passed, 3 skipped`
-- debug snapshot diagnostics contract synced for new seams:
-  - `tests/unit/api/test_answer_endpoint_debug_snapshot.py`
-  - `tests/unit/services/answer/test_answer_service_debug_snapshot.py`
+- pending
 
 ### Progress
 
 - [x] Patch 1 — inventory + scope lock
-- [x] Patch 2 — mode router seam
-- [x] Patch 3 — failure policy seam
-- [x] Patch 4 — response presenter seam
-- [x] Patch 5 — guardrails + closure
+- [ ] Patch 2 — Act read-only execution seam
+- [ ] Patch 3 — failure-policy and reason-code closure
+- [ ] Patch 4 — UI mode/block transparency
+- [ ] Patch 5 — guardrails + closure
 
 ### Non-Negotiable Rules
 
-- Keep `AnswerService` facade-thin; no new heavy business logic in facade.
-- Preserve endpoint parity and deterministic reason-codes.
-- No global refactor in Step 0.5.
+- Keep Act execution strictly read-only in A2.84.
+- Preserve `/answer` contract compatibility and controlled fallback behavior.
+- Keep diagnostics deterministic with explicit reason-codes.
 - One patch = one reason.
 
 ### Out of Scope
 
-Do NOT modify during A2.81:
+Do NOT modify during A2.84:
 
-- unrelated product feature logic
-- endpoint contract shape
-- non-target services outside answer/reasoning decomposition scope
-- opportunistic cross-domain cleanups
+- write-path tool execution / side-effectful actions,
+- policy profile matrix expansion (`prod_strict`/`dev_guided`/`dev_full`),
+- EvolutionAgent loop implementation,
+- unrelated product or architecture refactors.
 
 ### Definition of Done
 
-A2.81 is complete when:
+A2.84 is complete when:
 
-- answer and reasoning convergence phase-25 extraction is completed with parity
-- no-growth thresholds and import-budget constraints are updated to latest baselines and enforced in CI
-- target facades are further reduced and orchestration-focused
-- focused and full quality checks remain green
-- no answer/debug parity regressions are introduced
+- Act read-only execution works through explicit allowlist,
+- blocked actions return stable reason-codes with no uncontrolled 500 on user path,
+- UI surfaces runtime mode + block reason instead of opaque failure,
+- focused and full quality checks remain green,
+- mandatory docs are synchronized.
+
+## A2.83 Step 0.5 Snapshot (Closed)
+
+A2.83 closure markers retained for continuity:
+
+- mode router seam (`runtime_mode_*` reason-code fallback behavior),
+- controlled runtime fallback seam (`answer_runtime_controlled_fallback`),
+- response presenter seam (`diagnostics.presentation` compact/full),
+- full-suite parity: `581 passed, 3 skipped`.
 
 ## A2.56 Operational Guardrails Snapshot (Closed)
 
@@ -176,11 +141,11 @@ A2.56 policy markers are retained for deterministic docs quality gates:
 
 ## Next Anchor
 
-TBD - Post-A2.83 planning
+TBD - Post-A2.84 planning
 
 ## Anchor Closed
 
-A2.82 complete - Facade Convergence Phase 26 closed with answer facade stabilization, guardrails, and parity.
+A2.83 Step 0.5 complete - Facade stabilization before Act/Evolve with mode/failure/presenter seams.
 
 ## Post-A2.56 Maintenance
 
@@ -190,8 +155,8 @@ A2.82 complete - Facade Convergence Phase 26 closed with answer facade stabiliza
 
 Work order is strict:
 
-- inventory first
-- extraction second
-- guardrails immediately after each seam move
-- preserve runtime parity
-- no opportunistic feature work
+- inventory first,
+- execution seam second,
+- failure/policy closure third,
+- UI transparency fourth,
+- guardrails and closure last.

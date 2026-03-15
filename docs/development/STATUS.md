@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-A2.83 Step 0.5 complete
+A2.84 in progress
 
 ## Last Completed Anchor
 
@@ -20,11 +20,12 @@ Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 
 ## Current Active Anchor
 
-A2.83 closed - awaiting next anchor selection
+A2.84 - Act Read-Only Runtime + UX Transparency
 
 Current focus:
-- keep closure state stable and prepare next anchor scope selection
-- preserve newly introduced seams and no-growth guardrails
+- enable Act runtime in read-only mode (`list_files`, `read_file`) through explicit allowlist
+- preserve controlled `/answer` fallback behavior with deterministic reason-codes
+- surface runtime mode and block reasons in UI diagnostics
 - continue one-patch-one-reason execution discipline
 
 Execution discipline:
@@ -35,7 +36,7 @@ Execution discipline:
 
 ## Next Anchor
 
-TBD - Post-A2.83 planning
+A2.84 - Patch 2 (Act read-only execution seam)
 
 ## CI Status
 
