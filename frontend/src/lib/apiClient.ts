@@ -85,6 +85,12 @@ export async function searchDocuments(payload: SearchRequestDto, ctx: RequestCon
 export async function askAnswer(payload: AnswerRequestDto, ctx: RequestContext = {}): Promise<AnswerResponseDto> {
   const headers = buildWorkspaceHeaders(ctx.workspaceId)
   headers['Content-Type'] = 'application/json'
+  const filters: Record<string, unknown> = {
+    ...(payload.filters ?? {}),
+  }
+  if (payload.diagnostics_view) {
+    filters.diagnostics_view = payload.diagnostics_view
+  }
   const response = await fetch(`${API_BASE}/api/v1/answer`, {
     method: 'POST',
     headers,
@@ -93,6 +99,7 @@ export async function askAnswer(payload: AnswerRequestDto, ctx: RequestContext =
       k: payload.k ?? 8,
       graph_depth: payload.graph_depth ?? 1,
       session_id: payload.session_id ?? 'default',
+      filters,
     }),
   })
   return parseJson<AnswerResponseDto>(response)
@@ -103,6 +110,7 @@ export async function sendMessage(
   workspaceId: string,
   sessionId: string,
   query: string,
+  diagnosticsView: 'compact' | 'full' = 'compact',
 ): Promise<AnswerResponseDto> {
   const normalizedWorkspace = (workspaceId || '').trim() || 'default'
   const normalizedSession = (sessionId || '').trim() || 'default'
@@ -114,6 +122,7 @@ export async function sendMessage(
       k: 8,
       graph_depth: 1,
       session_id: scopedSessionId,
+      diagnostics_view: diagnosticsView,
     },
     { workspaceId: normalizedWorkspace },
   )

@@ -17,6 +17,7 @@ interface RuntimeInfo {
   requestedMode: string;
   selectedMode: string;
   actStatus: string;
+  diagnosticsMode: string;
   reasonCodes: string[];
 }
 
@@ -53,6 +54,10 @@ function makeMessageId(): string {
 export default function ChatPanel({ workspaceId, sessionId, onSessionUsed }: ChatPanelProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
+  const [diagnosticsView, setDiagnosticsView] = useState<'compact' | 'full'>(() => {
+    if (typeof window === 'undefined') return 'compact';
+    return localStorage.getItem('chat.diagnosticsView') === 'full' ? 'full' : 'compact';
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [requestError, setRequestError] = useState<string>('');
   const { setLastAnswer, setLastGraph } = useAppContext();
@@ -121,24 +126,37 @@ export default function ChatPanel({ workspaceId, sessionId, onSessionUsed }: Cha
       row.act_runtime && typeof row.act_runtime === 'object' && !Array.isArray(row.act_runtime)
         ? (row.act_runtime as Record<string, unknown>)
         : {};
+    const presentation =
+      row.presentation && typeof row.presentation === 'object' && !Array.isArray(row.presentation)
+        ? (row.presentation as Record<string, unknown>)
+        : {};
     const reasonCodes = Array.from(
       new Set([
         ...readReasonCodes(runtimeMode.reason_codes),
         ...readReasonCodes(actRuntime.reason_codes),
+        ...readReasonCodes(presentation.reason_codes),
         ...readReasonCodes(row.warnings),
       ]),
     );
     const requestedMode = String(runtimeMode.requested_mode ?? 'answer');
     const selectedMode = String(runtimeMode.selected_mode ?? requestedMode);
     const actStatus = String(actRuntime.status ?? 'n/a');
+    const diagnosticsMode = String(presentation.mode ?? 'full');
     const hasSignals =
       reasonCodes.length > 0 ||
       requestedMode !== 'answer' ||
       selectedMode !== 'answer' ||
-      actStatus !== 'n/a';
+      actStatus !== 'n/a' ||
+      diagnosticsMode !== 'full';
     if (!hasSignals) return undefined;
-    return { requestedMode, selectedMode, actStatus, reasonCodes };
+    return { requestedMode, selectedMode, actStatus, diagnosticsMode, reasonCodes };
   };
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('chat.diagnosticsView', diagnosticsView);
+    }
+  }, [diagnosticsView]);
 
   useEffect(() => {
     if (!scrollRef.current) return;
@@ -170,7 +188,7 @@ export default function ChatPanel({ workspaceId, sessionId, onSessionUsed }: Cha
     onSessionUsed(workspaceId, sessionId);
 
     try {
-      const response = await sendMessage(workspaceId, sessionId, trimmed);
+      const response = await sendMessage(workspaceId, sessionId, trimmed, diagnosticsView);
 
       const assistantMsg: Message = {
         id: makeMessageId(),
@@ -267,6 +285,9 @@ export default function ChatPanel({ workspaceId, sessionId, onSessionUsed }: Cha
                         Act: {msg.runtimeInfo.actStatus}
                       </span>
                     )}
+                    <span className="runtime-info-pill">
+                      Diag: {msg.runtimeInfo.diagnosticsMode}
+                    </span>
                   </div>
                   {msg.runtimeInfo.reasonCodes.length > 0 && (
                     <div className="runtime-reasons">
@@ -313,6 +334,16 @@ export default function ChatPanel({ workspaceId, sessionId, onSessionUsed }: Cha
           <div className="input-context-row">
             <span className="input-context-pill">Workspace: {workspaceId || 'default'}</span>
             <span className="input-context-pill">Session: {sessionId || 'default'}</span>
+            <label className="input-context-select">
+              Diagnostics:
+              <select
+                value={diagnosticsView}
+                onChange={(e) => setDiagnosticsView(e.target.value === 'full' ? 'full' : 'compact')}
+              >
+                <option value="compact">compact</option>
+                <option value="full">expanded</option>
+              </select>
+            </label>
           </div>
 
           <div className="input-wrapper">

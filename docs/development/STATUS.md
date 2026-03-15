@@ -36,7 +36,7 @@ Execution discipline:
 
 ## Next Anchor
 
-A2.85 - Patch 4 (UI compact/expanded diagnostics toggle)
+A2.85 - Patch 5 (guardrails + parity + closure)
 
 ## CI Status
 

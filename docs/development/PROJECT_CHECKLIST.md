@@ -91,7 +91,7 @@
 - [x] Patch 1 - inventory + scope lock
 - [x] Patch 2 - policy profile seam
 - [x] Patch 3 - compact diagnostics contract seam
-- [ ] Patch 4 - UI compact/expanded diagnostics toggle
+- [x] Patch 4 - UI compact/expanded diagnostics toggle
 - [ ] Patch 5 - guardrails + parity + closure
 
 ## A2.74 Historical Work - Facade Convergence Phase 18 (Answer/Reasoning)

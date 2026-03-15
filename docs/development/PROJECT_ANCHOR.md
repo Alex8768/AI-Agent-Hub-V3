@@ -109,7 +109,21 @@ Patch 3 artifacts:
 - add UI control for diagnostics verbosity while preserving mode/reason visibility.
 
 Patch 4 artifacts:
-- pending
+- frontend diagnostics toggle wired end-to-end:
+  - `frontend/src/components/ChatPanel.tsx`
+  - `frontend/src/lib/apiClient.ts`
+  - `frontend/src/contracts/api.ts`
+- request contract propagation:
+  - UI sends `filters.diagnostics_view` via answer request payload
+  - supported values: `compact` and `full` (`expanded` alias supported by backend)
+- runtime transparency card now includes diagnostics mode pill (`Diag: compact|full`)
+  while preserving mode/act/reason-code visibility
+- diagnostics preference persisted in browser (`localStorage`)
+- styling updates for diagnostics selector:
+  - `frontend/src/components/ChatPanel.css`
+- frontend compile verification green:
+  - `frontend: npm run build`
+  - result: `vite build` success
 
 #### Patch 5 — Guardrails + parity + closure
 - run focused + full-suite checks, sync mandatory docs, close A2.85.
@@ -122,7 +136,7 @@ Patch 5 artifacts:
 - [x] Patch 1 — inventory + scope lock
 - [x] Patch 2 — policy profile seam
 - [x] Patch 3 — compact diagnostics contract seam
-- [ ] Patch 4 — UI compact/expanded diagnostics toggle
+- [x] Patch 4 — UI compact/expanded diagnostics toggle
 - [ ] Patch 5 — guardrails + closure
 
 ### Non-Negotiable Rules

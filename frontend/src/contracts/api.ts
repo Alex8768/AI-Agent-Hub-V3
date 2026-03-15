@@ -29,6 +29,8 @@ export interface AnswerRequestDto {
   k?: number
   graph_depth?: number
   session_id?: string
+  filters?: Record<string, unknown>
+  diagnostics_view?: 'compact' | 'full' | 'expanded'
 }
 
 export interface AnswerResponseDto {
