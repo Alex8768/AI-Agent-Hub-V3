@@ -84,14 +84,15 @@
 
 - [x] A2.83 - Step 0.5 Facade Stabilization Before Act/Evolve
 - [x] A2.84 - Act Read-Only Runtime + UX Transparency
+- [ ] A2.85 - Managed Action Profiles + Compact Diagnostics UX
 
-## Current Work — A2.84 Act Read-Only Runtime + UX Transparency
+## Current Work — A2.85 Managed Action Profiles + Compact Diagnostics UX
 
 - [x] Patch 1 - inventory + scope lock
-- [x] Patch 2 - Act read-only execution seam
-- [x] Patch 3 - failure-policy and reason-code closure
-- [x] Patch 4 - UI mode/block transparency
-- [x] Patch 5 - guardrails + parity + closure
+- [ ] Patch 2 - policy profile seam
+- [ ] Patch 3 - compact diagnostics contract seam
+- [ ] Patch 4 - UI compact/expanded diagnostics toggle
+- [ ] Patch 5 - guardrails + parity + closure
 
 ## A2.74 Historical Work - Facade Convergence Phase 18 (Answer/Reasoning)
 

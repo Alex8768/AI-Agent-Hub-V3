@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-A2.84 complete
+A2.85 in progress
 
 ## Last Completed Anchor
 
@@ -20,11 +20,12 @@ Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 
 ## Current Active Anchor
 
-A2.84 closed - awaiting next anchor selection
+A2.85 - Managed Action Profiles + Compact Diagnostics UX
 
 Current focus:
-- keep closure state stable and prepare next anchor scope selection
-- preserve Act read-only and reason-code transparency guardrails
+- introduce deterministic runtime policy profiles by environment/context
+- deliver compact diagnostics default with expanded opt-in path
+- preserve A2.84 mode/reason transparency while adding diagnostics ergonomics
 - continue one-patch-one-reason execution discipline
 
 Execution discipline:
@@ -35,7 +36,7 @@ Execution discipline:
 
 ## Next Anchor
 
-TBD - Post-A2.84 planning
+A2.85 - Patch 2 (policy profile seam)
 
 ## CI Status
 
