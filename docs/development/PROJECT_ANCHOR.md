@@ -2,38 +2,39 @@
 
 ## Active Anchor
 
-A2.90 - UI Reliability and Product UX Baseline
+A2.91 - Truthfulness and Consistency Guard Baseline
 
 ### Goal
 
-Stabilize frontend UX for everyday users: restore predictable rendering, add first-class
-theme support (light/dark/system), introduce auto locale baseline, and keep runtime
-transparency features understandable instead of noisy.
+Introduce a deterministic truthfulness/consistency guard seam that evaluates answer claims
+against runtime evidence signals and flags probable overconfidence, source deference,
+or contradiction-risk with explicit reason-codes.
 
 ### Why Now
 
-Core runtime hardening (A2.84-A2.89) is complete, but user-visible quality is now the
-bottleneck. Current chat styling is still technical/raw and not product-grade for broad
-audience usage, so UI reliability and ergonomics must be upgraded next.
+Runtime safety and UX baselines are in place through A2.90; the next bottleneck is trust:
+answers should be logically cautious when evidence is weak and should not blindly defer
+to potentially wrong sources.
 
 ### Architecture Position
 
-Target A2.90 boundaries:
+Target A2.91 boundaries:
 
-- **UI runtime reliability**
-  - remove brittle/hardcoded palette hotspots that cause inconsistent visuals,
-  - keep chat/layout behavior deterministic under panel collapse/resize.
+- **Truthfulness guard seam**
+  - build deterministic heuristics for claim/evidence consistency checks,
+  - keep seam pure and testable with no network dependencies.
 
-- **Theme system baseline**
-  - support `light`, `dark`, and `system` modes with persisted preference,
-  - use graphite-toned dark palette (not near-black) and readable light palette.
+- **Runtime diagnostics integration**
+  - surface guard status and reason-codes in diagnostics,
+  - preserve existing `/answer` response contract shape.
 
-- **Locale baseline**
-  - auto-detect UI language from browser/system preference (initially `en`/`ru`),
-  - keep copy centralized via a minimal translation seam.
+- **Caution policy baseline**
+  - trigger explicit warning signals for low-evidence high-certainty outputs,
+  - detect direct source-deference language patterns.
 
-- **UX continuity**
-  - preserve existing diagnostics/runtime transparency while simplifying wording and noise density.
+- **Guardrails and quality**
+  - one patch = one reason,
+  - focused + docs + full parity checks remain green.
 
 - **Guardrails and quality**
   - maintain one patch = one reason discipline,
@@ -42,74 +43,59 @@ Target A2.90 boundaries:
 ### Patch Plan
 
 #### Patch 1 — Inventory + scope lock
-- inventory current UX liabilities in chat/layout/theme/locale touchpoints,
-- lock scope to reliability + UX baseline only (no Evolution loop work in A2.90),
-- define deterministic acceptance checks for theme/locale/runtime-info continuity.
+- inventory trust-related runtime touchpoints:
+  evidence counters, confidence fields, warning/reason-code merge paths, response assembly seams,
+- lock scope to deterministic truthfulness guard baseline only,
+- define initial reason-code taxonomy and diagnostics shape.
 
 Patch 1 artifacts:
-- frontend boundaries mapped:
-  - chat surface copy and controls,
-  - palette/token usage and hardcoded color hotspots,
-  - app-level preference persistence points,
-  - runtime diagnostics display zones,
+- boundaries mapped:
+  - guard seam input contract (`query`, `answer`, diagnostics evidence signals),
+  - guard seam output contract (`status`, `reason_codes`),
+  - non-breaking diagnostics merge path,
 - scope lock affirmed:
-  - no backend contract changes,
-  - no MCP/tooling behavior changes,
-  - no unrelated architecture refactor.
+  - no provider/model routing changes,
+  - no EvolutionAgent loop work,
+  - no endpoint shape breakage.
 
-#### Patch 2 — Theme + locale preference seam
-- add app-level UI preference seam with persisted `theme_mode` and resolved locale.
+#### Patch 2 — Truthfulness guard seam
+- add extracted seam for deterministic claim/evidence risk evaluation.
 
 Patch 2 artifacts:
-- new preference seam in frontend:
-  - theme mode resolver (`light`/`dark`/`system`),
-  - locale resolver (`en`/`ru`, system-first),
-  - localStorage persistence helpers.
-- seam wiring in:
-  - `frontend/src/App.tsx`
-  - `frontend/src/index.css`
-  - `frontend/src/lib/uiPreferences.ts`
-- focused frontend check green:
-  - `frontend: npm run build`
-  - result: success
+- new seam:
+  - `src/services/answer/diagnostics/truthfulness_guard.py`
+- baseline checks:
+  - low evidence + strong certainty phrase,
+  - direct source-deference phrase detection.
+- seam coverage:
+  - `tests/unit/services/answer/test_truthfulness_guard.py`
 
-#### Patch 3 — Chat/layout UX refresh
-- apply product-style visual cleanup to chat and shell surfaces.
+#### Patch 3 — Runtime wiring
+- wire guard seam into answer response diagnostics flow.
 
 Patch 3 artifacts:
-- refresh for:
-  - `frontend/src/components/ChatPanel.css`
-  - `frontend/src/App.css`
-- outcomes:
-  - improved readability/spacing hierarchy,
-  - less harsh borders and better visual affordances,
-  - stable behavior under side-panel collapse/expand.
-- focused frontend check green:
-  - `frontend: npm run build`
-  - result: success
+- runtime wiring in:
+  - `src/services/answer/response_assembly.py` (or equivalent response seam)
+- diagnostics additions:
+  - `diagnostics.truthfulness_guard.status`
+  - `diagnostics.truthfulness_guard.reason_codes`
+- reason-code closure continuity preserved.
 
-#### Patch 4 — Runtime transparency UX simplification
-- keep diagnostics transparency while reducing cognitive overload.
+#### Patch 4 — Continuity tests
+- expand tests for diagnostics continuity and warning propagation.
 
 Patch 4 artifacts:
-- simplify labels and badge wording in:
-  - `frontend/src/components/ChatPanel.tsx`
-  - related style tokens/classes.
-- preserve existing action controls:
-  - write approve/cancel flow remains explicit and deterministic.
-- focused frontend check green:
-  - `frontend: npm run build`
-  - result: success
+- coverage expansion:
+  - `tests/unit/services/answer/test_answer_service_debug_snapshot.py`
+  - `tests/unit/services/answer/test_reason_code_policy.py`
+- scenarios:
+  - no evidence + certainty claim emits guard warning,
+  - neutral answer remains guard-pass.
 
 #### Patch 5 — Guardrails + parity + closure
-- run frontend lint/build + backend regression parity checks, sync mandatory docs, close A2.90.
+- run focused + full-suite checks, sync mandatory docs, close A2.91.
 
 Patch 5 artifacts:
-- frontend closure checks green:
-  - `frontend: npm run lint`
-  - result: success
-  - `frontend: npm run build`
-  - result: success
 - focused closure checks green:
   - `tests/unit/services/answer/test_act_write_state_store.py`
   - `tests/unit/services/answer/test_act_read_only_runtime.py`
@@ -123,8 +109,11 @@ Patch 5 artifacts:
   - result: `127 passed`
 - full-suite parity check green:
   - `uv run pytest`
-  - result: `602 passed, 3 skipped`
-- mandatory docs synchronized for A2.90 closure:
+  - result: green
+- frontend parity check green:
+  - `frontend: npm run build`
+  - result: success
+- mandatory docs synchronized for A2.91 closure:
   - `docs/development/PROJECT_ANCHOR.md`
   - `docs/development/PROJECT_CHECKLIST.md`
   - `docs/development/STATUS.md`
@@ -133,10 +122,10 @@ Patch 5 artifacts:
 ### Progress
 
 - [x] Patch 1 — inventory + scope lock
-- [x] Patch 2 — theme + locale preference seam
-- [x] Patch 3 — chat/layout UX refresh
-- [x] Patch 4 — runtime transparency UX simplification
-- [x] Patch 5 — guardrails + closure
+- [ ] Patch 2 — truthfulness guard seam
+- [ ] Patch 3 — runtime wiring
+- [ ] Patch 4 — continuity tests
+- [ ] Patch 5 — guardrails + closure
 
 ### Non-Negotiable Rules
 
@@ -147,19 +136,18 @@ Patch 5 artifacts:
 
 ### Out of Scope
 
-Do NOT modify during A2.90:
+Do NOT modify during A2.91:
 
 - EvolutionAgent loop implementation,
 - unrelated product or architecture refactors.
 
 ### Definition of Done
 
-A2.90 is complete when:
+A2.91 is complete when:
 
-- UI renders reliably with no blank/unstyled main surfaces in standard flows,
-- theme modes (`light`/`dark`/`system`) are functional and persisted,
-- locale auto-selection baseline is in place for core UI copy,
-- runtime transparency remains available without overwhelming default UX,
+- deterministic truthfulness guard seam exists and is unit-tested,
+- runtime diagnostics expose guard status and reason-codes without contract regression,
+- reason-code/warnings closure remains deterministic,
 - focused and full quality checks remain green,
 - mandatory docs are synchronized.
 
@@ -190,7 +178,7 @@ A2.56 policy markers are retained for deterministic docs quality gates:
 
 ## Next Anchor
 
-TBD - Post-A2.90 planning
+TBD - Post-A2.91 planning
 
 ## Anchor Closed
 

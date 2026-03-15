@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-A2.90 complete
+A2.91 in progress
 
 ## Last Completed Anchor
 
@@ -20,11 +20,11 @@ Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 
 ## Current Active Anchor
 
-A2.90 closed - awaiting next anchor selection
+A2.91 - Truthfulness and Consistency Guard Baseline
 
 Current focus:
-- keep A2.90 closure state stable and prepare next anchor scope selection
-- preserve UX and runtime-transparency continuity while planning next capability track
+- add deterministic trust guardrails for answer consistency/evidence alignment
+- preserve runtime contract and reason-code determinism while adding trust diagnostics
 - continue one-patch-one-reason execution discipline
 
 Execution discipline:
@@ -35,7 +35,7 @@ Execution discipline:
 
 ## Next Anchor
 
-TBD - Post-A2.90 planning
+TBD - Post-A2.91 planning
 
 ## CI Status
 

@@ -90,14 +90,15 @@
 - [x] A2.88 - Write Confirm TTL Cleanup + Observability Metrics
 - [x] A2.89 - Confirm-Flow Quota and Rate Guards
 - [x] A2.90 - UI Reliability and Product UX Baseline
+- [ ] A2.91 - Truthfulness and Consistency Guard Baseline
 
-## Current Work — A2.90 UI Reliability and Product UX Baseline
+## Current Work — A2.91 Truthfulness and Consistency Guard Baseline
 
 - [x] Patch 1 - inventory + scope lock
-- [x] Patch 2 - theme + locale preference seam
-- [x] Patch 3 - chat/layout UX refresh
-- [x] Patch 4 - runtime transparency UX simplification
-- [x] Patch 5 - guardrails + parity + closure
+- [ ] Patch 2 - truthfulness guard seam
+- [ ] Patch 3 - runtime wiring
+- [ ] Patch 4 - continuity tests
+- [ ] Patch 5 - guardrails + parity + closure
 
 ## A2.74 Historical Work - Facade Convergence Phase 18 (Answer/Reasoning)
 
