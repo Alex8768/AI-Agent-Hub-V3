@@ -2,33 +2,34 @@
 
 ## Active Anchor
 
-A2.88 - Write Confirm TTL Cleanup + Observability Metrics
+A2.89 - Confirm-Flow Quota and Rate Guards
 
 ### Goal
 
-Add deterministic TTL cleanup lifecycle and runtime observability metrics for write-confirm
-state so long-running environments stay stable and easier to diagnose.
+Add deterministic quota and decision-rate guardrails for write confirm-flow so runtime
+can reject abusive or bursty approval traffic with explicit reason-codes.
 
 ### Why Now
 
-A2.87 made write confirm-flow durable; the next bottleneck is lifecycle hygiene
-(expired-state cleanup) and transparent operational metrics for runtime decisions.
+A2.88 stabilized TTL cleanup and observability metrics. The next reliability gap is
+capacity control: pending confirmation churn, idempotency growth, and rapid approval
+retries should be constrained before EvolutionAgent-era workloads increase pressure.
 
 ### Architecture Position
 
-Target A2.88 boundaries:
+Target A2.89 boundaries:
 
-- **TTL cleanup lifecycle**
-  - evict expired pending confirmations and idempotency records deterministically,
-  - keep cleanup safe under best-effort storage availability.
+- **Quota controls**
+  - enforce pending confirmation quota per session scope,
+  - enforce idempotency index capacity per session scope.
 
-- **Runtime observability metrics**
-  - expose cleanup and state-size counters to `act_runtime` diagnostics,
-  - keep reason-code behavior stable and machine-consumable.
+- **Decision-rate controls**
+  - add deterministic approve/cancel rate window guard,
+  - keep behavior durable under cache resets with memory-store fallback.
 
-- **Continuity and guardrails**
-  - preserve existing endpoint shape and write-confirm contract semantics,
-  - maintain one-patch-one-reason execution discipline.
+- **Runtime policy continuity**
+  - preserve existing write-confirm contract and endpoint shape,
+  - surface guard outcomes via stable `act_runtime.reason_codes`.
 
 - **Guardrails and quality**
   - maintain one patch = one reason discipline,
@@ -37,105 +38,63 @@ Target A2.88 boundaries:
 ### Patch Plan
 
 #### Patch 1 — Inventory + scope lock
-- inventory lifecycle/observability touchpoints:
-  pending/idempotency expiry semantics, cleanup trigger points,
-  diagnostics surfaces, and runtime contract dependencies,
-- lock scope to cleanup + observability only (no new tool/action surface),
-- define deterministic cleanup metric contract for diagnostics.
+- inventory quota/rate insertion points in write-confirm flow:
+  pending issuance, approve/cancel decision path, idempotency persistence path,
+- lock scope to quota/rate guards and diagnostics continuity only,
+- define initial reason-code contract for quota/rate outcomes.
 
 Patch 1 artifacts:
-- runtime boundary inventory captured:
-  - write-confirm pending expiry path,
-  - idempotency expiry/index lifecycle path,
-  - cleanup trigger integration path in act runtime,
-  - diagnostics metric emission path,
+- runtime boundaries mapped:
+  - pending confirmation issuance gate,
+  - approval decision rate gate,
+  - idempotency capacity gate,
+  - diagnostics emission path,
 - scope lock affirmed:
-  - no ungated write execution path in A2.88,
+  - no new tool surface,
   - no endpoint shape breakage,
-  - no global refactor,
-  - no opportunistic feature drift.
+  - no unrelated runtime refactor.
 
-#### Patch 2 — TTL lifecycle state-store seam
-- add deterministic cleanup lifecycle and expiry-aware store behavior.
+#### Patch 2 — State-store quota/rate seam
+- extend durable state seam with quota/rate evaluation helpers.
 
 Patch 2 artifacts:
-- state-store seam extended with lifecycle and TTL behavior:
+- state-store seam additions in:
   - `src/services/answer/act_write_state_store.py`
-- seam additions:
-  - idempotency TTL metadata (`created_at`, `expires_at`)
-  - idempotency index registry for cleanup traversal
-  - expiry-aware load path for idempotency replay records
-  - explicit cleanup API: `cleanup_expired_write_state`
-- seam observability metrics contract introduced:
-  - `pending_expired`
-  - `idempotency_expired`
-  - `idempotency_index_size`
-- seam coverage expanded:
+- new deterministic guard APIs:
+  - pending quota evaluation,
+  - idempotency quota evaluation,
+  - approve/cancel decision rate evaluation with sliding window.
+- seam coverage expanded in:
   - `tests/unit/services/answer/test_act_write_state_store.py`
-  - expiry and cleanup metric scenarios
-- focused checks green:
-  - `tests/unit/services/answer/test_act_write_state_store.py`
-  - `tests/unit/services/answer/test_act_read_only_runtime.py`
-  - `tests/unit/services/answer/test_policy_profiles.py`
-  - `tests/unit/services/answer/test_reason_code_policy.py`
-  - `tests/unit/services/answer/test_answer_response_presenter.py`
-  - `tests/unit/services/answer/test_answer_orchestration_quality_gate.py`
-  - `tests/unit/services/answer/test_answer_service_debug_snapshot.py`
-  - `tests/unit/api/test_answer_endpoint_debug_snapshot.py`
-  - `tests/unit/docs`
-  - result: `121 passed`
 
-#### Patch 3 — Runtime cleanup + observability wiring
-- invoke cleanup lifecycle in act runtime and expose deterministic store metrics.
+#### Patch 3 — Runtime guard wiring
+- integrate quota/rate guard calls into write-confirm runtime transitions.
 
 Patch 3 artifacts:
-- Act runtime now invokes cleanup lifecycle before write-confirm policy evaluation:
+- runtime guard wiring in:
   - `src/services/answer/act_read_only.py`
-  - `act_write_state_store.cleanup_expired_write_state(...)`
-- cleanup metrics wired into write-confirm diagnostics payload:
-  - `act_runtime.store_stats.pending_expired`
-  - `act_runtime.store_stats.idempotency_expired`
-  - `act_runtime.store_stats.idempotency_index_size`
-- observability behavior remains contract-safe:
-  - no endpoint shape breakage
-  - existing reason-code pathways preserved
-- focused checks green:
-  - `tests/unit/services/answer/test_act_write_state_store.py`
-  - `tests/unit/services/answer/test_act_read_only_runtime.py`
-  - `tests/unit/services/answer/test_policy_profiles.py`
-  - `tests/unit/services/answer/test_reason_code_policy.py`
-  - `tests/unit/services/answer/test_answer_response_presenter.py`
-  - `tests/unit/services/answer/test_answer_orchestration_quality_gate.py`
-  - `tests/unit/services/answer/test_answer_service_debug_snapshot.py`
-  - `tests/unit/api/test_answer_endpoint_debug_snapshot.py`
-  - `tests/unit/docs`
-  - result: `121 passed`
+- guard outcomes mapped to explicit reason-codes for blocked flows:
+  - pending quota exceeded,
+  - idempotency quota exceeded,
+  - decision rate limited.
+- diagnostics continuity preserved:
+  - existing `act_runtime` structure retained,
+  - `store_stats` continuity maintained.
 
-#### Patch 4 — Continuity tests for cleanup and metrics
-- expand unit coverage for expiry and diagnostics metric continuity.
+#### Patch 4 — Continuity and regression tests
+- add runtime and seam tests for guard decisions and reason-code stability.
 
 Patch 4 artifacts:
-- cleanup and observability continuity coverage expanded in:
+- coverage expanded in:
   - `tests/unit/services/answer/test_act_write_state_store.py`
   - `tests/unit/services/answer/test_act_read_only_runtime.py`
-- added lifecycle continuity scenarios:
-  - expired idempotency replay record is ignored on load
-  - cleanup reports deterministic expired counters
-  - write-confirm diagnostics includes `store_stats` payload on pending flow
-- focused checks green:
-  - `tests/unit/services/answer/test_act_write_state_store.py`
-  - `tests/unit/services/answer/test_act_read_only_runtime.py`
-  - `tests/unit/services/answer/test_policy_profiles.py`
-  - `tests/unit/services/answer/test_reason_code_policy.py`
-  - `tests/unit/services/answer/test_answer_response_presenter.py`
-  - `tests/unit/services/answer/test_answer_orchestration_quality_gate.py`
-  - `tests/unit/services/answer/test_answer_service_debug_snapshot.py`
-  - `tests/unit/api/test_answer_endpoint_debug_snapshot.py`
-  - `tests/unit/docs`
-  - result: `121 passed`
+- scenarios:
+  - pending quota blocks second issuance in same scope,
+  - idempotency quota blocks new replay-key persistence,
+  - decision rate guard blocks burst approvals.
 
 #### Patch 5 — Guardrails + parity + closure
-- run focused + full-suite checks, sync mandatory docs, close A2.88.
+- run focused + full-suite checks, sync mandatory docs, close A2.89.
 
 Patch 5 artifacts:
 - focused closure checks green:
@@ -148,14 +107,11 @@ Patch 5 artifacts:
   - `tests/unit/services/answer/test_answer_service_debug_snapshot.py`
   - `tests/unit/api/test_answer_endpoint_debug_snapshot.py`
   - `tests/unit/docs`
-  - result: `121 passed`
 - full-suite parity check green:
   - `uv run pytest`
-  - result: `596 passed, 3 skipped`
 - frontend closure build check green:
   - `frontend: npm run build`
-  - result: success
-- mandatory docs synchronized for A2.88 closure:
+- mandatory docs synchronized for A2.89 closure:
   - `docs/development/PROJECT_ANCHOR.md`
   - `docs/development/PROJECT_CHECKLIST.md`
   - `docs/development/STATUS.md`
@@ -164,10 +120,10 @@ Patch 5 artifacts:
 ### Progress
 
 - [x] Patch 1 — inventory + scope lock
-- [x] Patch 2 — TTL lifecycle state-store seam
-- [x] Patch 3 — runtime cleanup + observability wiring
-- [x] Patch 4 — continuity tests for cleanup and metrics
-- [x] Patch 5 — guardrails + closure
+- [ ] Patch 2 — state-store quota/rate seam
+- [ ] Patch 3 — runtime guard wiring
+- [ ] Patch 4 — continuity and regression tests
+- [ ] Patch 5 — guardrails + closure
 
 ### Non-Negotiable Rules
 
@@ -178,17 +134,17 @@ Patch 5 artifacts:
 
 ### Out of Scope
 
-Do NOT modify during A2.88:
+Do NOT modify during A2.89:
 
 - EvolutionAgent loop implementation,
 - unrelated product or architecture refactors.
 
 ### Definition of Done
 
-A2.88 is complete when:
+A2.89 is complete when:
 
-- pending/idempotency cleanup lifecycle is deterministic and tested,
-- runtime diagnostics expose actionable cleanup/state metrics,
+- pending/idempotency quota and decision-rate guards are deterministic and tested,
+- runtime diagnostics expose explicit quota/rate reason-codes for blocked paths,
 - write-confirm behavior remains contract-safe with no endpoint shape regression,
 - focused and full quality checks remain green,
 - mandatory docs are synchronized.
@@ -220,7 +176,7 @@ A2.56 policy markers are retained for deterministic docs quality gates:
 
 ## Next Anchor
 
-TBD - Post-A2.88 planning
+TBD - Post-A2.89 planning
 
 ## Anchor Closed
 

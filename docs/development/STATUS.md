@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-A2.88 complete
+A2.89 in progress
 
 ## Last Completed Anchor
 
@@ -20,11 +20,11 @@ Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 
 ## Current Active Anchor
 
-A2.88 closed - awaiting next anchor selection
+A2.89 - Confirm-Flow Quota and Rate Guards
 
 Current focus:
-- keep A2.88 closure state stable and prepare next anchor scope selection
-- preserve cleanup lifecycle and observability metric contract continuity
+- add deterministic quota and decision-rate guards to write confirm-flow runtime
+- preserve A2.88 cleanup and observability continuity while adding new guard outcomes
 - continue one-patch-one-reason execution discipline
 
 Execution discipline:
@@ -35,7 +35,7 @@ Execution discipline:
 
 ## Next Anchor
 
-TBD - Post-A2.88 planning
+TBD - Post-A2.89 planning
 
 ## CI Status
 
