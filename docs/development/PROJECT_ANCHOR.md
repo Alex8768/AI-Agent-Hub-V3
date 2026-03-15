@@ -79,6 +79,15 @@ Patch 3 artifacts:
   - `diagnostics.truthfulness_guard.logic_consistency`
   - `diagnostics.truthfulness_guard.trust_summary`
 - reason-code closure continuity preserved (`truthfulness_guard_internal_contradiction_detected`).
+- focused wiring checks green:
+  - `tests/unit/services/answer/test_response_assembly_truthfulness.py`
+  - `tests/unit/services/answer/test_answer_service_debug_snapshot.py`
+  - `tests/unit/api/test_answer_endpoint_debug_snapshot.py`
+  - `tests/unit/services/answer/test_truthfulness_guard.py`
+  - `tests/unit/services/answer/test_reason_code_policy.py`
+  - `tests/unit/services/answer/test_answer_soft_failure_observability.py`
+  - `tests/unit/services/answer/test_answer_orchestration_quality_gate.py::test_decomposition_no_growth_gate_answer_and_reasoning_monolith_line_budgets`
+  - result: `71 passed`
 
 #### Patch 4 — Continuity tests
 - expand continuity tests for logic-consistency and explainability field stability.
@@ -123,7 +132,7 @@ Patch 5 artifacts:
 
 - [x] Patch 1 — inventory + scope lock
 - [x] Patch 2 — logic consistency seam extension
-- [ ] Patch 3 — runtime wiring + explainability
+- [x] Patch 3 — runtime wiring + explainability
 - [ ] Patch 4 — continuity tests
 - [ ] Patch 5 — guardrails + closure
 
