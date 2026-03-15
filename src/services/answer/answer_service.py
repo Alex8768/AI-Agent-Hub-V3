@@ -160,9 +160,6 @@ class _AnswerFacadePipelineState:
         self.assistant_response_language = str(assistant_response_language or "auto")
         self.loaded_durable_approval = dict(loaded_durable_approval or {})
         self.loaded_durable_idempotency = dict(loaded_durable_idempotency or {})
-
-
-
 def _execution_runtime_helpers():
     import importlib
 
@@ -184,8 +181,6 @@ def _apply_handshake_transition_policy(
         draft_actions_bundle=draft_actions_bundle,
         policy_contract=policy_contract,
     )
-
-
 def _build_post_orchestration_deps() -> AnswerPostOrchestrationDeps:
     execution = _execution_runtime_helpers()
     return AnswerPostOrchestrationDeps(
@@ -227,8 +222,6 @@ def _build_diagnostics_merge_deps() -> AnswerDiagnosticsMergeDeps:
         append_planning_reason_codes=_append_planning_reason_codes,
         logger=_LOGGER,
     )
-
-
 async def _run_answer_primary_pipeline(
     *,
     http: Request,
@@ -809,6 +802,9 @@ class AnswerService:
             raise HTTPException(status_code=404, detail="Not Found")
 
         log_observability(http, workspace_id=workspace_id, req=req)
+        import importlib
+        runtime_mode_router = importlib.import_module("src.services.answer.mode_router")
+        runtime_mode_route = runtime_mode_router.resolve_answer_runtime_mode(req=req, runtime_context=runtime_context)
 
         engine = engine or getattr(http.app.state, "rag_engine", None)
         hybrid = retriever or getattr(http.app.state, "hybrid_retriever", None)
@@ -851,5 +847,6 @@ class AnswerService:
             get_memory_store=get_memory_store,
             deps=_build_diagnostics_merge_deps(),
         )
+        runtime_mode_router.apply_runtime_mode_diagnostics(resp=resp, route=runtime_mode_route)
 
         return resp

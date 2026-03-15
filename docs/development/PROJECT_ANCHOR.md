@@ -55,7 +55,20 @@ Patch 1 artifacts:
 - introduce explicit answer/act mode router seam while preserving endpoint contract.
 
 Patch 2 artifacts:
-- pending
+- mode router seam extracted to:
+  - `src/services/answer/mode_router.py`
+  - `resolve_answer_runtime_mode`
+  - `apply_runtime_mode_diagnostics`
+- `AnswerService.handle_contract` now resolves runtime mode explicitly before orchestration
+  and records selected/requested mode diagnostics after merge flow.
+- deterministic fallback behavior introduced for unsupported/disabled modes:
+  - `runtime_mode_unsupported_fallback_answer`
+  - `runtime_mode_act_disabled_fallback_answer`
+- focused checks green:
+  - `tests/unit/services/answer/test_answer_mode_router.py`
+  - `tests/unit/services/answer/test_answer_orchestration_quality_gate.py`
+  - `tests/unit/docs`
+  - result: `59 passed`
 
 #### Patch 3 — Failure policy seam
 - enforce controlled fallback for user-path errors (`/answer`) with deterministic reason-codes.
@@ -79,7 +92,7 @@ Patch 5 artifacts:
 ### Progress
 
 - [x] Patch 1 — inventory + scope lock
-- [ ] Patch 2 — mode router seam
+- [x] Patch 2 — mode router seam
 - [ ] Patch 3 — failure policy seam
 - [ ] Patch 4 — response presenter seam
 - [ ] Patch 5 — guardrails + closure

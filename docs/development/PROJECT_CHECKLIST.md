@@ -87,7 +87,7 @@
 ## Current Work — A2.83 Step 0.5 Facade Stabilization
 
 - [x] Patch 1 - inventory + scope lock
-- [ ] Patch 2 - mode router seam
+- [x] Patch 2 - mode router seam
 - [ ] Patch 3 - failure policy seam
 - [ ] Patch 4 - response presenter seam
 - [ ] Patch 5 - guardrails + parity + closure

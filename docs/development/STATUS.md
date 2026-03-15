@@ -35,7 +35,7 @@ Execution discipline:
 
 ## Next Anchor
 
-A2.83 Step 0.5 - Patch 2 (mode router seam)
+A2.83 Step 0.5 - Patch 3 (failure policy seam)
 
 ## CI Status
 
