@@ -83,6 +83,9 @@ Patch 3 artifacts:
 - diagnostics continuity preserved:
   - existing `act_runtime` structure retained,
   - `store_stats` continuity maintained.
+- focused runtime check green:
+  - `tests/unit/services/answer/test_act_read_only_runtime.py`
+  - result: `6 passed`
 
 #### Patch 4 — Continuity and regression tests
 - add runtime and seam tests for guard decisions and reason-code stability.
@@ -124,7 +127,7 @@ Patch 5 artifacts:
 
 - [x] Patch 1 — inventory + scope lock
 - [x] Patch 2 — state-store quota/rate seam
-- [ ] Patch 3 — runtime guard wiring
+- [x] Patch 3 — runtime guard wiring
 - [ ] Patch 4 — continuity and regression tests
 - [ ] Patch 5 — guardrails + closure
 

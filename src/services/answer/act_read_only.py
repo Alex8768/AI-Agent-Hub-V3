@@ -120,10 +120,12 @@ async def apply_act_read_only_runtime(
         write_policy = str(policy_profile.get("act_write_policy", "blocked") or "blocked")
         scope_key = _build_scope_key(req=req, workspace_id=workspace_id)
         session_id = str(getattr(req, "session_id", "default") or "default")
-        store_stats = await act_write_state_store.cleanup_expired_write_state(
-            scope_key=scope_key,
-            session_id=session_id,
-            workspace_id=str(workspace_id or ""),
+        store_stats = dict(
+            await act_write_state_store.cleanup_expired_write_state(
+                scope_key=scope_key,
+                session_id=session_id,
+                workspace_id=str(workspace_id or ""),
+            )
         )
         filters = dict(getattr(req, "filters", None) or {})
         decision = str(filters.get("act_confirm_decision", "") or "").strip().lower()
@@ -152,6 +154,26 @@ async def apply_act_read_only_runtime(
 
         if write_policy == "confirm_required":
             if decision not in {"approve", "cancel"}:
+                pending_quota = await act_write_state_store.evaluate_pending_confirmation_quota(
+                    scope_key=scope_key,
+                    session_id=session_id,
+                    workspace_id=str(workspace_id or ""),
+                )
+                store_stats["pending_quota_active"] = int(pending_quota.get("active_pending", 0) or 0)
+                store_stats["pending_quota_max"] = int(pending_quota.get("max_pending", 0) or 0)
+                if not bool(pending_quota.get("allowed", True)):
+                    diagnostics["act_runtime"] = _build_runtime_diag(
+                        status="blocked",
+                        mode="write_confirm",
+                        policy_profile=profile_name,
+                        workspace_id=workspace_id,
+                        reason_codes=[str(pending_quota.get("reason_code", "") or "act_write_pending_quota_exceeded")],
+                        tool_name=tool_name,
+                        store_stats=store_stats,
+                    )
+                    diagnostics["runtime_policy_profile"] = dict(policy_profile)
+                    setattr(resp, "diagnostics", diagnostics)
+                    return resp
                 issued_token = _issue_confirmation_token(scope_key=scope_key, tool_name=tool_name, tool_args=tool_args)
                 expires_at = now_epoch + _ACT_WRITE_CONFIRM_TTL_SECONDS
                 pending_payload = {
@@ -249,6 +271,27 @@ async def apply_act_read_only_runtime(
                 diagnostics["runtime_policy_profile"] = dict(policy_profile)
                 setattr(resp, "diagnostics", diagnostics)
                 return resp
+            decision_rate = await act_write_state_store.evaluate_decision_rate_limit(
+                scope_key=scope_key,
+                session_id=session_id,
+                workspace_id=str(workspace_id or ""),
+            )
+            store_stats["decision_rate_events"] = int(decision_rate.get("events_in_window", 0) or 0)
+            store_stats["decision_rate_max"] = int(decision_rate.get("max_events", 0) or 0)
+            store_stats["decision_rate_window_seconds"] = int(decision_rate.get("window_seconds", 0) or 0)
+            if not bool(decision_rate.get("allowed", True)):
+                diagnostics["act_runtime"] = _build_runtime_diag(
+                    status="blocked",
+                    mode="write_confirm",
+                    policy_profile=profile_name,
+                    workspace_id=workspace_id,
+                    reason_codes=[str(decision_rate.get("reason_code", "") or "act_write_decision_rate_limited")],
+                    tool_name=tool_name,
+                    store_stats=store_stats,
+                )
+                diagnostics["runtime_policy_profile"] = dict(policy_profile)
+                setattr(resp, "diagnostics", diagnostics)
+                return resp
             if decision == "cancel":
                 pending["consumed"] = True
                 await act_write_state_store.save_pending_confirmation(
@@ -294,6 +337,30 @@ async def apply_act_read_only_runtime(
                         store_stats=store_stats,
                         result=dict(prior.get("result", {}) or {}),
                         replayed=True,
+                    )
+                    diagnostics["runtime_policy_profile"] = dict(policy_profile)
+                    setattr(resp, "diagnostics", diagnostics)
+                    return resp
+            if decision == "approve" and idempotency_key:
+                idempotency_quota = await act_write_state_store.evaluate_idempotency_quota(
+                    scope_key=scope_key,
+                    session_id=session_id,
+                    workspace_id=str(workspace_id or ""),
+                    idempotency_key=idempotency_key,
+                )
+                store_stats["idempotency_quota_active"] = int(idempotency_quota.get("active_records", 0) or 0)
+                store_stats["idempotency_quota_max"] = int(idempotency_quota.get("max_records", 0) or 0)
+                if not bool(idempotency_quota.get("allowed", True)):
+                    diagnostics["act_runtime"] = _build_runtime_diag(
+                        status="blocked",
+                        mode="write_confirm",
+                        policy_profile=profile_name,
+                        workspace_id=workspace_id,
+                        reason_codes=[
+                            str(idempotency_quota.get("reason_code", "") or "act_write_idempotency_quota_exceeded")
+                        ],
+                        tool_name=tool_name,
+                        store_stats=store_stats,
                     )
                     diagnostics["runtime_policy_profile"] = dict(policy_profile)
                     setattr(resp, "diagnostics", diagnostics)

@@ -94,7 +94,7 @@
 
 - [x] Patch 1 - inventory + scope lock
 - [x] Patch 2 - state-store quota/rate seam
-- [ ] Patch 3 - runtime guard wiring
+- [x] Patch 3 - runtime guard wiring
 - [ ] Patch 4 - continuity and regression tests
 - [ ] Patch 5 - guardrails + parity + closure
 
