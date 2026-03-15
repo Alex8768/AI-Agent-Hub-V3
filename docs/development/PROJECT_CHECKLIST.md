@@ -95,7 +95,7 @@
 - [x] Patch 1 - inventory + scope lock
 - [x] Patch 2 - state-store quota/rate seam
 - [x] Patch 3 - runtime guard wiring
-- [ ] Patch 4 - continuity and regression tests
+- [x] Patch 4 - continuity and regression tests
 - [ ] Patch 5 - guardrails + parity + closure
 
 ## A2.74 Historical Work - Facade Convergence Phase 18 (Answer/Reasoning)

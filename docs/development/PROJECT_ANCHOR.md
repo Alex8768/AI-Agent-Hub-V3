@@ -98,6 +98,10 @@ Patch 4 artifacts:
   - pending quota blocks second issuance in same scope,
   - idempotency quota blocks new replay-key persistence,
   - decision rate guard blocks burst approvals.
+- focused regression checks green:
+  - `tests/unit/services/answer/test_act_write_state_store.py`
+  - `tests/unit/services/answer/test_act_read_only_runtime.py`
+  - result: `16 passed`
 
 #### Patch 5 — Guardrails + parity + closure
 - run focused + full-suite checks, sync mandatory docs, close A2.89.
@@ -128,7 +132,7 @@ Patch 5 artifacts:
 - [x] Patch 1 — inventory + scope lock
 - [x] Patch 2 — state-store quota/rate seam
 - [x] Patch 3 — runtime guard wiring
-- [ ] Patch 4 — continuity and regression tests
+- [x] Patch 4 — continuity and regression tests
 - [ ] Patch 5 — guardrails + closure
 
 ### Non-Negotiable Rules

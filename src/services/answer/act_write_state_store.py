@@ -316,7 +316,7 @@ async def evaluate_pending_confirmation_quota(
     session_id: str,
     workspace_id: str,
     now_epoch: int | None = None,
-    max_pending: int = _MAX_PENDING_CONFIRMATIONS_PER_SESSION,
+    max_pending: int | None = None,
 ) -> dict[str, object]:
     now_value = int(now_epoch if isinstance(now_epoch, int) else time.time())
     pending = await load_pending_confirmation(scope_key=scope_key, session_id=session_id, workspace_id=workspace_id)
@@ -324,7 +324,7 @@ async def evaluate_pending_confirmation_quota(
     consumed = bool(pending.get("consumed", False)) if pending else False
     is_open_pending = bool(pending) and not consumed and (not expires_at or now_value <= expires_at)
     active_count = 1 if is_open_pending else 0
-    limit = max(int(max_pending or 0), 0)
+    limit = max(int(_MAX_PENDING_CONFIRMATIONS_PER_SESSION if max_pending is None else max_pending), 0)
     blocked = active_count >= limit if limit else False
     return {
         "allowed": not blocked,
@@ -341,7 +341,7 @@ async def evaluate_idempotency_quota(
     workspace_id: str,
     now_epoch: int | None = None,
     idempotency_key: str = "",
-    max_records: int = _MAX_IDEMPOTENCY_RECORDS_PER_SESSION,
+    max_records: int | None = None,
 ) -> dict[str, object]:
     now_value = int(now_epoch if isinstance(now_epoch, int) else time.time())
     rows = await _load_idempotency_index(scope_key=scope_key, session_id=session_id, workspace_id=workspace_id)
@@ -365,7 +365,7 @@ async def evaluate_idempotency_quota(
     normalized_key = str(idempotency_key or "").strip()
     existing_keys = {str(item.get("idempotency_key", "") or "").strip() for item in next_rows}
     active_count = len(existing_keys)
-    limit = max(int(max_records or 0), 0)
+    limit = max(int(_MAX_IDEMPOTENCY_RECORDS_PER_SESSION if max_records is None else max_records), 0)
     blocked = bool(limit and active_count >= limit and normalized_key and normalized_key not in existing_keys)
     return {
         "allowed": not blocked,
@@ -382,8 +382,8 @@ async def evaluate_decision_rate_limit(
     workspace_id: str,
     now_epoch: int | None = None,
     record_event: bool = True,
-    max_events: int = _MAX_DECISIONS_PER_WINDOW,
-    window_seconds: int = _DECISION_RATE_WINDOW_SECONDS,
+    max_events: int | None = None,
+    window_seconds: int | None = None,
 ) -> dict[str, object]:
     now_value = int(now_epoch if isinstance(now_epoch, int) else time.time())
     cache_key = str(scope_key or "default")
@@ -393,8 +393,10 @@ async def evaluate_decision_rate_limit(
             workspace_id=workspace_id,
             key=_decision_rate_store_key(session_id=session_id),
         )
-    pruned = _trim_rate_events(events=events, now_epoch=now_value, window_seconds=window_seconds)
-    limit = max(int(max_events or 0), 0)
+    configured_window = int(_DECISION_RATE_WINDOW_SECONDS if window_seconds is None else window_seconds)
+    configured_max = int(_MAX_DECISIONS_PER_WINDOW if max_events is None else max_events)
+    pruned = _trim_rate_events(events=events, now_epoch=now_value, window_seconds=configured_window)
+    limit = max(configured_max, 0)
     blocked = bool(limit and len(pruned) >= limit)
     if not blocked and record_event:
         pruned.append(now_value)
@@ -410,7 +412,7 @@ async def evaluate_decision_rate_limit(
         "reason_code": "act_write_decision_rate_limited" if blocked else "",
         "events_in_window": len(pruned),
         "max_events": limit,
-        "window_seconds": int(window_seconds or 0),
+        "window_seconds": max(configured_window, 0),
     }
 
 

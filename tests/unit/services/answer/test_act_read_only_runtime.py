@@ -246,3 +246,197 @@ async def test_act_write_runtime_restores_pending_state_from_durable_store(monke
     diag = dict(approve_resp.diagnostics.get("act_runtime") or {})
     assert diag.get("status") == "executed"
     assert seen.get("tool_name") == "save_file"
+
+
+@pytest.mark.asyncio
+async def test_act_write_runtime_blocks_when_pending_quota_exceeded(monkeypatch) -> None:
+    _reset_act_write_runtime_state_for_tests()
+    act_write_state_store.reset_runtime_state_for_tests()
+
+    class _S:
+        debug = True
+
+    monkeypatch.setattr("src.services.answer.act_read_only.get_settings", lambda: _S())
+    req = AnswerRequest(
+        query="x",
+        session_id="quota-pending",
+        filters={"act_tool_name": "save_file", "act_tool_args": {"path": "a.txt", "content": "v1"}},
+    )
+    first = await apply_act_read_only_runtime(
+        resp=_Resp(),
+        req=req,
+        http=_HTTP(invoker=None),
+        workspace_id="default",
+        route={"selected_mode": "act"},
+    )
+    second = await apply_act_read_only_runtime(
+        resp=_Resp(),
+        req=req,
+        http=_HTTP(invoker=None),
+        workspace_id="default",
+        route={"selected_mode": "act"},
+    )
+    first_diag = dict(first.diagnostics.get("act_runtime") or {})
+    second_diag = dict(second.diagnostics.get("act_runtime") or {})
+    assert first_diag.get("status") == "pending_confirmation"
+    assert second_diag.get("status") == "blocked"
+    assert "act_write_pending_quota_exceeded" in list(second_diag.get("reason_codes") or [])
+
+
+@pytest.mark.asyncio
+async def test_act_write_runtime_blocks_when_idempotency_quota_exceeded(monkeypatch) -> None:
+    _reset_act_write_runtime_state_for_tests()
+    act_write_state_store.reset_runtime_state_for_tests()
+
+    class _S:
+        debug = True
+
+    monkeypatch.setattr("src.services.answer.act_read_only.get_settings", lambda: _S())
+    monkeypatch.setattr("src.services.answer.act_write_state_store._MAX_IDEMPOTENCY_RECORDS_PER_SESSION", 1)
+
+    async def _invoker(*, tool_name: str, arguments: dict[str, object]) -> dict[str, object]:
+        _ = (tool_name, arguments)
+        return {"ok": True}
+
+    open_req_1 = AnswerRequest(
+        query="x",
+        session_id="quota-idempotency",
+        filters={"act_tool_name": "save_file", "act_tool_args": {"path": "a.txt", "content": "v1"}},
+    )
+    open_resp_1 = await apply_act_read_only_runtime(
+        resp=_Resp(),
+        req=open_req_1,
+        http=_HTTP(invoker=_invoker),
+        workspace_id="default",
+        route={"selected_mode": "act"},
+    )
+    token_1 = str(dict(open_resp_1.diagnostics.get("act_runtime") or {}).get("confirmation", {}).get("token", ""))
+    approve_resp_1 = await apply_act_read_only_runtime(
+        resp=_Resp(),
+        req=AnswerRequest(
+            query="x",
+            session_id="quota-idempotency",
+            filters={
+                "act_tool_name": "save_file",
+                "act_confirm_decision": "approve",
+                "act_confirmation_token": token_1,
+                "act_idempotency_key": "id-cap-1",
+            },
+        ),
+        http=_HTTP(invoker=_invoker),
+        workspace_id="default",
+        route={"selected_mode": "act"},
+    )
+    assert dict(approve_resp_1.diagnostics.get("act_runtime") or {}).get("status") == "executed"
+
+    open_req_2 = AnswerRequest(
+        query="x",
+        session_id="quota-idempotency",
+        filters={"act_tool_name": "save_file", "act_tool_args": {"path": "b.txt", "content": "v2"}},
+    )
+    open_resp_2 = await apply_act_read_only_runtime(
+        resp=_Resp(),
+        req=open_req_2,
+        http=_HTTP(invoker=_invoker),
+        workspace_id="default",
+        route={"selected_mode": "act"},
+    )
+    token_2 = str(dict(open_resp_2.diagnostics.get("act_runtime") or {}).get("confirmation", {}).get("token", ""))
+    approve_resp_2 = await apply_act_read_only_runtime(
+        resp=_Resp(),
+        req=AnswerRequest(
+            query="x",
+            session_id="quota-idempotency",
+            filters={
+                "act_tool_name": "save_file",
+                "act_confirm_decision": "approve",
+                "act_confirmation_token": token_2,
+                "act_idempotency_key": "id-cap-2",
+            },
+        ),
+        http=_HTTP(invoker=_invoker),
+        workspace_id="default",
+        route={"selected_mode": "act"},
+    )
+    diag = dict(approve_resp_2.diagnostics.get("act_runtime") or {})
+    assert diag.get("status") == "blocked"
+    assert "act_write_idempotency_quota_exceeded" in list(diag.get("reason_codes") or [])
+
+
+@pytest.mark.asyncio
+async def test_act_write_runtime_blocks_when_decision_rate_limited(monkeypatch) -> None:
+    _reset_act_write_runtime_state_for_tests()
+    act_write_state_store.reset_runtime_state_for_tests()
+
+    class _S:
+        debug = True
+
+    monkeypatch.setattr("src.services.answer.act_read_only.get_settings", lambda: _S())
+    monkeypatch.setattr("src.services.answer.act_write_state_store._MAX_DECISIONS_PER_WINDOW", 1)
+    monkeypatch.setattr("src.services.answer.act_write_state_store._DECISION_RATE_WINDOW_SECONDS", 3600)
+
+    async def _invoker(*, tool_name: str, arguments: dict[str, object]) -> dict[str, object]:
+        _ = (tool_name, arguments)
+        return {"ok": True}
+
+    open_resp_1 = await apply_act_read_only_runtime(
+        resp=_Resp(),
+        req=AnswerRequest(
+            query="x",
+            session_id="rate-limited",
+            filters={"act_tool_name": "save_file", "act_tool_args": {"path": "a.txt", "content": "v1"}},
+        ),
+        http=_HTTP(invoker=_invoker),
+        workspace_id="default",
+        route={"selected_mode": "act"},
+    )
+    token_1 = str(dict(open_resp_1.diagnostics.get("act_runtime") or {}).get("confirmation", {}).get("token", ""))
+    approve_resp_1 = await apply_act_read_only_runtime(
+        resp=_Resp(),
+        req=AnswerRequest(
+            query="x",
+            session_id="rate-limited",
+            filters={
+                "act_tool_name": "save_file",
+                "act_confirm_decision": "approve",
+                "act_confirmation_token": token_1,
+                "act_idempotency_key": "id-rate-1",
+            },
+        ),
+        http=_HTTP(invoker=_invoker),
+        workspace_id="default",
+        route={"selected_mode": "act"},
+    )
+    assert dict(approve_resp_1.diagnostics.get("act_runtime") or {}).get("status") == "executed"
+
+    open_resp_2 = await apply_act_read_only_runtime(
+        resp=_Resp(),
+        req=AnswerRequest(
+            query="x",
+            session_id="rate-limited",
+            filters={"act_tool_name": "save_file", "act_tool_args": {"path": "b.txt", "content": "v2"}},
+        ),
+        http=_HTTP(invoker=_invoker),
+        workspace_id="default",
+        route={"selected_mode": "act"},
+    )
+    token_2 = str(dict(open_resp_2.diagnostics.get("act_runtime") or {}).get("confirmation", {}).get("token", ""))
+    approve_resp_2 = await apply_act_read_only_runtime(
+        resp=_Resp(),
+        req=AnswerRequest(
+            query="x",
+            session_id="rate-limited",
+            filters={
+                "act_tool_name": "save_file",
+                "act_confirm_decision": "approve",
+                "act_confirmation_token": token_2,
+                "act_idempotency_key": "id-rate-2",
+            },
+        ),
+        http=_HTTP(invoker=_invoker),
+        workspace_id="default",
+        route={"selected_mode": "act"},
+    )
+    diag = dict(approve_resp_2.diagnostics.get("act_runtime") or {})
+    assert diag.get("status") == "blocked"
+    assert "act_write_decision_rate_limited" in list(diag.get("reason_codes") or [])
