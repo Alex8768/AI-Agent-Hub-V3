@@ -36,7 +36,7 @@ Execution discipline:
 
 ## Next Anchor
 
-A2.84 - Patch 4 (UI mode/block transparency)
+A2.84 - Patch 5 (guardrails + parity + closure)
 
 ## CI Status
 

@@ -9,7 +9,15 @@ interface Message {
   role: 'user' | 'assistant';
   content: string;
   thoughts?: string;
+  runtimeInfo?: RuntimeInfo;
   error?: boolean;
+}
+
+interface RuntimeInfo {
+  requestedMode: string;
+  selectedMode: string;
+  actStatus: string;
+  reasonCodes: string[];
 }
 
 interface GraphNodeLike {
@@ -97,6 +105,41 @@ export default function ChatPanel({ workspaceId, sessionId, onSessionUsed }: Cha
     return { nodes, edges };
   };
 
+  const readReasonCodes = (value: unknown): string[] => {
+    if (!Array.isArray(value)) return [];
+    return value.map((item) => String(item)).filter((item) => item.trim().length > 0);
+  };
+
+  const readRuntimeInfo = (diagnostics: unknown): RuntimeInfo | undefined => {
+    if (!diagnostics || typeof diagnostics !== 'object' || Array.isArray(diagnostics)) return undefined;
+    const row = diagnostics as Record<string, unknown>;
+    const runtimeMode =
+      row.runtime_mode && typeof row.runtime_mode === 'object' && !Array.isArray(row.runtime_mode)
+        ? (row.runtime_mode as Record<string, unknown>)
+        : {};
+    const actRuntime =
+      row.act_runtime && typeof row.act_runtime === 'object' && !Array.isArray(row.act_runtime)
+        ? (row.act_runtime as Record<string, unknown>)
+        : {};
+    const reasonCodes = Array.from(
+      new Set([
+        ...readReasonCodes(runtimeMode.reason_codes),
+        ...readReasonCodes(actRuntime.reason_codes),
+        ...readReasonCodes(row.warnings),
+      ]),
+    );
+    const requestedMode = String(runtimeMode.requested_mode ?? 'answer');
+    const selectedMode = String(runtimeMode.selected_mode ?? requestedMode);
+    const actStatus = String(actRuntime.status ?? 'n/a');
+    const hasSignals =
+      reasonCodes.length > 0 ||
+      requestedMode !== 'answer' ||
+      selectedMode !== 'answer' ||
+      actStatus !== 'n/a';
+    if (!hasSignals) return undefined;
+    return { requestedMode, selectedMode, actStatus, reasonCodes };
+  };
+
   useEffect(() => {
     if (!scrollRef.current) return;
     scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -134,6 +177,7 @@ export default function ChatPanel({ workspaceId, sessionId, onSessionUsed }: Cha
         role: 'assistant',
         content: response.answer,
         thoughts: readThoughts(response.diagnostics),
+        runtimeInfo: readRuntimeInfo(response.diagnostics),
       };
 
       setMessages((prev) => [...prev, assistantMsg]);
@@ -205,6 +249,33 @@ export default function ChatPanel({ workspaceId, sessionId, onSessionUsed }: Cha
                   <summary>Reasoning notes</summary>
                   <div className="agent-thoughts-body">{msg.thoughts}</div>
                 </details>
+              )}
+
+              {msg.runtimeInfo && (
+                <div className="runtime-info-card">
+                  <div className="runtime-info-row">
+                    <span className="runtime-info-pill">
+                      Mode: {msg.runtimeInfo.selectedMode}
+                    </span>
+                    {msg.runtimeInfo.requestedMode !== msg.runtimeInfo.selectedMode && (
+                      <span className="runtime-info-pill is-warn">
+                        Requested: {msg.runtimeInfo.requestedMode}
+                      </span>
+                    )}
+                    {msg.runtimeInfo.actStatus !== 'n/a' && (
+                      <span className="runtime-info-pill">
+                        Act: {msg.runtimeInfo.actStatus}
+                      </span>
+                    )}
+                  </div>
+                  {msg.runtimeInfo.reasonCodes.length > 0 && (
+                    <div className="runtime-reasons">
+                      {msg.runtimeInfo.reasonCodes.map((code) => (
+                        <code key={`${msg.id}-${code}`}>{code}</code>
+                      ))}
+                    </div>
+                  )}
+                </div>
               )}
 
               <div className="message-content">

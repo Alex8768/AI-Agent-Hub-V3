@@ -90,7 +90,7 @@
 - [x] Patch 1 - inventory + scope lock
 - [x] Patch 2 - Act read-only execution seam
 - [x] Patch 3 - failure-policy and reason-code closure
-- [ ] Patch 4 - UI mode/block transparency
+- [x] Patch 4 - UI mode/block transparency
 - [ ] Patch 5 - guardrails + parity + closure
 
 ## A2.74 Historical Work - Facade Convergence Phase 18 (Answer/Reasoning)

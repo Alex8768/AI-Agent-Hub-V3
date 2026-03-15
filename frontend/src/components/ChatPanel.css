@@ -224,6 +224,52 @@
   word-break: break-word;
 }
 
+.runtime-info-card {
+  margin-bottom: 10px;
+  border: 1px solid var(--border-subtle);
+  background: #20242a;
+  padding: 8px;
+}
+
+.runtime-info-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.runtime-info-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 7px;
+  border: 1px solid var(--border-subtle);
+  background: #252a31;
+  color: var(--text-soft);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.runtime-info-pill.is-warn {
+  border-color: #7a6a3a;
+  color: #ffe7a1;
+  background: #3a3424;
+}
+
+.runtime-reasons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.runtime-reasons code {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 2px 6px;
+  border: 1px solid #485262;
+  background: #252d38;
+  color: var(--text-soft);
+}
+
 .message-loading {
   display: inline-flex;
   align-items: center;

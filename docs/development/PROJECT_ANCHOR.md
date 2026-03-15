@@ -106,7 +106,19 @@ Patch 3 artifacts:
 - surface `runtime_mode` and policy block reasons in UI (meta/chat surfaces).
 
 Patch 4 artifacts:
-- pending
+- chat runtime transparency added in:
+  - `frontend/src/components/ChatPanel.tsx`
+  - `frontend/src/components/ChatPanel.css`
+- per-answer runtime badges now render:
+  - selected/requested mode visibility
+  - Act runtime status
+  - surfaced reason-codes for policy/runtime block context
+- meta diagnostics panel expanded with runtime sections:
+  - `frontend/src/components/MetaPanel.tsx`
+  - new Runtime Mode and Act Runtime blocks
+- frontend compile verification green:
+  - `npm run build`
+  - result: `vite build` success
 
 #### Patch 5 — Guardrails + parity + closure
 - run focused + full-suite checks, sync mandatory docs, close A2.84.
@@ -119,7 +131,7 @@ Patch 5 artifacts:
 - [x] Patch 1 — inventory + scope lock
 - [x] Patch 2 — Act read-only execution seam
 - [x] Patch 3 — failure-policy and reason-code closure
-- [ ] Patch 4 — UI mode/block transparency
+- [x] Patch 4 — UI mode/block transparency
 - [ ] Patch 5 — guardrails + closure
 
 ### Non-Negotiable Rules
