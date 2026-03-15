@@ -65,6 +65,9 @@ Patch 2 artifacts:
   - evidence bindings include overlap metrics and bound status.
 - seam coverage:
   - `tests/unit/services/answer/test_truthfulness_guard.py`
+- focused seam check green:
+  - `tests/unit/services/answer/test_truthfulness_guard.py`
+  - result: `12 passed`
 
 #### Patch 3 — Runtime wiring + explainability
 - wire structured claim diagnostics fields into response diagnostics flow.
@@ -119,7 +122,7 @@ Patch 5 artifacts:
 ### Progress
 
 - [x] Patch 1 — inventory + scope lock
-- [ ] Patch 2 — claim graph seam extension
+- [x] Patch 2 — claim graph seam extension
 - [ ] Patch 3 — runtime wiring + explainability
 - [ ] Patch 4 — continuity tests
 - [ ] Patch 5 — guardrails + closure

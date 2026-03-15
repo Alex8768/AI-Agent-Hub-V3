@@ -99,7 +99,7 @@
 ## Current Work — A2.95 Structured Claim Graph and Evidence Binding Baseline
 
 - [x] Patch 1 - inventory + scope lock
-- [ ] Patch 2 - claim graph seam extension
+- [x] Patch 2 - claim graph seam extension
 - [ ] Patch 3 - runtime wiring + explainability
 - [ ] Patch 4 - continuity tests
 - [ ] Patch 5 - guardrails + parity + closure

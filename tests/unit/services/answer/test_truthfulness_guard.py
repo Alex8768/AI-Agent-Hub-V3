@@ -102,6 +102,7 @@ def test_truthfulness_guard_detects_evidence_claim_mismatch_for_strong_claim() -
     assert evidence_alignment.get("status") == "warn"
     process = list(bundle.get("reasoning_process") or [])
     assert any(dict(step).get("step") == "evidence_claim_alignment_check" for step in process)
+    assert any(dict(step).get("step") == "claim_graph_binding_check" for step in process)
 
 
 def test_truthfulness_guard_keeps_evidence_alignment_ok_when_overlap_is_present() -> None:
@@ -115,3 +116,33 @@ def test_truthfulness_guard_keeps_evidence_alignment_ok_when_overlap_is_present(
     )
     evidence_alignment = dict(bundle.get("evidence_alignment") or {})
     assert evidence_alignment.get("status") == "ok"
+
+
+def test_truthfulness_guard_builds_claim_graph_and_evidence_bindings() -> None:
+    bundle = build_truthfulness_guard_bundle(
+        query="Explain status",
+        answer="System is definitely stable. Latency improved in staging workloads.",
+        diagnostics={
+            "retrieved_provenance_count": 2,
+            "evidence_summary": "Staging workloads show improved latency after tuning.",
+        },
+    )
+    claim_graph = dict(bundle.get("claim_graph") or {})
+    bindings = list(bundle.get("evidence_bindings") or [])
+    assert isinstance(list(claim_graph.get("claims") or []), list)
+    assert isinstance(bindings, list)
+    assert bindings
+
+
+def test_truthfulness_guard_claim_graph_warns_on_unbound_high_certainty_claim() -> None:
+    bundle = build_truthfulness_guard_bundle(
+        query="Status",
+        answer="System is definitely deterministic for every workload.",
+        diagnostics={
+            "retrieved_provenance_count": 2,
+            "evidence_summary": "Only staging latency notes were observed.",
+        },
+    )
+    claim_graph = dict(bundle.get("claim_graph") or {})
+    assert claim_graph.get("status") == "warn"
+    assert "truthfulness_guard_claim_graph_mismatch_detected" in list(bundle.get("reason_codes") or [])

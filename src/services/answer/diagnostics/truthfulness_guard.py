@@ -24,6 +24,7 @@ _SOURCE_DEFERENCE_PHRASES: tuple[str, ...] = (
 )
 _WARN_CONFIDENCE_CAP = 0.55
 _EVIDENCE_ALIGNMENT_MIN_OVERLAP = 0.2
+_CLAIM_BINDING_MIN_OVERLAP = 0.15
 _STOPWORDS: set[str] = {
     "the",
     "and",
@@ -95,6 +96,67 @@ def _extract_keyword_tokens(*, text: str) -> set[str]:
     return {token for token in tokens if token not in _STOPWORDS}
 
 
+def _extract_claim_fragments(*, normalized_answer: str) -> list[str]:
+    fragments = [
+        fragment.strip()
+        for fragment in re.split(r"[.;!?]|, but |, however | но | однако ", normalized_answer)
+        if fragment.strip()
+    ]
+    return fragments[:6]
+
+
+def _build_claim_graph_bundle(
+    *,
+    normalized_answer: str,
+    diagnostics: dict[str, object],
+) -> tuple[dict[str, object], list[dict[str, object]], list[str]]:
+    evidence_summary_text = _normalize_text(str(diagnostics.get("evidence_summary", "") or ""))
+    evidence_tokens = _extract_keyword_tokens(text=evidence_summary_text)
+    claim_fragments = _extract_claim_fragments(normalized_answer=normalized_answer)
+    claims: list[dict[str, object]] = []
+    bindings: list[dict[str, object]] = []
+    reason_codes: list[str] = []
+    unsupported_high_certainty = 0
+
+    for idx, fragment in enumerate(claim_fragments, start=1):
+        claim_id = f"c{idx}"
+        claim_tokens = _extract_keyword_tokens(text=fragment)
+        overlap_tokens = sorted(claim_tokens & evidence_tokens)
+        overlap_ratio = (
+            float(len(overlap_tokens)) / float(len(claim_tokens))
+            if claim_tokens
+            else 1.0
+        )
+        high_certainty = _contains_phrase(text=fragment, phrases=_CERTAINTY_PHRASES)
+        bound = bool(evidence_tokens) and overlap_ratio >= _CLAIM_BINDING_MIN_OVERLAP
+        if high_certainty and not bound:
+            unsupported_high_certainty += 1
+        claims.append(
+            {
+                "id": claim_id,
+                "text": fragment,
+                "high_certainty": high_certainty,
+            }
+        )
+        bindings.append(
+            {
+                "claim_id": claim_id,
+                "bound": bound,
+                "overlap_ratio": round(overlap_ratio, 3),
+                "overlap_token_count": len(overlap_tokens),
+            }
+        )
+
+    claim_graph = {
+        "status": "warn" if unsupported_high_certainty > 0 else "ok",
+        "claims": claims,
+        "edges": [],
+    }
+    if unsupported_high_certainty > 0:
+        reason_codes.append("truthfulness_guard_claim_graph_mismatch_detected")
+    return claim_graph, bindings, reason_codes
+
+
 def _build_evidence_alignment_bundle(
     *,
     answer_text: str,
@@ -144,6 +206,10 @@ def build_truthfulness_guard_bundle(
         diagnostics=diag,
         strong_certainty_detected=has_strong_certainty,
     )
+    claim_graph, evidence_bindings, claim_graph_reason_codes = _build_claim_graph_bundle(
+        normalized_answer=normalized_answer,
+        diagnostics=diag,
+    )
 
     if not has_evidence and has_strong_certainty:
         reason_codes.append("truthfulness_guard_low_evidence_high_certainty_claim")
@@ -152,6 +218,7 @@ def build_truthfulness_guard_bundle(
     if contradiction_signals:
         reason_codes.append("truthfulness_guard_internal_contradiction_detected")
     reason_codes.extend(evidence_alignment_reason_codes)
+    reason_codes.extend(claim_graph_reason_codes)
     if not normalized_query and not normalized_answer:
         reason_codes.append("truthfulness_guard_empty_payload")
 
@@ -163,9 +230,13 @@ def build_truthfulness_guard_bundle(
         "Trust reduced: internal contradiction patterns detected."
         if contradiction_signals
         else (
+            "Trust reduced: unsupported high-certainty claims detected."
+            if claim_graph.get("status") == "warn"
+            else (
             "Trust reduced: claim-evidence mismatch detected."
             if evidence_alignment.get("status") == "warn"
             else "Trust checks passed: no contradiction or evidence mismatch signals."
+            )
         )
     )
     reasoning_process = [
@@ -176,6 +247,10 @@ def build_truthfulness_guard_bundle(
         {
             "step": "evidence_claim_alignment_check",
             "status": str(evidence_alignment.get("status", "ok") or "ok"),
+        },
+        {
+            "step": "claim_graph_binding_check",
+            "status": str(claim_graph.get("status", "ok") or "ok"),
         },
     ]
 
@@ -191,6 +266,8 @@ def build_truthfulness_guard_bundle(
             "contradiction_signals": contradiction_signals,
         },
         "evidence_alignment": evidence_alignment,
+        "claim_graph": claim_graph,
+        "evidence_bindings": evidence_bindings,
         "inputs": {
             "has_evidence": bool(has_evidence),
             "evidence_count": int(evidence_count),
