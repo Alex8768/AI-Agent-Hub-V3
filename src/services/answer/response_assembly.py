@@ -96,6 +96,8 @@ async def run_answer_response_assembly(
         }
         guard_diag = dict(diag.get("truthfulness_guard") or {})
         guard_diag["logic_consistency"] = dict(guard_diag.get("logic_consistency") or {})
+        guard_diag["evidence_alignment"] = dict(guard_diag.get("evidence_alignment") or {})
+        guard_diag["reasoning_process"] = [dict(x) for x in list(guard_diag.get("reasoning_process") or [])]
         guard_diag["trust_summary"] = str(guard_diag.get("trust_summary", "") or "")
         diag["truthfulness_guard"] = guard_diag
         truthfulness_reasons.extend(
