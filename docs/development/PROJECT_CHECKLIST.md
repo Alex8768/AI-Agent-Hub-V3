@@ -94,7 +94,7 @@
 - [x] A2.92 - Trust Calibration and Explainability Baseline
 - [x] A2.93 - Logic Consistency Signals Baseline
 - [x] A2.94 - Evidence-to-Claim Alignment Signals Baseline
-- [ ] A2.95 - Structured Claim Graph and Evidence Binding Baseline
+- [x] A2.95 - Structured Claim Graph and Evidence Binding Baseline
 
 ## Current Work — A2.95 Structured Claim Graph and Evidence Binding Baseline
 
@@ -102,7 +102,7 @@
 - [x] Patch 2 - claim graph seam extension
 - [x] Patch 3 - runtime wiring + explainability
 - [x] Patch 4 - continuity tests
-- [ ] Patch 5 - guardrails + parity + closure
+- [x] Patch 5 - guardrails + parity + closure
 
 ## A2.74 Historical Work - Facade Convergence Phase 18 (Answer/Reasoning)
 
