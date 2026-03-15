@@ -106,7 +106,7 @@ Patch 4 artifacts:
   - `tests/unit/services/answer/test_truthfulness_guard.py`
   - `tests/unit/services/answer/test_response_assembly_truthfulness.py`
   - `tests/unit/services/answer/test_reason_code_policy.py`
-  - result: `58 passed`
+  - result: `60 passed`
 
 #### Patch 5 — Guardrails + parity + closure
 - run focused + full-suite checks, sync mandatory docs, close A2.94.
@@ -140,7 +140,7 @@ Patch 5 artifacts:
 - [x] Patch 1 — inventory + scope lock
 - [x] Patch 2 — evidence alignment seam extension
 - [x] Patch 3 — runtime wiring + explainability
-- [ ] Patch 4 — continuity tests
+- [x] Patch 4 — continuity tests
 - [ ] Patch 5 — guardrails + closure
 
 ### Non-Negotiable Rules
