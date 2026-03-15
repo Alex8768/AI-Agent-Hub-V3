@@ -96,7 +96,7 @@
 
 - [x] Patch 1 - inventory + scope lock
 - [x] Patch 2 - truthfulness guard seam
-- [ ] Patch 3 - runtime wiring
+- [x] Patch 3 - runtime wiring
 - [ ] Patch 4 - continuity tests
 - [ ] Patch 5 - guardrails + parity + closure
 

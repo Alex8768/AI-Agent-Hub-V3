@@ -106,6 +106,7 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
         "response_language",
         "assistant_recovery_policy",
         "conversational_runtime_parity",
+        "truthfulness_guard",
         "assistant_mode_enabled",
         "assistant_proactive_enabled",
         "assistant_actions_enabled",

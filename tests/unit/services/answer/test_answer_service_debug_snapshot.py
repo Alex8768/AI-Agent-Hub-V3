@@ -168,6 +168,7 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
         "response_language",
         "assistant_recovery_policy",
         "conversational_runtime_parity",
+        "truthfulness_guard",
         "assistant_mode_enabled",
         "assistant_proactive_enabled",
         "assistant_actions_enabled",

@@ -19,6 +19,7 @@ async def run_answer_response_assembly(
     build_assistant_chat_recovery_answer: object,
     normalize_low_evidence_friendliness: object,
     build_conversational_runtime_parity_bundle: object,
+    build_truthfulness_guard_bundle: object,
 ) -> object:
     try:
         diag = dict(getattr(resp, "diagnostics", None) or {})
@@ -71,6 +72,18 @@ async def run_answer_response_assembly(
         diag["conversational_runtime_parity"] = conversational_runtime_parity
         reason_codes = [str(x) for x in list(diag.get("planning_reason_codes") or []) if str(x or "").strip()]
         reason_codes.extend(list(conversational_runtime_parity.get("reason_codes") or []))
+        truthfulness_guard = build_truthfulness_guard_bundle(
+            query=str(getattr(req, "query", "") or ""),
+            answer=str(getattr(resp, "answer", "") or ""),
+            diagnostics=diag,
+        )
+        diag["truthfulness_guard"] = dict(truthfulness_guard or {})
+        truthfulness_reasons = [
+            str(x)
+            for x in list((dict(truthfulness_guard or {})).get("reason_codes") or [])
+            if str(x or "").strip() and str(x) != "truthfulness_guard_evaluated"
+        ]
+        reason_codes.extend(truthfulness_reasons)
         diag["planning_reason_codes"] = sorted(set(reason_codes))
         resp.diagnostics = diag
     except Exception as exc:

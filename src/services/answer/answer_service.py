@@ -271,6 +271,7 @@ async def _run_answer_primary_pipeline(
         build_assistant_chat_recovery_answer=_build_assistant_chat_recovery_answer,
         normalize_low_evidence_friendliness=_normalize_low_evidence_friendliness,
         build_conversational_runtime_parity_bundle=_build_conversational_runtime_parity_bundle,
+        build_truthfulness_guard_bundle=_build_truthfulness_guard_bundle,
     )
     return _AnswerFacadePipelineState(
         resp=resp,
@@ -309,6 +310,21 @@ def _build_conversational_runtime_parity_bundle(
         answer_language_fn=_answer_language,
         is_unknown_style_answer_fn=_is_unknown_style_answer,
     )
+
+
+def _build_truthfulness_guard_bundle(
+    *,
+    query: str,
+    answer: str,
+    diagnostics: dict[str, object],
+) -> dict[str, object]:
+    import importlib
+
+    impl = getattr(
+        importlib.import_module("src.services.answer.diagnostics.truthfulness_guard"),
+        "build_truthfulness_guard_bundle",
+    )
+    return impl(query=query, answer=answer, diagnostics=diagnostics)
 
 
 _RESPONSE_STYLE_RUNTIME = build_reasoning_response_style_runtime()

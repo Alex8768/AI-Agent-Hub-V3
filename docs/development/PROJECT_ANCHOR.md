@@ -83,6 +83,12 @@ Patch 3 artifacts:
   - `diagnostics.truthfulness_guard.status`
   - `diagnostics.truthfulness_guard.reason_codes`
 - reason-code closure continuity preserved.
+- focused continuity checks green:
+  - `tests/unit/services/answer/test_truthfulness_guard.py`
+  - `tests/unit/services/answer/test_answer_service_debug_snapshot.py`
+  - `tests/unit/api/test_answer_endpoint_debug_snapshot.py`
+  - `tests/unit/services/answer/test_reason_code_policy.py`
+  - result: `52 passed`
 
 #### Patch 4 — Continuity tests
 - expand tests for diagnostics continuity and warning propagation.
@@ -126,7 +132,7 @@ Patch 5 artifacts:
 
 - [x] Patch 1 — inventory + scope lock
 - [x] Patch 2 — truthfulness guard seam
-- [ ] Patch 3 — runtime wiring
+- [x] Patch 3 — runtime wiring
 - [ ] Patch 4 — continuity tests
 - [ ] Patch 5 — guardrails + closure
 
