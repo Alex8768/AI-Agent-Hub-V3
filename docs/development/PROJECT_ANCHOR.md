@@ -110,7 +110,19 @@ Patch 4 artifacts:
 - sync mandatory docs and close Step 0.5.
 
 Patch 5 artifacts:
-- pending
+- focused closure checks green:
+  - `tests/unit/services/answer/test_answer_orchestration_quality_gate.py`
+  - `tests/unit/services/answer/test_answer_mode_router.py`
+  - `tests/unit/services/answer/test_answer_failure_policy.py`
+  - `tests/unit/services/answer/test_answer_response_presenter.py`
+  - `tests/unit/docs`
+  - result: `62 passed`
+- full-suite parity check green:
+  - `uv run pytest`
+  - result: `581 passed, 3 skipped`
+- debug snapshot diagnostics contract synced for new seams:
+  - `tests/unit/api/test_answer_endpoint_debug_snapshot.py`
+  - `tests/unit/services/answer/test_answer_service_debug_snapshot.py`
 
 ### Progress
 
@@ -118,7 +130,7 @@ Patch 5 artifacts:
 - [x] Patch 2 — mode router seam
 - [x] Patch 3 — failure policy seam
 - [x] Patch 4 — response presenter seam
-- [ ] Patch 5 — guardrails + closure
+- [x] Patch 5 — guardrails + closure
 
 ### Non-Negotiable Rules
 

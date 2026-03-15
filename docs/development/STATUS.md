@@ -2,16 +2,17 @@
 
 ## Current Phase
 
-A2.83 Step 0.5 in progress
+A2.83 Step 0.5 complete
 
 ## Last Completed Anchor
 
-A2.82 - Facade Convergence Phase 26 (Answer/Reasoning)
+A2.83 - Step 0.5 Facade Stabilization Before Act/Evolve
 
-A2.82 closed with:
-- answer facade ownership extracted into dedicated runtime helper modules for diagnostics, session memory, execution, planner, feedback/tool-selection, and response parity
-- no-growth baselines recalibrated and preserved at closure (`855`/`241`) with import budgets (`15`/`14`)
-- focused and full-suite checks green at closure (`576 passed, 3 skipped`)
+A2.83 Step 0.5 closed with:
+- explicit runtime mode router seam (`answer`/`act`) with deterministic fallback reason-codes
+- controlled failure policy seam returning non-500 fallback responses for user-path runtime failures
+- response presenter seam supporting compact diagnostics shaping without breaking default contract
+- focused and full-suite checks green at closure (`581 passed, 3 skipped`)
 
 Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 - Anchor Closed — A2.56 complete (operational guardrails policy closure)
@@ -19,13 +20,12 @@ Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 
 ## Current Active Anchor
 
-A2.83 Step 0.5 - Facade Stabilization Before Act/Evolve
+A2.83 closed - awaiting next anchor selection
 
 Current focus:
-- keep `AnswerService` as thin facade before Act/Evolve runtime enablement
-- route runtime concerns through seams (mode routing, failure policy, response presentation)
-- remove user-path `/answer` hard failures in favor of controlled fallback + reason-codes
-- keep one-patch-one-reason execution discipline
+- keep closure state stable and prepare next anchor scope selection
+- preserve newly introduced seams and no-growth guardrails
+- continue one-patch-one-reason execution discipline
 
 Execution discipline:
 - no net-new intelligence features
@@ -35,7 +35,7 @@ Execution discipline:
 
 ## Next Anchor
 
-A2.83 Step 0.5 - Patch 5 (guardrails + parity + closure)
+TBD - Post-A2.83 planning
 
 ## CI Status
 

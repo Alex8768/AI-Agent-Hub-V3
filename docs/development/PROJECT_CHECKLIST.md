@@ -82,7 +82,7 @@
 
 ## Next
 
-- [ ] A2.83 - Step 0.5 Facade Stabilization Before Act/Evolve
+- [x] A2.83 - Step 0.5 Facade Stabilization Before Act/Evolve
 
 ## Current Work — A2.83 Step 0.5 Facade Stabilization
 
@@ -90,7 +90,7 @@
 - [x] Patch 2 - mode router seam
 - [x] Patch 3 - failure policy seam
 - [x] Patch 4 - response presenter seam
-- [ ] Patch 5 - guardrails + parity + closure
+- [x] Patch 5 - guardrails + parity + closure
 
 ## A2.74 Historical Work - Facade Convergence Phase 18 (Answer/Reasoning)
 

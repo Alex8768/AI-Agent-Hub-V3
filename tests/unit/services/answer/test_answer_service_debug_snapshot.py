@@ -209,6 +209,8 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
         "plan_id",
         "retriever_stats",
         "session_memory_saved",
+        "runtime_mode",
+        "presentation",
     }
 
     # Contract keys expected by debug snapshot behavior
