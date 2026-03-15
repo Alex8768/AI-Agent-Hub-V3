@@ -122,10 +122,10 @@ Patch 5 artifacts:
   - `tests/unit/services/answer/test_answer_service_debug_snapshot.py`
   - `tests/unit/api/test_answer_endpoint_debug_snapshot.py`
   - `tests/unit/docs`
-  - result: `149 passed`
+  - result: `151 passed`
 - full-suite parity check green:
   - `uv run pytest`
-  - result: `612 passed, 3 skipped`
+  - result: `614 passed, 3 skipped`
 - frontend parity check green:
   - `frontend: npm run build`
   - result: success
@@ -141,7 +141,7 @@ Patch 5 artifacts:
 - [x] Patch 2 — evidence alignment seam extension
 - [x] Patch 3 — runtime wiring + explainability
 - [x] Patch 4 — continuity tests
-- [ ] Patch 5 — guardrails + closure
+- [x] Patch 5 — guardrails + closure
 
 ### Non-Negotiable Rules
 
@@ -198,7 +198,7 @@ TBD - Post-A2.94 planning
 
 ## Anchor Closed
 
-A2.93 complete - logic consistency signals baseline closure.
+A2.94 complete - evidence-to-claim alignment signals baseline closure.
 
 ## Post-A2.56 Maintenance
 

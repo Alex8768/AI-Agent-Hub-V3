@@ -2,17 +2,17 @@
 
 ## Current Phase
 
-A2.94 in progress
+A2.94 complete
 
 ## Last Completed Anchor
 
-A2.93 - Logic Consistency Signals Baseline
+A2.94 - Evidence-to-Claim Alignment Signals Baseline
 
-A2.93 closed with:
-- deterministic contradiction-pattern signals integrated into truthfulness diagnostics
-- runtime explainability fields for compact trust summary and logic consistency status
-- continuity coverage for debug snapshot stability of new trust fields
-- focused checks green (`149 passed`) and full-suite parity green (`612 passed, 3 skipped`)
+A2.94 closed with:
+- deterministic evidence-to-claim mismatch signals integrated into trust diagnostics
+- runtime explainability fields for evidence alignment and reasoning-process steps
+- continuity coverage for debug snapshot stability of new trust process fields
+- focused checks green (`151 passed`) and full-suite parity green (`614 passed, 3 skipped`)
 
 Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 - Anchor Closed — A2.56 complete (operational guardrails policy closure)
@@ -20,11 +20,11 @@ Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 
 ## Current Active Anchor
 
-A2.94 - Evidence-to-Claim Alignment Signals Baseline
+A2.94 closed - awaiting next anchor selection
 
 Current focus:
-- add deterministic evidence-to-claim mismatch signals in trust diagnostics
-- surface process-style reasoning checks in diagnostics while preserving contract stability
+- keep A2.94 closure state stable and prepare next anchor scope selection
+- preserve evidence-alignment diagnostics continuity while planning next capability track
 - continue one-patch-one-reason execution discipline
 
 Execution discipline:
