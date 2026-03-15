@@ -23,6 +23,18 @@ _SOURCE_DEFERENCE_PHRASES: tuple[str, ...] = (
     "как написано в википедии",
 )
 _WARN_CONFIDENCE_CAP = 0.55
+_CONTRADICTION_PAIRS: tuple[tuple[str, str], ...] = (
+    ("always", "sometimes"),
+    ("never", "sometimes"),
+    ("cannot", "can"),
+    ("impossible", "possible"),
+    ("always", "not always"),
+    ("never", "not never"),
+    ("всегда", "иногда"),
+    ("никогда", "иногда"),
+    ("невозможно", "возможно"),
+    ("не может", "может"),
+)
 
 
 def _normalize_text(value: str) -> str:
@@ -33,6 +45,14 @@ def _contains_phrase(*, text: str, phrases: tuple[str, ...]) -> bool:
     if not text:
         return False
     return any(str(phrase).strip().lower() in text for phrase in phrases if str(phrase).strip())
+
+
+def _detect_contradiction_signals(*, normalized_answer: str) -> list[str]:
+    signals: list[str] = []
+    for left, right in _CONTRADICTION_PAIRS:
+        if left in normalized_answer and right in normalized_answer:
+            signals.append(f"{left}|{right}")
+    return sorted(set(signals))
 
 
 def build_truthfulness_guard_bundle(
@@ -50,23 +70,37 @@ def build_truthfulness_guard_bundle(
     has_evidence = evidence_count > 0
     has_strong_certainty = _contains_phrase(text=normalized_answer, phrases=_CERTAINTY_PHRASES)
     has_source_deference = _contains_phrase(text=normalized_answer, phrases=_SOURCE_DEFERENCE_PHRASES)
+    contradiction_signals = _detect_contradiction_signals(normalized_answer=normalized_answer)
 
     if not has_evidence and has_strong_certainty:
         reason_codes.append("truthfulness_guard_low_evidence_high_certainty_claim")
     if has_source_deference:
         reason_codes.append("truthfulness_guard_source_deference_detected")
+    if contradiction_signals:
+        reason_codes.append("truthfulness_guard_internal_contradiction_detected")
     if not normalized_query and not normalized_answer:
         reason_codes.append("truthfulness_guard_empty_payload")
 
     unique_reason_codes = sorted(set(reason_codes))
     risk_reasons = [code for code in unique_reason_codes if code not in {"truthfulness_guard_evaluated"}]
     status = "warn" if risk_reasons else "ok"
+    logic_status = "warn" if contradiction_signals else "ok"
+    trust_summary = (
+        "Trust reduced: internal contradiction patterns detected."
+        if contradiction_signals
+        else "No internal contradiction signals detected."
+    )
 
     return {
         "contract_version": "v1",
         "mode": "deterministic_heuristic",
         "status": status,
         "reason_codes": unique_reason_codes,
+        "trust_summary": trust_summary,
+        "logic_consistency": {
+            "status": logic_status,
+            "contradiction_signals": contradiction_signals,
+        },
         "inputs": {
             "has_evidence": bool(has_evidence),
             "evidence_count": int(evidence_count),

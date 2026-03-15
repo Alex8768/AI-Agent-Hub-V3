@@ -97,7 +97,7 @@
 ## Current Work — A2.93 Logic Consistency Signals Baseline
 
 - [x] Patch 1 - inventory + scope lock
-- [ ] Patch 2 - logic consistency seam extension
+- [x] Patch 2 - logic consistency seam extension
 - [ ] Patch 3 - runtime wiring + explainability
 - [ ] Patch 4 - continuity tests
 - [ ] Patch 5 - guardrails + parity + closure

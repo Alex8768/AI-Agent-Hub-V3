@@ -60,3 +60,28 @@ def test_truthfulness_confidence_calibration_keeps_ok_path() -> None:
     assert calibrated == 0.71
     assert bool(details.get("confidence_cap_applied")) is False
     assert "truthfulness_guard_confidence_capped" not in list(details.get("reason_codes") or [])
+
+
+def test_truthfulness_guard_detects_internal_contradiction_signals() -> None:
+    bundle = build_truthfulness_guard_bundle(
+        query="Can this be always true?",
+        answer="This is always correct, but sometimes it fails under load.",
+        diagnostics={"retrieved_provenance_count": 3},
+    )
+    assert bundle.get("status") == "warn"
+    assert "truthfulness_guard_internal_contradiction_detected" in list(bundle.get("reason_codes") or [])
+    logic = dict(bundle.get("logic_consistency") or {})
+    assert logic.get("status") == "warn"
+    assert list(logic.get("contradiction_signals") or [])
+    assert "Trust reduced" in str(bundle.get("trust_summary", ""))
+
+
+def test_truthfulness_guard_logic_consistency_ok_when_no_contradiction() -> None:
+    bundle = build_truthfulness_guard_bundle(
+        query="Provide a concise status",
+        answer="Current evidence suggests a stable result.",
+        diagnostics={"retrieved_provenance_count": 2},
+    )
+    logic = dict(bundle.get("logic_consistency") or {})
+    assert logic.get("status") == "ok"
+    assert list(logic.get("contradiction_signals") or []) == []
