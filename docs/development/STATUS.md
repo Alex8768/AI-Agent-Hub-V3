@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-A2.93 complete
+A2.94 in progress
 
 ## Last Completed Anchor
 
@@ -20,11 +20,11 @@ Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 
 ## Current Active Anchor
 
-A2.93 closed - awaiting next anchor selection
+A2.94 - Evidence-to-Claim Alignment Signals Baseline
 
 Current focus:
-- keep A2.93 closure state stable and prepare next anchor scope selection
-- preserve logic-consistency diagnostics continuity while planning next capability track
+- add deterministic evidence-to-claim mismatch signals in trust diagnostics
+- surface process-style reasoning checks in diagnostics while preserving contract stability
 - continue one-patch-one-reason execution discipline
 
 Execution discipline:
@@ -35,7 +35,7 @@ Execution discipline:
 
 ## Next Anchor
 
-TBD - Post-A2.93 planning
+TBD - Post-A2.94 planning
 
 ## CI Status
 

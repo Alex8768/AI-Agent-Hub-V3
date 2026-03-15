@@ -93,14 +93,15 @@
 - [x] A2.91 - Truthfulness and Consistency Guard Baseline
 - [x] A2.92 - Trust Calibration and Explainability Baseline
 - [x] A2.93 - Logic Consistency Signals Baseline
+- [ ] A2.94 - Evidence-to-Claim Alignment Signals Baseline
 
-## Current Work — A2.93 Logic Consistency Signals Baseline
+## Current Work — A2.94 Evidence-to-Claim Alignment Signals Baseline
 
 - [x] Patch 1 - inventory + scope lock
-- [x] Patch 2 - logic consistency seam extension
-- [x] Patch 3 - runtime wiring + explainability
-- [x] Patch 4 - continuity tests
-- [x] Patch 5 - guardrails + parity + closure
+- [ ] Patch 2 - evidence alignment seam extension
+- [ ] Patch 3 - runtime wiring + explainability
+- [ ] Patch 4 - continuity tests
+- [ ] Patch 5 - guardrails + parity + closure
 
 ## A2.74 Historical Work - Facade Convergence Phase 18 (Answer/Reasoning)
 

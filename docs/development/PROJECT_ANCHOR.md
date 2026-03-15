@@ -2,33 +2,33 @@
 
 ## Active Anchor
 
-A2.93 - Logic Consistency Signals Baseline
+A2.94 - Evidence-to-Claim Alignment Signals Baseline
 
 ### Goal
 
-Add deterministic logic-consistency signaling so answers with internal contradiction patterns
-are surfaced as trust warnings with compact, user-readable explanation signals.
+Add deterministic evidence-to-claim alignment signaling so trust diagnostics reflect a clear
+reasoning process (checks and outcomes) without polluting answer text with hedging noise.
 
 ### Why Now
 
-A2.92 calibrated confidence under trust risk; the next trust gap is internal coherence.
-The runtime should explicitly flag probable answer contradictions and explain why trust is reduced.
+A2.93 added internal contradiction checks. The next trust gap is external alignment:
+claims should be compared with available evidence signals and surfaced as process diagnostics.
 
 ### Architecture Position
 
-Target A2.93 boundaries:
+Target A2.94 boundaries:
 
-- **Logic consistency seam extension**
-  - add deterministic contradiction-pattern checks in trust diagnostics seam,
+- **Evidence alignment seam extension**
+  - add deterministic claim-vs-evidence mismatch heuristics in trust diagnostics seam,
   - keep checks pure/testable with no provider dependencies.
 
 - **Runtime diagnostics explainability**
-  - surface compact trust summary and logic consistency status in diagnostics,
+  - surface compact reasoning-process steps and evidence-alignment status in diagnostics,
   - preserve existing `/answer` response contract shape.
 
 - **Caution policy extension**
-  - emit contradiction reason-codes for internally inconsistent answer phrasing,
-  - keep neutral internally consistent answers unchanged.
+  - emit evidence mismatch reason-codes for high-certainty unsupported claims,
+  - keep neutral evidence-aligned answers unchanged.
 
 - **Guardrails and quality**
   - one patch = one reason,
@@ -41,28 +41,28 @@ Target A2.93 boundaries:
 ### Patch Plan
 
 #### Patch 1 — Inventory + scope lock
-- inventory logic-consistency touchpoints in trust guard and diagnostics merge path,
-- lock scope to contradiction signaling + compact explanation only,
-- define deterministic contradiction reason-codes.
+- inventory evidence-alignment touchpoints in trust guard and diagnostics merge path,
+- lock scope to process-style trust diagnostics only (no answer-text verbosity changes),
+- define deterministic evidence mismatch reason-codes.
 
 Patch 1 artifacts:
 - boundaries mapped:
-  - trust guard output contract extension (`logic_consistency`, compact trust summary),
+  - trust guard output contract extension (`evidence_alignment`, reasoning process steps),
   - non-breaking response/diagnostics merge path,
 - scope lock affirmed:
   - no provider/model routing changes,
   - no EvolutionAgent loop work,
   - no endpoint shape breakage.
 
-#### Patch 2 — Logic consistency seam extension
-- add contradiction-pattern checks and compact trust summary in truthfulness diagnostics seam.
+#### Patch 2 — Evidence alignment seam extension
+- add claim-vs-evidence mismatch checks and reasoning-process output in truthfulness diagnostics seam.
 
 Patch 2 artifacts:
 - seam updates in:
   - `src/services/answer/diagnostics/truthfulness_guard.py`
 - baseline checks:
-  - contradictory phrase pairs trigger warn status,
-  - compact trust summary explains triggered trust signals.
+  - high-certainty claim with low evidence overlap triggers warn status,
+  - reasoning process contains explicit check outcomes.
 - seam coverage:
   - `tests/unit/services/answer/test_truthfulness_guard.py`
 - focused seam check green:
@@ -70,15 +70,15 @@ Patch 2 artifacts:
   - result: `8 passed`
 
 #### Patch 3 — Runtime wiring + explainability
-- wire logic-consistency explainability fields into response diagnostics flow.
+- wire evidence-alignment explainability fields into response diagnostics flow.
 
 Patch 3 artifacts:
 - runtime wiring in:
   - `src/services/answer/response_assembly.py`
 - diagnostics additions:
-  - `diagnostics.truthfulness_guard.logic_consistency`
-  - `diagnostics.truthfulness_guard.trust_summary`
-- reason-code closure continuity preserved (`truthfulness_guard_internal_contradiction_detected`).
+  - `diagnostics.truthfulness_guard.evidence_alignment`
+  - `diagnostics.truthfulness_guard.reasoning_process`
+- reason-code closure continuity preserved (`truthfulness_guard_evidence_claim_mismatch_detected`).
 - focused wiring checks green:
   - `tests/unit/services/answer/test_response_assembly_truthfulness.py`
   - `tests/unit/services/answer/test_answer_service_debug_snapshot.py`
@@ -90,7 +90,7 @@ Patch 3 artifacts:
   - result: `71 passed`
 
 #### Patch 4 — Continuity tests
-- expand continuity tests for logic-consistency and explainability field stability.
+- expand continuity tests for evidence-alignment and reasoning-process field stability.
 
 Patch 4 artifacts:
 - coverage expansion:
@@ -98,8 +98,8 @@ Patch 4 artifacts:
   - `tests/unit/api/test_answer_endpoint_debug_snapshot.py`
   - `tests/unit/services/answer/test_reason_code_policy.py`
 - scenarios:
-  - contradiction warn path exposes trust summary and reason-code,
-  - consistent path preserves ok status.
+  - mismatch warn path exposes reasoning process and reason-code,
+  - aligned path preserves ok status.
 - focused continuity checks green:
   - `tests/unit/services/answer/test_answer_service_debug_snapshot.py`
   - `tests/unit/api/test_answer_endpoint_debug_snapshot.py`
@@ -109,7 +109,7 @@ Patch 4 artifacts:
   - result: `58 passed`
 
 #### Patch 5 — Guardrails + parity + closure
-- run focused + full-suite checks, sync mandatory docs, close A2.93.
+- run focused + full-suite checks, sync mandatory docs, close A2.94.
 
 Patch 5 artifacts:
 - focused closure checks green:
@@ -129,7 +129,7 @@ Patch 5 artifacts:
 - frontend parity check green:
   - `frontend: npm run build`
   - result: success
-- mandatory docs synchronized for A2.93 closure:
+- mandatory docs synchronized for A2.94 closure:
   - `docs/development/PROJECT_ANCHOR.md`
   - `docs/development/PROJECT_CHECKLIST.md`
   - `docs/development/STATUS.md`
@@ -138,10 +138,10 @@ Patch 5 artifacts:
 ### Progress
 
 - [x] Patch 1 — inventory + scope lock
-- [x] Patch 2 — logic consistency seam extension
-- [x] Patch 3 — runtime wiring + explainability
-- [x] Patch 4 — continuity tests
-- [x] Patch 5 — guardrails + closure
+- [ ] Patch 2 — evidence alignment seam extension
+- [ ] Patch 3 — runtime wiring + explainability
+- [ ] Patch 4 — continuity tests
+- [ ] Patch 5 — guardrails + closure
 
 ### Non-Negotiable Rules
 
@@ -152,17 +152,17 @@ Patch 5 artifacts:
 
 ### Out of Scope
 
-Do NOT modify during A2.93:
+Do NOT modify during A2.94:
 
 - EvolutionAgent loop implementation,
 - unrelated product or architecture refactors.
 
 ### Definition of Done
 
-A2.93 is complete when:
+A2.94 is complete when:
 
-- deterministic logic-consistency trust seam extension exists and is unit-tested,
-- runtime diagnostics expose logic-consistency explainability fields without contract regression,
+- deterministic evidence-alignment trust seam extension exists and is unit-tested,
+- runtime diagnostics expose evidence-alignment reasoning-process fields without contract regression,
 - reason-code/warnings closure remains deterministic,
 - focused and full quality checks remain green,
 - mandatory docs are synchronized.
@@ -194,7 +194,7 @@ A2.56 policy markers are retained for deterministic docs quality gates:
 
 ## Next Anchor
 
-TBD - Post-A2.93 planning
+TBD - Post-A2.94 planning
 
 ## Anchor Closed
 
