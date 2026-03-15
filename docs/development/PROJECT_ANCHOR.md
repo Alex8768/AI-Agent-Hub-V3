@@ -2,33 +2,33 @@
 
 ## Active Anchor
 
-A2.85 - Managed Action Profiles + Compact Diagnostics UX
+A2.86 - Controlled Write Actions via Confirm Flow
 
 ### Goal
 
-Introduce runtime policy profiles and compact diagnostics delivery so action behavior is
-controllable by environment and the UI can switch between concise and expanded views.
+Enable managed write-capable actions through explicit confirmation flow and profile-aware
+policy gating without reintroducing uncontrolled side effects.
 
 ### Why Now
 
-A2.84 unlocked read-only Act and visible block reasons. The next bottleneck is profile
-control (`prod_strict`/`dev_guided`/`dev_full`) and response payload ergonomics for the UI.
+A2.85 completed profile diagnostics and diagnostics UX controls; the next bottleneck is
+safe write execution enablement under deterministic confirmation and policy contracts.
 
 ### Architecture Position
 
-Target A2.85 boundaries:
+Target A2.86 boundaries:
 
-- **Managed runtime policy profiles**
-  - normalize policy profile selection by environment/runtime context,
-  - keep deterministic reason-codes when profile blocks actions.
+- **Write action governance**
+  - allow write-capable tool path only behind confirmation gate,
+  - enforce profile-aware policy behavior with deterministic reason-codes.
 
-- **Compact diagnostics delivery**
-  - keep core answer payload stable while enabling concise default diagnostics output,
-  - preserve ability to request expanded diagnostics deterministically.
+- **Confirmation flow hardening**
+  - require explicit tokenized approval before side-effectful execution,
+  - preserve idempotency and replay protection.
 
-- **UI diagnostics ergonomics**
-  - expose compact/expanded diagnostics toggle in UI,
-  - preserve runtime mode and reason-code visibility from A2.84.
+- **UI approval ergonomics**
+  - surface pending write approvals with explicit approve/cancel controls,
+  - preserve runtime/profile/reason transparency from A2.85.
 
 - **Guardrails and quality**
   - maintain one patch = one reason discipline,
@@ -37,161 +37,90 @@ Target A2.85 boundaries:
 ### Patch Plan
 
 #### Patch 1 — Inventory + scope lock
-- inventory profile-sensitive runtime touchpoints:
-  action allowlist/deny rules, mode routing, fallback and warning propagation,
-  compact diagnostics shaping and UI consumption paths,
-- lock scope to managed profiles + compact diagnostics UX only,
-- define deterministic contract for profile and diagnostics-view reason-codes.
+- inventory write-action runtime touchpoints:
+  tool policy profile checks, confirmation token lifecycle, idempotency replay path,
+  execution receipt diagnostics, and UI approval interaction path,
+- lock scope to controlled write actions via confirm-flow only,
+- define deterministic reason-code contract for policy, approval, and execution states.
 
 Patch 1 artifacts:
 - runtime boundary inventory captured:
-  - profile selection and policy decision path,
-  - diagnostics compact/full presenter path,
-  - UI diagnostics toggle/render path,
-  - controlled fallback + warning propagation path,
+  - write policy profile decision path,
+  - confirmation handshake and token validation path,
+  - execution gateway/idempotency replay path,
+  - UI approval action path and status rendering,
 - scope lock affirmed:
-  - no expansion of side-effecting execution in A2.85,
+  - no ungated write execution path in A2.86,
   - no endpoint shape breakage,
   - no global refactor,
   - no opportunistic feature drift.
 
-#### Patch 2 — Policy profile seam
-- introduce deterministic runtime profile resolver (`prod_strict`/`dev_guided`/`dev_full`)
-  and wire policy diagnostics reason-codes.
+#### Patch 2 — Profile-aware write policy seam
+- enforce write-action policy matrix (`prod_strict`/`dev_guided`/`dev_full`) and
+  deterministic policy reason-codes.
 
 Patch 2 artifacts:
-- policy profile seam extracted to:
-  - `src/services/answer/policy_profiles.py`
-  - `resolve_runtime_policy_profile`
-- Act runtime now resolves and surfaces profile diagnostics in:
-  - `src/services/answer/act_read_only.py`
-  - `diagnostics.runtime_policy_profile`
-- deterministic profile gating enforced:
-  - `prod_strict` blocks Act read-only execution with `act_blocked_by_policy_profile`
-  - `dev_guided`/`dev_full` keep read-only Act path enabled
-  - debug-only request override reason-codes:
-    - `runtime_policy_profile_override_applied`
-    - `runtime_policy_profile_override_blocked_in_non_debug`
-- focused checks green:
-  - `tests/unit/services/answer/test_policy_profiles.py`
-  - `tests/unit/services/answer/test_act_read_only_runtime.py`
-  - `tests/unit/services/answer/test_answer_orchestration_quality_gate.py`
-  - `tests/unit/services/answer/test_answer_service_debug_snapshot.py`
-  - `tests/unit/api/test_answer_endpoint_debug_snapshot.py`
-  - `tests/unit/docs`
-  - result: `110 passed`
+- pending
 
-#### Patch 3 — Compact diagnostics contract seam
-- enforce compact diagnostics default with deterministic expanded diagnostics opt-in.
+#### Patch 3 — Confirm-flow write execution seam
+- route write-capable tool execution through approval handshake with deterministic
+  token/idempotency/replay behavior.
 
 Patch 3 artifacts:
-- response presenter contract seam enhanced in:
-  - `src/services/answer/response_presenter.py`
-- deterministic diagnostics view normalization added:
-  - supports `diagnostics_view=expanded` alias to full mode
-  - invalid diagnostics view values fallback to full with reason-code
-- presenter now emits explicit presentation contract metadata:
-  - `requested_mode`, `resolved_mode`, `excluded_diagnostics`, `reason_codes`
-- coverage expanded for contract behavior:
-  - `tests/unit/services/answer/test_answer_response_presenter.py`
-- focused checks green:
-  - `tests/unit/services/answer/test_answer_response_presenter.py`
-  - `tests/unit/services/answer/test_policy_profiles.py`
-  - `tests/unit/services/answer/test_act_read_only_runtime.py`
-  - `tests/unit/services/answer/test_reason_code_policy.py`
-  - `tests/unit/services/answer/test_answer_orchestration_quality_gate.py`
-  - `tests/unit/services/answer/test_answer_service_debug_snapshot.py`
-  - `tests/unit/api/test_answer_endpoint_debug_snapshot.py`
-  - `tests/unit/docs`
-  - result: `114 passed`
+- pending
 
-#### Patch 4 — UI compact/expanded diagnostics toggle
-- add UI control for diagnostics verbosity while preserving mode/reason visibility.
+#### Patch 4 — UI approval controls for write actions
+- add pending-approval controls (approve/cancel) and execution status surfaces in UI.
 
 Patch 4 artifacts:
-- frontend diagnostics toggle wired end-to-end:
-  - `frontend/src/components/ChatPanel.tsx`
-  - `frontend/src/lib/apiClient.ts`
-  - `frontend/src/contracts/api.ts`
-- request contract propagation:
-  - UI sends `filters.diagnostics_view` via answer request payload
-  - supported values: `compact` and `full` (`expanded` alias supported by backend)
-- runtime transparency card now includes diagnostics mode pill (`Diag: compact|full`)
-  while preserving mode/act/reason-code visibility
-- diagnostics preference persisted in browser (`localStorage`)
-- styling updates for diagnostics selector:
-  - `frontend/src/components/ChatPanel.css`
-- frontend compile verification green:
-  - `frontend: npm run build`
-  - result: `vite build` success
+- pending
 
 #### Patch 5 — Guardrails + parity + closure
-- run focused + full-suite checks, sync mandatory docs, close A2.85.
+- run focused + full-suite checks, sync mandatory docs, close A2.86.
 
 Patch 5 artifacts:
-- focused closure checks green:
-  - `tests/unit/services/answer/test_answer_response_presenter.py`
-  - `tests/unit/services/answer/test_policy_profiles.py`
-  - `tests/unit/services/answer/test_act_read_only_runtime.py`
-  - `tests/unit/services/answer/test_reason_code_policy.py`
-  - `tests/unit/services/answer/test_answer_orchestration_quality_gate.py`
-  - `tests/unit/services/answer/test_answer_service_debug_snapshot.py`
-  - `tests/unit/api/test_answer_endpoint_debug_snapshot.py`
-  - `tests/unit/docs`
-  - result: `114 passed`
-- full-suite parity check green:
-  - `uv run pytest`
-  - result: `589 passed, 3 skipped`
-- frontend closure build check green:
-  - `frontend: npm run build`
-  - result: success
-- mandatory docs synchronized for A2.85 closure:
-  - `docs/development/PROJECT_ANCHOR.md`
-  - `docs/development/PROJECT_CHECKLIST.md`
-  - `docs/development/STATUS.md`
-  - `docs/architecture/PLATFORM_FEATURES.md`
+- pending
 
 ### Progress
 
 - [x] Patch 1 — inventory + scope lock
-- [x] Patch 2 — policy profile seam
-- [x] Patch 3 — compact diagnostics contract seam
-- [x] Patch 4 — UI compact/expanded diagnostics toggle
-- [x] Patch 5 — guardrails + closure
+- [ ] Patch 2 — profile-aware write policy seam
+- [ ] Patch 3 — confirm-flow write execution seam
+- [ ] Patch 4 — UI approval controls for write actions
+- [ ] Patch 5 — guardrails + closure
 
 ### Non-Negotiable Rules
 
-- Keep Act side-effect execution disabled in A2.85.
+- Keep ungated write execution disabled in A2.86.
 - Preserve `/answer` contract compatibility and controlled fallback behavior.
 - Keep diagnostics deterministic with explicit reason-codes.
 - One patch = one reason.
 
 ### Out of Scope
 
-Do NOT modify during A2.85:
+Do NOT modify during A2.86:
 
-- write-path tool execution / side-effectful actions,
 - EvolutionAgent loop implementation,
 - unrelated product or architecture refactors.
 
 ### Definition of Done
 
-A2.85 is complete when:
+A2.86 is complete when:
 
-- profile-driven policy behavior is deterministic and observable,
-- compact diagnostics default + expanded opt-in contract is stable,
-- UI can toggle diagnostics verbosity without losing reason-code transparency,
+- write actions execute only through deterministic confirmation path,
+- profile matrix behavior is deterministic and observable in diagnostics,
+- UI surfaces approval intent/status and supports approve/cancel flow,
 - focused and full quality checks remain green,
 - mandatory docs are synchronized.
 
-## A2.84 Snapshot (Closed)
+## A2.85 Snapshot (Closed)
 
-A2.84 closure markers retained for continuity:
+A2.85 closure markers retained for continuity:
 
-- Act read-only seam (`list_files`, `read_file` allowlist),
-- reason-code closure seam into top-level warnings,
-- UI runtime mode + block reason visibility,
-- full-suite parity: `584 passed, 3 skipped`.
+- runtime policy profile seam (`prod_strict` / `dev_guided` / `dev_full`),
+- diagnostics presentation contract normalization (`requested_mode`/`resolved_mode`),
+- UI compact/expanded diagnostics toggle,
+- full-suite parity: `589 passed, 3 skipped`.
 
 ## A2.56 Operational Guardrails Snapshot (Closed)
 
@@ -211,7 +140,7 @@ A2.56 policy markers are retained for deterministic docs quality gates:
 
 ## Next Anchor
 
-TBD - Post-A2.85 planning
+TBD - Post-A2.86 planning
 
 ## Anchor Closed
 

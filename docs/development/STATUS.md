@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-A2.85 complete
+A2.86 in progress
 
 ## Last Completed Anchor
 
@@ -20,11 +20,12 @@ Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 
 ## Current Active Anchor
 
-A2.85 closed - awaiting next anchor selection
+A2.86 - Controlled Write Actions via Confirm Flow
 
 Current focus:
-- keep A2.85 closure state stable and prepare next anchor scope selection
-- preserve profile diagnostics and compact/expanded UI contract behavior
+- introduce profile-aware controlled write actions behind confirm-flow
+- harden approval token/idempotency execution path with deterministic reason-codes
+- surface approval actions/status in UI while preserving existing diagnostics visibility
 - continue one-patch-one-reason execution discipline
 
 Execution discipline:
@@ -35,7 +36,7 @@ Execution discipline:
 
 ## Next Anchor
 
-TBD - Post-A2.85 planning
+A2.86 - Patch 2 (profile-aware write policy seam)
 
 ## CI Status
 
