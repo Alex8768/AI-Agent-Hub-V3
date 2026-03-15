@@ -122,10 +122,10 @@ Patch 5 artifacts:
   - `tests/unit/services/answer/test_answer_service_debug_snapshot.py`
   - `tests/unit/api/test_answer_endpoint_debug_snapshot.py`
   - `tests/unit/docs`
-  - result: `127 passed`
+  - result: `147 passed`
 - full-suite parity check green:
   - `uv run pytest`
-  - result: `608 passed, 3 skipped`
+  - result: `610 passed, 3 skipped`
 - frontend parity check green:
   - `frontend: npm run build`
   - result: success
@@ -141,7 +141,7 @@ Patch 5 artifacts:
 - [x] Patch 2 — confidence calibration seam
 - [x] Patch 3 — runtime wiring + explainability
 - [x] Patch 4 — continuity tests
-- [ ] Patch 5 — guardrails + closure
+- [x] Patch 5 — guardrails + closure
 
 ### Non-Negotiable Rules
 
@@ -198,7 +198,7 @@ TBD - Post-A2.92 planning
 
 ## Anchor Closed
 
-A2.91 complete - truthfulness and consistency guard baseline closure.
+A2.92 complete - trust calibration and explainability baseline closure.
 
 ## Post-A2.56 Maintenance
 

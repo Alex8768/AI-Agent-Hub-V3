@@ -2,17 +2,17 @@
 
 ## Current Phase
 
-A2.92 in progress
+A2.92 complete
 
 ## Last Completed Anchor
 
-A2.91 - Truthfulness and Consistency Guard Baseline
+A2.92 - Trust Calibration and Explainability Baseline
 
-A2.91 closed with:
-- deterministic truthfulness guard seam for low-evidence certainty and source-deference signals
-- response diagnostics wiring for `truthfulness_guard` with planning reason-code continuity
-- continuity coverage for response-assembly warn/pass paths
-- focused checks green (`133 passed`) and full-suite parity green (`608 passed, 3 skipped`)
+A2.92 closed with:
+- deterministic trust confidence calibration seam with warn-path cap policy
+- response diagnostics explainability fields (`confidence_before`/`confidence_after`/`confidence_cap_applied`)
+- continuity coverage for snapshot stability and response-assembly calibration behavior
+- focused checks green (`147 passed`) and full-suite parity green (`610 passed, 3 skipped`)
 
 Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 - Anchor Closed — A2.56 complete (operational guardrails policy closure)
@@ -20,11 +20,11 @@ Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 
 ## Current Active Anchor
 
-A2.92 - Trust Calibration and Explainability Baseline
+A2.92 closed - awaiting next anchor selection
 
 Current focus:
-- calibrate answer confidence deterministically on trust-risk signals
-- surface explainable confidence calibration diagnostics while preserving contract stability
+- keep A2.92 closure state stable and prepare next anchor scope selection
+- preserve trust calibration diagnostics continuity while planning next capability track
 - continue one-patch-one-reason execution discipline
 
 Execution discipline:
