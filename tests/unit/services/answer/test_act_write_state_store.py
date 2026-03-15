@@ -107,3 +107,72 @@ async def test_cleanup_expired_write_state_reports_metrics(monkeypatch) -> None:
     )
     assert int(stats.get("pending_expired", 0) or 0) == 1
     assert int(stats.get("idempotency_expired", 0) or 0) == 1
+
+
+@pytest.mark.asyncio
+async def test_pending_confirmation_quota_blocks_active_pending(monkeypatch) -> None:
+    mem = _Mem()
+    monkeypatch.setattr("src.services.answer.act_write_state_store.get_memory_store", lambda: mem)
+    scope = store.build_scope_key(session_id="s5", workspace_id="w5")
+    await store.save_pending_confirmation(
+        scope_key=scope,
+        session_id="s5",
+        workspace_id="w5",
+        payload={"confirmation_token": "act-confirm:open", "expires_at": 9999999999, "tool_name": "save_file", "consumed": False},
+    )
+    verdict = await store.evaluate_pending_confirmation_quota(
+        scope_key=scope,
+        session_id="s5",
+        workspace_id="w5",
+    )
+    assert bool(verdict.get("allowed")) is False
+    assert verdict.get("reason_code") == "act_write_pending_quota_exceeded"
+
+
+@pytest.mark.asyncio
+async def test_idempotency_quota_blocks_new_key_after_capacity(monkeypatch) -> None:
+    mem = _Mem()
+    monkeypatch.setattr("src.services.answer.act_write_state_store.get_memory_store", lambda: mem)
+    scope = store.build_scope_key(session_id="s6", workspace_id="w6")
+    await store.save_idempotency_record(
+        scope_key=scope,
+        session_id="s6",
+        workspace_id="w6",
+        idempotency_key="id-cap-1",
+        payload={"confirmation_token": "act-confirm:cap1", "result": {"ok": True}},
+    )
+    verdict = await store.evaluate_idempotency_quota(
+        scope_key=scope,
+        session_id="s6",
+        workspace_id="w6",
+        idempotency_key="id-cap-2",
+        max_records=1,
+    )
+    assert bool(verdict.get("allowed")) is False
+    assert verdict.get("reason_code") == "act_write_idempotency_quota_exceeded"
+
+
+@pytest.mark.asyncio
+async def test_decision_rate_limit_blocks_when_window_capacity_reached(monkeypatch) -> None:
+    mem = _Mem()
+    monkeypatch.setattr("src.services.answer.act_write_state_store.get_memory_store", lambda: mem)
+    scope = store.build_scope_key(session_id="s7", workspace_id="w7")
+    first = await store.evaluate_decision_rate_limit(
+        scope_key=scope,
+        session_id="s7",
+        workspace_id="w7",
+        now_epoch=100,
+        max_events=1,
+        window_seconds=60,
+    )
+    blocked = await store.evaluate_decision_rate_limit(
+        scope_key=scope,
+        session_id="s7",
+        workspace_id="w7",
+        now_epoch=110,
+        max_events=1,
+        window_seconds=60,
+    )
+    assert bool(first.get("allowed")) is True
+    assert bool(blocked.get("allowed")) is False
+    assert blocked.get("reason_code") == "act_write_decision_rate_limited"

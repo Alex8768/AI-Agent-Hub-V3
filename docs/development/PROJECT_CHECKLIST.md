@@ -93,7 +93,7 @@
 ## Current Work — A2.89 Confirm-Flow Quota and Rate Guards
 
 - [x] Patch 1 - inventory + scope lock
-- [ ] Patch 2 - state-store quota/rate seam
+- [x] Patch 2 - state-store quota/rate seam
 - [ ] Patch 3 - runtime guard wiring
 - [ ] Patch 4 - continuity and regression tests
 - [ ] Patch 5 - guardrails + parity + closure

@@ -66,6 +66,9 @@ Patch 2 artifacts:
   - approve/cancel decision rate evaluation with sliding window.
 - seam coverage expanded in:
   - `tests/unit/services/answer/test_act_write_state_store.py`
+- focused seam check green:
+  - `tests/unit/services/answer/test_act_write_state_store.py`
+  - result: `7 passed`
 
 #### Patch 3 — Runtime guard wiring
 - integrate quota/rate guard calls into write-confirm runtime transitions.
@@ -120,7 +123,7 @@ Patch 5 artifacts:
 ### Progress
 
 - [x] Patch 1 — inventory + scope lock
-- [ ] Patch 2 — state-store quota/rate seam
+- [x] Patch 2 — state-store quota/rate seam
 - [ ] Patch 3 — runtime guard wiring
 - [ ] Patch 4 — continuity and regression tests
 - [ ] Patch 5 — guardrails + closure
