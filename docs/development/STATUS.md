@@ -36,7 +36,7 @@ Execution discipline:
 
 ## Next Anchor
 
-A2.85 - Patch 2 (policy profile seam)
+A2.85 - Patch 3 (compact diagnostics contract seam)
 
 ## CI Status
 

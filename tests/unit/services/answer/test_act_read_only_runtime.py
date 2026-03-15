@@ -27,7 +27,11 @@ class _HTTP:
 
 
 @pytest.mark.asyncio
-async def test_act_read_only_runtime_blocks_non_allowlisted_tool() -> None:
+async def test_act_read_only_runtime_blocks_non_allowlisted_tool(monkeypatch) -> None:
+    class _S:
+        debug = True
+
+    monkeypatch.setattr("src.services.answer.act_read_only.get_settings", lambda: _S())
     req = AnswerRequest(query="x", filters={"act_tool_name": "save_file", "act_tool_args": {"path": "a.txt"}})
     resp = await apply_act_read_only_runtime(
         resp=_Resp(),
@@ -42,7 +46,12 @@ async def test_act_read_only_runtime_blocks_non_allowlisted_tool() -> None:
 
 
 @pytest.mark.asyncio
-async def test_act_read_only_runtime_executes_list_files_when_allowlisted() -> None:
+async def test_act_read_only_runtime_executes_list_files_when_allowlisted(monkeypatch) -> None:
+    class _S:
+        debug = True
+
+    monkeypatch.setattr("src.services.answer.act_read_only.get_settings", lambda: _S())
+
     async def _invoker(*, tool_name: str, arguments: dict[str, object]) -> dict[str, object]:
         assert tool_name == "list_files"
         assert arguments == {"path": "."}
@@ -60,3 +69,22 @@ async def test_act_read_only_runtime_executes_list_files_when_allowlisted() -> N
     assert diag.get("status") == "executed"
     assert diag.get("tool_name") == "list_files"
     assert "act_read_only_tool_executed" in list(diag.get("reason_codes") or [])
+
+
+@pytest.mark.asyncio
+async def test_act_read_only_runtime_blocks_on_prod_strict_profile(monkeypatch) -> None:
+    class _S:
+        debug = False
+
+    monkeypatch.setattr("src.services.answer.act_read_only.get_settings", lambda: _S())
+    req = AnswerRequest(query="x", filters={"act_tool_name": "list_files", "act_tool_args": {"path": "."}})
+    resp = await apply_act_read_only_runtime(
+        resp=_Resp(),
+        req=req,
+        http=_HTTP(invoker=None),
+        workspace_id="default",
+        route={"selected_mode": "act"},
+    )
+    diag = dict(resp.diagnostics.get("act_runtime") or {})
+    assert diag.get("status") == "blocked"
+    assert "act_blocked_by_policy_profile" in list(diag.get("reason_codes") or [])

@@ -89,7 +89,7 @@
 ## Current Work — A2.85 Managed Action Profiles + Compact Diagnostics UX
 
 - [x] Patch 1 - inventory + scope lock
-- [ ] Patch 2 - policy profile seam
+- [x] Patch 2 - policy profile seam
 - [ ] Patch 3 - compact diagnostics contract seam
 - [ ] Patch 4 - UI compact/expanded diagnostics toggle
 - [ ] Patch 5 - guardrails + parity + closure

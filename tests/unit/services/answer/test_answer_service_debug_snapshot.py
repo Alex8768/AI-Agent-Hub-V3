@@ -210,6 +210,7 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
         "retriever_stats",
         "session_memory_saved",
         "runtime_mode",
+        "runtime_policy_profile",
         "presentation",
         "act_runtime",
     }

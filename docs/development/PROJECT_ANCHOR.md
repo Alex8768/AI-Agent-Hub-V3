@@ -60,7 +60,26 @@ Patch 1 artifacts:
   and wire policy diagnostics reason-codes.
 
 Patch 2 artifacts:
-- pending
+- policy profile seam extracted to:
+  - `src/services/answer/policy_profiles.py`
+  - `resolve_runtime_policy_profile`
+- Act runtime now resolves and surfaces profile diagnostics in:
+  - `src/services/answer/act_read_only.py`
+  - `diagnostics.runtime_policy_profile`
+- deterministic profile gating enforced:
+  - `prod_strict` blocks Act read-only execution with `act_blocked_by_policy_profile`
+  - `dev_guided`/`dev_full` keep read-only Act path enabled
+  - debug-only request override reason-codes:
+    - `runtime_policy_profile_override_applied`
+    - `runtime_policy_profile_override_blocked_in_non_debug`
+- focused checks green:
+  - `tests/unit/services/answer/test_policy_profiles.py`
+  - `tests/unit/services/answer/test_act_read_only_runtime.py`
+  - `tests/unit/services/answer/test_answer_orchestration_quality_gate.py`
+  - `tests/unit/services/answer/test_answer_service_debug_snapshot.py`
+  - `tests/unit/api/test_answer_endpoint_debug_snapshot.py`
+  - `tests/unit/docs`
+  - result: `110 passed`
 
 #### Patch 3 — Compact diagnostics contract seam
 - enforce compact diagnostics default with deterministic expanded diagnostics opt-in.
@@ -83,7 +102,7 @@ Patch 5 artifacts:
 ### Progress
 
 - [x] Patch 1 — inventory + scope lock
-- [ ] Patch 2 — policy profile seam
+- [x] Patch 2 — policy profile seam
 - [ ] Patch 3 — compact diagnostics contract seam
 - [ ] Patch 4 — UI compact/expanded diagnostics toggle
 - [ ] Patch 5 — guardrails + closure
