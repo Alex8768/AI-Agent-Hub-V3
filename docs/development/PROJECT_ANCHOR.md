@@ -81,7 +81,23 @@ Patch 2 artifacts:
 - adapt write-confirm runtime to load/save/consume durable state store records.
 
 Patch 3 artifacts:
-- pending
+- Act write-confirm runtime now wired to durable state seam in:
+  - `src/services/answer/act_read_only.py`
+- pending/idempotency state operations moved from direct process globals to seam calls:
+  - pending load/save through `act_write_state_store.load_pending_confirmation` and
+    `act_write_state_store.save_pending_confirmation`
+  - idempotency load/save through `act_write_state_store.load_idempotency_record` and
+    `act_write_state_store.save_idempotency_record`
+- runtime behavior remains contract-compatible while becoming restart-resilient when
+  memory-store durability is available
+- focused checks green:
+  - `tests/unit/services/answer/test_act_write_state_store.py`
+  - `tests/unit/services/answer/test_act_read_only_runtime.py`
+  - `tests/unit/services/answer/test_policy_profiles.py`
+  - `tests/unit/services/answer/test_answer_orchestration_quality_gate.py`
+  - `tests/unit/services/answer/test_answer_service_debug_snapshot.py`
+  - `tests/unit/api/test_answer_endpoint_debug_snapshot.py`
+  - result: `73 passed`
 
 #### Patch 4 — Runtime diagnostics continuity + tests
 - validate durable storage behavior and preserve diagnostic contract surfaces.
@@ -99,7 +115,7 @@ Patch 5 artifacts:
 
 - [x] Patch 1 — inventory + scope lock
 - [x] Patch 2 — durable write state store seam
-- [ ] Patch 3 — restart-resilient confirm-flow runtime wiring
+- [x] Patch 3 — restart-resilient confirm-flow runtime wiring
 - [ ] Patch 4 — runtime diagnostics continuity + tests
 - [ ] Patch 5 — guardrails + closure
 

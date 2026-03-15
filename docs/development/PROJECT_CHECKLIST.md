@@ -92,7 +92,7 @@
 
 - [x] Patch 1 - inventory + scope lock
 - [x] Patch 2 - durable write state store seam
-- [ ] Patch 3 - restart-resilient confirm-flow runtime wiring
+- [x] Patch 3 - restart-resilient confirm-flow runtime wiring
 - [ ] Patch 4 - runtime diagnostics continuity + tests
 - [ ] Patch 5 - guardrails + parity + closure
 

@@ -7,14 +7,13 @@ import time
 from typing import Any
 
 from src.core.config import get_settings
+from src.services.answer import act_write_state_store
 from src.services.answer.policy_profiles import resolve_runtime_policy_profile
 
 
 _ACT_READ_ONLY_ALLOWLIST: tuple[str, ...] = ("list_files", "read_file")
 _ACT_WRITE_CONFIRM_ALLOWLIST: tuple[str, ...] = ("save_file",)
 _ACT_WRITE_CONFIRM_TTL_SECONDS = 900
-_PENDING_WRITE_CONFIRMATIONS: dict[str, dict[str, object]] = {}
-_WRITE_CONFIRM_IDEMPOTENCY: dict[str, dict[str, object]] = {}
 
 
 def _resolve_act_request(req: object) -> tuple[str, dict[str, object]]:
@@ -31,7 +30,7 @@ def _resolve_act_request(req: object) -> tuple[str, dict[str, object]]:
 
 def _build_scope_key(*, req: object, workspace_id: str) -> str:
     session_id = str(getattr(req, "session_id", "default") or "default")
-    return f"{str(workspace_id or 'default')}:{session_id}"
+    return act_write_state_store.build_scope_key(session_id=session_id, workspace_id=str(workspace_id or "default"))
 
 
 def _issue_confirmation_token(*, scope_key: str, tool_name: str, tool_args: dict[str, object]) -> str:
@@ -75,8 +74,7 @@ def _build_runtime_diag(
 
 
 def _reset_act_write_runtime_state_for_tests() -> None:
-    _PENDING_WRITE_CONFIRMATIONS.clear()
-    _WRITE_CONFIRM_IDEMPOTENCY.clear()
+    act_write_state_store.reset_runtime_state_for_tests()
 
 
 async def apply_act_read_only_runtime(
@@ -118,11 +116,16 @@ async def apply_act_read_only_runtime(
     if tool_name in _ACT_WRITE_CONFIRM_ALLOWLIST:
         write_policy = str(policy_profile.get("act_write_policy", "blocked") or "blocked")
         scope_key = _build_scope_key(req=req, workspace_id=workspace_id)
+        session_id = str(getattr(req, "session_id", "default") or "default")
         filters = dict(getattr(req, "filters", None) or {})
         decision = str(filters.get("act_confirm_decision", "") or "").strip().lower()
         token = str(filters.get("act_confirmation_token", "") or "").strip()
         idempotency_key = str(filters.get("act_idempotency_key", "") or "").strip()
-        pending = dict(_PENDING_WRITE_CONFIRMATIONS.get(scope_key) or {})
+        pending = await act_write_state_store.load_pending_confirmation(
+            scope_key=scope_key,
+            session_id=session_id,
+            workspace_id=str(workspace_id or ""),
+        )
         now_epoch = int(time.time())
 
         if write_policy == "blocked":
@@ -142,13 +145,19 @@ async def apply_act_read_only_runtime(
             if decision not in {"approve", "cancel"}:
                 issued_token = _issue_confirmation_token(scope_key=scope_key, tool_name=tool_name, tool_args=tool_args)
                 expires_at = now_epoch + _ACT_WRITE_CONFIRM_TTL_SECONDS
-                _PENDING_WRITE_CONFIRMATIONS[scope_key] = {
+                pending_payload = {
                     "confirmation_token": issued_token,
                     "tool_name": tool_name,
                     "tool_args": dict(tool_args),
                     "expires_at": expires_at,
                     "consumed": False,
                 }
+                await act_write_state_store.save_pending_confirmation(
+                    scope_key=scope_key,
+                    session_id=session_id,
+                    workspace_id=str(workspace_id or ""),
+                    payload=pending_payload,
+                )
                 diagnostics["act_runtime"] = _build_runtime_diag(
                     status="pending_confirmation",
                     mode="write_confirm",
@@ -227,7 +236,12 @@ async def apply_act_read_only_runtime(
                 return resp
             if decision == "cancel":
                 pending["consumed"] = True
-                _PENDING_WRITE_CONFIRMATIONS[scope_key] = pending
+                await act_write_state_store.save_pending_confirmation(
+                    scope_key=scope_key,
+                    session_id=session_id,
+                    workspace_id=str(workspace_id or ""),
+                    payload=pending,
+                )
                 diagnostics["act_runtime"] = _build_runtime_diag(
                     status="cancelled",
                     mode="write_confirm",
@@ -240,11 +254,20 @@ async def apply_act_read_only_runtime(
                 setattr(resp, "diagnostics", diagnostics)
                 return resp
             if idempotency_key:
-                replay_key = f"{scope_key}:{idempotency_key}"
-                prior = dict(_WRITE_CONFIRM_IDEMPOTENCY.get(replay_key) or {})
+                prior = await act_write_state_store.load_idempotency_record(
+                    scope_key=scope_key,
+                    session_id=session_id,
+                    workspace_id=str(workspace_id or ""),
+                    idempotency_key=idempotency_key,
+                )
                 if prior and str(prior.get("confirmation_token", "")) == token:
                     pending["consumed"] = True
-                    _PENDING_WRITE_CONFIRMATIONS[scope_key] = pending
+                    await act_write_state_store.save_pending_confirmation(
+                        scope_key=scope_key,
+                        session_id=session_id,
+                        workspace_id=str(workspace_id or ""),
+                        payload=pending,
+                    )
                     diagnostics["act_runtime"] = _build_runtime_diag(
                         status="executed",
                         mode="write_confirm",
@@ -324,19 +347,35 @@ async def apply_act_read_only_runtime(
     runtime_result = result if isinstance(result, dict) else {"value": result}
     if tool_name in _ACT_WRITE_CONFIRM_ALLOWLIST:
         scope_key = _build_scope_key(req=req, workspace_id=workspace_id)
+        session_id = str(getattr(req, "session_id", "default") or "default")
         filters = dict(getattr(req, "filters", None) or {})
         decision = str(filters.get("act_confirm_decision", "") or "").strip().lower()
         token = str(filters.get("act_confirmation_token", "") or "").strip()
         idempotency_key = str(filters.get("act_idempotency_key", "") or "").strip()
-        pending = dict(_PENDING_WRITE_CONFIRMATIONS.get(scope_key) or {})
+        pending = await act_write_state_store.load_pending_confirmation(
+            scope_key=scope_key,
+            session_id=session_id,
+            workspace_id=str(workspace_id or ""),
+        )
         if decision == "approve" and pending:
             pending["consumed"] = True
-            _PENDING_WRITE_CONFIRMATIONS[scope_key] = pending
+            await act_write_state_store.save_pending_confirmation(
+                scope_key=scope_key,
+                session_id=session_id,
+                workspace_id=str(workspace_id or ""),
+                payload=pending,
+            )
         if decision == "approve" and idempotency_key and token:
-            _WRITE_CONFIRM_IDEMPOTENCY[f"{scope_key}:{idempotency_key}"] = {
-                "confirmation_token": token,
-                "result": dict(runtime_result),
-            }
+            await act_write_state_store.save_idempotency_record(
+                scope_key=scope_key,
+                session_id=session_id,
+                workspace_id=str(workspace_id or ""),
+                idempotency_key=idempotency_key,
+                payload={
+                    "confirmation_token": token,
+                    "result": dict(runtime_result),
+                },
+            )
         reason_code = "act_write_tool_executed_confirmed" if decision == "approve" else "act_write_tool_executed_direct"
         diagnostics["act_runtime"] = _build_runtime_diag(
             status="executed",

@@ -35,7 +35,7 @@ Execution discipline:
 
 ## Next Anchor
 
-A2.87 - Patch 3 (restart-resilient confirm-flow runtime wiring)
+A2.87 - Patch 4 (runtime diagnostics continuity + tests)
 
 ## CI Status
 
