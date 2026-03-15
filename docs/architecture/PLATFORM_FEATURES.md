@@ -77,7 +77,7 @@ AI-Agent-Hub-V3 is a modular AI platform for production-grade agent systems with
 - [x] Side-effect risk classification
 - [x] MCP connector expansion (A2.25 complete: registry/discovery/safety/runtime with quality gates)
 - [x] Answer/Act runtime mode routing and read-only tool execution path (A2.84 complete)
-- [ ] Runtime policy profiles (`prod_strict` / `dev_guided` / `dev_full`) for action/tool governance (A2.85)
+- [x] Runtime policy profiles (`prod_strict` / `dev_guided` / `dev_full`) for action/tool governance (A2.85 patch 2)
 
 ### 6) Platform/Operations
 

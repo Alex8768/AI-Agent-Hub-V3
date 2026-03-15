@@ -2,17 +2,17 @@
 
 ## Current Phase
 
-A2.85 in progress
+A2.85 complete
 
 ## Last Completed Anchor
 
-A2.84 - Act Read-Only Runtime + UX Transparency
+A2.85 - Managed Action Profiles + Compact Diagnostics UX
 
-A2.84 closed with:
-- Act read-only runtime seam with deterministic allowlist (`list_files`, `read_file`)
-- reason-code closure seam promoting policy/runtime reason-codes into top-level warnings
-- chat/meta UI visibility for runtime mode, Act status and block reason-codes
-- focused and full-suite checks green at closure (`584 passed, 3 skipped`)
+A2.85 closed with:
+- runtime policy profile seam (`prod_strict` / `dev_guided` / `dev_full`) with deterministic diagnostics
+- compact diagnostics presentation contract normalization with explicit requested/resolved metadata
+- chat diagnostics verbosity toggle (`compact`/`expanded`) propagated through answer request filters
+- focused and full-suite checks green at closure (`589 passed, 3 skipped`)
 
 Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 - Anchor Closed — A2.56 complete (operational guardrails policy closure)
@@ -20,12 +20,11 @@ Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 
 ## Current Active Anchor
 
-A2.85 - Managed Action Profiles + Compact Diagnostics UX
+A2.85 closed - awaiting next anchor selection
 
 Current focus:
-- introduce deterministic runtime policy profiles by environment/context
-- deliver compact diagnostics default with expanded opt-in path
-- preserve A2.84 mode/reason transparency while adding diagnostics ergonomics
+- keep A2.85 closure state stable and prepare next anchor scope selection
+- preserve profile diagnostics and compact/expanded UI contract behavior
 - continue one-patch-one-reason execution discipline
 
 Execution discipline:
@@ -36,7 +35,7 @@ Execution discipline:
 
 ## Next Anchor
 
-A2.85 - Patch 5 (guardrails + parity + closure)
+TBD - Post-A2.85 planning
 
 ## CI Status
 

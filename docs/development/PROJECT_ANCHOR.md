@@ -129,7 +129,27 @@ Patch 4 artifacts:
 - run focused + full-suite checks, sync mandatory docs, close A2.85.
 
 Patch 5 artifacts:
-- pending
+- focused closure checks green:
+  - `tests/unit/services/answer/test_answer_response_presenter.py`
+  - `tests/unit/services/answer/test_policy_profiles.py`
+  - `tests/unit/services/answer/test_act_read_only_runtime.py`
+  - `tests/unit/services/answer/test_reason_code_policy.py`
+  - `tests/unit/services/answer/test_answer_orchestration_quality_gate.py`
+  - `tests/unit/services/answer/test_answer_service_debug_snapshot.py`
+  - `tests/unit/api/test_answer_endpoint_debug_snapshot.py`
+  - `tests/unit/docs`
+  - result: `114 passed`
+- full-suite parity check green:
+  - `uv run pytest`
+  - result: `589 passed, 3 skipped`
+- frontend closure build check green:
+  - `frontend: npm run build`
+  - result: success
+- mandatory docs synchronized for A2.85 closure:
+  - `docs/development/PROJECT_ANCHOR.md`
+  - `docs/development/PROJECT_CHECKLIST.md`
+  - `docs/development/STATUS.md`
+  - `docs/architecture/PLATFORM_FEATURES.md`
 
 ### Progress
 
@@ -137,7 +157,7 @@ Patch 5 artifacts:
 - [x] Patch 2 — policy profile seam
 - [x] Patch 3 — compact diagnostics contract seam
 - [x] Patch 4 — UI compact/expanded diagnostics toggle
-- [ ] Patch 5 — guardrails + closure
+- [x] Patch 5 — guardrails + closure
 
 ### Non-Negotiable Rules
 
@@ -195,7 +215,7 @@ TBD - Post-A2.85 planning
 
 ## Anchor Closed
 
-A2.84 complete - Act read-only runtime and UI transparency closure.
+A2.85 complete - managed policy profiles and compact diagnostics UX closure.
 
 ## Post-A2.56 Maintenance
 
