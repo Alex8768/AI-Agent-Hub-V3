@@ -124,7 +124,20 @@ Patch 4 artifacts:
 - run focused + full-suite checks, sync mandatory docs, close A2.84.
 
 Patch 5 artifacts:
-- pending
+- focused closure checks green:
+  - `tests/unit/services/answer/test_reason_code_policy.py`
+  - `tests/unit/services/answer/test_act_read_only_runtime.py`
+  - `tests/unit/services/answer/test_answer_orchestration_quality_gate.py`
+  - `tests/unit/services/answer/test_answer_service_debug_snapshot.py`
+  - `tests/unit/api/test_answer_endpoint_debug_snapshot.py`
+  - `tests/unit/docs`
+  - result: `107 passed`
+- full-suite parity check green:
+  - `uv run pytest`
+  - result: `584 passed, 3 skipped`
+- frontend runtime transparency build check green:
+  - `frontend: npm run build`
+  - result: success
 
 ### Progress
 
@@ -132,7 +145,7 @@ Patch 5 artifacts:
 - [x] Patch 2 — Act read-only execution seam
 - [x] Patch 3 — failure-policy and reason-code closure
 - [x] Patch 4 — UI mode/block transparency
-- [ ] Patch 5 — guardrails + closure
+- [x] Patch 5 — guardrails + closure
 
 ### Non-Negotiable Rules
 
