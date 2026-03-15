@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-A2.89 complete
+A2.90 in progress
 
 ## Last Completed Anchor
 
@@ -20,11 +20,11 @@ Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 
 ## Current Active Anchor
 
-A2.89 closed - awaiting next anchor selection
+A2.90 - UI Reliability and Product UX Baseline
 
 Current focus:
-- keep A2.89 closure state stable and prepare next anchor scope selection
-- preserve quota/rate guard reason-code and diagnostics continuity
+- stabilize UI rendering and polish core chat/layout usability
+- add theme and locale baseline for mainstream product ergonomics
 - continue one-patch-one-reason execution discipline
 
 Execution discipline:
@@ -35,7 +35,7 @@ Execution discipline:
 
 ## Next Anchor
 
-TBD - Post-A2.89 planning
+TBD - Post-A2.90 planning
 
 ## CI Status
 

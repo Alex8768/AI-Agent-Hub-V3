@@ -2,34 +2,38 @@
 
 ## Active Anchor
 
-A2.89 - Confirm-Flow Quota and Rate Guards
+A2.90 - UI Reliability and Product UX Baseline
 
 ### Goal
 
-Add deterministic quota and decision-rate guardrails for write confirm-flow so runtime
-can reject abusive or bursty approval traffic with explicit reason-codes.
+Stabilize frontend UX for everyday users: restore predictable rendering, add first-class
+theme support (light/dark/system), introduce auto locale baseline, and keep runtime
+transparency features understandable instead of noisy.
 
 ### Why Now
 
-A2.88 stabilized TTL cleanup and observability metrics. The next reliability gap is
-capacity control: pending confirmation churn, idempotency growth, and rapid approval
-retries should be constrained before EvolutionAgent-era workloads increase pressure.
+Core runtime hardening (A2.84-A2.89) is complete, but user-visible quality is now the
+bottleneck. Current chat styling is still technical/raw and not product-grade for broad
+audience usage, so UI reliability and ergonomics must be upgraded next.
 
 ### Architecture Position
 
-Target A2.89 boundaries:
+Target A2.90 boundaries:
 
-- **Quota controls**
-  - enforce pending confirmation quota per session scope,
-  - enforce idempotency index capacity per session scope.
+- **UI runtime reliability**
+  - remove brittle/hardcoded palette hotspots that cause inconsistent visuals,
+  - keep chat/layout behavior deterministic under panel collapse/resize.
 
-- **Decision-rate controls**
-  - add deterministic approve/cancel rate window guard,
-  - keep behavior durable under cache resets with memory-store fallback.
+- **Theme system baseline**
+  - support `light`, `dark`, and `system` modes with persisted preference,
+  - use graphite-toned dark palette (not near-black) and readable light palette.
 
-- **Runtime policy continuity**
-  - preserve existing write-confirm contract and endpoint shape,
-  - surface guard outcomes via stable `act_runtime.reason_codes`.
+- **Locale baseline**
+  - auto-detect UI language from browser/system preference (initially `en`/`ru`),
+  - keep copy centralized via a minimal translation seam.
+
+- **UX continuity**
+  - preserve existing diagnostics/runtime transparency while simplifying wording and noise density.
 
 - **Guardrails and quality**
   - maintain one patch = one reason discipline,
@@ -38,73 +42,57 @@ Target A2.89 boundaries:
 ### Patch Plan
 
 #### Patch 1 — Inventory + scope lock
-- inventory quota/rate insertion points in write-confirm flow:
-  pending issuance, approve/cancel decision path, idempotency persistence path,
-- lock scope to quota/rate guards and diagnostics continuity only,
-- define initial reason-code contract for quota/rate outcomes.
+- inventory current UX liabilities in chat/layout/theme/locale touchpoints,
+- lock scope to reliability + UX baseline only (no Evolution loop work in A2.90),
+- define deterministic acceptance checks for theme/locale/runtime-info continuity.
 
 Patch 1 artifacts:
-- runtime boundaries mapped:
-  - pending confirmation issuance gate,
-  - approval decision rate gate,
-  - idempotency capacity gate,
-  - diagnostics emission path,
+- frontend boundaries mapped:
+  - chat surface copy and controls,
+  - palette/token usage and hardcoded color hotspots,
+  - app-level preference persistence points,
+  - runtime diagnostics display zones,
 - scope lock affirmed:
-  - no new tool surface,
-  - no endpoint shape breakage,
-  - no unrelated runtime refactor.
+  - no backend contract changes,
+  - no MCP/tooling behavior changes,
+  - no unrelated architecture refactor.
 
-#### Patch 2 — State-store quota/rate seam
-- extend durable state seam with quota/rate evaluation helpers.
+#### Patch 2 — Theme + locale preference seam
+- add app-level UI preference seam with persisted `theme_mode` and resolved locale.
 
 Patch 2 artifacts:
-- state-store seam additions in:
-  - `src/services/answer/act_write_state_store.py`
-- new deterministic guard APIs:
-  - pending quota evaluation,
-  - idempotency quota evaluation,
-  - approve/cancel decision rate evaluation with sliding window.
-- seam coverage expanded in:
-  - `tests/unit/services/answer/test_act_write_state_store.py`
-- focused seam check green:
-  - `tests/unit/services/answer/test_act_write_state_store.py`
-  - result: `7 passed`
+- new preference seam in frontend:
+  - theme mode resolver (`light`/`dark`/`system`),
+  - locale resolver (`en`/`ru`, system-first),
+  - localStorage persistence helpers.
+- seam wiring in:
+  - `frontend/src/App.tsx`
+  - `frontend/src/index.css`
 
-#### Patch 3 — Runtime guard wiring
-- integrate quota/rate guard calls into write-confirm runtime transitions.
+#### Patch 3 — Chat/layout UX refresh
+- apply product-style visual cleanup to chat and shell surfaces.
 
 Patch 3 artifacts:
-- runtime guard wiring in:
-  - `src/services/answer/act_read_only.py`
-- guard outcomes mapped to explicit reason-codes for blocked flows:
-  - pending quota exceeded,
-  - idempotency quota exceeded,
-  - decision rate limited.
-- diagnostics continuity preserved:
-  - existing `act_runtime` structure retained,
-  - `store_stats` continuity maintained.
-- focused runtime check green:
-  - `tests/unit/services/answer/test_act_read_only_runtime.py`
-  - result: `6 passed`
+- refresh for:
+  - `frontend/src/components/ChatPanel.css`
+  - `frontend/src/App.css`
+- outcomes:
+  - improved readability/spacing hierarchy,
+  - less harsh borders and better visual affordances,
+  - stable behavior under side-panel collapse/expand.
 
-#### Patch 4 — Continuity and regression tests
-- add runtime and seam tests for guard decisions and reason-code stability.
+#### Patch 4 — Runtime transparency UX simplification
+- keep diagnostics transparency while reducing cognitive overload.
 
 Patch 4 artifacts:
-- coverage expanded in:
-  - `tests/unit/services/answer/test_act_write_state_store.py`
-  - `tests/unit/services/answer/test_act_read_only_runtime.py`
-- scenarios:
-  - pending quota blocks second issuance in same scope,
-  - idempotency quota blocks new replay-key persistence,
-  - decision rate guard blocks burst approvals.
-- focused regression checks green:
-  - `tests/unit/services/answer/test_act_write_state_store.py`
-  - `tests/unit/services/answer/test_act_read_only_runtime.py`
-  - result: `16 passed`
+- simplify labels and badge wording in:
+  - `frontend/src/components/ChatPanel.tsx`
+  - related style tokens/classes.
+- preserve existing action controls:
+  - write approve/cancel flow remains explicit and deterministic.
 
 #### Patch 5 — Guardrails + parity + closure
-- run focused + full-suite checks, sync mandatory docs, close A2.89.
+- run frontend lint/build + backend regression parity checks, sync mandatory docs, close A2.90.
 
 Patch 5 artifacts:
 - focused closure checks green:
@@ -124,7 +112,7 @@ Patch 5 artifacts:
 - frontend closure build check green:
   - `frontend: npm run build`
   - result: success
-- mandatory docs synchronized for A2.89 closure:
+- mandatory docs synchronized for A2.90 closure:
   - `docs/development/PROJECT_ANCHOR.md`
   - `docs/development/PROJECT_CHECKLIST.md`
   - `docs/development/STATUS.md`
@@ -133,10 +121,10 @@ Patch 5 artifacts:
 ### Progress
 
 - [x] Patch 1 — inventory + scope lock
-- [x] Patch 2 — state-store quota/rate seam
-- [x] Patch 3 — runtime guard wiring
-- [x] Patch 4 — continuity and regression tests
-- [x] Patch 5 — guardrails + closure
+- [ ] Patch 2 — theme + locale preference seam
+- [ ] Patch 3 — chat/layout UX refresh
+- [ ] Patch 4 — runtime transparency UX simplification
+- [ ] Patch 5 — guardrails + closure
 
 ### Non-Negotiable Rules
 
@@ -147,18 +135,19 @@ Patch 5 artifacts:
 
 ### Out of Scope
 
-Do NOT modify during A2.89:
+Do NOT modify during A2.90:
 
 - EvolutionAgent loop implementation,
 - unrelated product or architecture refactors.
 
 ### Definition of Done
 
-A2.89 is complete when:
+A2.90 is complete when:
 
-- pending/idempotency quota and decision-rate guards are deterministic and tested,
-- runtime diagnostics expose explicit quota/rate reason-codes for blocked paths,
-- write-confirm behavior remains contract-safe with no endpoint shape regression,
+- UI renders reliably with no blank/unstyled main surfaces in standard flows,
+- theme modes (`light`/`dark`/`system`) are functional and persisted,
+- locale auto-selection baseline is in place for core UI copy,
+- runtime transparency remains available without overwhelming default UX,
 - focused and full quality checks remain green,
 - mandatory docs are synchronized.
 
@@ -189,7 +178,7 @@ A2.56 policy markers are retained for deterministic docs quality gates:
 
 ## Next Anchor
 
-TBD - Post-A2.89 planning
+TBD - Post-A2.90 planning
 
 ## Anchor Closed
 
