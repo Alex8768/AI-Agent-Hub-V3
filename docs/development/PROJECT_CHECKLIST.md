@@ -86,7 +86,7 @@
 - [x] A2.84 - Act Read-Only Runtime + UX Transparency
 - [x] A2.85 - Managed Action Profiles + Compact Diagnostics UX
 - [x] A2.86 - Controlled Write Actions via Confirm Flow
-- [ ] A2.87 - Durable Approval State Persistence Hardening
+- [x] A2.87 - Durable Approval State Persistence Hardening
 
 ## Current Work — A2.87 Durable Approval State Persistence Hardening
 
@@ -94,7 +94,7 @@
 - [x] Patch 2 - durable write state store seam
 - [x] Patch 3 - restart-resilient confirm-flow runtime wiring
 - [x] Patch 4 - runtime diagnostics continuity + tests
-- [ ] Patch 5 - guardrails + parity + closure
+- [x] Patch 5 - guardrails + parity + closure
 
 ## A2.74 Historical Work - Facade Convergence Phase 18 (Answer/Reasoning)
 

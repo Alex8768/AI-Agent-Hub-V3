@@ -79,7 +79,7 @@ AI-Agent-Hub-V3 is a modular AI platform for production-grade agent systems with
 - [x] Answer/Act runtime mode routing and read-only tool execution path (A2.84 complete)
 - [x] Runtime policy profiles (`prod_strict` / `dev_guided` / `dev_full`) for action/tool governance (A2.85 patch 2)
 - [x] Controlled write action execution via confirm-flow approval handshake (A2.86)
-- [ ] Durable persistence for write confirm-flow pending/idempotency state (A2.87)
+- [x] Durable persistence for write confirm-flow pending/idempotency state (A2.87)
 
 ### 6) Platform/Operations
 

@@ -2,17 +2,17 @@
 
 ## Current Phase
 
-A2.87 in progress
+A2.87 complete
 
 ## Last Completed Anchor
 
-A2.86 - Controlled Write Actions via Confirm Flow
+A2.87 - Durable Approval State Persistence Hardening
 
-A2.86 closed with:
-- profile-aware write policy contract (`blocked` / `confirm_required` / `direct_allowed`)
-- Act write confirm-flow runtime (pending token, approve/cancel, validation and idempotent replay)
-- chat runtime approval controls for pending write actions (approve/cancel in message card)
-- focused and full-suite checks green at closure (`591 passed, 3 skipped`)
+A2.87 closed with:
+- durable write-confirm state store seam for pending/idempotency record persistence
+- confirm-flow runtime wired to durable state load/save paths with restart resilience
+- continuity tests proving pending write approvals can be restored from durable store
+- focused and full-suite checks green at closure (`594 passed, 3 skipped`)
 
 Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 - Anchor Closed — A2.56 complete (operational guardrails policy closure)
@@ -20,11 +20,11 @@ Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 
 ## Current Active Anchor
 
-A2.87 - Durable Approval State Persistence Hardening
+A2.87 closed - awaiting next anchor selection
 
 Current focus:
-- harden write confirm-flow with durable state persistence and restart resilience
-- preserve existing reason-code and diagnostics contracts while shifting state storage
+- keep A2.87 closure state stable and prepare next anchor scope selection
+- preserve durable write confirm-flow behavior and diagnostics contract continuity
 - continue one-patch-one-reason execution discipline
 
 Execution discipline:
@@ -35,7 +35,7 @@ Execution discipline:
 
 ## Next Anchor
 
-A2.87 - Patch 5 (guardrails + parity + closure)
+TBD - Post-A2.87 planning
 
 ## CI Status
 
