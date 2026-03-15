@@ -82,7 +82,30 @@ Patch 2 artifacts:
   token/idempotency/replay behavior.
 
 Patch 3 artifacts:
-- pending
+- Act runtime write-confirm seam implemented in:
+  - `src/services/answer/act_read_only.py`
+- write-capable tool path introduced for `save_file` with profile-aware behavior:
+  - `blocked` -> deterministic block reason-codes
+  - `confirm_required` -> pending confirmation token flow
+  - `direct_allowed` -> direct execution path
+- deterministic confirm-flow contracts added:
+  - pending token issuance (`act-confirm:*`) + ttl metadata
+  - approve/cancel transition handling
+  - token validation (missing/invalid/expired/consumed/tool mismatch)
+  - idempotency replay for approved writes (`act_idempotency_key`)
+- diagnostics expanded for write flow transparency:
+  - `diagnostics.act_runtime.confirmation`
+  - explicit write reason-codes (`act_write_*`)
+- runtime test coverage expanded:
+  - `tests/unit/services/answer/test_act_read_only_runtime.py`
+- focused checks green:
+  - `tests/unit/services/answer/test_act_read_only_runtime.py`
+  - `tests/unit/services/answer/test_policy_profiles.py`
+  - `tests/unit/services/answer/test_answer_orchestration_quality_gate.py`
+  - `tests/unit/services/answer/test_answer_service_debug_snapshot.py`
+  - `tests/unit/api/test_answer_endpoint_debug_snapshot.py`
+  - `tests/unit/docs`
+  - result: `112 passed`
 
 #### Patch 4 — UI approval controls for write actions
 - add pending-approval controls (approve/cancel) and execution status surfaces in UI.
@@ -100,7 +123,7 @@ Patch 5 artifacts:
 
 - [x] Patch 1 — inventory + scope lock
 - [x] Patch 2 — profile-aware write policy seam
-- [ ] Patch 3 — confirm-flow write execution seam
+- [x] Patch 3 — confirm-flow write execution seam
 - [ ] Patch 4 — UI approval controls for write actions
 - [ ] Patch 5 — guardrails + closure
 

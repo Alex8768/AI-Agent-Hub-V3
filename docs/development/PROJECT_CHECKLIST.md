@@ -91,7 +91,7 @@
 
 - [x] Patch 1 - inventory + scope lock
 - [x] Patch 2 - profile-aware write policy seam
-- [ ] Patch 3 - confirm-flow write execution seam
+- [x] Patch 3 - confirm-flow write execution seam
 - [ ] Patch 4 - UI approval controls for write actions
 - [ ] Patch 5 - guardrails + parity + closure
 
