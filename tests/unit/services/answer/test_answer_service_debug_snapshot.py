@@ -230,6 +230,13 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
     assert diag.get("plan_contract_version") == "v1"
     assert diag.get("llm_planner_contract_version") == "v1"
     assert diag.get("tool_selection_contract_version") == "v1"
+    truthfulness_guard = dict(diag.get("truthfulness_guard") or {})
+    assert "status" in truthfulness_guard
+    assert "reason_codes" in truthfulness_guard
+    assert "confidence_before" in truthfulness_guard
+    assert "confidence_after" in truthfulness_guard
+    assert "confidence_cap_applied" in truthfulness_guard
+    assert isinstance(truthfulness_guard.get("confidence_cap_applied"), bool)
     intent = dict(diag.get("assistant_intent") or {})
     assert set(intent.keys()) == {
         "intent",

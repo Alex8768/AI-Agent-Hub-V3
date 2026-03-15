@@ -101,6 +101,12 @@ Patch 4 artifacts:
 - scenarios:
   - warn path caps confidence and emits reason-code,
   - ok path keeps confidence unchanged.
+- focused continuity checks green:
+  - `tests/unit/services/answer/test_response_assembly_truthfulness.py`
+  - `tests/unit/services/answer/test_answer_service_debug_snapshot.py`
+  - `tests/unit/api/test_answer_endpoint_debug_snapshot.py`
+  - `tests/unit/services/answer/test_reason_code_policy.py`
+  - result: `50 passed`
 
 #### Patch 5 — Guardrails + parity + closure
 - run focused + full-suite checks, sync mandatory docs, close A2.92.
@@ -134,7 +140,7 @@ Patch 5 artifacts:
 - [x] Patch 1 — inventory + scope lock
 - [x] Patch 2 — confidence calibration seam
 - [x] Patch 3 — runtime wiring + explainability
-- [ ] Patch 4 — continuity tests
+- [x] Patch 4 — continuity tests
 - [ ] Patch 5 — guardrails + closure
 
 ### Non-Negotiable Rules

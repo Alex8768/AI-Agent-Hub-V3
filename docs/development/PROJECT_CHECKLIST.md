@@ -98,7 +98,7 @@
 - [x] Patch 1 - inventory + scope lock
 - [x] Patch 2 - confidence calibration seam
 - [x] Patch 3 - runtime wiring + explainability
-- [ ] Patch 4 - continuity tests
+- [x] Patch 4 - continuity tests
 - [ ] Patch 5 - guardrails + parity + closure
 
 ## A2.74 Historical Work - Facade Convergence Phase 18 (Answer/Reasoning)
