@@ -68,6 +68,10 @@ Patch 2 artifacts:
 - seam wiring in:
   - `frontend/src/App.tsx`
   - `frontend/src/index.css`
+  - `frontend/src/lib/uiPreferences.ts`
+- focused frontend check green:
+  - `frontend: npm run build`
+  - result: success
 
 #### Patch 3 — Chat/layout UX refresh
 - apply product-style visual cleanup to chat and shell surfaces.
@@ -121,7 +125,7 @@ Patch 5 artifacts:
 ### Progress
 
 - [x] Patch 1 — inventory + scope lock
-- [ ] Patch 2 — theme + locale preference seam
+- [x] Patch 2 — theme + locale preference seam
 - [ ] Patch 3 — chat/layout UX refresh
 - [ ] Patch 4 — runtime transparency UX simplification
 - [ ] Patch 5 — guardrails + closure

@@ -94,7 +94,7 @@
 ## Current Work — A2.90 UI Reliability and Product UX Baseline
 
 - [x] Patch 1 - inventory + scope lock
-- [ ] Patch 2 - theme + locale preference seam
+- [x] Patch 2 - theme + locale preference seam
 - [ ] Patch 3 - chat/layout UX refresh
 - [ ] Patch 4 - runtime transparency UX simplification
 - [ ] Patch 5 - guardrails + parity + closure

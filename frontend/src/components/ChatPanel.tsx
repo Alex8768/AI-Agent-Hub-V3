@@ -48,13 +48,14 @@ interface ChatPanelProps {
   workspaceId: string;
   sessionId: string;
   onSessionUsed: (ws: string, sid: string) => void;
+  locale?: 'en' | 'ru';
 }
 
 function makeMessageId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-export default function ChatPanel({ workspaceId, sessionId, onSessionUsed }: ChatPanelProps) {
+export default function ChatPanel({ workspaceId, sessionId, onSessionUsed, locale = 'en' }: ChatPanelProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [diagnosticsView, setDiagnosticsView] = useState<'compact' | 'full'>(() => {
@@ -180,6 +181,69 @@ export default function ChatPanel({ workspaceId, sessionId, onSessionUsed }: Cha
   }, [input]);
 
   const canSend = useMemo(() => input.trim().length > 0 && !isLoading, [input, isLoading]);
+  const ui = useMemo(
+    () =>
+      locale === 'ru'
+        ? {
+            emptyTitle: 'Готов к следующему запросу',
+            emptyText:
+              'Спрашивайте по документам, запускайте задачи с инструментами, анализируйте граф и работайте в контексте выбранной области и сессии.',
+            hintWorkspace: 'Контекст области',
+            hintGraph: 'Готов к графу',
+            hintTools: 'Инструменты включены',
+            you: 'Вы',
+            agent: 'Агент',
+            error: 'Ошибка',
+            reasoning: 'Ход рассуждений',
+            mode: 'Режим',
+            requested: 'Запрошено',
+            action: 'Действие',
+            diag: 'Диаг',
+            approveWrite: 'Подтвердить запись',
+            cancel: 'Отмена',
+            requestFailed: 'Запрос завершился ошибкой.',
+            approvalFailed: 'Подтверждение завершилось ошибкой.',
+            requestFailedHint: 'Последний запрос завершился ошибкой. Проверьте backend/API и попробуйте снова.',
+            diagnostics: 'Диагностика',
+            compact: 'компактный',
+            expanded: 'расширенный',
+            placeholder: 'Напишите агенту…',
+            send: 'Отправить',
+            working: 'Выполняю…',
+            enterToSend: 'Enter - отправить',
+            shiftEnter: 'Shift + Enter - новая строка',
+          }
+        : {
+            emptyTitle: 'Ready for the next query',
+            emptyText:
+              'Ask about documents, run tool-assisted tasks, inspect graph context, or work inside a specific workspace and session.',
+            hintWorkspace: 'Workspace-aware',
+            hintGraph: 'Graph-ready',
+            hintTools: 'Tool-capable',
+            you: 'You',
+            agent: 'Agent',
+            error: 'Error',
+            reasoning: 'Reasoning notes',
+            mode: 'Mode',
+            requested: 'Requested',
+            action: 'Act',
+            diag: 'Diag',
+            approveWrite: 'Approve Write',
+            cancel: 'Cancel',
+            requestFailed: 'Request failed.',
+            approvalFailed: 'Approval request failed.',
+            requestFailedHint: 'Last request failed. Check backend/API availability and try again.',
+            diagnostics: 'Diagnostics',
+            compact: 'compact',
+            expanded: 'expanded',
+            placeholder: 'Message the agent…',
+            send: 'Send',
+            working: 'Working…',
+            enterToSend: 'Enter to send',
+            shiftEnter: 'Shift + Enter for newline',
+          },
+    [locale],
+  );
 
   const handleSend = async () => {
     const trimmed = input.trim();
@@ -228,7 +292,7 @@ export default function ChatPanel({ workspaceId, sessionId, onSessionUsed }: Cha
         {
           id: makeMessageId(),
           role: 'assistant',
-          content: `Request failed.\n\n${message}`,
+          content: `${ui.requestFailed}\n\n${message}`,
           error: true,
         },
       ]);
@@ -273,7 +337,7 @@ export default function ChatPanel({ workspaceId, sessionId, onSessionUsed }: Cha
         {
           id: makeMessageId(),
           role: 'assistant',
-          content: `Approval request failed.\n\n${message}`,
+          content: `${ui.approvalFailed}\n\n${message}`,
           error: true,
         },
       ]);
@@ -288,15 +352,14 @@ export default function ChatPanel({ workspaceId, sessionId, onSessionUsed }: Cha
         {messages.length === 0 && !isLoading && (
           <div className="chat-empty-state">
             <div className="chat-empty-badge">Agent Console</div>
-            <h2>Ready for the next query</h2>
+            <h2>{ui.emptyTitle}</h2>
             <p>
-              Ask about documents, run tool-assisted tasks, inspect graph context, or work inside a
-              specific workspace and session.
+              {ui.emptyText}
             </p>
             <div className="chat-empty-hints">
-              <span>Workspace-aware</span>
-              <span>Graph-ready</span>
-              <span>Tool-capable</span>
+              <span>{ui.hintWorkspace}</span>
+              <span>{ui.hintGraph}</span>
+              <span>{ui.hintTools}</span>
             </div>
           </div>
         )}
@@ -307,18 +370,18 @@ export default function ChatPanel({ workspaceId, sessionId, onSessionUsed }: Cha
             className={`message-row ${msg.role} ${msg.error ? 'is-error' : ''}`}
           >
             <div className="message-avatar">
-              {msg.role === 'user' ? 'You' : 'AI'}
+              {msg.role === 'user' ? ui.you : 'AI'}
             </div>
 
             <div className="message-card">
               <div className="message-header">
-                <span className="message-role">{msg.role === 'user' ? 'You' : 'Agent'}</span>
-                {msg.error && <span className="message-state">Error</span>}
+                <span className="message-role">{msg.role === 'user' ? ui.you : ui.agent}</span>
+                {msg.error && <span className="message-state">{ui.error}</span>}
               </div>
 
               {msg.thoughts && (
                 <details className="agent-thoughts">
-                  <summary>Reasoning notes</summary>
+                  <summary>{ui.reasoning}</summary>
                   <div className="agent-thoughts-body">{msg.thoughts}</div>
                 </details>
               )}
@@ -327,20 +390,20 @@ export default function ChatPanel({ workspaceId, sessionId, onSessionUsed }: Cha
                 <div className="runtime-info-card">
                   <div className="runtime-info-row">
                     <span className="runtime-info-pill">
-                      Mode: {msg.runtimeInfo.selectedMode}
+                      {ui.mode}: {msg.runtimeInfo.selectedMode}
                     </span>
                     {msg.runtimeInfo.requestedMode !== msg.runtimeInfo.selectedMode && (
                       <span className="runtime-info-pill is-warn">
-                        Requested: {msg.runtimeInfo.requestedMode}
+                        {ui.requested}: {msg.runtimeInfo.requestedMode}
                       </span>
                     )}
                     {msg.runtimeInfo.actStatus !== 'n/a' && (
                       <span className="runtime-info-pill">
-                        Act: {msg.runtimeInfo.actStatus}
+                        {ui.action}: {msg.runtimeInfo.actStatus}
                       </span>
                     )}
                     <span className="runtime-info-pill">
-                      Diag: {msg.runtimeInfo.diagnosticsMode}
+                      {ui.diag}: {msg.runtimeInfo.diagnosticsMode}
                     </span>
                   </div>
                   {msg.runtimeInfo.reasonCodes.length > 0 && (
@@ -358,7 +421,7 @@ export default function ChatPanel({ workspaceId, sessionId, onSessionUsed }: Cha
                         onClick={() => void handleWriteApproval(msg, 'approve')}
                         disabled={isLoading}
                       >
-                        Approve Write
+                        {ui.approveWrite}
                       </button>
                       <button
                         className="runtime-approval-btn is-cancel"
@@ -366,7 +429,7 @@ export default function ChatPanel({ workspaceId, sessionId, onSessionUsed }: Cha
                         onClick={() => void handleWriteApproval(msg, 'cancel')}
                         disabled={isLoading}
                       >
-                        Cancel
+                        {ui.cancel}
                       </button>
                     </div>
                   )}
@@ -385,7 +448,7 @@ export default function ChatPanel({ workspaceId, sessionId, onSessionUsed }: Cha
             <div className="message-avatar">AI</div>
             <div className="message-card is-loading">
               <div className="message-header">
-                <span className="message-role">Agent</span>
+                <span className="message-role">{ui.agent}</span>
               </div>
               <div className="message-loading">
                 <span className="loading-dot" />
@@ -400,7 +463,7 @@ export default function ChatPanel({ workspaceId, sessionId, onSessionUsed }: Cha
       <div className="chat-input-area">
         {requestError && (
           <div className="chat-request-error">
-            Last request failed. Check backend/API availability and try again.
+            {ui.requestFailedHint}
           </div>
         )}
 
@@ -409,13 +472,13 @@ export default function ChatPanel({ workspaceId, sessionId, onSessionUsed }: Cha
             <span className="input-context-pill">Workspace: {workspaceId || 'default'}</span>
             <span className="input-context-pill">Session: {sessionId || 'default'}</span>
             <label className="input-context-select">
-              Diagnostics:
+              {ui.diagnostics}:
               <select
                 value={diagnosticsView}
                 onChange={(e) => setDiagnosticsView(e.target.value === 'full' ? 'full' : 'compact')}
               >
-                <option value="compact">compact</option>
-                <option value="full">expanded</option>
+                <option value="compact">{ui.compact}</option>
+                <option value="full">{ui.expanded}</option>
               </select>
             </label>
           </div>
@@ -433,7 +496,7 @@ export default function ChatPanel({ workspaceId, sessionId, onSessionUsed }: Cha
                   void handleSend();
                 }
               }}
-              placeholder="Message the agent…"
+              placeholder={ui.placeholder}
             />
             <button
               className="send-btn"
@@ -441,13 +504,13 @@ export default function ChatPanel({ workspaceId, sessionId, onSessionUsed }: Cha
               disabled={!canSend}
               type="button"
             >
-              {isLoading ? 'Working…' : 'Send'}
+              {isLoading ? ui.working : ui.send}
             </button>
           </div>
 
           <div className="input-footer">
-            <span>Enter to send</span>
-            <span>Shift + Enter for newline</span>
+            <span>{ui.enterToSend}</span>
+            <span>{ui.shiftEnter}</span>
           </div>
         </div>
       </div>
