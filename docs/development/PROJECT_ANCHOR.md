@@ -97,9 +97,18 @@ Patch 4 artifacts:
 - coverage expansion:
   - `tests/unit/services/answer/test_answer_service_debug_snapshot.py`
   - `tests/unit/services/answer/test_reason_code_policy.py`
+- additional seam continuity coverage:
+  - `tests/unit/services/answer/test_response_assembly_truthfulness.py`
 - scenarios:
   - no evidence + certainty claim emits guard warning,
   - neutral answer remains guard-pass.
+- focused continuity checks green:
+  - `tests/unit/services/answer/test_response_assembly_truthfulness.py`
+  - `tests/unit/services/answer/test_truthfulness_guard.py`
+  - `tests/unit/services/answer/test_answer_service_debug_snapshot.py`
+  - `tests/unit/api/test_answer_endpoint_debug_snapshot.py`
+  - `tests/unit/services/answer/test_reason_code_policy.py`
+  - result: `54 passed`
 
 #### Patch 5 — Guardrails + parity + closure
 - run focused + full-suite checks, sync mandatory docs, close A2.91.
@@ -133,7 +142,7 @@ Patch 5 artifacts:
 - [x] Patch 1 — inventory + scope lock
 - [x] Patch 2 — truthfulness guard seam
 - [x] Patch 3 — runtime wiring
-- [ ] Patch 4 — continuity tests
+- [x] Patch 4 — continuity tests
 - [ ] Patch 5 — guardrails + closure
 
 ### Non-Negotiable Rules
