@@ -91,14 +91,15 @@
 - [x] A2.89 - Confirm-Flow Quota and Rate Guards
 - [x] A2.90 - UI Reliability and Product UX Baseline
 - [x] A2.91 - Truthfulness and Consistency Guard Baseline
+- [ ] A2.92 - Trust Calibration and Explainability Baseline
 
-## Current Work — A2.91 Truthfulness and Consistency Guard Baseline
+## Current Work — A2.92 Trust Calibration and Explainability Baseline
 
 - [x] Patch 1 - inventory + scope lock
-- [x] Patch 2 - truthfulness guard seam
-- [x] Patch 3 - runtime wiring
-- [x] Patch 4 - continuity tests
-- [x] Patch 5 - guardrails + parity + closure
+- [ ] Patch 2 - confidence calibration seam
+- [ ] Patch 3 - runtime wiring + explainability
+- [ ] Patch 4 - continuity tests
+- [ ] Patch 5 - guardrails + parity + closure
 
 ## A2.74 Historical Work - Facade Convergence Phase 18 (Answer/Reasoning)
 

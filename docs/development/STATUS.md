@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-A2.91 complete
+A2.92 in progress
 
 ## Last Completed Anchor
 
@@ -20,11 +20,11 @@ Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 
 ## Current Active Anchor
 
-A2.91 closed - awaiting next anchor selection
+A2.92 - Trust Calibration and Explainability Baseline
 
 Current focus:
-- keep A2.91 closure state stable and prepare next anchor scope selection
-- preserve trust diagnostics continuity while planning the next capability track
+- calibrate answer confidence deterministically on trust-risk signals
+- surface explainable confidence calibration diagnostics while preserving contract stability
 - continue one-patch-one-reason execution discipline
 
 Execution discipline:
@@ -35,7 +35,7 @@ Execution discipline:
 
 ## Next Anchor
 
-TBD - Post-A2.91 planning
+TBD - Post-A2.92 planning
 
 ## CI Status
 
