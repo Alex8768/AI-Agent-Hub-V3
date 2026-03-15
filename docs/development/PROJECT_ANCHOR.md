@@ -2,33 +2,33 @@
 
 ## Active Anchor
 
-A2.94 - Evidence-to-Claim Alignment Signals Baseline
+A2.95 - Structured Claim Graph and Evidence Binding Baseline
 
 ### Goal
 
-Add deterministic evidence-to-claim alignment signaling so trust diagnostics reflect a clear
-reasoning process (checks and outcomes) without polluting answer text with hedging noise.
+Add deterministic structured claim graph diagnostics with evidence binding metadata so
+reasoning-process checks are machine-readable and compact for trust evaluation.
 
 ### Why Now
 
-A2.93 added internal contradiction checks. The next trust gap is external alignment:
-claims should be compared with available evidence signals and surfaced as process diagnostics.
+A2.94 introduced evidence-alignment process signals. The next step is structure:
+diagnostics should represent claims and evidence bindings as explicit graph-like artifacts.
 
 ### Architecture Position
 
-Target A2.94 boundaries:
+Target A2.95 boundaries:
 
-- **Evidence alignment seam extension**
-  - add deterministic claim-vs-evidence mismatch heuristics in trust diagnostics seam,
+- **Claim graph seam extension**
+  - add deterministic claim extraction and evidence binding metadata in trust diagnostics seam,
   - keep checks pure/testable with no provider dependencies.
 
 - **Runtime diagnostics explainability**
-  - surface compact reasoning-process steps and evidence-alignment status in diagnostics,
+  - surface structured claim graph and evidence bindings in diagnostics,
   - preserve existing `/answer` response contract shape.
 
 - **Caution policy extension**
-  - emit evidence mismatch reason-codes for high-certainty unsupported claims,
-  - keep neutral evidence-aligned answers unchanged.
+  - emit claim-graph mismatch reason-codes for unsupported high-certainty claims,
+  - keep neutral supported claims unchanged.
 
 - **Guardrails and quality**
   - one patch = one reason,
@@ -41,56 +41,44 @@ Target A2.94 boundaries:
 ### Patch Plan
 
 #### Patch 1 — Inventory + scope lock
-- inventory evidence-alignment touchpoints in trust guard and diagnostics merge path,
-- lock scope to process-style trust diagnostics only (no answer-text verbosity changes),
-- define deterministic evidence mismatch reason-codes.
+- inventory claim-structure touchpoints in trust guard and diagnostics merge path,
+- lock scope to structured diagnostics only (no answer-text verbosity changes),
+- define deterministic claim-graph reason-codes.
 
 Patch 1 artifacts:
 - boundaries mapped:
-  - trust guard output contract extension (`evidence_alignment`, reasoning process steps),
+  - trust guard output contract extension (`claim_graph`, `evidence_bindings`),
   - non-breaking response/diagnostics merge path,
 - scope lock affirmed:
   - no provider/model routing changes,
   - no EvolutionAgent loop work,
   - no endpoint shape breakage.
 
-#### Patch 2 — Evidence alignment seam extension
-- add claim-vs-evidence mismatch checks and reasoning-process output in truthfulness diagnostics seam.
+#### Patch 2 — Claim graph seam extension
+- add deterministic claim graph and evidence-binding builders in truthfulness diagnostics seam.
 
 Patch 2 artifacts:
 - seam updates in:
   - `src/services/answer/diagnostics/truthfulness_guard.py`
 - baseline checks:
-  - high-certainty claim with low evidence overlap triggers warn status,
-  - reasoning process contains explicit check outcomes.
+  - claims are extracted into stable nodes,
+  - evidence bindings include overlap metrics and bound status.
 - seam coverage:
   - `tests/unit/services/answer/test_truthfulness_guard.py`
-- focused seam check green:
-  - `tests/unit/services/answer/test_truthfulness_guard.py`
-  - result: `8 passed`
 
 #### Patch 3 — Runtime wiring + explainability
-- wire evidence-alignment explainability fields into response diagnostics flow.
+- wire structured claim diagnostics fields into response diagnostics flow.
 
 Patch 3 artifacts:
 - runtime wiring in:
   - `src/services/answer/response_assembly.py`
 - diagnostics additions:
-  - `diagnostics.truthfulness_guard.evidence_alignment`
-  - `diagnostics.truthfulness_guard.reasoning_process`
-- reason-code closure continuity preserved (`truthfulness_guard_evidence_claim_mismatch_detected`).
-- focused wiring checks green:
-  - `tests/unit/services/answer/test_response_assembly_truthfulness.py`
-  - `tests/unit/services/answer/test_answer_service_debug_snapshot.py`
-  - `tests/unit/api/test_answer_endpoint_debug_snapshot.py`
-  - `tests/unit/services/answer/test_truthfulness_guard.py`
-  - `tests/unit/services/answer/test_reason_code_policy.py`
-  - `tests/unit/services/answer/test_answer_soft_failure_observability.py`
-  - `tests/unit/services/answer/test_answer_orchestration_quality_gate.py::test_decomposition_no_growth_gate_answer_and_reasoning_monolith_line_budgets`
-  - result: `71 passed`
+  - `diagnostics.truthfulness_guard.claim_graph`
+  - `diagnostics.truthfulness_guard.evidence_bindings`
+- reason-code closure continuity preserved (`truthfulness_guard_claim_graph_mismatch_detected`).
 
 #### Patch 4 — Continuity tests
-- expand continuity tests for evidence-alignment and reasoning-process field stability.
+- expand continuity tests for claim graph and evidence-binding field stability.
 
 Patch 4 artifacts:
 - coverage expansion:
@@ -98,18 +86,11 @@ Patch 4 artifacts:
   - `tests/unit/api/test_answer_endpoint_debug_snapshot.py`
   - `tests/unit/services/answer/test_reason_code_policy.py`
 - scenarios:
-  - mismatch warn path exposes reasoning process and reason-code,
-  - aligned path preserves ok status.
-- focused continuity checks green:
-  - `tests/unit/services/answer/test_answer_service_debug_snapshot.py`
-  - `tests/unit/api/test_answer_endpoint_debug_snapshot.py`
-  - `tests/unit/services/answer/test_truthfulness_guard.py`
-  - `tests/unit/services/answer/test_response_assembly_truthfulness.py`
-  - `tests/unit/services/answer/test_reason_code_policy.py`
-  - result: `60 passed`
+  - mismatch warn path exposes claim/evidence binding mismatch,
+  - aligned path preserves ok status and bound claims.
 
 #### Patch 5 — Guardrails + parity + closure
-- run focused + full-suite checks, sync mandatory docs, close A2.94.
+- run focused + full-suite checks, sync mandatory docs, close A2.95.
 
 Patch 5 artifacts:
 - focused closure checks green:
@@ -129,7 +110,7 @@ Patch 5 artifacts:
 - frontend parity check green:
   - `frontend: npm run build`
   - result: success
-- mandatory docs synchronized for A2.94 closure:
+- mandatory docs synchronized for A2.95 closure:
   - `docs/development/PROJECT_ANCHOR.md`
   - `docs/development/PROJECT_CHECKLIST.md`
   - `docs/development/STATUS.md`
@@ -138,10 +119,10 @@ Patch 5 artifacts:
 ### Progress
 
 - [x] Patch 1 — inventory + scope lock
-- [x] Patch 2 — evidence alignment seam extension
-- [x] Patch 3 — runtime wiring + explainability
-- [x] Patch 4 — continuity tests
-- [x] Patch 5 — guardrails + closure
+- [ ] Patch 2 — claim graph seam extension
+- [ ] Patch 3 — runtime wiring + explainability
+- [ ] Patch 4 — continuity tests
+- [ ] Patch 5 — guardrails + closure
 
 ### Non-Negotiable Rules
 
@@ -152,17 +133,17 @@ Patch 5 artifacts:
 
 ### Out of Scope
 
-Do NOT modify during A2.94:
+Do NOT modify during A2.95:
 
 - EvolutionAgent loop implementation,
 - unrelated product or architecture refactors.
 
 ### Definition of Done
 
-A2.94 is complete when:
+A2.95 is complete when:
 
-- deterministic evidence-alignment trust seam extension exists and is unit-tested,
-- runtime diagnostics expose evidence-alignment reasoning-process fields without contract regression,
+- deterministic claim-graph trust seam extension exists and is unit-tested,
+- runtime diagnostics expose structured claim/evidence binding fields without contract regression,
 - reason-code/warnings closure remains deterministic,
 - focused and full quality checks remain green,
 - mandatory docs are synchronized.
@@ -194,7 +175,7 @@ A2.56 policy markers are retained for deterministic docs quality gates:
 
 ## Next Anchor
 
-TBD - Post-A2.94 planning
+TBD - Post-A2.95 planning
 
 ## Anchor Closed
 

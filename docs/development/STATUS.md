@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-A2.94 complete
+A2.95 in progress
 
 ## Last Completed Anchor
 
@@ -20,11 +20,11 @@ Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 
 ## Current Active Anchor
 
-A2.94 closed - awaiting next anchor selection
+A2.95 - Structured Claim Graph and Evidence Binding Baseline
 
 Current focus:
-- keep A2.94 closure state stable and prepare next anchor scope selection
-- preserve evidence-alignment diagnostics continuity while planning next capability track
+- add structured claim graph and evidence binding diagnostics for trust process visibility
+- preserve runtime parity while strengthening machine-readable reasoning diagnostics
 - continue one-patch-one-reason execution discipline
 
 Execution discipline:
@@ -35,7 +35,7 @@ Execution discipline:
 
 ## Next Anchor
 
-TBD - Post-A2.94 planning
+TBD - Post-A2.95 planning
 
 ## CI Status
 
