@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-A2.87 complete
+A2.88 in progress
 
 ## Last Completed Anchor
 
@@ -20,11 +20,12 @@ Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 
 ## Current Active Anchor
 
-A2.87 closed - awaiting next anchor selection
+A2.88 - Write Confirm TTL Cleanup + Observability Metrics
 
 Current focus:
-- keep A2.87 closure state stable and prepare next anchor scope selection
-- preserve durable write confirm-flow behavior and diagnostics contract continuity
+- add deterministic TTL cleanup for confirm-flow state records
+- surface cleanup/state observability metrics in runtime diagnostics
+- preserve write-confirm contract behavior and endpoint stability
 - continue one-patch-one-reason execution discipline
 
 Execution discipline:
@@ -35,7 +36,7 @@ Execution discipline:
 
 ## Next Anchor
 
-TBD - Post-A2.87 planning
+A2.88 - Patch 2 (TTL lifecycle state-store seam)
 
 ## CI Status
 

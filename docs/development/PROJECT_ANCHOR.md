@@ -2,33 +2,33 @@
 
 ## Active Anchor
 
-A2.87 - Durable Approval State Persistence Hardening
+A2.88 - Write Confirm TTL Cleanup + Observability Metrics
 
 ### Goal
 
-Harden write-confirm runtime by persisting approval/idempotency state in durable memory
-store so confirmation flow survives process restarts and remains deterministic.
+Add deterministic TTL cleanup lifecycle and runtime observability metrics for write-confirm
+state so long-running environments stay stable and easier to diagnose.
 
 ### Why Now
 
-A2.86 introduced controlled write execution and UI approvals, but pending/idempotency
-state still relied on process memory fallback paths that can be lost on restart.
+A2.87 made write confirm-flow durable; the next bottleneck is lifecycle hygiene
+(expired-state cleanup) and transparent operational metrics for runtime decisions.
 
 ### Architecture Position
 
-Target A2.87 boundaries:
+Target A2.88 boundaries:
 
-- **Durable state persistence seam**
-  - isolate write-confirm pending/idempotency state access behind a dedicated store seam,
-  - persist and reload state via memory store with safe in-process fallback.
+- **TTL cleanup lifecycle**
+  - evict expired pending confirmations and idempotency records deterministically,
+  - keep cleanup safe under best-effort storage availability.
 
-- **Confirm-flow restart resilience**
-  - preserve pending confirmations and idempotency replay after process restart,
-  - keep token validation semantics deterministic.
+- **Runtime observability metrics**
+  - expose cleanup and state-size counters to `act_runtime` diagnostics,
+  - keep reason-code behavior stable and machine-consumable.
 
-- **Diagnostics continuity**
-  - preserve existing runtime reason-code transparency contract,
-  - expose deterministic durable-state load/save behavior through tests.
+- **Continuity and guardrails**
+  - preserve existing endpoint shape and write-confirm contract semantics,
+  - maintain one-patch-one-reason execution discipline.
 
 - **Guardrails and quality**
   - maintain one patch = one reason discipline,
@@ -37,158 +37,88 @@ Target A2.87 boundaries:
 ### Patch Plan
 
 #### Patch 1 — Inventory + scope lock
-- inventory write-confirm state touchpoints:
-  pending confirmation record lifecycle, idempotency replay record lifecycle,
-  memory-store integration points, and fallback behavior boundaries,
-- lock scope to durable-state hardening only (no net-new write tool expansion),
-- define deterministic persistence contract for load/save/replay semantics.
+- inventory lifecycle/observability touchpoints:
+  pending/idempotency expiry semantics, cleanup trigger points,
+  diagnostics surfaces, and runtime contract dependencies,
+- lock scope to cleanup + observability only (no new tool/action surface),
+- define deterministic cleanup metric contract for diagnostics.
 
 Patch 1 artifacts:
 - runtime boundary inventory captured:
-  - write-confirm pending record read/write path,
-  - idempotency replay record read/write path,
-  - memory-store best-effort integration and fallback path,
-  - runtime diagnostics contract continuity path,
+  - write-confirm pending expiry path,
+  - idempotency expiry/index lifecycle path,
+  - cleanup trigger integration path in act runtime,
+  - diagnostics metric emission path,
 - scope lock affirmed:
-  - no ungated write execution path in A2.87,
+  - no ungated write execution path in A2.88,
   - no endpoint shape breakage,
   - no global refactor,
   - no opportunistic feature drift.
 
-#### Patch 2 — Durable write state store seam
-- extract and wire durable pending/idempotency state store seam for write-confirm runtime.
+#### Patch 2 — TTL lifecycle state-store seam
+- add deterministic cleanup lifecycle and expiry-aware store behavior.
 
 Patch 2 artifacts:
-- durable state store seam extracted to:
-  - `src/services/answer/act_write_state_store.py`
-- seam responsibilities:
-  - scope/key normalization for pending/idempotency write-confirm records
-  - memory-store read/write with JSON normalization
-  - safe in-process fallback cache for unavailable memory-store operations
-  - test reset helper for deterministic runtime tests
-- seam coverage added:
-  - `tests/unit/services/answer/test_act_write_state_store.py`
-- focused checks green (seam + runtime regressions):
-  - `tests/unit/services/answer/test_act_write_state_store.py`
-  - `tests/unit/services/answer/test_act_read_only_runtime.py`
-  - `tests/unit/services/answer/test_policy_profiles.py`
-  - `tests/unit/services/answer/test_answer_orchestration_quality_gate.py`
-  - `tests/unit/services/answer/test_answer_service_debug_snapshot.py`
-  - `tests/unit/api/test_answer_endpoint_debug_snapshot.py`
-  - result: `73 passed`
+- pending
 
-#### Patch 3 — Restart-resilient confirm-flow runtime wiring
-- adapt write-confirm runtime to load/save/consume durable state store records.
+#### Patch 3 — Runtime cleanup + observability wiring
+- invoke cleanup lifecycle in act runtime and expose deterministic store metrics.
 
 Patch 3 artifacts:
-- Act write-confirm runtime now wired to durable state seam in:
-  - `src/services/answer/act_read_only.py`
-- pending/idempotency state operations moved from direct process globals to seam calls:
-  - pending load/save through `act_write_state_store.load_pending_confirmation` and
-    `act_write_state_store.save_pending_confirmation`
-  - idempotency load/save through `act_write_state_store.load_idempotency_record` and
-    `act_write_state_store.save_idempotency_record`
-- runtime behavior remains contract-compatible while becoming restart-resilient when
-  memory-store durability is available
-- focused checks green:
-  - `tests/unit/services/answer/test_act_write_state_store.py`
-  - `tests/unit/services/answer/test_act_read_only_runtime.py`
-  - `tests/unit/services/answer/test_policy_profiles.py`
-  - `tests/unit/services/answer/test_answer_orchestration_quality_gate.py`
-  - `tests/unit/services/answer/test_answer_service_debug_snapshot.py`
-  - `tests/unit/api/test_answer_endpoint_debug_snapshot.py`
-  - result: `73 passed`
+- pending
 
-#### Patch 4 — Runtime diagnostics continuity + tests
-- validate durable storage behavior and preserve diagnostic contract surfaces.
+#### Patch 4 — Continuity tests for cleanup and metrics
+- expand unit coverage for expiry and diagnostics metric continuity.
 
 Patch 4 artifacts:
-- runtime continuity coverage expanded:
-  - `tests/unit/services/answer/test_act_write_state_store.py`
-  - `tests/unit/services/answer/test_act_read_only_runtime.py`
-- added restart-resilience runtime test:
-  - pending write confirmation can be restored from durable memory store after
-    process-local cache reset and still complete approve flow deterministically
-- diagnostics compatibility preserved:
-  - no endpoint shape changes
-  - existing `act_runtime` / reason-code surfaces remain contract-safe
-- focused checks green:
-  - `tests/unit/services/answer/test_act_write_state_store.py`
-  - `tests/unit/services/answer/test_act_read_only_runtime.py`
-  - `tests/unit/services/answer/test_policy_profiles.py`
-  - `tests/unit/services/answer/test_answer_orchestration_quality_gate.py`
-  - `tests/unit/services/answer/test_answer_service_debug_snapshot.py`
-  - `tests/unit/api/test_answer_endpoint_debug_snapshot.py`
-  - `tests/unit/docs`
-  - result: `115 passed`
+- pending
 
 #### Patch 5 — Guardrails + parity + closure
-- run focused + full-suite checks, sync mandatory docs, close A2.87.
+- run focused + full-suite checks, sync mandatory docs, close A2.88.
 
 Patch 5 artifacts:
-- focused closure checks green:
-  - `tests/unit/services/answer/test_act_write_state_store.py`
-  - `tests/unit/services/answer/test_act_read_only_runtime.py`
-  - `tests/unit/services/answer/test_policy_profiles.py`
-  - `tests/unit/services/answer/test_reason_code_policy.py`
-  - `tests/unit/services/answer/test_answer_response_presenter.py`
-  - `tests/unit/services/answer/test_answer_orchestration_quality_gate.py`
-  - `tests/unit/services/answer/test_answer_service_debug_snapshot.py`
-  - `tests/unit/api/test_answer_endpoint_debug_snapshot.py`
-  - `tests/unit/docs`
-  - result: `119 passed`
-- full-suite parity check green:
-  - `uv run pytest`
-  - result: `594 passed, 3 skipped`
-- frontend closure build check green:
-  - `frontend: npm run build`
-  - result: success
-- mandatory docs synchronized for A2.87 closure:
-  - `docs/development/PROJECT_ANCHOR.md`
-  - `docs/development/PROJECT_CHECKLIST.md`
-  - `docs/development/STATUS.md`
-  - `docs/architecture/PLATFORM_FEATURES.md`
+- pending
 
 ### Progress
 
 - [x] Patch 1 — inventory + scope lock
-- [x] Patch 2 — durable write state store seam
-- [x] Patch 3 — restart-resilient confirm-flow runtime wiring
-- [x] Patch 4 — runtime diagnostics continuity + tests
-- [x] Patch 5 — guardrails + closure
+- [ ] Patch 2 — TTL lifecycle state-store seam
+- [ ] Patch 3 — runtime cleanup + observability wiring
+- [ ] Patch 4 — continuity tests for cleanup and metrics
+- [ ] Patch 5 — guardrails + closure
 
 ### Non-Negotiable Rules
 
-- Keep ungated write execution disabled in A2.87.
+- Keep ungated write execution disabled in A2.88.
 - Preserve `/answer` contract compatibility and controlled fallback behavior.
 - Keep diagnostics deterministic with explicit reason-codes.
 - One patch = one reason.
 
 ### Out of Scope
 
-Do NOT modify during A2.87:
+Do NOT modify during A2.88:
 
 - EvolutionAgent loop implementation,
 - unrelated product or architecture refactors.
 
 ### Definition of Done
 
-A2.87 is complete when:
+A2.88 is complete when:
 
-- pending/idempotency write-confirm state is persisted and reloadable from durable store,
-- runtime behavior is restart-resilient without contract regressions,
-- diagnostics and reason-code behavior remain stable,
+- pending/idempotency cleanup lifecycle is deterministic and tested,
+- runtime diagnostics expose actionable cleanup/state metrics,
+- write-confirm behavior remains contract-safe with no endpoint shape regression,
 - focused and full quality checks remain green,
 - mandatory docs are synchronized.
 
-## A2.86 Snapshot (Closed)
+## A2.87 Snapshot (Closed)
 
-A2.86 closure markers retained for continuity:
+A2.87 closure markers retained for continuity:
 
-- profile-aware write policy contract (`blocked` / `confirm_required` / `direct_allowed`),
-- Act write confirm-flow runtime with token validation and idempotency replay,
-- UI approve/cancel controls for pending write actions,
-- full-suite parity: `591 passed, 3 skipped`.
+- durable state seam for write-confirm pending/idempotency records,
+- restart-resilient runtime wiring to memory-store state,
+- continuity coverage for pending restore after cache reset,
+- full-suite parity: `594 passed, 3 skipped`.
 
 ## A2.56 Operational Guardrails Snapshot (Closed)
 
@@ -208,7 +138,7 @@ A2.56 policy markers are retained for deterministic docs quality gates:
 
 ## Next Anchor
 
-TBD - Post-A2.87 planning
+TBD - Post-A2.88 planning
 
 ## Anchor Closed
 
