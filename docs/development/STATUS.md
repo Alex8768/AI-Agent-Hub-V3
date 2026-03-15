@@ -36,7 +36,7 @@ Execution discipline:
 
 ## Next Anchor
 
-A2.84 - Patch 2 (Act read-only execution seam)
+A2.84 - Patch 3 (failure-policy and reason-code closure)
 
 ## CI Status
 

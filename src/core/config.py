@@ -568,6 +568,11 @@ class Settings(BaseSettings):
         ge=10,
         description="Maximum workspace size in MB"
     )
+
+    workspace_tools_use_repo_root_in_dev: bool = Field(
+        default=False,
+        description="Use repository root for workspace MCP tools in development mode"
+    )
     
     # ============ SECURITY SETTINGS ============
     secret_key: SecretStr = Field(

@@ -88,7 +88,7 @@
 ## Current Work — A2.84 Act Read-Only Runtime + UX Transparency
 
 - [x] Patch 1 - inventory + scope lock
-- [ ] Patch 2 - Act read-only execution seam
+- [x] Patch 2 - Act read-only execution seam
 - [ ] Patch 3 - failure-policy and reason-code closure
 - [ ] Patch 4 - UI mode/block transparency
 - [ ] Patch 5 - guardrails + parity + closure

@@ -211,6 +211,7 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
         "session_memory_saved",
         "runtime_mode",
         "presentation",
+        "act_runtime",
     }
 
     # Contract keys expected by debug snapshot behavior

@@ -34,4 +34,6 @@ echo "Press Ctrl+C to stop"
 echo ""
 
 cd "/Users/aleksandrladygin/Documents/LLM Engineering/ai-agent-hub-v3"
-PYTHONPATH="$PWD" uvicorn src.api.main:app --host 0.0.0.0 --port 8000 --reload
+PYTHONPATH="$PWD" \
+WORKSPACE_TOOLS_USE_REPO_ROOT_IN_DEV=true \
+uvicorn src.api.main:app --host 0.0.0.0 --port 8000 --reload

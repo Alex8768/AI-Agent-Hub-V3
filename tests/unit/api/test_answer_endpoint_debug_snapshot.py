@@ -149,6 +149,7 @@ def test_answer_endpoint_includes_debug_snapshot_when_debug_enabled(monkeypatch)
         "session_memory_saved",
         "runtime_mode",
         "presentation",
+        "act_runtime",
     }
     assert "trace_id" in diag
     assert "evidence_type_counts" in diag

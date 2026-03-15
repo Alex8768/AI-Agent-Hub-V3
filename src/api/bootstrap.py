@@ -54,6 +54,15 @@ async def _wire_singletons(app: FastAPI) -> None:
     except Exception as e:
         logger.warning(f"⚠️ HybridRetriever singleton skipped (non-fatal): {e}")
 
+    # Workspace MCP runtime (tool registry + local invoker)
+    try:
+        from src.api.mcp_workspace_runtime import wire_workspace_mcp_runtime
+
+        wire_workspace_mcp_runtime(app)
+        logger.info("✅ Workspace MCP runtime wired (list_files/read_file/save_file)")
+    except Exception as e:
+        logger.warning(f"⚠️ Workspace MCP runtime skipped (non-fatal): {e}")
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

@@ -60,7 +60,25 @@ Patch 1 artifacts:
 - wire deterministic read-only tool execution path for Act mode with explicit allowlist.
 
 Patch 2 artifacts:
-- pending
+- act runtime seam extracted to:
+  - `src/services/answer/act_read_only.py`
+  - `apply_act_read_only_runtime`
+- `AnswerService.handle_contract` now invokes read-only Act seam after runtime mode
+  resolution and before response presentation.
+- deterministic read-only policy enforced for Act mode:
+  - allowlist: `list_files`, `read_file`
+  - blocked reason-code: `act_read_only_tool_not_allowlisted`
+  - execution reason-code: `act_read_only_tool_executed`
+- workspace MCP runtime wiring kept explicit on app bootstrap:
+  - `src/api/mcp_workspace_runtime.py`
+  - `src/api/bootstrap.py`
+- focused checks green:
+  - `tests/unit/services/answer/test_act_read_only_runtime.py`
+  - `tests/unit/services/answer/test_answer_orchestration_quality_gate.py`
+  - `tests/unit/services/answer/test_answer_service_debug_snapshot.py`
+  - `tests/unit/api/test_answer_endpoint_debug_snapshot.py`
+  - `tests/unit/docs`
+  - result: `106 passed`
 
 #### Patch 3 — Failure-policy and reason-code closure
 - guarantee controlled fallback + reason-codes for policy/runtime blocks across `/answer`.
@@ -83,7 +101,7 @@ Patch 5 artifacts:
 ### Progress
 
 - [x] Patch 1 — inventory + scope lock
-- [ ] Patch 2 — Act read-only execution seam
+- [x] Patch 2 — Act read-only execution seam
 - [ ] Patch 3 — failure-policy and reason-code closure
 - [ ] Patch 4 — UI mode/block transparency
 - [ ] Patch 5 — guardrails + closure
