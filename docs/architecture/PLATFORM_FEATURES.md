@@ -82,6 +82,7 @@ AI-Agent-Hub-V3 is a modular AI platform for production-grade agent systems with
 - [x] Durable persistence for write confirm-flow pending/idempotency state (A2.87)
 - [x] Write confirm-flow TTL cleanup lifecycle and runtime observability metrics (A2.88)
 - [x] Confirm-flow quota and decision-rate guards with explicit block reason-codes (A2.89)
+- [x] Product UX baseline: theme modes (`light`/`dark`/`system`), system locale auto-detect (`en`/`ru`), and simplified runtime transparency in chat (A2.90)
 
 ### 6) Platform/Operations
 

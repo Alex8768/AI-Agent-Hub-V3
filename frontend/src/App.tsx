@@ -6,7 +6,8 @@ import RightPanel from './components/RightPanel';
 import ChatPanel from './components/ChatPanel';
 import GraphCanvas from './components/GraphCanvas';
 import MetaPanel from './components/MetaPanel';
-import { AppProvider, useAppContext } from './context/AppContext';
+import { AppProvider } from './context/AppContext';
+import { useAppContext } from './context/useAppContext';
 import { getHealth } from './lib/apiClient';
 import {
   readLocalePreference,

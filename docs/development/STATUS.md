@@ -2,17 +2,17 @@
 
 ## Current Phase
 
-A2.90 in progress
+A2.90 complete
 
 ## Last Completed Anchor
 
-A2.89 - Confirm-Flow Quota and Rate Guards
+A2.90 - UI Reliability and Product UX Baseline
 
-A2.89 closed with:
-- deterministic pending/idempotency quota guards in durable write state seam
-- approve/cancel decision-rate limiting with durable memory-store fallback
-- explicit blocked reason-codes for pending quota, idempotency capacity, and rate throttling
-- focused + full-suite + frontend closure checks green (`602 passed, 3 skipped`)
+A2.90 closed with:
+- persisted theme preferences (`light`/`dark`/`system`) and system-first locale baseline (`en`/`ru`)
+- product UX refresh for chat and layout surfaces with improved readability and visual hierarchy
+- runtime transparency simplified for end users while preserving technical reason-code visibility
+- frontend lint/build and backend focused/full regression checks green (`602 passed, 3 skipped`)
 
 Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 - Anchor Closed — A2.56 complete (operational guardrails policy closure)
@@ -20,11 +20,11 @@ Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 
 ## Current Active Anchor
 
-A2.90 - UI Reliability and Product UX Baseline
+A2.90 closed - awaiting next anchor selection
 
 Current focus:
-- stabilize UI rendering and polish core chat/layout usability
-- add theme and locale baseline for mainstream product ergonomics
+- keep A2.90 closure state stable and prepare next anchor scope selection
+- preserve UX and runtime-transparency continuity while planning next capability track
 - continue one-patch-one-reason execution discipline
 
 Execution discipline:

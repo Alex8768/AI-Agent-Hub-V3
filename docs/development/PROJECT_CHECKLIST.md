@@ -89,7 +89,7 @@
 - [x] A2.87 - Durable Approval State Persistence Hardening
 - [x] A2.88 - Write Confirm TTL Cleanup + Observability Metrics
 - [x] A2.89 - Confirm-Flow Quota and Rate Guards
-- [ ] A2.90 - UI Reliability and Product UX Baseline
+- [x] A2.90 - UI Reliability and Product UX Baseline
 
 ## Current Work — A2.90 UI Reliability and Product UX Baseline
 
@@ -97,7 +97,7 @@
 - [x] Patch 2 - theme + locale preference seam
 - [x] Patch 3 - chat/layout UX refresh
 - [x] Patch 4 - runtime transparency UX simplification
-- [ ] Patch 5 - guardrails + parity + closure
+- [x] Patch 5 - guardrails + parity + closure
 
 ## A2.74 Historical Work - Facade Convergence Phase 18 (Answer/Reasoning)
 

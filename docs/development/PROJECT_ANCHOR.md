@@ -105,6 +105,11 @@ Patch 4 artifacts:
 - run frontend lint/build + backend regression parity checks, sync mandatory docs, close A2.90.
 
 Patch 5 artifacts:
+- frontend closure checks green:
+  - `frontend: npm run lint`
+  - result: success
+  - `frontend: npm run build`
+  - result: success
 - focused closure checks green:
   - `tests/unit/services/answer/test_act_write_state_store.py`
   - `tests/unit/services/answer/test_act_read_only_runtime.py`
@@ -119,9 +124,6 @@ Patch 5 artifacts:
 - full-suite parity check green:
   - `uv run pytest`
   - result: `602 passed, 3 skipped`
-- frontend closure build check green:
-  - `frontend: npm run build`
-  - result: success
 - mandatory docs synchronized for A2.90 closure:
   - `docs/development/PROJECT_ANCHOR.md`
   - `docs/development/PROJECT_CHECKLIST.md`
@@ -134,7 +136,7 @@ Patch 5 artifacts:
 - [x] Patch 2 — theme + locale preference seam
 - [x] Patch 3 — chat/layout UX refresh
 - [x] Patch 4 — runtime transparency UX simplification
-- [ ] Patch 5 — guardrails + closure
+- [x] Patch 5 — guardrails + closure
 
 ### Non-Negotiable Rules
 
@@ -192,7 +194,7 @@ TBD - Post-A2.90 planning
 
 ## Anchor Closed
 
-A2.89 complete - confirm-flow quota and rate guardrails closure.
+A2.90 complete - ui reliability and product ux baseline closure.
 
 ## Post-A2.56 Maintenance
 
