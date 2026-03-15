@@ -95,7 +95,7 @@
 ## Current Work — A2.91 Truthfulness and Consistency Guard Baseline
 
 - [x] Patch 1 - inventory + scope lock
-- [ ] Patch 2 - truthfulness guard seam
+- [x] Patch 2 - truthfulness guard seam
 - [ ] Patch 3 - runtime wiring
 - [ ] Patch 4 - continuity tests
 - [ ] Patch 5 - guardrails + parity + closure

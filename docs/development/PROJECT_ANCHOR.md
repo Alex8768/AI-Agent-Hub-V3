@@ -69,6 +69,9 @@ Patch 2 artifacts:
   - direct source-deference phrase detection.
 - seam coverage:
   - `tests/unit/services/answer/test_truthfulness_guard.py`
+- focused seam check green:
+  - `tests/unit/services/answer/test_truthfulness_guard.py`
+  - result: `4 passed`
 
 #### Patch 3 — Runtime wiring
 - wire guard seam into answer response diagnostics flow.
@@ -122,7 +125,7 @@ Patch 5 artifacts:
 ### Progress
 
 - [x] Patch 1 — inventory + scope lock
-- [ ] Patch 2 — truthfulness guard seam
+- [x] Patch 2 — truthfulness guard seam
 - [ ] Patch 3 — runtime wiring
 - [ ] Patch 4 — continuity tests
 - [ ] Patch 5 — guardrails + closure
