@@ -84,6 +84,9 @@ Patch 3 artifacts:
   - improved readability/spacing hierarchy,
   - less harsh borders and better visual affordances,
   - stable behavior under side-panel collapse/expand.
+- focused frontend check green:
+  - `frontend: npm run build`
+  - result: success
 
 #### Patch 4 — Runtime transparency UX simplification
 - keep diagnostics transparency while reducing cognitive overload.
@@ -126,7 +129,7 @@ Patch 5 artifacts:
 
 - [x] Patch 1 — inventory + scope lock
 - [x] Patch 2 — theme + locale preference seam
-- [ ] Patch 3 — chat/layout UX refresh
+- [x] Patch 3 — chat/layout UX refresh
 - [ ] Patch 4 — runtime transparency UX simplification
 - [ ] Patch 5 — guardrails + closure
 
