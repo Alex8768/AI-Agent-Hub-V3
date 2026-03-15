@@ -119,6 +119,7 @@ async def test_response_assembly_writes_soft_failure_reason_code():
         build_assistant_chat_recovery_answer=_recovery,
         normalize_low_evidence_friendliness=lambda **kwargs: str(kwargs.get("answer", "") or ""),
         build_conversational_runtime_parity_bundle=_raise_parity,
+        build_truthfulness_guard_bundle=lambda **kwargs: {"status": "ok", "reason_codes": ["truthfulness_guard_evaluated"]},
     )
 
     diag = dict(getattr(out, "diagnostics", None) or {})

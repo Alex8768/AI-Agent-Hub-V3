@@ -2,17 +2,17 @@
 
 ## Current Phase
 
-A2.91 in progress
+A2.91 complete
 
 ## Last Completed Anchor
 
-A2.90 - UI Reliability and Product UX Baseline
+A2.91 - Truthfulness and Consistency Guard Baseline
 
-A2.90 closed with:
-- persisted theme preferences (`light`/`dark`/`system`) and system-first locale baseline (`en`/`ru`)
-- product UX refresh for chat and layout surfaces with improved readability and visual hierarchy
-- runtime transparency simplified for end users while preserving technical reason-code visibility
-- frontend lint/build and backend focused/full regression checks green (`602 passed, 3 skipped`)
+A2.91 closed with:
+- deterministic truthfulness guard seam for low-evidence certainty and source-deference signals
+- response diagnostics wiring for `truthfulness_guard` with planning reason-code continuity
+- continuity coverage for response-assembly warn/pass paths
+- focused checks green (`133 passed`) and full-suite parity green (`608 passed, 3 skipped`)
 
 Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 - Anchor Closed — A2.56 complete (operational guardrails policy closure)
@@ -20,11 +20,11 @@ Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 
 ## Current Active Anchor
 
-A2.91 - Truthfulness and Consistency Guard Baseline
+A2.91 closed - awaiting next anchor selection
 
 Current focus:
-- add deterministic trust guardrails for answer consistency/evidence alignment
-- preserve runtime contract and reason-code determinism while adding trust diagnostics
+- keep A2.91 closure state stable and prepare next anchor scope selection
+- preserve trust diagnostics continuity while planning the next capability track
 - continue one-patch-one-reason execution discipline
 
 Execution discipline:

@@ -127,7 +127,7 @@ Patch 5 artifacts:
   - result: `127 passed`
 - full-suite parity check green:
   - `uv run pytest`
-  - result: green
+  - result: `608 passed, 3 skipped`
 - frontend parity check green:
   - `frontend: npm run build`
   - result: success
@@ -143,7 +143,7 @@ Patch 5 artifacts:
 - [x] Patch 2 — truthfulness guard seam
 - [x] Patch 3 — runtime wiring
 - [x] Patch 4 — continuity tests
-- [ ] Patch 5 — guardrails + closure
+- [x] Patch 5 — guardrails + closure
 
 ### Non-Negotiable Rules
 
@@ -200,7 +200,7 @@ TBD - Post-A2.91 planning
 
 ## Anchor Closed
 
-A2.90 complete - ui reliability and product ux baseline closure.
+A2.91 complete - truthfulness and consistency guard baseline closure.
 
 ## Post-A2.56 Maintenance
 

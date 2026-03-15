@@ -83,6 +83,7 @@ AI-Agent-Hub-V3 is a modular AI platform for production-grade agent systems with
 - [x] Write confirm-flow TTL cleanup lifecycle and runtime observability metrics (A2.88)
 - [x] Confirm-flow quota and decision-rate guards with explicit block reason-codes (A2.89)
 - [x] Product UX baseline: theme modes (`light`/`dark`/`system`), system locale auto-detect (`en`/`ru`), and simplified runtime transparency in chat (A2.90)
+- [x] Deterministic truthfulness guard baseline: low-evidence high-certainty and source-deference diagnostics signals in answer runtime (A2.91)
 
 ### 6) Platform/Operations
 

@@ -70,3 +70,18 @@ def build_conversational_runtime_parity_bundle(
         answer_language_fn=answer_language_fn,
         is_unknown_style_answer_fn=is_unknown_style_answer_fn,
     )
+
+
+def build_truthfulness_guard_bundle(
+    *,
+    query: str,
+    answer: str,
+    diagnostics: dict[str, object],
+) -> dict[str, object]:
+    import importlib
+
+    impl = getattr(
+        importlib.import_module("src.services.answer.diagnostics.truthfulness_guard"),
+        "build_truthfulness_guard_bundle",
+    )
+    return impl(query=query, answer=answer, diagnostics=diagnostics)

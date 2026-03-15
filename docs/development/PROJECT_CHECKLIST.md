@@ -90,7 +90,7 @@
 - [x] A2.88 - Write Confirm TTL Cleanup + Observability Metrics
 - [x] A2.89 - Confirm-Flow Quota and Rate Guards
 - [x] A2.90 - UI Reliability and Product UX Baseline
-- [ ] A2.91 - Truthfulness and Consistency Guard Baseline
+- [x] A2.91 - Truthfulness and Consistency Guard Baseline
 
 ## Current Work — A2.91 Truthfulness and Consistency Guard Baseline
 
@@ -98,7 +98,7 @@
 - [x] Patch 2 - truthfulness guard seam
 - [x] Patch 3 - runtime wiring
 - [x] Patch 4 - continuity tests
-- [ ] Patch 5 - guardrails + parity + closure
+- [x] Patch 5 - guardrails + parity + closure
 
 ## A2.74 Historical Work - Facade Convergence Phase 18 (Answer/Reasoning)
 
