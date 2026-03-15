@@ -36,7 +36,7 @@ Execution discipline:
 
 ## Next Anchor
 
-A2.84 - Patch 3 (failure-policy and reason-code closure)
+A2.84 - Patch 4 (UI mode/block transparency)
 
 ## CI Status
 

@@ -807,14 +807,13 @@ class AnswerService:
         failure_policy = importlib.import_module("src.services.answer.failure_policy")
         response_presenter = importlib.import_module("src.services.answer.response_presenter")
         act_read_only = importlib.import_module("src.services.answer.act_read_only")
+        reason_code_policy = importlib.import_module("src.services.answer.reason_code_policy")
         runtime_mode_route = runtime_mode_router.resolve_answer_runtime_mode(req=req, runtime_context=runtime_context)
-
         engine = engine or getattr(http.app.state, "rag_engine", None)
         hybrid = retriever or getattr(http.app.state, "hybrid_retriever", None)
         if engine is None or hybrid is None:
             from fastapi import HTTPException
             raise HTTPException(status_code=503, detail="Reasoning stack not initialized")
-
         try:
             pipeline = await _run_answer_primary_pipeline(
                 http=http, req=req, workspace_id=workspace_id, settings=s, runtime_context=runtime_context, engine=engine,
@@ -850,6 +849,7 @@ class AnswerService:
             )
         runtime_mode_router.apply_runtime_mode_diagnostics(resp=resp, route=runtime_mode_route)
         resp = await act_read_only.apply_act_read_only_runtime(resp=resp, req=req, http=http, workspace_id=workspace_id, route=runtime_mode_route)
+        resp = reason_code_policy.apply_reason_code_closure(resp=resp)
         resp = response_presenter.present_answer_response(req=req, resp=resp)
 
         return resp

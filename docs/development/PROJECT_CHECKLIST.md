@@ -89,7 +89,7 @@
 
 - [x] Patch 1 - inventory + scope lock
 - [x] Patch 2 - Act read-only execution seam
-- [ ] Patch 3 - failure-policy and reason-code closure
+- [x] Patch 3 - failure-policy and reason-code closure
 - [ ] Patch 4 - UI mode/block transparency
 - [ ] Patch 5 - guardrails + parity + closure
 

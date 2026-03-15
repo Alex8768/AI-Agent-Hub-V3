@@ -84,7 +84,23 @@ Patch 2 artifacts:
 - guarantee controlled fallback + reason-codes for policy/runtime blocks across `/answer`.
 
 Patch 3 artifacts:
-- pending
+- reason-code closure seam extracted to:
+  - `src/services/answer/reason_code_policy.py`
+  - `apply_reason_code_closure`
+- `AnswerService.handle_contract` now applies reason-code closure after
+  mode/act diagnostics, ensuring deterministic policy/runtime reason-codes are
+  promoted to top-level `warnings`.
+- closure includes reason-code propagation from:
+  - `diagnostics.runtime_mode.reason_codes`
+  - `diagnostics.act_runtime.reason_codes`
+  - `diagnostics.failure_policy.reason_code`
+- focused checks green:
+  - `tests/unit/services/answer/test_reason_code_policy.py`
+  - `tests/unit/services/answer/test_answer_orchestration_quality_gate.py`
+  - `tests/unit/services/answer/test_answer_service_debug_snapshot.py`
+  - `tests/unit/api/test_answer_endpoint_debug_snapshot.py`
+  - `tests/unit/docs`
+  - result: `107 passed`
 
 #### Patch 4 — UI mode/block transparency
 - surface `runtime_mode` and policy block reasons in UI (meta/chat surfaces).
@@ -102,7 +118,7 @@ Patch 5 artifacts:
 
 - [x] Patch 1 — inventory + scope lock
 - [x] Patch 2 — Act read-only execution seam
-- [ ] Patch 3 — failure-policy and reason-code closure
+- [x] Patch 3 — failure-policy and reason-code closure
 - [ ] Patch 4 — UI mode/block transparency
 - [ ] Patch 5 — guardrails + closure
 
