@@ -1,6 +1,9 @@
 from __future__ import annotations
 
-from src.services.answer.diagnostics.truthfulness_guard import build_truthfulness_guard_bundle
+from src.services.answer.diagnostics.truthfulness_guard import (
+    build_truthfulness_guard_bundle,
+    calibrate_confidence_with_truthfulness_guard,
+)
 
 
 def test_truthfulness_guard_warns_on_low_evidence_and_high_certainty() -> None:
@@ -37,3 +40,23 @@ def test_truthfulness_guard_marks_empty_payload() -> None:
     bundle = build_truthfulness_guard_bundle(query="", answer="", diagnostics={"retrieved_provenance_count": 0})
     assert bundle.get("status") == "warn"
     assert "truthfulness_guard_empty_payload" in list(bundle.get("reason_codes") or [])
+
+
+def test_truthfulness_confidence_calibration_caps_warn_path() -> None:
+    calibrated, details = calibrate_confidence_with_truthfulness_guard(
+        confidence=0.92,
+        truthfulness_guard_bundle={"status": "warn"},
+    )
+    assert calibrated == 0.55
+    assert bool(details.get("confidence_cap_applied")) is True
+    assert "truthfulness_guard_confidence_capped" in list(details.get("reason_codes") or [])
+
+
+def test_truthfulness_confidence_calibration_keeps_ok_path() -> None:
+    calibrated, details = calibrate_confidence_with_truthfulness_guard(
+        confidence=0.71,
+        truthfulness_guard_bundle={"status": "ok"},
+    )
+    assert calibrated == 0.71
+    assert bool(details.get("confidence_cap_applied")) is False
+    assert "truthfulness_guard_confidence_capped" not in list(details.get("reason_codes") or [])

@@ -66,6 +66,9 @@ Patch 2 artifacts:
   - ok status leaves confidence unchanged.
 - seam coverage:
   - `tests/unit/services/answer/test_truthfulness_guard.py`
+- focused seam check green:
+  - `tests/unit/services/answer/test_truthfulness_guard.py`
+  - result: `6 passed`
 
 #### Patch 3 — Runtime wiring + explainability
 - wire confidence calibration into answer response assembly.
@@ -121,7 +124,7 @@ Patch 5 artifacts:
 ### Progress
 
 - [x] Patch 1 — inventory + scope lock
-- [ ] Patch 2 — confidence calibration seam
+- [x] Patch 2 — confidence calibration seam
 - [ ] Patch 3 — runtime wiring + explainability
 - [ ] Patch 4 — continuity tests
 - [ ] Patch 5 — guardrails + closure

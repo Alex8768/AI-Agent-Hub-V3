@@ -22,6 +22,7 @@ _SOURCE_DEFERENCE_PHRASES: tuple[str, ...] = (
     "википедия говорит",
     "как написано в википедии",
 )
+_WARN_CONFIDENCE_CAP = 0.55
 
 
 def _normalize_text(value: str) -> str:
@@ -72,4 +73,27 @@ def build_truthfulness_guard_bundle(
             "strong_certainty_detected": bool(has_strong_certainty),
             "source_deference_detected": bool(has_source_deference),
         },
+    }
+
+
+def calibrate_confidence_with_truthfulness_guard(
+    *,
+    confidence: float | int | None,
+    truthfulness_guard_bundle: dict[str, object] | None,
+) -> tuple[float, dict[str, object]]:
+    raw_confidence = float(confidence if confidence is not None else 0.0)
+    normalized_before = max(0.0, min(1.0, raw_confidence))
+    guard = dict(truthfulness_guard_bundle or {})
+    guard_status = str(guard.get("status", "ok") or "ok").strip().lower()
+    applied = guard_status == "warn" and normalized_before > _WARN_CONFIDENCE_CAP
+    normalized_after = _WARN_CONFIDENCE_CAP if applied else normalized_before
+    reason_codes = ["truthfulness_guard_confidence_calibrated"]
+    if applied:
+        reason_codes.append("truthfulness_guard_confidence_capped")
+    return normalized_after, {
+        "confidence_before": normalized_before,
+        "confidence_after": normalized_after,
+        "confidence_cap": _WARN_CONFIDENCE_CAP,
+        "confidence_cap_applied": applied,
+        "reason_codes": sorted(set(reason_codes)),
     }

@@ -96,7 +96,7 @@
 ## Current Work — A2.92 Trust Calibration and Explainability Baseline
 
 - [x] Patch 1 - inventory + scope lock
-- [ ] Patch 2 - confidence calibration seam
+- [x] Patch 2 - confidence calibration seam
 - [ ] Patch 3 - runtime wiring + explainability
 - [ ] Patch 4 - continuity tests
 - [ ] Patch 5 - guardrails + parity + closure
