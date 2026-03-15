@@ -2,17 +2,17 @@
 
 ## Current Phase
 
-A2.93 in progress
+A2.93 complete
 
 ## Last Completed Anchor
 
-A2.92 - Trust Calibration and Explainability Baseline
+A2.93 - Logic Consistency Signals Baseline
 
-A2.92 closed with:
-- deterministic trust confidence calibration seam with warn-path cap policy
-- response diagnostics explainability fields (`confidence_before`/`confidence_after`/`confidence_cap_applied`)
-- continuity coverage for snapshot stability and response-assembly calibration behavior
-- focused checks green (`147 passed`) and full-suite parity green (`610 passed, 3 skipped`)
+A2.93 closed with:
+- deterministic contradiction-pattern signals integrated into truthfulness diagnostics
+- runtime explainability fields for compact trust summary and logic consistency status
+- continuity coverage for debug snapshot stability of new trust fields
+- focused checks green (`149 passed`) and full-suite parity green (`612 passed, 3 skipped`)
 
 Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 - Anchor Closed — A2.56 complete (operational guardrails policy closure)
@@ -20,11 +20,11 @@ Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 
 ## Current Active Anchor
 
-A2.93 - Logic Consistency Signals Baseline
+A2.93 closed - awaiting next anchor selection
 
 Current focus:
-- add deterministic internal-logic contradiction signaling for answer trust diagnostics
-- preserve runtime parity while adding compact trust explainability summary
+- keep A2.93 closure state stable and prepare next anchor scope selection
+- preserve logic-consistency diagnostics continuity while planning next capability track
 - continue one-patch-one-reason execution discipline
 
 Execution discipline:

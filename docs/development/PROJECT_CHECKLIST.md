@@ -92,7 +92,7 @@
 - [x] A2.90 - UI Reliability and Product UX Baseline
 - [x] A2.91 - Truthfulness and Consistency Guard Baseline
 - [x] A2.92 - Trust Calibration and Explainability Baseline
-- [ ] A2.93 - Logic Consistency Signals Baseline
+- [x] A2.93 - Logic Consistency Signals Baseline
 
 ## Current Work — A2.93 Logic Consistency Signals Baseline
 
@@ -100,7 +100,7 @@
 - [x] Patch 2 - logic consistency seam extension
 - [x] Patch 3 - runtime wiring + explainability
 - [x] Patch 4 - continuity tests
-- [ ] Patch 5 - guardrails + parity + closure
+- [x] Patch 5 - guardrails + parity + closure
 
 ## A2.74 Historical Work - Facade Convergence Phase 18 (Answer/Reasoning)
 

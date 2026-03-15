@@ -85,6 +85,7 @@ AI-Agent-Hub-V3 is a modular AI platform for production-grade agent systems with
 - [x] Product UX baseline: theme modes (`light`/`dark`/`system`), system locale auto-detect (`en`/`ru`), and simplified runtime transparency in chat (A2.90)
 - [x] Deterministic truthfulness guard baseline: low-evidence high-certainty and source-deference diagnostics signals in answer runtime (A2.91)
 - [x] Deterministic trust calibration baseline: confidence cap + explainability diagnostics for truthfulness warn paths (A2.92)
+- [x] Deterministic logic consistency signals baseline: contradiction-pattern detection and compact trust summary diagnostics in answer runtime (A2.93)
 
 ### 6) Platform/Operations
 
