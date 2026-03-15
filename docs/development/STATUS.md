@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-A2.82 complete
+A2.83 Step 0.5 in progress
 
 ## Last Completed Anchor
 
@@ -19,12 +19,13 @@ Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 
 ## Current Active Anchor
 
-TBD - Post-A2.83 planning
+A2.83 Step 0.5 - Facade Stabilization Before Act/Evolve
 
 Current focus:
-- define next inventory and scope lock after A2.82 closure
-- preserve no-growth guardrail discipline from latest baselines (`855`/`241`) and import budgets (`15`/`14`)
-- maintain one-patch-one-reason execution discipline
+- keep `AnswerService` as thin facade before Act/Evolve runtime enablement
+- route runtime concerns through seams (mode routing, failure policy, response presentation)
+- remove user-path `/answer` hard failures in favor of controlled fallback + reason-codes
+- keep one-patch-one-reason execution discipline
 
 Execution discipline:
 - no net-new intelligence features
@@ -34,7 +35,7 @@ Execution discipline:
 
 ## Next Anchor
 
-TBD - Post-A2.82 planning
+A2.83 Step 0.5 - Patch 2 (mode router seam)
 
 ## CI Status
 
