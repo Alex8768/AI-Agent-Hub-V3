@@ -24,9 +24,16 @@ def resolve_runtime_policy_profile(*, req: object, settings: object) -> dict[str
             reason_codes.append("runtime_policy_profile_override_applied")
 
     allow_act_read_only = profile in {"dev_guided", "dev_full"}
+    write_policy_by_profile = {
+        "prod_strict": "blocked",
+        "dev_guided": "confirm_required",
+        "dev_full": "direct_allowed",
+    }
+    act_write_policy = str(write_policy_by_profile.get(profile, "blocked"))
     return {
         "profile_name": profile,
         "source": source,
         "allow_act_read_only": allow_act_read_only,
+        "act_write_policy": act_write_policy,
         "reason_codes": reason_codes,
     }

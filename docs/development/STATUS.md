@@ -36,7 +36,7 @@ Execution discipline:
 
 ## Next Anchor
 
-A2.86 - Patch 2 (profile-aware write policy seam)
+A2.86 - Patch 3 (confirm-flow write execution seam)
 
 ## CI Status
 

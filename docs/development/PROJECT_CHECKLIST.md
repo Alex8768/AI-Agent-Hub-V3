@@ -90,7 +90,7 @@
 ## Current Work — A2.86 Controlled Write Actions via Confirm Flow
 
 - [x] Patch 1 - inventory + scope lock
-- [ ] Patch 2 - profile-aware write policy seam
+- [x] Patch 2 - profile-aware write policy seam
 - [ ] Patch 3 - confirm-flow write execution seam
 - [ ] Patch 4 - UI approval controls for write actions
 - [ ] Patch 5 - guardrails + parity + closure

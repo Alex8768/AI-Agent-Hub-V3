@@ -60,7 +60,22 @@ Patch 1 artifacts:
   deterministic policy reason-codes.
 
 Patch 2 artifacts:
-- pending
+- policy profile seam extended with explicit write policy contract:
+  - `src/services/answer/policy_profiles.py`
+  - `act_write_policy`: `blocked` / `confirm_required` / `direct_allowed`
+- profile-to-write-policy matrix now deterministic:
+  - `prod_strict` -> `blocked`
+  - `dev_guided` -> `confirm_required`
+  - `dev_full` -> `direct_allowed`
+- unit coverage expanded for profile write policy expectations:
+  - `tests/unit/services/answer/test_policy_profiles.py`
+- focused checks green:
+  - `tests/unit/services/answer/test_policy_profiles.py`
+  - `tests/unit/services/answer/test_answer_orchestration_quality_gate.py`
+  - `tests/unit/services/answer/test_answer_service_debug_snapshot.py`
+  - `tests/unit/api/test_answer_endpoint_debug_snapshot.py`
+  - `tests/unit/docs`
+  - result: `107 passed`
 
 #### Patch 3 — Confirm-flow write execution seam
 - route write-capable tool execution through approval handshake with deterministic
@@ -84,7 +99,7 @@ Patch 5 artifacts:
 ### Progress
 
 - [x] Patch 1 — inventory + scope lock
-- [ ] Patch 2 — profile-aware write policy seam
+- [x] Patch 2 — profile-aware write policy seam
 - [ ] Patch 3 — confirm-flow write execution seam
 - [ ] Patch 4 — UI approval controls for write actions
 - [ ] Patch 5 — guardrails + closure
