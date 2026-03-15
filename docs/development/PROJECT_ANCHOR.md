@@ -74,7 +74,18 @@ Patch 2 artifacts:
 - enforce controlled fallback for user-path errors (`/answer`) with deterministic reason-codes.
 
 Patch 3 artifacts:
-- pending
+- failure policy seam extracted to:
+  - `src/services/answer/failure_policy.py`
+  - `build_controlled_answer_fallback`
+- `AnswerService.handle_contract` now applies guarded exception handling around
+  primary orchestration and returns controlled fallback response instead of bubbling
+  runtime exceptions to endpoint-level `500`.
+- deterministic fallback reason-code introduced:
+  - `answer_runtime_controlled_fallback`
+- focused checks green:
+  - `tests/unit/services/answer/test_answer_failure_policy.py`
+  - `tests/unit/services/answer/test_answer_orchestration_quality_gate.py`
+  - result: `19 passed`
 
 #### Patch 4 — Response presenter seam
 - split compact response shape from full diagnostics payload for UI clarity and runtime efficiency.
@@ -93,7 +104,7 @@ Patch 5 artifacts:
 
 - [x] Patch 1 — inventory + scope lock
 - [x] Patch 2 — mode router seam
-- [ ] Patch 3 — failure policy seam
+- [x] Patch 3 — failure policy seam
 - [ ] Patch 4 — response presenter seam
 - [ ] Patch 5 — guardrails + closure
 

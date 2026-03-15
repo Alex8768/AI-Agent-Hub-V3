@@ -804,6 +804,7 @@ class AnswerService:
         log_observability(http, workspace_id=workspace_id, req=req)
         import importlib
         runtime_mode_router = importlib.import_module("src.services.answer.mode_router")
+        failure_policy = importlib.import_module("src.services.answer.failure_policy")
         runtime_mode_route = runtime_mode_router.resolve_answer_runtime_mode(req=req, runtime_context=runtime_context)
 
         engine = engine or getattr(http.app.state, "rag_engine", None)
@@ -812,41 +813,39 @@ class AnswerService:
             from fastapi import HTTPException
             raise HTTPException(status_code=503, detail="Reasoning stack not initialized")
 
-        pipeline = await _run_answer_primary_pipeline(
-            http=http,
-            req=req,
-            workspace_id=workspace_id,
-            settings=s,
-            runtime_context=runtime_context,
-            engine=engine,
-            hybrid=hybrid,
-            get_reasoning_engine=get_reasoning_engine,
-            get_memory_store=get_memory_store,
-        )
-        resp = await run_answer_post_orchestration_flow(
-            req=req,
-            http=http,
-            resp=pipeline.resp,
-            workspace_id=workspace_id,
-            assistant_mode_enabled=pipeline.assistant_mode_enabled,
-            assistant_proactive_enabled=pipeline.assistant_proactive_enabled,
-            assistant_actions_enabled=pipeline.assistant_actions_enabled,
-            assistant_response_language=pipeline.assistant_response_language,
-            loaded_durable_approval=pipeline.loaded_durable_approval,
-            loaded_durable_idempotency=pipeline.loaded_durable_idempotency,
-            get_memory_store=get_memory_store,
-            deps=_build_post_orchestration_deps(),
-        )
-
-        resp = await run_answer_diagnostics_merge_flow(
-            req=req,
-            resp=resp,
-            workspace_id=workspace_id,
-            loaded_durable_approval=pipeline.loaded_durable_approval,
-            loaded_durable_idempotency=pipeline.loaded_durable_idempotency,
-            get_memory_store=get_memory_store,
-            deps=_build_diagnostics_merge_deps(),
-        )
+        try:
+            pipeline = await _run_answer_primary_pipeline(
+                http=http, req=req, workspace_id=workspace_id, settings=s, runtime_context=runtime_context, engine=engine,
+                hybrid=hybrid, get_reasoning_engine=get_reasoning_engine, get_memory_store=get_memory_store,
+            )
+            resp = await run_answer_post_orchestration_flow(
+                req=req, http=http, resp=pipeline.resp, workspace_id=workspace_id,
+                assistant_mode_enabled=pipeline.assistant_mode_enabled,
+                assistant_proactive_enabled=pipeline.assistant_proactive_enabled,
+                assistant_actions_enabled=pipeline.assistant_actions_enabled,
+                assistant_response_language=pipeline.assistant_response_language,
+                loaded_durable_approval=pipeline.loaded_durable_approval,
+                loaded_durable_idempotency=pipeline.loaded_durable_idempotency,
+                get_memory_store=get_memory_store, deps=_build_post_orchestration_deps(),
+            )
+            resp = await run_answer_diagnostics_merge_flow(
+                req=req, resp=resp, workspace_id=workspace_id,
+                loaded_durable_approval=pipeline.loaded_durable_approval,
+                loaded_durable_idempotency=pipeline.loaded_durable_idempotency,
+                get_memory_store=get_memory_store, deps=_build_diagnostics_merge_deps(),
+            )
+        except Exception as e:
+            _LOGGER.warning(
+                "answer_runtime_controlled_fallback",
+                extra={"workspace_id": workspace_id, "reason_code": "answer_runtime_controlled_fallback", "error": str(e)},
+            )
+            return failure_policy.build_controlled_answer_fallback(
+                req=req,
+                workspace_id=workspace_id,
+                reason_code="answer_runtime_controlled_fallback",
+                error=e,
+                route=runtime_mode_route,
+            )
         runtime_mode_router.apply_runtime_mode_diagnostics(resp=resp, route=runtime_mode_route)
 
         return resp
