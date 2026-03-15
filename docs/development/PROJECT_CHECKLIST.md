@@ -92,7 +92,7 @@
 ## Current Work — A2.88 Write Confirm TTL Cleanup + Observability Metrics
 
 - [x] Patch 1 - inventory + scope lock
-- [ ] Patch 2 - TTL lifecycle state-store seam
+- [x] Patch 2 - TTL lifecycle state-store seam
 - [ ] Patch 3 - runtime cleanup + observability wiring
 - [ ] Patch 4 - continuity tests for cleanup and metrics
 - [ ] Patch 5 - guardrails + parity + closure

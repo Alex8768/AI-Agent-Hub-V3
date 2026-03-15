@@ -59,7 +59,31 @@ Patch 1 artifacts:
 - add deterministic cleanup lifecycle and expiry-aware store behavior.
 
 Patch 2 artifacts:
-- pending
+- state-store seam extended with lifecycle and TTL behavior:
+  - `src/services/answer/act_write_state_store.py`
+- seam additions:
+  - idempotency TTL metadata (`created_at`, `expires_at`)
+  - idempotency index registry for cleanup traversal
+  - expiry-aware load path for idempotency replay records
+  - explicit cleanup API: `cleanup_expired_write_state`
+- seam observability metrics contract introduced:
+  - `pending_expired`
+  - `idempotency_expired`
+  - `idempotency_index_size`
+- seam coverage expanded:
+  - `tests/unit/services/answer/test_act_write_state_store.py`
+  - expiry and cleanup metric scenarios
+- focused checks green:
+  - `tests/unit/services/answer/test_act_write_state_store.py`
+  - `tests/unit/services/answer/test_act_read_only_runtime.py`
+  - `tests/unit/services/answer/test_policy_profiles.py`
+  - `tests/unit/services/answer/test_reason_code_policy.py`
+  - `tests/unit/services/answer/test_answer_response_presenter.py`
+  - `tests/unit/services/answer/test_answer_orchestration_quality_gate.py`
+  - `tests/unit/services/answer/test_answer_service_debug_snapshot.py`
+  - `tests/unit/api/test_answer_endpoint_debug_snapshot.py`
+  - `tests/unit/docs`
+  - result: `121 passed`
 
 #### Patch 3 — Runtime cleanup + observability wiring
 - invoke cleanup lifecycle in act runtime and expose deterministic store metrics.
@@ -82,7 +106,7 @@ Patch 5 artifacts:
 ### Progress
 
 - [x] Patch 1 — inventory + scope lock
-- [ ] Patch 2 — TTL lifecycle state-store seam
+- [x] Patch 2 — TTL lifecycle state-store seam
 - [ ] Patch 3 — runtime cleanup + observability wiring
 - [ ] Patch 4 — continuity tests for cleanup and metrics
 - [ ] Patch 5 — guardrails + closure

@@ -36,7 +36,7 @@ Execution discipline:
 
 ## Next Anchor
 
-A2.88 - Patch 2 (TTL lifecycle state-store seam)
+A2.88 - Patch 3 (runtime cleanup + observability wiring)
 
 ## CI Status
 
