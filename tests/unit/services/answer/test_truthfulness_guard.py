@@ -85,3 +85,33 @@ def test_truthfulness_guard_logic_consistency_ok_when_no_contradiction() -> None
     logic = dict(bundle.get("logic_consistency") or {})
     assert logic.get("status") == "ok"
     assert list(logic.get("contradiction_signals") or []) == []
+
+
+def test_truthfulness_guard_detects_evidence_claim_mismatch_for_strong_claim() -> None:
+    bundle = build_truthfulness_guard_bundle(
+        query="Status",
+        answer="This will definitely optimize throughput deterministically for all workloads.",
+        diagnostics={
+            "retrieved_provenance_count": 3,
+            "evidence_summary": "Only baseline latency notes were observed in staging samples.",
+        },
+    )
+    assert bundle.get("status") == "warn"
+    assert "truthfulness_guard_evidence_claim_mismatch_detected" in list(bundle.get("reason_codes") or [])
+    evidence_alignment = dict(bundle.get("evidence_alignment") or {})
+    assert evidence_alignment.get("status") == "warn"
+    process = list(bundle.get("reasoning_process") or [])
+    assert any(dict(step).get("step") == "evidence_claim_alignment_check" for step in process)
+
+
+def test_truthfulness_guard_keeps_evidence_alignment_ok_when_overlap_is_present() -> None:
+    bundle = build_truthfulness_guard_bundle(
+        query="Status",
+        answer="This will definitely improve latency for staging workloads.",
+        diagnostics={
+            "retrieved_provenance_count": 2,
+            "evidence_summary": "Latency improved in staging workloads during benchmark runs.",
+        },
+    )
+    evidence_alignment = dict(bundle.get("evidence_alignment") or {})
+    assert evidence_alignment.get("status") == "ok"

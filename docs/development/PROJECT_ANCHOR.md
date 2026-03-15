@@ -138,7 +138,7 @@ Patch 5 artifacts:
 ### Progress
 
 - [x] Patch 1 — inventory + scope lock
-- [ ] Patch 2 — evidence alignment seam extension
+- [x] Patch 2 — evidence alignment seam extension
 - [ ] Patch 3 — runtime wiring + explainability
 - [ ] Patch 4 — continuity tests
 - [ ] Patch 5 — guardrails + closure

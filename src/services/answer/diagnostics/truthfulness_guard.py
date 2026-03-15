@@ -23,6 +23,41 @@ _SOURCE_DEFERENCE_PHRASES: tuple[str, ...] = (
     "как написано в википедии",
 )
 _WARN_CONFIDENCE_CAP = 0.55
+_EVIDENCE_ALIGNMENT_MIN_OVERLAP = 0.2
+_STOPWORDS: set[str] = {
+    "the",
+    "and",
+    "for",
+    "that",
+    "with",
+    "this",
+    "from",
+    "will",
+    "have",
+    "been",
+    "were",
+    "would",
+    "there",
+    "about",
+    "into",
+    "under",
+    "your",
+    "you",
+    "are",
+    "как",
+    "это",
+    "что",
+    "для",
+    "под",
+    "или",
+    "при",
+    "без",
+    "над",
+    "она",
+    "они",
+    "его",
+    "еще",
+}
 _CONTRADICTION_PAIRS: tuple[tuple[str, str], ...] = (
     ("always", "sometimes"),
     ("never", "sometimes"),
@@ -55,6 +90,39 @@ def _detect_contradiction_signals(*, normalized_answer: str) -> list[str]:
     return sorted(set(signals))
 
 
+def _extract_keyword_tokens(*, text: str) -> set[str]:
+    tokens = set(re.findall(r"[a-zа-я0-9]{4,}", text))
+    return {token for token in tokens if token not in _STOPWORDS}
+
+
+def _build_evidence_alignment_bundle(
+    *,
+    answer_text: str,
+    diagnostics: dict[str, object],
+    strong_certainty_detected: bool,
+) -> tuple[dict[str, object], list[str]]:
+    evidence_summary_text = _normalize_text(str(diagnostics.get("evidence_summary", "") or ""))
+    answer_tokens = _extract_keyword_tokens(text=answer_text)
+    evidence_tokens = _extract_keyword_tokens(text=evidence_summary_text)
+    overlap_tokens = sorted(answer_tokens & evidence_tokens)
+    overlap_ratio = (
+        float(len(overlap_tokens)) / float(len(answer_tokens))
+        if answer_tokens
+        else 1.0
+    )
+    status = "ok"
+    reason_codes: list[str] = []
+    if strong_certainty_detected and answer_tokens and evidence_tokens and overlap_ratio < _EVIDENCE_ALIGNMENT_MIN_OVERLAP:
+        status = "warn"
+        reason_codes.append("truthfulness_guard_evidence_claim_mismatch_detected")
+    return {
+        "status": status,
+        "overlap_ratio": round(overlap_ratio, 3),
+        "overlap_token_count": len(overlap_tokens),
+        "claim_token_count": len(answer_tokens),
+    }, reason_codes
+
+
 def build_truthfulness_guard_bundle(
     *,
     query: str,
@@ -71,6 +139,11 @@ def build_truthfulness_guard_bundle(
     has_strong_certainty = _contains_phrase(text=normalized_answer, phrases=_CERTAINTY_PHRASES)
     has_source_deference = _contains_phrase(text=normalized_answer, phrases=_SOURCE_DEFERENCE_PHRASES)
     contradiction_signals = _detect_contradiction_signals(normalized_answer=normalized_answer)
+    evidence_alignment, evidence_alignment_reason_codes = _build_evidence_alignment_bundle(
+        answer_text=normalized_answer,
+        diagnostics=diag,
+        strong_certainty_detected=has_strong_certainty,
+    )
 
     if not has_evidence and has_strong_certainty:
         reason_codes.append("truthfulness_guard_low_evidence_high_certainty_claim")
@@ -78,6 +151,7 @@ def build_truthfulness_guard_bundle(
         reason_codes.append("truthfulness_guard_source_deference_detected")
     if contradiction_signals:
         reason_codes.append("truthfulness_guard_internal_contradiction_detected")
+    reason_codes.extend(evidence_alignment_reason_codes)
     if not normalized_query and not normalized_answer:
         reason_codes.append("truthfulness_guard_empty_payload")
 
@@ -88,8 +162,22 @@ def build_truthfulness_guard_bundle(
     trust_summary = (
         "Trust reduced: internal contradiction patterns detected."
         if contradiction_signals
-        else "No internal contradiction signals detected."
+        else (
+            "Trust reduced: claim-evidence mismatch detected."
+            if evidence_alignment.get("status") == "warn"
+            else "Trust checks passed: no contradiction or evidence mismatch signals."
+        )
     )
+    reasoning_process = [
+        {
+            "step": "logic_consistency_check",
+            "status": logic_status,
+        },
+        {
+            "step": "evidence_claim_alignment_check",
+            "status": str(evidence_alignment.get("status", "ok") or "ok"),
+        },
+    ]
 
     return {
         "contract_version": "v1",
@@ -97,10 +185,12 @@ def build_truthfulness_guard_bundle(
         "status": status,
         "reason_codes": unique_reason_codes,
         "trust_summary": trust_summary,
+        "reasoning_process": reasoning_process,
         "logic_consistency": {
             "status": logic_status,
             "contradiction_signals": contradiction_signals,
         },
+        "evidence_alignment": evidence_alignment,
         "inputs": {
             "has_evidence": bool(has_evidence),
             "evidence_count": int(evidence_count),
