@@ -36,7 +36,7 @@ Execution discipline:
 
 ## Next Anchor
 
-A2.88 - Patch 4 (continuity tests for cleanup and metrics)
+A2.88 - Patch 5 (guardrails + parity + closure)
 
 ## CI Status
 

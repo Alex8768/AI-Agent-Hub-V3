@@ -115,7 +115,24 @@ Patch 3 artifacts:
 - expand unit coverage for expiry and diagnostics metric continuity.
 
 Patch 4 artifacts:
-- pending
+- cleanup and observability continuity coverage expanded in:
+  - `tests/unit/services/answer/test_act_write_state_store.py`
+  - `tests/unit/services/answer/test_act_read_only_runtime.py`
+- added lifecycle continuity scenarios:
+  - expired idempotency replay record is ignored on load
+  - cleanup reports deterministic expired counters
+  - write-confirm diagnostics includes `store_stats` payload on pending flow
+- focused checks green:
+  - `tests/unit/services/answer/test_act_write_state_store.py`
+  - `tests/unit/services/answer/test_act_read_only_runtime.py`
+  - `tests/unit/services/answer/test_policy_profiles.py`
+  - `tests/unit/services/answer/test_reason_code_policy.py`
+  - `tests/unit/services/answer/test_answer_response_presenter.py`
+  - `tests/unit/services/answer/test_answer_orchestration_quality_gate.py`
+  - `tests/unit/services/answer/test_answer_service_debug_snapshot.py`
+  - `tests/unit/api/test_answer_endpoint_debug_snapshot.py`
+  - `tests/unit/docs`
+  - result: `121 passed`
 
 #### Patch 5 — Guardrails + parity + closure
 - run focused + full-suite checks, sync mandatory docs, close A2.88.
@@ -128,7 +145,7 @@ Patch 5 artifacts:
 - [x] Patch 1 — inventory + scope lock
 - [x] Patch 2 — TTL lifecycle state-store seam
 - [x] Patch 3 — runtime cleanup + observability wiring
-- [ ] Patch 4 — continuity tests for cleanup and metrics
+- [x] Patch 4 — continuity tests for cleanup and metrics
 - [ ] Patch 5 — guardrails + closure
 
 ### Non-Negotiable Rules
