@@ -19,7 +19,10 @@ def test_response_presenter_keeps_full_diagnostics_by_default() -> None:
     out = present_answer_response(req=req, resp=resp)
     diagnostics = dict(out.diagnostics or {})
     assert "planner_runtime_parity" in diagnostics
-    assert dict(diagnostics.get("presentation") or {}).get("mode") == "full"
+    presentation = dict(diagnostics.get("presentation") or {})
+    assert presentation.get("mode") == "full"
+    assert presentation.get("requested_mode") == "full"
+    assert list(presentation.get("reason_codes") or []) == []
 
 
 def test_response_presenter_compact_mode_excludes_verbose_diagnostics() -> None:
@@ -30,4 +33,16 @@ def test_response_presenter_compact_mode_excludes_verbose_diagnostics() -> None:
     assert "planner_runtime_parity" not in diagnostics
     assert "tool_selection" not in diagnostics
     assert diagnostics.get("response_mode") == "strict_rag"
-    assert dict(diagnostics.get("presentation") or {}).get("mode") == "compact"
+    presentation = dict(diagnostics.get("presentation") or {})
+    assert presentation.get("mode") == "compact"
+    assert presentation.get("requested_mode") == "compact"
+
+
+def test_response_presenter_supports_expanded_alias() -> None:
+    resp = _Resp()
+    req = AnswerRequest(query="q", filters={"diagnostics_view": "expanded"})
+    out = present_answer_response(req=req, resp=resp)
+    diagnostics = dict(out.diagnostics or {})
+    presentation = dict(diagnostics.get("presentation") or {})
+    assert presentation.get("mode") == "full"
+    assert "diagnostics_view_alias_expanded_to_full" in list(presentation.get("reason_codes") or [])

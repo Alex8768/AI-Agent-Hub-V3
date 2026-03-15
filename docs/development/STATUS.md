@@ -36,7 +36,7 @@ Execution discipline:
 
 ## Next Anchor
 
-A2.85 - Patch 3 (compact diagnostics contract seam)
+A2.85 - Patch 4 (UI compact/expanded diagnostics toggle)
 
 ## CI Status
 

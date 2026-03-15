@@ -90,7 +90,7 @@
 
 - [x] Patch 1 - inventory + scope lock
 - [x] Patch 2 - policy profile seam
-- [ ] Patch 3 - compact diagnostics contract seam
+- [x] Patch 3 - compact diagnostics contract seam
 - [ ] Patch 4 - UI compact/expanded diagnostics toggle
 - [ ] Patch 5 - guardrails + parity + closure
 

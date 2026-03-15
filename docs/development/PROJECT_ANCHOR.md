@@ -85,7 +85,25 @@ Patch 2 artifacts:
 - enforce compact diagnostics default with deterministic expanded diagnostics opt-in.
 
 Patch 3 artifacts:
-- pending
+- response presenter contract seam enhanced in:
+  - `src/services/answer/response_presenter.py`
+- deterministic diagnostics view normalization added:
+  - supports `diagnostics_view=expanded` alias to full mode
+  - invalid diagnostics view values fallback to full with reason-code
+- presenter now emits explicit presentation contract metadata:
+  - `requested_mode`, `resolved_mode`, `excluded_diagnostics`, `reason_codes`
+- coverage expanded for contract behavior:
+  - `tests/unit/services/answer/test_answer_response_presenter.py`
+- focused checks green:
+  - `tests/unit/services/answer/test_answer_response_presenter.py`
+  - `tests/unit/services/answer/test_policy_profiles.py`
+  - `tests/unit/services/answer/test_act_read_only_runtime.py`
+  - `tests/unit/services/answer/test_reason_code_policy.py`
+  - `tests/unit/services/answer/test_answer_orchestration_quality_gate.py`
+  - `tests/unit/services/answer/test_answer_service_debug_snapshot.py`
+  - `tests/unit/api/test_answer_endpoint_debug_snapshot.py`
+  - `tests/unit/docs`
+  - result: `114 passed`
 
 #### Patch 4 — UI compact/expanded diagnostics toggle
 - add UI control for diagnostics verbosity while preserving mode/reason visibility.
@@ -103,7 +121,7 @@ Patch 5 artifacts:
 
 - [x] Patch 1 — inventory + scope lock
 - [x] Patch 2 — policy profile seam
-- [ ] Patch 3 — compact diagnostics contract seam
+- [x] Patch 3 — compact diagnostics contract seam
 - [ ] Patch 4 — UI compact/expanded diagnostics toggle
 - [ ] Patch 5 — guardrails + closure
 
