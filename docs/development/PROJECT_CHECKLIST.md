@@ -88,7 +88,7 @@
 - [x] A2.86 - Controlled Write Actions via Confirm Flow
 - [x] A2.87 - Durable Approval State Persistence Hardening
 - [x] A2.88 - Write Confirm TTL Cleanup + Observability Metrics
-- [ ] A2.89 - Confirm-Flow Quota and Rate Guards
+- [x] A2.89 - Confirm-Flow Quota and Rate Guards
 
 ## Current Work — A2.89 Confirm-Flow Quota and Rate Guards
 
@@ -96,7 +96,7 @@
 - [x] Patch 2 - state-store quota/rate seam
 - [x] Patch 3 - runtime guard wiring
 - [x] Patch 4 - continuity and regression tests
-- [ ] Patch 5 - guardrails + parity + closure
+- [x] Patch 5 - guardrails + parity + closure
 
 ## A2.74 Historical Work - Facade Convergence Phase 18 (Answer/Reasoning)
 

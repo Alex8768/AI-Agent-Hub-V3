@@ -2,17 +2,17 @@
 
 ## Current Phase
 
-A2.89 in progress
+A2.89 complete
 
 ## Last Completed Anchor
 
-A2.88 - Write Confirm TTL Cleanup + Observability Metrics
+A2.89 - Confirm-Flow Quota and Rate Guards
 
-A2.88 closed with:
-- deterministic TTL lifecycle cleanup for pending and idempotency write-confirm records
-- act runtime diagnostics include cleanup/state observability metrics (`store_stats`)
-- continuity tests for expiry behavior and cleanup metric reporting
-- focused and full-suite checks green at closure (`596 passed, 3 skipped`)
+A2.89 closed with:
+- deterministic pending/idempotency quota guards in durable write state seam
+- approve/cancel decision-rate limiting with durable memory-store fallback
+- explicit blocked reason-codes for pending quota, idempotency capacity, and rate throttling
+- focused + full-suite + frontend closure checks green (`602 passed, 3 skipped`)
 
 Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 - Anchor Closed — A2.56 complete (operational guardrails policy closure)
@@ -20,11 +20,11 @@ Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 
 ## Current Active Anchor
 
-A2.89 - Confirm-Flow Quota and Rate Guards
+A2.89 closed - awaiting next anchor selection
 
 Current focus:
-- add deterministic quota and decision-rate guards to write confirm-flow runtime
-- preserve A2.88 cleanup and observability continuity while adding new guard outcomes
+- keep A2.89 closure state stable and prepare next anchor scope selection
+- preserve quota/rate guard reason-code and diagnostics continuity
 - continue one-patch-one-reason execution discipline
 
 Execution discipline:

@@ -117,10 +117,13 @@ Patch 5 artifacts:
   - `tests/unit/services/answer/test_answer_service_debug_snapshot.py`
   - `tests/unit/api/test_answer_endpoint_debug_snapshot.py`
   - `tests/unit/docs`
+  - result: `127 passed`
 - full-suite parity check green:
   - `uv run pytest`
+  - result: `602 passed, 3 skipped`
 - frontend closure build check green:
   - `frontend: npm run build`
+  - result: success
 - mandatory docs synchronized for A2.89 closure:
   - `docs/development/PROJECT_ANCHOR.md`
   - `docs/development/PROJECT_CHECKLIST.md`
@@ -133,7 +136,7 @@ Patch 5 artifacts:
 - [x] Patch 2 — state-store quota/rate seam
 - [x] Patch 3 — runtime guard wiring
 - [x] Patch 4 — continuity and regression tests
-- [ ] Patch 5 — guardrails + closure
+- [x] Patch 5 — guardrails + closure
 
 ### Non-Negotiable Rules
 
@@ -190,7 +193,7 @@ TBD - Post-A2.89 planning
 
 ## Anchor Closed
 
-A2.88 complete - write confirm TTL cleanup and observability metrics closure.
+A2.89 complete - confirm-flow quota and rate guardrails closure.
 
 ## Post-A2.56 Maintenance
 
