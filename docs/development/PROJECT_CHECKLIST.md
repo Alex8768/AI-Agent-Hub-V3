@@ -91,7 +91,7 @@
 ## Current Work — A2.87 Durable Approval State Persistence Hardening
 
 - [x] Patch 1 - inventory + scope lock
-- [ ] Patch 2 - durable write state store seam
+- [x] Patch 2 - durable write state store seam
 - [ ] Patch 3 - restart-resilient confirm-flow runtime wiring
 - [ ] Patch 4 - runtime diagnostics continuity + tests
 - [ ] Patch 5 - guardrails + parity + closure

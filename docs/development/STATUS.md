@@ -35,7 +35,7 @@ Execution discipline:
 
 ## Next Anchor
 
-A2.87 - Patch 2 (durable write state store seam)
+A2.87 - Patch 3 (restart-resilient confirm-flow runtime wiring)
 
 ## CI Status
 

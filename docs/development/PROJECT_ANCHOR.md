@@ -59,7 +59,23 @@ Patch 1 artifacts:
 - extract and wire durable pending/idempotency state store seam for write-confirm runtime.
 
 Patch 2 artifacts:
-- pending
+- durable state store seam extracted to:
+  - `src/services/answer/act_write_state_store.py`
+- seam responsibilities:
+  - scope/key normalization for pending/idempotency write-confirm records
+  - memory-store read/write with JSON normalization
+  - safe in-process fallback cache for unavailable memory-store operations
+  - test reset helper for deterministic runtime tests
+- seam coverage added:
+  - `tests/unit/services/answer/test_act_write_state_store.py`
+- focused checks green (seam + runtime regressions):
+  - `tests/unit/services/answer/test_act_write_state_store.py`
+  - `tests/unit/services/answer/test_act_read_only_runtime.py`
+  - `tests/unit/services/answer/test_policy_profiles.py`
+  - `tests/unit/services/answer/test_answer_orchestration_quality_gate.py`
+  - `tests/unit/services/answer/test_answer_service_debug_snapshot.py`
+  - `tests/unit/api/test_answer_endpoint_debug_snapshot.py`
+  - result: `73 passed`
 
 #### Patch 3 — Restart-resilient confirm-flow runtime wiring
 - adapt write-confirm runtime to load/save/consume durable state store records.
@@ -82,7 +98,7 @@ Patch 5 artifacts:
 ### Progress
 
 - [x] Patch 1 — inventory + scope lock
-- [ ] Patch 2 — durable write state store seam
+- [x] Patch 2 — durable write state store seam
 - [ ] Patch 3 — restart-resilient confirm-flow runtime wiring
 - [ ] Patch 4 — runtime diagnostics continuity + tests
 - [ ] Patch 5 — guardrails + closure
