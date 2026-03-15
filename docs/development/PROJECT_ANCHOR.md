@@ -2,34 +2,33 @@
 
 ## Active Anchor
 
-A2.92 - Trust Calibration and Explainability Baseline
+A2.93 - Logic Consistency Signals Baseline
 
 ### Goal
 
-Add deterministic trust calibration for answer confidence and explainability signals so
-low-evidence certainty is explicitly down-scored and surfaced with contract-safe diagnostics.
+Add deterministic logic-consistency signaling so answers with internal contradiction patterns
+are surfaced as trust warnings with compact, user-readable explanation signals.
 
 ### Why Now
 
-A2.91 introduced baseline trust warnings. The next step is to make trust signals actionable:
-confidence should be calibrated when guard risk is detected and diagnostics should explain
-why confidence changed.
+A2.92 calibrated confidence under trust risk; the next trust gap is internal coherence.
+The runtime should explicitly flag probable answer contradictions and explain why trust is reduced.
 
 ### Architecture Position
 
-Target A2.92 boundaries:
+Target A2.93 boundaries:
 
-- **Trust calibration seam**
-  - add deterministic confidence-cap policy tied to trust guard risk,
-  - keep calibration pure/testable with no provider dependencies.
+- **Logic consistency seam extension**
+  - add deterministic contradiction-pattern checks in trust diagnostics seam,
+  - keep checks pure/testable with no provider dependencies.
 
 - **Runtime diagnostics explainability**
-  - surface pre/post confidence and cap application state in diagnostics,
+  - surface compact trust summary and logic consistency status in diagnostics,
   - preserve existing `/answer` response contract shape.
 
 - **Caution policy extension**
-  - cap confidence on low-evidence certainty and source-deference risk paths,
-  - keep neutral evidence-backed responses unchanged.
+  - emit contradiction reason-codes for internally inconsistent answer phrasing,
+  - keep neutral internally consistent answers unchanged.
 
 - **Guardrails and quality**
   - one patch = one reason,
@@ -42,74 +41,56 @@ Target A2.92 boundaries:
 ### Patch Plan
 
 #### Patch 1 — Inventory + scope lock
-- inventory confidence-touchpoint seams in answer response assembly and diagnostics,
-- lock scope to trust calibration + explainability only,
-- define deterministic reason-codes for confidence-cap outcomes.
+- inventory logic-consistency touchpoints in trust guard and diagnostics merge path,
+- lock scope to contradiction signaling + compact explanation only,
+- define deterministic contradiction reason-codes.
 
 Patch 1 artifacts:
 - boundaries mapped:
-  - calibration seam input/output contract (`status`, `reason_codes`, confidence before/after),
+  - trust guard output contract extension (`logic_consistency`, compact trust summary),
   - non-breaking response/diagnostics merge path,
 - scope lock affirmed:
   - no provider/model routing changes,
   - no EvolutionAgent loop work,
   - no endpoint shape breakage.
 
-#### Patch 2 — Confidence calibration seam
-- add deterministic confidence-calibration helper aligned with truthfulness guard results.
+#### Patch 2 — Logic consistency seam extension
+- add contradiction-pattern checks and compact trust summary in truthfulness diagnostics seam.
 
 Patch 2 artifacts:
-- calibration helper in:
+- seam updates in:
   - `src/services/answer/diagnostics/truthfulness_guard.py`
 - baseline checks:
-  - warn status caps confidence at deterministic ceiling,
-  - ok status leaves confidence unchanged.
+  - contradictory phrase pairs trigger warn status,
+  - compact trust summary explains triggered trust signals.
 - seam coverage:
   - `tests/unit/services/answer/test_truthfulness_guard.py`
-- focused seam check green:
-  - `tests/unit/services/answer/test_truthfulness_guard.py`
-  - result: `6 passed`
 
 #### Patch 3 — Runtime wiring + explainability
-- wire confidence calibration into answer response assembly.
+- wire logic-consistency explainability fields into response diagnostics flow.
 
 Patch 3 artifacts:
 - runtime wiring in:
   - `src/services/answer/response_assembly.py`
-  - `src/services/answer/response/runtime_parity_helpers.py`
 - diagnostics additions:
-  - `diagnostics.truthfulness_guard.confidence_before`
-  - `diagnostics.truthfulness_guard.confidence_after`
-  - `diagnostics.truthfulness_guard.confidence_cap_applied`
-- reason-code closure continuity preserved (`truthfulness_guard_confidence_capped`).
-- focused wiring checks green:
-  - `tests/unit/services/answer/test_response_assembly_truthfulness.py`
-  - `tests/unit/services/answer/test_answer_service_debug_snapshot.py`
-  - `tests/unit/api/test_answer_endpoint_debug_snapshot.py`
-  - `tests/unit/services/answer/test_truthfulness_guard.py`
-  - `tests/unit/services/answer/test_answer_soft_failure_observability.py`
-  - `tests/unit/services/answer/test_answer_orchestration_quality_gate.py::test_decomposition_no_growth_gate_answer_and_reasoning_monolith_line_budgets`
-  - result: `68 passed`
+  - `diagnostics.truthfulness_guard.logic_consistency`
+  - `diagnostics.truthfulness_guard.trust_summary`
+- reason-code closure continuity preserved (`truthfulness_guard_internal_contradiction_detected`).
 
 #### Patch 4 — Continuity tests
-- expand continuity tests for calibration behavior and debug snapshot stability.
+- expand continuity tests for logic-consistency and explainability field stability.
 
 Patch 4 artifacts:
 - coverage expansion:
-  - `tests/unit/services/answer/test_response_assembly_truthfulness.py`
-  - `tests/unit/services/answer/test_reason_code_policy.py`
-- scenarios:
-  - warn path caps confidence and emits reason-code,
-  - ok path keeps confidence unchanged.
-- focused continuity checks green:
-  - `tests/unit/services/answer/test_response_assembly_truthfulness.py`
   - `tests/unit/services/answer/test_answer_service_debug_snapshot.py`
   - `tests/unit/api/test_answer_endpoint_debug_snapshot.py`
   - `tests/unit/services/answer/test_reason_code_policy.py`
-  - result: `50 passed`
+- scenarios:
+  - contradiction warn path exposes trust summary and reason-code,
+  - consistent path preserves ok status.
 
 #### Patch 5 — Guardrails + parity + closure
-- run focused + full-suite checks, sync mandatory docs, close A2.92.
+- run focused + full-suite checks, sync mandatory docs, close A2.93.
 
 Patch 5 artifacts:
 - focused closure checks green:
@@ -129,7 +110,7 @@ Patch 5 artifacts:
 - frontend parity check green:
   - `frontend: npm run build`
   - result: success
-- mandatory docs synchronized for A2.92 closure:
+- mandatory docs synchronized for A2.93 closure:
   - `docs/development/PROJECT_ANCHOR.md`
   - `docs/development/PROJECT_CHECKLIST.md`
   - `docs/development/STATUS.md`
@@ -138,10 +119,10 @@ Patch 5 artifacts:
 ### Progress
 
 - [x] Patch 1 — inventory + scope lock
-- [x] Patch 2 — confidence calibration seam
-- [x] Patch 3 — runtime wiring + explainability
-- [x] Patch 4 — continuity tests
-- [x] Patch 5 — guardrails + closure
+- [ ] Patch 2 — logic consistency seam extension
+- [ ] Patch 3 — runtime wiring + explainability
+- [ ] Patch 4 — continuity tests
+- [ ] Patch 5 — guardrails + closure
 
 ### Non-Negotiable Rules
 
@@ -152,17 +133,17 @@ Patch 5 artifacts:
 
 ### Out of Scope
 
-Do NOT modify during A2.92:
+Do NOT modify during A2.93:
 
 - EvolutionAgent loop implementation,
 - unrelated product or architecture refactors.
 
 ### Definition of Done
 
-A2.92 is complete when:
+A2.93 is complete when:
 
-- deterministic confidence calibration seam exists and is unit-tested,
-- runtime diagnostics expose confidence calibration explainability fields without contract regression,
+- deterministic logic-consistency trust seam extension exists and is unit-tested,
+- runtime diagnostics expose logic-consistency explainability fields without contract regression,
 - reason-code/warnings closure remains deterministic,
 - focused and full quality checks remain green,
 - mandatory docs are synchronized.
@@ -194,7 +175,7 @@ A2.56 policy markers are retained for deterministic docs quality gates:
 
 ## Next Anchor
 
-TBD - Post-A2.92 planning
+TBD - Post-A2.93 planning
 
 ## Anchor Closed
 
