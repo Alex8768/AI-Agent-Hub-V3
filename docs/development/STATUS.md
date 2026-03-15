@@ -2,17 +2,17 @@
 
 ## Current Phase
 
-A2.86 in progress
+A2.86 complete
 
 ## Last Completed Anchor
 
-A2.85 - Managed Action Profiles + Compact Diagnostics UX
+A2.86 - Controlled Write Actions via Confirm Flow
 
-A2.85 closed with:
-- runtime policy profile seam (`prod_strict` / `dev_guided` / `dev_full`) with deterministic diagnostics
-- compact diagnostics presentation contract normalization with explicit requested/resolved metadata
-- chat diagnostics verbosity toggle (`compact`/`expanded`) propagated through answer request filters
-- focused and full-suite checks green at closure (`589 passed, 3 skipped`)
+A2.86 closed with:
+- profile-aware write policy contract (`blocked` / `confirm_required` / `direct_allowed`)
+- Act write confirm-flow runtime (pending token, approve/cancel, validation and idempotent replay)
+- chat runtime approval controls for pending write actions (approve/cancel in message card)
+- focused and full-suite checks green at closure (`591 passed, 3 skipped`)
 
 Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 - Anchor Closed — A2.56 complete (operational guardrails policy closure)
@@ -20,12 +20,11 @@ Legacy closure markers retained for A2.56 docs quality-gate compatibility:
 
 ## Current Active Anchor
 
-A2.86 - Controlled Write Actions via Confirm Flow
+A2.86 closed - awaiting next anchor selection
 
 Current focus:
-- introduce profile-aware controlled write actions behind confirm-flow
-- harden approval token/idempotency execution path with deterministic reason-codes
-- surface approval actions/status in UI while preserving existing diagnostics visibility
+- keep A2.86 closure state stable and prepare next anchor scope selection
+- preserve controlled write confirm-flow behavior and runtime diagnostics transparency
 - continue one-patch-one-reason execution discipline
 
 Execution discipline:
@@ -36,7 +35,7 @@ Execution discipline:
 
 ## Next Anchor
 
-A2.86 - Patch 5 (guardrails + parity + closure)
+TBD - Post-A2.86 planning
 
 ## CI Status
 

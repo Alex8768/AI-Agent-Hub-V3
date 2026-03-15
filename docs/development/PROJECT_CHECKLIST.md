@@ -85,7 +85,7 @@
 - [x] A2.83 - Step 0.5 Facade Stabilization Before Act/Evolve
 - [x] A2.84 - Act Read-Only Runtime + UX Transparency
 - [x] A2.85 - Managed Action Profiles + Compact Diagnostics UX
-- [ ] A2.86 - Controlled Write Actions via Confirm Flow
+- [x] A2.86 - Controlled Write Actions via Confirm Flow
 
 ## Current Work — A2.86 Controlled Write Actions via Confirm Flow
 
@@ -93,7 +93,7 @@
 - [x] Patch 2 - profile-aware write policy seam
 - [x] Patch 3 - confirm-flow write execution seam
 - [x] Patch 4 - UI approval controls for write actions
-- [ ] Patch 5 - guardrails + parity + closure
+- [x] Patch 5 - guardrails + parity + closure
 
 ## A2.74 Historical Work - Facade Convergence Phase 18 (Answer/Reasoning)
 

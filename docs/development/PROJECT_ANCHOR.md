@@ -134,7 +134,27 @@ Patch 4 artifacts:
 - run focused + full-suite checks, sync mandatory docs, close A2.86.
 
 Patch 5 artifacts:
-- pending
+- focused closure checks green:
+  - `tests/unit/services/answer/test_policy_profiles.py`
+  - `tests/unit/services/answer/test_act_read_only_runtime.py`
+  - `tests/unit/services/answer/test_reason_code_policy.py`
+  - `tests/unit/services/answer/test_answer_response_presenter.py`
+  - `tests/unit/services/answer/test_answer_orchestration_quality_gate.py`
+  - `tests/unit/services/answer/test_answer_service_debug_snapshot.py`
+  - `tests/unit/api/test_answer_endpoint_debug_snapshot.py`
+  - `tests/unit/docs`
+  - result: `116 passed`
+- full-suite parity check green:
+  - `uv run pytest`
+  - result: `591 passed, 3 skipped`
+- frontend closure build check green:
+  - `frontend: npm run build`
+  - result: success
+- mandatory docs synchronized for A2.86 closure:
+  - `docs/development/PROJECT_ANCHOR.md`
+  - `docs/development/PROJECT_CHECKLIST.md`
+  - `docs/development/STATUS.md`
+  - `docs/architecture/PLATFORM_FEATURES.md`
 
 ### Progress
 
@@ -142,7 +162,7 @@ Patch 5 artifacts:
 - [x] Patch 2 — profile-aware write policy seam
 - [x] Patch 3 — confirm-flow write execution seam
 - [x] Patch 4 — UI approval controls for write actions
-- [ ] Patch 5 — guardrails + closure
+- [x] Patch 5 — guardrails + closure
 
 ### Non-Negotiable Rules
 
@@ -199,7 +219,7 @@ TBD - Post-A2.86 planning
 
 ## Anchor Closed
 
-A2.85 complete - managed policy profiles and compact diagnostics UX closure.
+A2.86 complete - controlled write actions via confirm-flow closure.
 
 ## Post-A2.56 Maintenance
 
