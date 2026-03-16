@@ -197,6 +197,115 @@ Polish shell composition so collapsed sidebars, top controls, and panel framing 
 ### Next patch
 - Patch 5: settings/modal architecture and final UX polish.
 
+## Patch 4.7c — Split handle and pane control consistency
+
+### Goal
+Fix remaining interaction gaps by making split resize clearly trustworthy in practice and consolidating pane open/close controls around top bar triggers.
+
+### Scope
+- frontend/src/components/shell/MainWorkspace.tsx
+- frontend/src/components/AppLayout.tsx
+- frontend/src/components/shell/TopBar.tsx
+- docs/frontend-refactor-log.md
+
+### Changes
+- Upgraded split divider interaction with explicit drag affordance:
+  - stronger visible separator states (idle/hover/dragging)
+  - wider hit area
+  - stable drag cursor and constraints
+  - persisted split ratio.
+- Removed panel-local close buttons from side panes to avoid split control model.
+- Kept `Esc` close behavior while making top bar pane controls the primary and explicit source of truth.
+- Grouped top bar pane triggers into an intentional `Panes` control cluster.
+
+### Why
+- Previous state still felt dual-control and split drag confidence was not strong enough.
+- Product interaction model requires one coherent pane control pattern and trustworthy split manipulation.
+
+### Validation
+- npm run build
+- npm run lint
+
+### Result
+- done
+
+### Next patch
+- Patch 5: settings/modal architecture and final UX polish.
+
+## Patch 4.7b — Reflow panes correction
+
+### Goal
+Correct the 4.7 interaction mismatch by replacing overlay-like behavior with true workspace reflow panes and stronger split-resize interaction.
+
+### Scope
+- frontend/src/components/AppLayout.tsx
+- frontend/src/components/shell/MainWorkspace.tsx
+- docs/frontend-refactor-log.md
+
+### Changes
+- Replaced overlay composition with true structural reflow compositor:
+  - open left: `left | main`
+  - open right: `main | right`
+  - open both: `left | main | right`
+  - closed panes are fully removed from layout columns.
+- Removed modal-style backdrop/dimming for normal pane-open state.
+- Tuned pane adjacency to near-flush surfaces with thin dividers and subtle tint separation.
+- Kept side panes as workspace surfaces (no floating card styling, no pane shadows).
+- Strengthened split interaction divider in `MainWorkspace`:
+  - wider hit area
+  - explicit resize cursor
+  - visible active/hover feedback
+  - stable min/max constraints with persisted ratio.
+
+### Why
+- Previous implementation still felt like overlays visually adjusted to mimic reflow.
+- Product target requires true multi-pane workspace composition and trustworthy split manipulation.
+
+### Validation
+- npm run build
+- npm run lint
+
+### Result
+- done
+
+### Next patch
+- Patch 5: settings/modal architecture and final UX polish.
+
+## Patch 4.7 — Workspace interaction polish
+
+### Goal
+Polish workspace interaction quality so overlay side panes and split chat/canvas resizing feel intentional, stable, and desktop-native.
+
+### Scope
+- frontend/src/components/AppLayout.tsx
+- frontend/src/components/shell/MainWorkspace.tsx
+- frontend/src/components/shell/TopBar.tsx
+- docs/frontend-refactor-log.md
+
+### Changes
+- Added soft workspace adaptation when side panes open: center surface shifts with adaptive clamp-based insets instead of abrupt compression.
+- Tuned left/right side sheets to read as pane/sheet surfaces (thin separators, subtle tint) rather than floating cards.
+- Kept top bar toggles as source-of-truth controls and synchronized visual pressed state (`aria-pressed` + active variant).
+- Implemented first-class split resize using `react-resizable-panels` with:
+  - visible but subtle divider
+  - proper col-resize cursor
+  - min/max panel constraints
+  - persistent split ratio via autosave key.
+
+### Why
+- Overlay architecture needed interaction polish to feel like workspace surfaces, not modal overlays.
+- Split mode requires high-quality resize ergonomics to be product-usable.
+
+### Validation
+- npm run build
+- npm run lint
+
+### Result
+- done
+
+### Next patch
+- Patch 5: settings/modal architecture and final UX polish.
+
 ## Patch 4.6 — Overlay sidebar architecture
 
 ### Goal

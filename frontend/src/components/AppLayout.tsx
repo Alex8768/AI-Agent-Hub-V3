@@ -1,7 +1,4 @@
 import React, { useEffect } from 'react'
-import { X } from 'lucide-react'
-
-import { Button } from '@/components/ui/button'
 
 interface AppLayoutProps {
   leftPanel: React.ReactNode
@@ -22,10 +19,25 @@ const AppLayout: React.FC<AppLayoutProps> = ({
   onToggleLeft,
   onToggleRight,
 }) => {
-  const hasOpenDrawer = leftVisible || rightVisible
+  const hasOpenPane = leftVisible || rightVisible
+  const bothPanesOpen = leftVisible && rightVisible
+  const leftPaneWidth = bothPanesOpen
+    ? 'clamp(14rem, 19vw, 17rem)'
+    : 'clamp(16rem, 22vw, 20rem)'
+  const rightPaneWidth = bothPanesOpen
+    ? 'clamp(15rem, 20vw, 18rem)'
+    : 'clamp(18rem, 24vw, 22rem)'
+
+  const gridTemplateColumns = leftVisible && rightVisible
+    ? `${leftPaneWidth} minmax(0,1fr) ${rightPaneWidth}`
+    : leftVisible
+      ? `${leftPaneWidth} minmax(0,1fr)`
+      : rightVisible
+        ? `minmax(0,1fr) ${rightPaneWidth}`
+        : 'minmax(0,1fr)'
 
   useEffect(() => {
-    if (!hasOpenDrawer) return
+    if (!hasOpenPane) return
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key !== 'Escape') return
       if (leftVisible && onToggleLeft) onToggleLeft()
@@ -33,56 +45,27 @@ const AppLayout: React.FC<AppLayoutProps> = ({
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [hasOpenDrawer, leftVisible, rightVisible, onToggleLeft, onToggleRight])
+  }, [hasOpenPane, leftVisible, rightVisible, onToggleLeft, onToggleRight])
 
   return (
-    <div className="h-full w-full p-3">
-      <div className="relative h-full w-full overflow-hidden rounded-xl border bg-background">
-        <div className="h-full min-h-0">{centerPanel}</div>
-
-        {hasOpenDrawer && (
-          <button
-            type="button"
-            className="absolute inset-0 z-20 bg-black/10 backdrop-blur-[1px]"
-            aria-label="Close side panels"
-            onClick={() => {
-              if (leftVisible && onToggleLeft) onToggleLeft()
-              if (rightVisible && onToggleRight) onToggleRight()
-            }}
-          />
-        )}
-
+    <div className="h-full w-full">
+      <div
+        className="grid h-full min-h-0 w-full overflow-hidden border-t border-border/70 bg-background transition-[grid-template-columns] duration-200 ease-out"
+        style={{ gridTemplateColumns }}
+      >
         {leftVisible && (
-          <aside className="absolute inset-y-0 left-0 z-30 w-[min(20rem,calc(100vw-3rem))] border-r bg-background shadow-xl">
-            <div className="flex h-10 items-center justify-end border-b px-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7"
-                onClick={onToggleLeft}
-                aria-label="Close left panel"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-            <div className="h-[calc(100%-2.5rem)] min-h-0 overflow-auto">{leftPanel}</div>
+          <aside className="min-h-0 border-r border-border/70 bg-muted/20">
+            <div className="h-full min-h-0 overflow-auto">{leftPanel}</div>
           </aside>
         )}
 
+        <main className="min-h-0 bg-background">
+          <div className="h-full min-h-0 overflow-hidden">{centerPanel}</div>
+        </main>
+
         {rightVisible && (
-          <aside className="absolute inset-y-0 right-0 z-30 w-[min(22rem,calc(100vw-3rem))] border-l bg-background shadow-xl">
-            <div className="flex h-10 items-center justify-start border-b px-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7"
-                onClick={onToggleRight}
-                aria-label="Close right panel"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-            <div className="h-[calc(100%-2.5rem)] min-h-0 overflow-auto">{rightPanel}</div>
+          <aside className="min-h-0 border-l border-border/70 bg-muted/20">
+            <div className="h-full min-h-0 overflow-auto">{rightPanel}</div>
           </aside>
         )}
       </div>

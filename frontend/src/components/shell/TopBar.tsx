@@ -72,26 +72,31 @@ export default function TopBar({
         </div>
 
         <div className="flex items-center gap-2">
-          <Button
-            type="button"
-            size="icon"
-            variant={leftPanelOpen ? 'secondary' : 'ghost'}
-            className="h-8 w-8"
-            onClick={onToggleLeftPanel}
-            aria-label={leftPanelOpen ? 'Close left panel' : 'Open left panel'}
-          >
-            <PanelLeft className="h-4 w-4" />
-          </Button>
-          <Button
-            type="button"
-            size="icon"
-            variant={rightPanelOpen ? 'secondary' : 'ghost'}
-            className="h-8 w-8"
-            onClick={onToggleRightPanel}
-            aria-label={rightPanelOpen ? 'Close right panel' : 'Open right panel'}
-          >
-            <PanelRight className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-1 rounded-md border bg-muted/25 px-1 py-1">
+            <span className="px-1 text-[10px] uppercase tracking-wide text-muted-foreground">Panes</span>
+            <Button
+              type="button"
+              size="icon"
+              variant={leftPanelOpen ? 'secondary' : 'ghost'}
+              className="h-8 w-8"
+              aria-pressed={leftPanelOpen}
+              onClick={onToggleLeftPanel}
+              aria-label={leftPanelOpen ? 'Close left panel' : 'Open left panel'}
+            >
+              <PanelLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              type="button"
+              size="icon"
+              variant={rightPanelOpen ? 'secondary' : 'ghost'}
+              className="h-8 w-8"
+              aria-pressed={rightPanelOpen}
+              onClick={onToggleRightPanel}
+              aria-label={rightPanelOpen ? 'Close right panel' : 'Open right panel'}
+            >
+              <PanelRight className="h-4 w-4" />
+            </Button>
+          </div>
           <Badge variant={healthStatus === 'healthy' ? 'secondary' : 'destructive'}>
             {healthStatus === 'healthy' ? 'Connected' : healthStatus === 'checking' ? 'Checking' : 'Offline'}
           </Badge>
