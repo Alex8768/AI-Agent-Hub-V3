@@ -1,5 +1,4 @@
-import React, { useEffect, useState } from 'react';
-import * as Tabs from '@radix-ui/react-tabs';
+import React, { useEffect, useState } from 'react'
 import {
   deleteDocument,
   getToolSchema,
@@ -7,261 +6,205 @@ import {
   listDocuments,
   listTools,
   uploadDocument,
-} from '../lib/apiClient';
-import type { DocumentItem, ToolItemDto, ToolSchemaDto } from '../contracts/api';
-import DocumentsPanel from './right-panel/DocumentsPanel';
-import ToolsPanel from './right-panel/ToolsPanel';
-import ToolInvokeModal from './right-panel/ToolInvokeModal';
+} from '../lib/apiClient'
+import type { DocumentItem, ToolItemDto, ToolSchemaDto } from '../contracts/api'
+import type { RightSidebarTab } from './shell/layoutState'
+import ToolInvokeModal from './right-panel/ToolInvokeModal'
+import ApprovalsTab from './right-sidebar/ApprovalsTab'
+import ContextTab from './right-sidebar/ContextTab'
+import FilesTab from './right-sidebar/FilesTab'
+import ToolsTab from './right-sidebar/ToolsTab'
+import TraceTab from './right-sidebar/TraceTab'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { useAppContext } from '../context/useAppContext'
 
 interface RightPanelProps {
-  workspaceId: string;
+  workspaceId: string
+  activeTab: RightSidebarTab
+  onTabChange: (tab: RightSidebarTab) => void
 }
 
-const RightPanel: React.FC<RightPanelProps> = ({ workspaceId }) => {
-  const [documents, setDocuments] = useState<DocumentItem[]>([]);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [documentsLoading, setDocumentsLoading] = useState(false);
-
-  const [tools, setTools] = useState<ToolItemDto[]>([]);
-  const [toolsLoading, setToolsLoading] = useState(false);
-
-  const [error, setError] = useState('');
-
-  const [selectedTool, setSelectedTool] = useState<ToolItemDto | null>(null);
-  const [selectedToolSchema, setSelectedToolSchema] = useState<ToolSchemaDto | null>(null);
-  const [schemaLoading, setSchemaLoading] = useState(false);
-
-  const [invokeArgsText, setInvokeArgsText] = useState('{}');
-  const [invokeResult, setInvokeResult] = useState('');
-  const [invokeError, setInvokeError] = useState('');
-  const [invokeLoading, setInvokeLoading] = useState(false);
-  const [resultCopied, setResultCopied] = useState(false);
-
-  const buildTemplateFromSchema = (schema: unknown): Record<string, unknown> => {
-    if (!schema || typeof schema !== 'object' || Array.isArray(schema)) return {};
-
-    const row = schema as Record<string, unknown>;
-    const properties =
-      row.properties && typeof row.properties === 'object' && !Array.isArray(row.properties)
-        ? (row.properties as Record<string, unknown>)
-        : {};
-
-    const required = Array.isArray(row.required)
-      ? row.required.map((x) => String(x || '')).filter((x) => x.length > 0)
-      : [];
-
-    const inferDefault = (value: unknown): unknown => {
-      if (!value || typeof value !== 'object' || Array.isArray(value)) return '';
-      const spec = value as Record<string, unknown>;
-
-      if (spec.default !== undefined) return spec.default;
-
-      const type = String(spec.type || '').toLowerCase();
-      if (type === 'number' || type === 'integer') return 0;
-      if (type === 'boolean') return false;
-      if (type === 'array') return [];
-      if (type === 'object') return {};
-
-      return '';
-    };
-
-    const keys = required.length > 0 ? required : Object.keys(properties);
-    const output: Record<string, unknown> = {};
-
-    keys.forEach((key) => {
-      output[key] = inferDefault(properties[key]);
-    });
-
-    return output;
-  };
+const RightPanel: React.FC<RightPanelProps> = ({ workspaceId, activeTab, onTabChange }) => {
+  const [documents, setDocuments] = useState<DocumentItem[]>([])
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [documentsLoading, setDocumentsLoading] = useState(false)
+  const [tools, setTools] = useState<ToolItemDto[]>([])
+  const [toolsLoading, setToolsLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [selectedTool, setSelectedTool] = useState<ToolItemDto | null>(null)
+  const [selectedToolSchema, setSelectedToolSchema] = useState<ToolSchemaDto | null>(null)
+  const [schemaLoading, setSchemaLoading] = useState(false)
+  const [invokeArgsText, setInvokeArgsText] = useState('{}')
+  const [invokeResult, setInvokeResult] = useState('')
+  const [invokeError, setInvokeError] = useState('')
+  const [invokeLoading, setInvokeLoading] = useState(false)
+  const [resultCopied, setResultCopied] = useState(false)
+  const { lastAnswer } = useAppContext()
 
   useEffect(() => {
-    let alive = true;
-    setDocumentsLoading(true);
+    let mounted = true
 
-    listDocuments({ workspaceId })
-      .then((items) => {
-        if (alive) setDocuments(items);
-      })
-      .catch((err) => setError(String(err)))
-      .finally(() => {
-        if (alive) setDocumentsLoading(false);
-      });
+    const fetchData = async () => {
+      setDocumentsLoading(true)
+      setToolsLoading(true)
 
-    return () => {
-      alive = false;
-    };
-  }, [workspaceId]);
+      try {
+        const [docs, toolsData] = await Promise.all([
+          listDocuments({ workspaceId }),
+          listTools({ workspaceId })
+        ])
 
-  useEffect(() => {
-    let alive = true;
-    setToolsLoading(true);
+        if (mounted) {
+          setDocuments(docs)
+          setTools(toolsData.tools || [])
+        }
+      } catch (err) {
+        if (mounted) setError(String(err))
+      } finally {
+        if (mounted) {
+          setDocumentsLoading(false)
+          setToolsLoading(false)
+        }
+      }
+    }
 
-    listTools({ workspaceId })
-      .then((data) => {
-        if (alive) setTools(data.tools || []);
-      })
-      .catch((err) => setError(String(err)))
-      .finally(() => {
-        if (alive) setToolsLoading(false);
-      });
+    fetchData()
 
-    return () => {
-      alive = false;
-    };
-  }, [workspaceId]);
+    return () => { mounted = false }
+  }, [workspaceId])
 
-  const onFileSelected = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSelectedFile(event.target.files?.[0] ?? null);
-  };
+  const handleUpload = async (event: React.FormEvent) => {
+    event.preventDefault()
+    if (!selectedFile) return
 
-  const onUpload = async (event: React.FormEvent) => {
-    event.preventDefault();
-    if (!selectedFile) return;
-
-    setDocumentsLoading(true);
-    setError('');
+    setDocumentsLoading(true)
+    setError('')
 
     try {
-      await uploadDocument(selectedFile, { workspaceId });
-      setSelectedFile(null);
-
-      const items = await listDocuments({ workspaceId });
-      setDocuments(items);
+      await uploadDocument(selectedFile, { workspaceId })
+      setSelectedFile(null)
+      const items = await listDocuments({ workspaceId })
+      setDocuments(items)
     } catch (err) {
-      setError(String(err));
+      setError(String(err))
     } finally {
-      setDocumentsLoading(false);
+      setDocumentsLoading(false)
     }
-  };
+  }
 
-  const onDelete = async (id: string) => {
-    setDocumentsLoading(true);
-    setError('');
+  const handleDelete = async (id: string) => {
+    setDocumentsLoading(true)
+    setError('')
 
     try {
-      await deleteDocument(id, { workspaceId });
-      setDocuments((prev) => prev.filter((item) => item.id !== id));
+      await deleteDocument(id, { workspaceId })
+      setDocuments(prev => prev.filter(item => item.id !== id))
     } catch (err) {
-      setError(String(err));
+      setError(String(err))
     } finally {
-      setDocumentsLoading(false);
+      setDocumentsLoading(false)
     }
-  };
+  }
 
   const openInvokeModal = async (tool: ToolItemDto) => {
-    setSelectedTool(tool);
-    setSelectedToolSchema(null);
-    setInvokeArgsText('{}');
-    setInvokeResult('');
-    setInvokeError('');
-    setSchemaLoading(true);
+    setSelectedTool(tool)
+    setSelectedToolSchema(null)
+    setInvokeArgsText('{}')
+    setInvokeResult('')
+    setInvokeError('')
+    setSchemaLoading(true)
 
     try {
-      const schema = await getToolSchema(tool.tool_name, { workspaceId });
-      setSelectedToolSchema(schema);
+      const schema = await getToolSchema(tool.tool_name, { workspaceId })
+      setSelectedToolSchema(schema)
 
-      const template = buildTemplateFromSchema(schema.input_schema);
-      setInvokeArgsText(JSON.stringify(template, null, 2));
+      const inputSchema = schema.input_schema as { properties?: Record<string, unknown> } | undefined
+      const template = inputSchema?.properties
+        ? Object.keys(inputSchema.properties).reduce((acc, key) => {
+            acc[key] = ''
+            return acc
+          }, {} as Record<string, unknown>)
+        : {}
+
+      setInvokeArgsText(JSON.stringify(template, null, 2))
     } catch (err) {
-      setInvokeError(`Failed to load schema: ${String(err)}`);
+      setInvokeError(`Failed to load schema: ${String(err)}`)
     } finally {
-      setSchemaLoading(false);
+      setSchemaLoading(false)
     }
-  };
+  }
 
-  const closeInvokeModal = () => {
-    setSelectedTool(null);
-    setSelectedToolSchema(null);
-    setSchemaLoading(false);
-    setInvokeLoading(false);
-    setResultCopied(false);
-  };
+  const handleInvoke = async (event: React.FormEvent) => {
+    event.preventDefault()
+    if (!selectedTool?.tool_name) return
 
-  const onInvoke = async (event: React.FormEvent) => {
-    event.preventDefault();
-    if (!selectedTool?.tool_name) return;
-
-    setInvokeLoading(true);
-    setInvokeError('');
-    setInvokeResult('');
+    setInvokeLoading(true)
+    setInvokeError('')
+    setInvokeResult('')
 
     try {
-      let parsed: unknown = {};
-
-      if (invokeArgsText.trim().length > 0) {
-        parsed = JSON.parse(invokeArgsText);
-      }
-
-      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-        throw new Error('Arguments must be a JSON object');
-      }
-
-      const result = await invokeTool(
-        selectedTool.tool_name,
-        parsed as Record<string, unknown>,
-        { workspaceId },
-      );
-
-      setInvokeResult(JSON.stringify(result, null, 2));
+      const parsed = JSON.parse(invokeArgsText)
+      const result = await invokeTool(selectedTool.tool_name, parsed, { workspaceId })
+      setInvokeResult(JSON.stringify(result, null, 2))
     } catch (err) {
-      setInvokeError(String(err));
+      setInvokeError(String(err))
     } finally {
-      setInvokeLoading(false);
+      setInvokeLoading(false)
     }
-  };
+  }
 
-  const applySchemaTemplate = () => {
-    if (!selectedToolSchema) return;
-
-    const template = buildTemplateFromSchema(selectedToolSchema.input_schema);
-    setInvokeArgsText(JSON.stringify(template, null, 2));
-  };
-
-  const copyInvokeResult = async () => {
-    if (!invokeResult) return;
-
-    try {
-      await navigator.clipboard.writeText(invokeResult);
-      setResultCopied(true);
-      window.setTimeout(() => setResultCopied(false), 1200);
-    } catch (err) {
-      setInvokeError(`Copy failed: ${String(err)}`);
-    }
-  };
+  const copyResult = async () => {
+    if (!invokeResult) return
+    await navigator.clipboard.writeText(invokeResult)
+    setResultCopied(true)
+    setTimeout(() => setResultCopied(false), 1200)
+  }
 
   return (
     <>
-      <Tabs.Root defaultValue="files" className="tabs-root">
-        <Tabs.List className="tabs-list">
-          <Tabs.Trigger value="files" className="tabs-trigger">
-            Files
-          </Tabs.Trigger>
-          <Tabs.Trigger value="tools" className="tabs-trigger">
-            Tools
-          </Tabs.Trigger>
-        </Tabs.List>
+      <Tabs value={activeTab} onValueChange={(value) => onTabChange(value as RightSidebarTab)} className="h-full">
+        <div className="border-b px-3 py-2">
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="files" className="text-xs">Files</TabsTrigger>
+            <TabsTrigger value="tools" className="text-xs">Tools</TabsTrigger>
+            <TabsTrigger value="context" className="text-xs">Context</TabsTrigger>
+            <TabsTrigger value="trace" className="text-xs">Trace</TabsTrigger>
+            <TabsTrigger value="approvals" className="text-xs">Approvals</TabsTrigger>
+          </TabsList>
+        </div>
 
-        <Tabs.Content value="files" className="tabs-content">
-          <DocumentsPanel
+        <TabsContent value="files" className="h-[calc(100%-48px)] overflow-auto">
+          <FilesTab
             documents={documents}
             documentsLoading={documentsLoading}
             error={error}
             selectedFile={selectedFile}
-            onFileSelected={onFileSelected}
-            onUpload={onUpload}
-            onDelete={onDelete}
+            onFileSelected={(e) => setSelectedFile(e.target.files?.[0] ?? null)}
+            onUpload={handleUpload}
+            onDelete={handleDelete}
           />
-        </Tabs.Content>
+        </TabsContent>
 
-        <Tabs.Content value="tools" className="tabs-content">
-          <ToolsPanel
+        <TabsContent value="tools" className="h-[calc(100%-48px)] overflow-auto">
+          <ToolsTab
             tools={tools}
             toolsLoading={toolsLoading}
             onInvokeTool={openInvokeModal}
           />
-        </Tabs.Content>
-      </Tabs.Root>
+        </TabsContent>
+
+        <TabsContent value="context" className="h-[calc(100%-48px)] overflow-auto">
+          <ContextTab lastAnswer={lastAnswer} />
+        </TabsContent>
+
+        <TabsContent value="trace" className="h-[calc(100%-48px)] overflow-auto">
+          <TraceTab lastAnswer={lastAnswer} />
+        </TabsContent>
+
+        <TabsContent value="approvals" className="h-[calc(100%-48px)] overflow-auto">
+          <ApprovalsTab />
+        </TabsContent>
+      </Tabs>
 
       {selectedTool && (
         <ToolInvokeModal
@@ -273,15 +216,25 @@ const RightPanel: React.FC<RightPanelProps> = ({ workspaceId }) => {
           invokeError={invokeError}
           invokeLoading={invokeLoading}
           resultCopied={resultCopied}
-          onClose={closeInvokeModal}
+          onClose={() => setSelectedTool(null)}
           onArgsChange={setInvokeArgsText}
-          onApplySchemaTemplate={applySchemaTemplate}
-          onInvoke={onInvoke}
-          onCopyResult={copyInvokeResult}
+          onApplySchemaTemplate={() => {
+            if (!selectedToolSchema) return
+            const inputSchema = selectedToolSchema.input_schema as { properties?: Record<string, unknown> } | undefined
+            const template = inputSchema?.properties
+              ? Object.keys(inputSchema.properties).reduce((acc, key) => {
+                  acc[key] = ''
+                  return acc
+                }, {} as Record<string, unknown>)
+              : {}
+            setInvokeArgsText(JSON.stringify(template, null, 2))
+          }}
+          onInvoke={handleInvoke}
+          onCopyResult={copyResult}
         />
       )}
     </>
-  );
-};
+  )
+}
 
-export default RightPanel;
+export default RightPanel

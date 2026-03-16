@@ -1,250 +1,171 @@
-import { useEffect, useMemo, useState } from 'react';
-import './App.css';
-import AppLayout from './components/AppLayout';
-import ChatTabs from './components/ChatTabs';
-import RightPanel from './components/RightPanel';
-import ChatPanel from './components/ChatPanel';
-import GraphCanvas from './components/GraphCanvas';
-import MetaPanel from './components/MetaPanel';
-import { AppProvider } from './context/AppContext';
-import { useAppContext } from './context/useAppContext';
-import { getHealth } from './lib/apiClient';
+import { useEffect, useMemo, useState } from 'react'
+import AppLayout from './components/AppLayout'
+import RightPanel from './components/RightPanel'
+import ChatPanel from './components/ChatPanel'
+import GraphCanvas from './components/GraphCanvas'
+import type { AgentSettings } from './components/SettingsDialog'
+import { AppProvider } from './context/AppContext'
+import { useAppContext } from './context/useAppContext'
+import { getHealth } from './lib/apiClient'
+import { ThemeProvider } from '@/components/theme-provider'
+import { readLocalePreference, resolveLocale, writeLocalePreference, type UiLocale } from './lib/uiPreferences'
+import GlobalModalHost from './components/shell/GlobalModalHost'
+import LeftSidebar from './components/shell/LeftSidebar'
+import MainWorkspace from './components/shell/MainWorkspace'
+import RightSidebar from './components/shell/RightSidebar'
+import TopBar from './components/shell/TopBar'
+import ChatsSection from './components/left-sidebar/ChatsSection'
+import ProjectsSection from './components/left-sidebar/ProjectsSection'
+import SavedSection from './components/left-sidebar/SavedSection'
+import ViewsSection from './components/left-sidebar/ViewsSection'
 import {
-  readLocalePreference,
-  readThemeModePreference,
-  resolveLocale,
-  resolveThemeMode,
-  writeLocalePreference,
-  writeThemeModePreference,
-  type UiLocale,
-  type UiThemeMode,
-} from './lib/uiPreferences';
+  readLayoutState,
+  writeLayoutState,
+  type AppMode,
+  type LeftSidebarSection,
+  type RightSidebarTab,
+  type ShellLayoutState,
+} from './components/shell/layoutState'
 
-type HealthState = 'checking' | 'healthy' | 'unreachable';
+type HealthState = 'checking' | 'healthy' | 'unreachable'
 
 function AppContent() {
-  const [healthStatus, setHealthStatus] = useState<HealthState>('checking');
-  const [leftVisible, setLeftVisible] = useState(false);
-  const [rightVisible, setRightVisible] = useState(false);
-  const [workspaceId, setWorkspaceId] = useState('default');
-  const [sessionId, setSessionId] = useState('default');
-  const [lastUsedSession, setLastUsedSession] = useState('default:default');
-  const [themeMode, setThemeMode] = useState<UiThemeMode>(() => readThemeModePreference());
-  const [localeMode, setLocaleMode] = useState<UiLocale | 'auto'>(() => readLocalePreference());
+  const [healthStatus, setHealthStatus] = useState<HealthState>('checking')
+  const [layoutState, setLayoutState] = useState<ShellLayoutState>(() => readLayoutState())
+  const [workspaceId] = useState('default')
+  const [sessionId] = useState('default')
+  const [lastUsedSession, setLastUsedSession] = useState('default:default')
+  const [localeMode, setLocaleMode] = useState<UiLocale | 'auto'>(() => readLocalePreference())
+  const [settings, setSettings] = useState<AgentSettings>({
+    apiProvider: 'openai',
+    selectedModel: '',
+    reasoningMode: 'standard',
+    forceSearch: false,
+    showReasoning: true,
+    apiBaseUrl: '',
+  })
 
-  const { lastGraph, lastAnswer } = useAppContext();
-  const locale = useMemo(() => resolveLocale(localeMode), [localeMode]);
-  const resolvedTheme = useMemo(() => resolveThemeMode(themeMode), [themeMode]);
-
-  const copy = useMemo(() => {
-    if (locale === 'ru') {
-      return {
-        healthy: 'Доступен',
-        unreachable: 'Недоступен',
-        checking: 'Проверка',
-        workspace: 'Рабочая область',
-        session: 'Сессия',
-        agentWorkspace: 'Контекст агента',
-        sessionContext: 'Контекст сессии',
-        sidebarText: 'Ограничьте чат, граф и инструменты выбранной рабочей областью и сессией.',
-        currentScope: 'Текущий контекст',
-        lastChannel: 'Последний активный канал',
-        noRequestsYet: 'Запросов пока не было',
-        diagnosticsTab: 'Метаданные',
-        scopePrefix: 'Контекст',
-        appearance: 'Тема',
-        language: 'Язык',
-        themeSystem: 'Системная',
-        themeLight: 'Светлая',
-        themeDark: 'Тёмная',
-        localeAuto: 'Авто',
-        localeRu: 'Русский',
-        localeEn: 'English',
-      };
-    }
-    return {
-      healthy: 'Healthy',
-      unreachable: 'Unreachable',
-      checking: 'Checking',
-      workspace: 'Workspace',
-      session: 'Session',
-      agentWorkspace: 'Agent Workspace',
-      sessionContext: 'Session Context',
-      sidebarText: 'Scope the chat, graph and tool activity to a specific workspace/session pair.',
-      currentScope: 'Current Scope',
-      lastChannel: 'Last Active Channel',
-      noRequestsYet: 'No requests yet',
-      diagnosticsTab: 'Meta',
-      scopePrefix: 'Scope',
-      appearance: 'Theme',
-      language: 'Language',
-      themeSystem: 'System',
-      themeLight: 'Light',
-      themeDark: 'Dark',
-      localeAuto: 'Auto',
-      localeRu: 'Русский',
-      localeEn: 'English',
-    };
-  }, [locale]);
+  const { lastGraph } = useAppContext()
+  const locale = useMemo(() => resolveLocale(localeMode), [localeMode])
 
   useEffect(() => {
     getHealth()
       .then(() => setHealthStatus('healthy'))
-      .catch(() => setHealthStatus('unreachable'));
-  }, []);
+      .catch(() => setHealthStatus('unreachable'))
+  }, [])
 
   useEffect(() => {
-    if (typeof document === 'undefined') return;
-    const root = document.documentElement;
-    root.setAttribute('data-theme', resolvedTheme);
-    root.setAttribute('data-locale', locale);
-  }, [resolvedTheme, locale]);
+    document.documentElement.lang = locale
+  }, [locale])
 
   useEffect(() => {
-    writeThemeModePreference(themeMode);
-  }, [themeMode]);
-
-  useEffect(() => {
-    writeLocalePreference(localeMode);
-  }, [localeMode]);
+    writeLayoutState(layoutState)
+  }, [layoutState])
 
   const onSessionUsed = (ws: string, sid: string) => {
-    const normalizedWorkspace = ws.trim() || 'default';
-    const normalizedSession = sid.trim() || 'default';
-    setLastUsedSession(`${normalizedWorkspace}:${normalizedSession}`);
-  };
+    setLastUsedSession(`${ws.trim() || 'default'}:${sid.trim() || 'default'}`)
+  }
 
-  const healthLabel = useMemo(() => {
-    if (healthStatus === 'healthy') return copy.healthy;
-    if (healthStatus === 'unreachable') return copy.unreachable;
-    return copy.checking;
-  }, [copy.checking, copy.healthy, copy.unreachable, healthStatus]);
+  const updateLayout = (next: Partial<ShellLayoutState>) => {
+    setLayoutState((prev) => ({
+      ...prev,
+      ...next,
+    }))
+  }
 
-  const leftPanel = (
-    <div className="panel-body shell-sidebar">
-      <div className="sidebar-section">
-        <div className="sidebar-eyebrow">{copy.agentWorkspace}</div>
-        <h2 className="sidebar-title">{copy.sessionContext}</h2>
-        <p className="sidebar-copy">
-          {copy.sidebarText}
-        </p>
-      </div>
+  const setAppMode = (appMode: AppMode) => {
+    updateLayout({
+      appMode,
+      canvasVisible: appMode === 'split' || appMode === 'canvas',
+    })
+  }
 
-      <div className="sidebar-section">
-        <label className="field-label" htmlFor="workspace-input">
-          {copy.workspace}
-        </label>
-        <input
-          id="workspace-input"
-          className="field-input"
-          value={workspaceId}
-          onChange={(e) => setWorkspaceId(e.target.value)}
-          placeholder="default"
-        />
+  const setLeftSidebarSection = (leftSidebarSection: LeftSidebarSection) => {
+    updateLayout({ leftSidebarSection })
+  }
 
-        <label className="field-label" htmlFor="session-input">
-          {copy.session}
-        </label>
-        <input
-          id="session-input"
-          className="field-input"
-          value={sessionId}
-          onChange={(e) => setSessionId(e.target.value)}
-          placeholder="default"
-        />
-      </div>
-
-      <div className="sidebar-section sidebar-info-card">
-        <div className="section-title">{copy.currentScope}</div>
-        <div className="scope-grid">
-          <div className="scope-item">
-            <span className="scope-key">{copy.workspace}</span>
-            <strong>{workspaceId.trim() || 'default'}</strong>
-          </div>
-          <div className="scope-item">
-            <span className="scope-key">{copy.session}</span>
-            <strong>{sessionId.trim() || 'default'}</strong>
-          </div>
-        </div>
-      </div>
-
-      <div className="sidebar-section sidebar-info-card">
-        <div className="section-title">{copy.lastChannel}</div>
-        <div className="sidebar-copy sidebar-copy-tight">{lastUsedSession || copy.noRequestsYet}</div>
-      </div>
-    </div>
-  );
+  const setRightSidebarTab = (rightSidebarTab: RightSidebarTab) => {
+    updateLayout({ rightSidebarTab })
+  }
 
   return (
-    <div className="app-root">
-      <main className="app-content">
+    <div className="flex h-screen flex-col bg-background">
+      <TopBar
+        title="AI Agent Hub"
+        settings={settings}
+        onSettingsChange={setSettings}
+        localeMode={localeMode}
+        onLocaleModeChange={(next) => {
+          setLocaleMode(next)
+          writeLocalePreference(next)
+        }}
+        healthStatus={healthStatus}
+        appMode={layoutState.appMode}
+        onAppModeChange={setAppMode}
+      />
+
+      <main className="min-h-0 flex-1">
         <AppLayout
-          leftVisible={leftVisible}
-          rightVisible={rightVisible}
-          onToggleLeft={() => setLeftVisible((v) => !v)}
-          onToggleRight={() => setRightVisible((v) => !v)}
-          leftPanel={leftPanel}
+          leftVisible={layoutState.leftSidebarOpen}
+          rightVisible={layoutState.rightSidebarOpen}
+          onToggleLeft={() => updateLayout({ leftSidebarOpen: !layoutState.leftSidebarOpen })}
+          onToggleRight={() => updateLayout({ rightSidebarOpen: !layoutState.rightSidebarOpen })}
+          leftPanel={
+            <LeftSidebar
+              section={layoutState.leftSidebarSection}
+              onSectionChange={setLeftSidebarSection}
+              sections={{
+                chats: (
+                  <ChatsSection
+                    workspaceId={workspaceId}
+                    sessionId={sessionId}
+                    lastUsedSession={lastUsedSession}
+                  />
+                ),
+                projects: <ProjectsSection workspaceId={workspaceId} />,
+                views: <ViewsSection appMode={layoutState.appMode} onAppModeChange={setAppMode} />,
+                saved: <SavedSection />,
+              }}
+            />
+          }
           centerPanel={
-            <ChatTabs
+            <MainWorkspace
+              appMode={layoutState.appMode}
+              canvasVisible={layoutState.canvasVisible}
               chatContent={
                 <ChatPanel
                   workspaceId={workspaceId}
                   sessionId={sessionId}
                   onSessionUsed={onSessionUsed}
                   locale={locale}
+                  settings={settings}
                 />
               }
               canvasContent={<GraphCanvas nodes={lastGraph?.nodes} edges={lastGraph?.edges} />}
-              metaContent={<MetaPanel diagnostics={lastAnswer?.diagnostics || null} />}
             />
           }
-          rightPanel={<RightPanel workspaceId={workspaceId} />}
+          rightPanel={
+            <RightSidebar activeTab={layoutState.rightSidebarTab}>
+              <RightPanel
+                workspaceId={workspaceId}
+                activeTab={layoutState.rightSidebarTab}
+                onTabChange={setRightSidebarTab}
+              />
+            </RightSidebar>
+          }
         />
       </main>
-
-      <footer className="status-bar">
-        <div className="status-section">
-          <div className="status-indicator">
-            {copy.scopePrefix}: {(workspaceId.trim() || 'default')} / {(sessionId.trim() || 'default')}
-          </div>
-        </div>
-
-        <div className="status-section">
-          <label className="status-select">
-            {copy.appearance}
-            <select
-              value={themeMode}
-              onChange={(e) => setThemeMode((e.target.value as UiThemeMode) || 'system')}
-            >
-              <option value="system">{copy.themeSystem}</option>
-              <option value="light">{copy.themeLight}</option>
-              <option value="dark">{copy.themeDark}</option>
-            </select>
-          </label>
-          <label className="status-select">
-            {copy.language}
-            <select
-              value={localeMode}
-              onChange={(e) => setLocaleMode((e.target.value as UiLocale | 'auto') || 'auto')}
-            >
-              <option value="auto">{copy.localeAuto}</option>
-              <option value="ru">{copy.localeRu}</option>
-              <option value="en">{copy.localeEn}</option>
-            </select>
-          </label>
-          <div className={`status-indicator ${healthStatus}`}>
-            ● {healthLabel}
-          </div>
-        </div>
-      </footer>
+      <GlobalModalHost />
     </div>
-  );
+  )
 }
 
 export default function App() {
   return (
-    <AppProvider>
-      <AppContent />
-    </AppProvider>
-  );
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+      <AppProvider>
+        <AppContent />
+      </AppProvider>
+    </ThemeProvider>
+  )
 }

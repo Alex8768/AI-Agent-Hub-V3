@@ -1,66 +1,18 @@
-import React from 'react';
-import { Group, Panel, Separator } from 'react-resizable-panels';
+import React from 'react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
+
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
 
 interface AppLayoutProps {
-  leftPanel: React.ReactNode;
-  centerPanel: React.ReactNode;
-  rightPanel: React.ReactNode;
-  leftVisible?: boolean;
-  rightVisible?: boolean;
-  onToggleLeft?: () => void;
-  onToggleRight?: () => void;
+  leftPanel: React.ReactNode
+  centerPanel: React.ReactNode
+  rightPanel: React.ReactNode
+  leftVisible?: boolean
+  rightVisible?: boolean
+  onToggleLeft?: () => void
+  onToggleRight?: () => void
 }
-
-interface SidebarShellProps {
-  side: 'left' | 'right';
-  title: string;
-  onCollapse?: () => void;
-  children: React.ReactNode;
-}
-
-const SidebarShell: React.FC<SidebarShellProps> = ({
-  side,
-  title,
-  onCollapse,
-  children,
-}) => {
-  return (
-    <div className={`sidebar-shell sidebar-shell-${side}`}>
-      <div className="sidebar-header">
-        <span className="sidebar-header-title">{title}</span>
-        <button
-          className="sidebar-toggle-btn"
-          type="button"
-          onClick={onCollapse}
-          aria-label={`Collapse ${title}`}
-        >
-          {side === 'left' ? '‹' : '›'}
-        </button>
-      </div>
-      <div className="sidebar-content">{children}</div>
-    </div>
-  );
-};
-
-interface RailProps {
-  side: 'left' | 'right';
-  label: string;
-  onExpand?: () => void;
-}
-
-const Rail: React.FC<RailProps> = ({ side, label, onExpand }) => (
-  <div className={`layout-rail layout-rail-${side}`}>
-    <button
-      className="layout-rail-button"
-      type="button"
-      onClick={onExpand}
-      aria-label={`Expand ${label}`}
-    >
-      {side === 'left' ? '›' : '‹'}
-    </button>
-    <span className="layout-rail-label">{label}</span>
-  </div>
-);
 
 const AppLayout: React.FC<AppLayoutProps> = ({
   leftPanel,
@@ -71,53 +23,82 @@ const AppLayout: React.FC<AppLayoutProps> = ({
   onToggleLeft,
   onToggleRight,
 }) => {
+  const gridTemplateColumns = `${leftVisible ? 'minmax(240px, 320px)' : '48px'} minmax(0, 1fr) ${rightVisible ? 'minmax(280px, 380px)' : '48px'}`
+
   return (
-    <Group orientation="horizontal" style={{ height: '100%', width: '100%' }}>
-      {leftVisible ? (
-        <>
-          <Panel defaultSize={18} minSize={18} maxSize={26}>
-            <div className="layout-panel layout-panel-left">
-              <SidebarShell side="left" title="Workspace" onCollapse={onToggleLeft}>
-                {leftPanel}
-              </SidebarShell>
+    <div className="h-full w-full p-2">
+      <div className="grid h-full w-full gap-2" style={{ gridTemplateColumns }}>
+        <div className="min-h-0">
+          <Card className="flex h-full min-h-0 flex-col overflow-hidden rounded-lg border shadow-sm">
+            <div className="flex h-10 items-center justify-between border-b px-3">
+              {leftVisible ? (
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  History
+                </span>
+              ) : (
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">L</span>
+              )}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                onClick={onToggleLeft}
+                aria-label={leftVisible ? 'Collapse left sidebar' : 'Expand left sidebar'}
+              >
+                {leftVisible ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+              </Button>
             </div>
-          </Panel>
-          <Separator className="layout-separator" />
-        </>
-      ) : (
-        <>
-          <Panel defaultSize={2.8} minSize={2.8} maxSize={2.8}>
-            <Rail side="left" label="NAV" onExpand={onToggleLeft} />
-          </Panel>
-          <Separator className="layout-separator is-collapsed" />
-        </>
-      )}
-
-      <Panel minSize={40}>
-        <div className="layout-panel layout-panel-center">{centerPanel}</div>
-      </Panel>
-
-      {rightVisible ? (
-        <>
-          <Separator className="layout-separator" />
-          <Panel defaultSize={22} minSize={20} maxSize={30}>
-            <div className="layout-panel layout-panel-right">
-              <SidebarShell side="right" title="Inspector" onCollapse={onToggleRight}>
-                {rightPanel}
-              </SidebarShell>
+            <div className={`min-h-0 flex-1 overflow-auto ${leftVisible ? '' : 'hidden'}`}>
+              {leftPanel}
             </div>
-          </Panel>
-        </>
-      ) : (
-        <>
-          <Separator className="layout-separator is-collapsed" />
-          <Panel defaultSize={3.2} minSize={3.2} maxSize={3.2}>
-            <Rail side="right" label="INSPECT" onExpand={onToggleRight} />
-          </Panel>
-        </>
-      )}
-    </Group>
-  );
-};
+          </Card>
+        </div>
 
-export default AppLayout;
+        <div className="min-h-0">
+          <Card className="flex h-full min-h-0 flex-col overflow-hidden rounded-lg border shadow-sm">
+            <div className="min-h-0 flex-1 overflow-hidden">{centerPanel}</div>
+          </Card>
+        </div>
+
+        <div className="min-h-0">
+          <Card className="flex h-full min-h-0 flex-col overflow-hidden rounded-lg border shadow-sm">
+            <div className="flex h-10 items-center justify-between border-b px-3">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                onClick={onToggleRight}
+                aria-label={rightVisible ? 'Collapse right sidebar' : 'Expand right sidebar'}
+              >
+                {rightVisible ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+              </Button>
+              {rightVisible ? (
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Context
+                </span>
+              ) : (
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">R</span>
+              )}
+            </div>
+            <div className={`min-h-0 flex-1 overflow-auto ${rightVisible ? '' : 'hidden'}`}>
+              {rightPanel}
+            </div>
+            {!rightVisible && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-full border-t"
+                onClick={onToggleRight}
+                aria-label="Expand right sidebar"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+            )}
+          </Card>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default AppLayout
