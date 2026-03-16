@@ -139,6 +139,15 @@ function AppContent() {
                   onSessionUsed={onSessionUsed}
                   locale={locale}
                   settings={settings}
+                  onOpenCanvas={() => setAppMode('canvas')}
+                  onShowTrace={() => {
+                    updateLayout({ rightSidebarOpen: true })
+                    setRightSidebarTab('trace')
+                  }}
+                  onShowContext={() => {
+                    updateLayout({ rightSidebarOpen: true })
+                    setRightSidebarTab('context')
+                  }}
                 />
               }
               canvasContent={<GraphCanvas nodes={lastGraph?.nodes} edges={lastGraph?.edges} />}

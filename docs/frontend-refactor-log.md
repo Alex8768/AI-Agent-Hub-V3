@@ -77,3 +77,41 @@ Reorganize left and right sidebars by explicit platform roles without touching c
 
 ### Next patch
 - Patch 3: transform chat into execution runtime stream with event-driven rendering and approval cards.
+
+## Patch 3 — Transform chat into runtime stream
+
+### Goal
+Upgrade chat UI from plain message feed to execution runtime stream with typed event rendering, reasoning summaries, inline approvals, and result action bar foundation.
+
+### Scope
+- frontend/src/components/ChatPanel.tsx
+- frontend/src/components/chat-runtime/types.ts
+- frontend/src/components/chat-runtime/ResultActionBar.tsx
+- frontend/src/App.tsx
+- docs/frontend-refactor-log.md
+
+### Changes
+- Added typed chat runtime UI model with explicit item and event types.
+- Rebuilt chat timeline rendering around event-driven cards:
+  - execution events
+  - plan card
+  - reasoning summary card
+  - inline approval card
+  - result card
+- Added inline approval flow with `approve / deny / review` actions in chat stream.
+- Added result action bar with `Copy`, `Retry`, `Continue`, `Open Canvas`, `Show Trace`, `Show Context`, `Export`.
+- Connected action bar hooks to shell-level layout actions (`canvas`, `trace`, `context`) via thin callbacks from app shell.
+
+### Why
+- Runtime transparency requires showing what the assistant is doing step-by-step, not just final text.
+- Typed UI events prepare the frontend for future backend streaming without breaking current API contracts.
+
+### Validation
+- npm run build
+- npm run lint
+
+### Result
+- done
+
+### Next patch
+- Patch 4: integrate canvas as a real workspace surface tied to runtime outputs.
