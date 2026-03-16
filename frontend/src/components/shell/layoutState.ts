@@ -1,3 +1,5 @@
+import { DEFAULT_CANVAS_STATE, normalizeCanvasState, type CanvasState } from '../canvas/canvasState'
+
 export type AppMode = 'chat' | 'split' | 'canvas'
 
 export type LeftSidebarSection = 'chats' | 'projects' | 'views' | 'saved'
@@ -14,6 +16,7 @@ export interface ShellLayoutState {
   density: LayoutDensity
   showReasoningSummaries: boolean
   showExecutionEvents: boolean
+  canvas: CanvasState
 }
 
 const STORAGE_KEY = 'shell.layout.v1'
@@ -28,6 +31,7 @@ export const DEFAULT_LAYOUT_STATE: ShellLayoutState = {
   density: 'comfortable',
   showReasoningSummaries: true,
   showExecutionEvents: true,
+  canvas: DEFAULT_CANVAS_STATE,
 }
 
 function isObject(value: unknown): value is Record<string, unknown> {
@@ -70,6 +74,7 @@ export function readLayoutState(): ShellLayoutState {
       density: parsed.density === 'compact' ? 'compact' : 'comfortable',
       showReasoningSummaries: parsed.showReasoningSummaries !== false,
       showExecutionEvents: parsed.showExecutionEvents !== false,
+      canvas: normalizeCanvasState(parsed.canvas),
     }
 
     return next

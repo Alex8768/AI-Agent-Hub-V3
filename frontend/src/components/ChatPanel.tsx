@@ -3,6 +3,7 @@ import { CheckCircle2, Loader2, SendHorizontal, ShieldAlert } from 'lucide-react
 import ReactMarkdown from 'react-markdown'
 import ResultActionBar from './chat-runtime/ResultActionBar'
 import type { ApprovalItem, ChatTimelineItem, RuntimeEventType } from './chat-runtime/types'
+import type { CanvasViewType } from './canvas/canvasState'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -16,9 +17,12 @@ interface ChatPanelProps {
   sessionId: string
   onSessionUsed: (ws: string, sid: string) => void
   locale?: 'en' | 'ru'
-  onOpenCanvas?: () => void
-  onShowTrace?: () => void
-  onShowContext?: () => void
+  onOpenCanvasView?: (request: {
+    view: CanvasViewType
+    title?: string
+    payload?: unknown
+    mode?: 'canvas' | 'split'
+  }) => void
   settings: {
     apiProvider: string
     selectedModel: string
@@ -45,16 +49,14 @@ export default function ChatPanel({
   onSessionUsed,
   locale = 'en',
   settings,
-  onOpenCanvas,
-  onShowTrace,
-  onShowContext,
+  onOpenCanvasView,
 }: ChatPanelProps) {
   const [timeline, setTimeline] = useState<ChatTimelineItem[]>([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [requestError, setRequestError] = useState<string>('')
   const [lastPrompt, setLastPrompt] = useState('')
-  const { setLastAnswer } = useAppContext()
+  const { lastAnswer, setLastAnswer } = useAppContext()
 
   const scrollRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -400,9 +402,55 @@ export default function ChatPanel({
                         onContinue={() => {
                           setInput((prev) => (prev.trim() ? `${prev}\nContinue with next step.` : 'Continue with next step.'))
                         }}
-                        onOpenCanvas={() => onOpenCanvas?.()}
-                        onShowTrace={() => onShowTrace?.()}
-                        onShowContext={() => onShowContext?.()}
+                        onOpenCanvas={() =>
+                          onOpenCanvasView?.({
+                            view: 'plan',
+                            title: 'Result Plan',
+                            payload: {
+                              steps: item.content
+                                .split('\n')
+                                .map((line) => line.trim())
+                                .filter((line) => line.length > 0)
+                                .slice(0, 6),
+                            },
+                            mode: 'canvas',
+                          })
+                        }
+                        onOpenDiff={() =>
+                          onOpenCanvasView?.({
+                            view: 'diff',
+                            title: 'Result Diff Preview',
+                            payload: { before: '', after: item.content },
+                            mode: 'split',
+                          })
+                        }
+                        onOpenArtifact={() =>
+                          onOpenCanvasView?.({
+                            view: 'artifact',
+                            title: 'Result Artifact',
+                            payload: {
+                              source: 'assistant_result',
+                              content: item.content,
+                            },
+                            mode: 'split',
+                          })
+                        }
+                        onShowTrace={() =>
+                          onOpenCanvasView?.({
+                            view: 'document',
+                            title: 'Trace Preview',
+                            payload: { text: JSON.stringify(lastAnswer?.diagnostics ?? {}, null, 2) },
+                            mode: 'split',
+                          })
+                        }
+                        onShowContext={() =>
+                          onOpenCanvasView?.({
+                            view: 'document',
+                            title: 'Context Preview',
+                            payload: { text: lastAnswer?.context_preview ?? '' },
+                            mode: 'split',
+                          })
+                        }
                         onExport={() => {
                           const blob = new Blob([item.content], { type: 'text/plain;charset=utf-8' })
                           const href = URL.createObjectURL(blob)

@@ -6,6 +6,8 @@ interface ResultActionBarProps {
   onRetry: () => void
   onContinue: () => void
   onOpenCanvas: () => void
+  onOpenDiff: () => void
+  onOpenArtifact: () => void
   onShowTrace: () => void
   onShowContext: () => void
   onExport: () => void
@@ -16,6 +18,8 @@ export default function ResultActionBar({
   onRetry,
   onContinue,
   onOpenCanvas,
+  onOpenDiff,
+  onOpenArtifact,
   onShowTrace,
   onShowContext,
   onExport,
@@ -37,6 +41,12 @@ export default function ResultActionBar({
       <Button size="sm" variant="ghost" onClick={onOpenCanvas}>
         <SquarePen className="mr-1 h-3.5 w-3.5" />
         Open Canvas
+      </Button>
+      <Button size="sm" variant="ghost" onClick={onOpenDiff}>
+        Open Diff
+      </Button>
+      <Button size="sm" variant="ghost" onClick={onOpenArtifact}>
+        Open Artifact
       </Button>
       <Button size="sm" variant="ghost" onClick={onShowTrace}>
         <ScrollText className="mr-1 h-3.5 w-3.5" />

@@ -115,3 +115,49 @@ Upgrade chat UI from plain message feed to execution runtime stream with typed e
 
 ### Next patch
 - Patch 4: integrate canvas as a real workspace surface tied to runtime outputs.
+
+## Patch 4 — Integrate canvas as workspace surface
+
+### Goal
+Integrate Canvas into workspace modes (`chat`, `split`, `canvas`) as a first-class surface and wire result/runtime actions to open meaningful canvas views.
+
+### Scope
+- frontend/src/App.tsx
+- frontend/src/components/shell/layoutState.ts
+- frontend/src/components/shell/MainWorkspace.tsx
+- frontend/src/components/ChatPanel.tsx
+- frontend/src/components/chat-runtime/ResultActionBar.tsx
+- frontend/src/components/canvas/canvasState.ts
+- frontend/src/components/canvas/CanvasHost.tsx
+- frontend/src/components/canvas/views/EmptyCanvasView.tsx
+- frontend/src/components/canvas/views/GraphCanvasView.tsx
+- frontend/src/components/canvas/views/PlanCanvasView.tsx
+- frontend/src/components/canvas/views/DiffCanvasView.tsx
+- frontend/src/components/canvas/views/ArtifactCanvasView.tsx
+- frontend/src/components/canvas/views/DocumentCanvasView.tsx
+- docs/frontend-refactor-log.md
+
+### Changes
+- Added typed canvas view model (`CanvasViewType`, `CanvasState`) and integrated it into unified shell layout state.
+- Updated `MainWorkspace` to operate as mode router with stable real behavior for `chat`, `split`, and `canvas`.
+- Added dedicated canvas host and separate view components for graph, plan, diff, artifact, and document previews.
+- Wired ResultActionBar actions to canvas content flows:
+  - Open Canvas -> plan view
+  - Open Diff -> diff view
+  - Open Artifact -> artifact view
+  - Show Trace/Show Context -> document previews on canvas
+- Reused existing `GraphCanvas` through a dedicated `GraphCanvasView` adapter.
+
+### Why
+- Canvas needed explicit state and view semantics to become a real workspace surface.
+- Runtime outputs now have direct path into canvas without backend contract changes.
+
+### Validation
+- npm run build
+- npm run lint
+
+### Result
+- done
+
+### Next patch
+- Patch 5: move settings into proper modal/popover layers and polish UX density/status cues.

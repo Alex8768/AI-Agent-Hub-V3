@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react'
 import AppLayout from './components/AppLayout'
 import RightPanel from './components/RightPanel'
 import ChatPanel from './components/ChatPanel'
-import GraphCanvas from './components/GraphCanvas'
 import type { AgentSettings } from './components/SettingsDialog'
 import { AppProvider } from './context/AppContext'
 import { useAppContext } from './context/useAppContext'
@@ -18,6 +17,8 @@ import ChatsSection from './components/left-sidebar/ChatsSection'
 import ProjectsSection from './components/left-sidebar/ProjectsSection'
 import SavedSection from './components/left-sidebar/SavedSection'
 import ViewsSection from './components/left-sidebar/ViewsSection'
+import CanvasHost from './components/canvas/CanvasHost'
+import type { CanvasViewType } from './components/canvas/canvasState'
 import {
   readLayoutState,
   writeLayoutState,
@@ -74,9 +75,19 @@ function AppContent() {
   }
 
   const setAppMode = (appMode: AppMode) => {
+    const nextCanvas =
+      appMode === 'canvas' && layoutState.canvas.activeView === 'empty'
+        ? {
+            activeView: 'graph' as CanvasViewType,
+            title: 'Graph View',
+            payload: { nodes: lastGraph?.nodes ?? [], edges: lastGraph?.edges ?? [] },
+          }
+        : layoutState.canvas
+
     updateLayout({
       appMode,
       canvasVisible: appMode === 'split' || appMode === 'canvas',
+      canvas: nextCanvas,
     })
   }
 
@@ -86,6 +97,24 @@ function AppContent() {
 
   const setRightSidebarTab = (rightSidebarTab: RightSidebarTab) => {
     updateLayout({ rightSidebarTab })
+  }
+
+  const openCanvasView = (request: {
+    view: CanvasViewType
+    title?: string
+    payload?: unknown
+    mode?: 'canvas' | 'split'
+  }) => {
+    const nextMode: AppMode = request.mode === 'split' ? 'split' : 'canvas'
+    updateLayout({
+      appMode: nextMode,
+      canvasVisible: true,
+      canvas: {
+        activeView: request.view,
+        title: request.title,
+        payload: request.payload,
+      },
+    })
   }
 
   return (
@@ -131,7 +160,6 @@ function AppContent() {
           centerPanel={
             <MainWorkspace
               appMode={layoutState.appMode}
-              canvasVisible={layoutState.canvasVisible}
               chatContent={
                 <ChatPanel
                   workspaceId={workspaceId}
@@ -139,18 +167,32 @@ function AppContent() {
                   onSessionUsed={onSessionUsed}
                   locale={locale}
                   settings={settings}
-                  onOpenCanvas={() => setAppMode('canvas')}
-                  onShowTrace={() => {
-                    updateLayout({ rightSidebarOpen: true })
-                    setRightSidebarTab('trace')
-                  }}
-                  onShowContext={() => {
-                    updateLayout({ rightSidebarOpen: true })
-                    setRightSidebarTab('context')
+                  onOpenCanvasView={(request) => {
+                    if (request.title?.toLowerCase().includes('trace')) {
+                      updateLayout({ rightSidebarOpen: true })
+                      setRightSidebarTab('trace')
+                    }
+                    if (request.title?.toLowerCase().includes('context')) {
+                      updateLayout({ rightSidebarOpen: true })
+                      setRightSidebarTab('context')
+                    }
+                    openCanvasView(request)
                   }}
                 />
               }
-              canvasContent={<GraphCanvas nodes={lastGraph?.nodes} edges={lastGraph?.edges} />}
+              canvasContent={
+                <CanvasHost
+                  canvasState={
+                    layoutState.canvas.activeView === 'empty' && lastGraph
+                      ? {
+                          activeView: 'graph',
+                          title: 'Graph View',
+                          payload: { nodes: lastGraph.nodes, edges: lastGraph.edges },
+                        }
+                      : layoutState.canvas
+                  }
+                />
+              }
             />
           }
           rightPanel={
