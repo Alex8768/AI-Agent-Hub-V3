@@ -196,3 +196,36 @@ Polish shell composition so collapsed sidebars, top controls, and panel framing 
 
 ### Next patch
 - Patch 5: settings/modal architecture and final UX polish.
+
+## Patch 4.6 — Overlay sidebar architecture
+
+### Goal
+Convert left and right sidebars from persistent layout columns into overlay desktop drawers so the main workspace remains primary and keeps full width when panels are closed.
+
+### Scope
+- frontend/src/components/AppLayout.tsx
+- frontend/src/components/shell/TopBar.tsx
+- frontend/src/App.tsx
+- docs/frontend-refactor-log.md
+
+### Changes
+- Replaced column-based sidebar layout with overlay drawers (`aside`) rendered above the workspace surface.
+- Closed side panels now consume zero layout width; center workspace always owns the full base layout area.
+- Moved primary panel open/close controls to TopBar with explicit left/right trigger buttons.
+- Added light backdrop layer for click-outside close behavior while keeping non-modal visual separation.
+- Added `Esc` key support to close open drawers.
+- Kept left/sidebar content architecture and runtime/canvas/settings foundations unchanged.
+
+### Why
+- Structural columns made the shell feel like a dashboard and reduced main workspace primacy.
+- Overlay drawers align better with IDE/operator workflows and preserve focus on the central surface.
+
+### Validation
+- npm run build
+- npm run lint
+
+### Result
+- done
+
+### Next patch
+- Patch 5: settings/modal architecture and final UX polish.

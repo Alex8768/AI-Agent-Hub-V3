@@ -1,6 +1,7 @@
 import SettingsDialog, { type AgentSettings } from '../SettingsDialog'
 import { ModeToggle } from '@/components/ui/ModeToggle'
 import type { AppMode } from './layoutState'
+import { PanelLeft, PanelRight } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 
@@ -17,6 +18,10 @@ interface TopBarProps {
   healthStatus: HealthState
   appMode: AppMode
   onAppModeChange: (mode: AppMode) => void
+  leftPanelOpen: boolean
+  rightPanelOpen: boolean
+  onToggleLeftPanel: () => void
+  onToggleRightPanel: () => void
 }
 
 const modeOptions: Array<{ id: AppMode; label: string }> = [
@@ -36,6 +41,10 @@ export default function TopBar({
   healthStatus,
   appMode,
   onAppModeChange,
+  leftPanelOpen,
+  rightPanelOpen,
+  onToggleLeftPanel,
+  onToggleRightPanel,
 }: TopBarProps) {
   return (
     <header className="border-b bg-background/95 px-4 py-2 backdrop-blur supports-[backdrop-filter]:bg-background/80">
@@ -63,6 +72,26 @@ export default function TopBar({
         </div>
 
         <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            size="icon"
+            variant={leftPanelOpen ? 'secondary' : 'ghost'}
+            className="h-8 w-8"
+            onClick={onToggleLeftPanel}
+            aria-label={leftPanelOpen ? 'Close left panel' : 'Open left panel'}
+          >
+            <PanelLeft className="h-4 w-4" />
+          </Button>
+          <Button
+            type="button"
+            size="icon"
+            variant={rightPanelOpen ? 'secondary' : 'ghost'}
+            className="h-8 w-8"
+            onClick={onToggleRightPanel}
+            aria-label={rightPanelOpen ? 'Close right panel' : 'Open right panel'}
+          >
+            <PanelRight className="h-4 w-4" />
+          </Button>
           <Badge variant={healthStatus === 'healthy' ? 'secondary' : 'destructive'}>
             {healthStatus === 'healthy' ? 'Connected' : healthStatus === 'checking' ? 'Checking' : 'Offline'}
           </Badge>

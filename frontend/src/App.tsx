@@ -133,6 +133,10 @@ function AppContent() {
         healthStatus={healthStatus}
         appMode={layoutState.appMode}
         onAppModeChange={setAppMode}
+        leftPanelOpen={layoutState.leftSidebarOpen}
+        rightPanelOpen={layoutState.rightSidebarOpen}
+        onToggleLeftPanel={() => updateLayout({ leftSidebarOpen: !layoutState.leftSidebarOpen })}
+        onToggleRightPanel={() => updateLayout({ rightSidebarOpen: !layoutState.rightSidebarOpen })}
       />
 
       <main className="min-h-0 flex-1">
