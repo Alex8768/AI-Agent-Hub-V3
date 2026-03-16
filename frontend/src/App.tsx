@@ -121,6 +121,8 @@ function AppContent() {
     <div className="flex h-screen flex-col bg-background">
       <TopBar
         title="AI Agent Hub"
+        workspaceId={workspaceId}
+        sessionId={sessionId}
         settings={settings}
         onSettingsChange={setSettings}
         localeMode={localeMode}
@@ -196,7 +198,7 @@ function AppContent() {
             />
           }
           rightPanel={
-            <RightSidebar activeTab={layoutState.rightSidebarTab}>
+            <RightSidebar>
               <RightPanel
                 workspaceId={workspaceId}
                 activeTab={layoutState.rightSidebarTab}

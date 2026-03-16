@@ -13,17 +13,17 @@ export default function MainWorkspace({
   canvasContent,
 }: MainWorkspaceProps) {
   if (appMode === 'canvas') {
-    return <div className="h-full">{canvasContent}</div>
+    return <div className="h-full bg-background">{canvasContent}</div>
   }
 
   if (appMode === 'split') {
     return (
-      <div className="grid h-full min-h-0 grid-cols-[1.3fr_1fr] gap-2 p-2">
-        <section className="min-h-0 overflow-hidden rounded-lg border">{chatContent}</section>
-        <section className="min-h-0 overflow-hidden rounded-lg border">{canvasContent}</section>
+      <div className="grid h-full min-h-0 grid-cols-[1.3fr_1fr] gap-3 p-3">
+        <section className="min-h-0 overflow-hidden rounded-lg bg-background">{chatContent}</section>
+        <section className="min-h-0 overflow-hidden rounded-lg bg-background">{canvasContent}</section>
       </div>
     )
   }
 
-  return <div className="h-full">{chatContent}</div>
+  return <div className="h-full bg-background">{chatContent}</div>
 }

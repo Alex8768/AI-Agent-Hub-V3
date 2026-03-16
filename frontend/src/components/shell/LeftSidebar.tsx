@@ -19,7 +19,7 @@ const sectionOptions: Array<{ id: LeftSidebarSection; label: string }> = [
 export default function LeftSidebar({ section, onSectionChange, sections }: LeftSidebarProps) {
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="border-b p-2">
+      <div className="border-b bg-background/70 p-2">
         <div className="grid grid-cols-2 gap-1">
           {sectionOptions.map((item) => (
             <Button
@@ -27,7 +27,7 @@ export default function LeftSidebar({ section, onSectionChange, sections }: Left
               type="button"
               size="sm"
               variant={section === item.id ? 'default' : 'ghost'}
-              className="h-8 justify-start text-xs"
+              className="h-8 justify-start rounded-md text-xs"
               onClick={() => onSectionChange(item.id)}
             >
               {item.label}
@@ -35,7 +35,7 @@ export default function LeftSidebar({ section, onSectionChange, sections }: Left
           ))}
         </div>
       </div>
-      <div className="min-h-0 flex-1">
+      <div className="min-h-0 flex-1 bg-background/30">
         <ScrollArea className="h-full">{sections[section]}</ScrollArea>
       </div>
     </div>

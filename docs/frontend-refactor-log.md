@@ -161,3 +161,38 @@ Integrate Canvas into workspace modes (`chat`, `split`, `canvas`) as a first-cla
 
 ### Next patch
 - Patch 5: move settings into proper modal/popover layers and polish UX density/status cues.
+
+## Patch 4.5 — Shell UX cleanup
+
+### Goal
+Polish shell composition so collapsed sidebars, top controls, and panel framing feel intentional and product-like while preserving Patch 1-4 architecture.
+
+### Scope
+- frontend/src/App.tsx
+- frontend/src/components/shell/TopBar.tsx
+- frontend/src/components/AppLayout.tsx
+- frontend/src/components/shell/LeftSidebar.tsx
+- frontend/src/components/shell/RightSidebar.tsx
+- frontend/src/components/shell/MainWorkspace.tsx
+- docs/frontend-refactor-log.md
+
+### Changes
+- Reworked top controls into a single cohesive top control surface with title/context, mode switch, connection status, quick theme toggle, and settings trigger.
+- Replaced broken-looking collapsed sidebars with intentional compact rails (`Nav`/`Ops`) and clear reopen triggers.
+- Reduced shell framing noise by removing excessive nested card shells and simplifying panel containers.
+- Improved visual hierarchy so center workspace reads as primary surface and sidebars are clearly secondary.
+- Kept mode/router, runtime stream, and canvas state architecture intact.
+
+### Why
+- The shell still looked like scaffolding with stacked bars and accidental collapsed states.
+- Product feel required clearer control surfaces and less decorative container noise.
+
+### Validation
+- npm run build
+- npm run lint
+
+### Result
+- done
+
+### Next patch
+- Patch 5: settings/modal architecture and final UX polish.

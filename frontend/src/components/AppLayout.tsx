@@ -1,8 +1,7 @@
 import React from 'react'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, PanelLeft, PanelRight } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
 
 interface AppLayoutProps {
   leftPanel: React.ReactNode
@@ -23,78 +22,77 @@ const AppLayout: React.FC<AppLayoutProps> = ({
   onToggleLeft,
   onToggleRight,
 }) => {
-  const gridTemplateColumns = `${leftVisible ? 'minmax(240px, 320px)' : '48px'} minmax(0, 1fr) ${rightVisible ? 'minmax(280px, 380px)' : '48px'}`
+  const gridTemplateColumns = `${leftVisible ? 'minmax(248px, 312px)' : '56px'} minmax(0, 1fr) ${rightVisible ? 'minmax(290px, 360px)' : '56px'}`
 
   return (
-    <div className="h-full w-full p-2">
-      <div className="grid h-full w-full gap-2" style={{ gridTemplateColumns }}>
+    <div className="h-full w-full p-3">
+      <div className="grid h-full w-full gap-3" style={{ gridTemplateColumns }}>
         <div className="min-h-0">
-          <Card className="flex h-full min-h-0 flex-col overflow-hidden rounded-lg border shadow-sm">
-            <div className="flex h-10 items-center justify-between border-b px-3">
-              {leftVisible ? (
-                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  History
-                </span>
-              ) : (
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">L</span>
-              )}
+          {leftVisible ? (
+            <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border bg-card/50">
+              <div className="flex h-9 items-center justify-end border-b px-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={onToggleLeft}
+                  aria-label="Collapse left sidebar"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+              </div>
+              <div className="min-h-0 flex-1 overflow-auto">{leftPanel}</div>
+            </div>
+          ) : (
+            <div className="flex h-full min-h-0 flex-col items-center justify-start rounded-xl border bg-muted/30 p-1.5">
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-7 w-7"
+                className="h-8 w-8 rounded-md"
                 onClick={onToggleLeft}
-                aria-label={leftVisible ? 'Collapse left sidebar' : 'Expand left sidebar'}
+                aria-label="Expand left sidebar"
               >
-                {leftVisible ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                <PanelLeft className="h-4 w-4" />
               </Button>
+              <span className="mt-2 text-[10px] uppercase tracking-wider text-muted-foreground">Nav</span>
             </div>
-            <div className={`min-h-0 flex-1 overflow-auto ${leftVisible ? '' : 'hidden'}`}>
-              {leftPanel}
-            </div>
-          </Card>
+          )}
         </div>
 
         <div className="min-h-0">
-          <Card className="flex h-full min-h-0 flex-col overflow-hidden rounded-lg border shadow-sm">
-            <div className="min-h-0 flex-1 overflow-hidden">{centerPanel}</div>
-          </Card>
+          <div className="h-full min-h-0 overflow-hidden rounded-xl border bg-background">{centerPanel}</div>
         </div>
 
         <div className="min-h-0">
-          <Card className="flex h-full min-h-0 flex-col overflow-hidden rounded-lg border shadow-sm">
-            <div className="flex h-10 items-center justify-between border-b px-3">
+          {rightVisible ? (
+            <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border bg-card/50">
+              <div className="flex h-9 items-center justify-start border-b px-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={onToggleRight}
+                  aria-label="Collapse right sidebar"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+              <div className="min-h-0 flex-1 overflow-auto">{rightPanel}</div>
+            </div>
+          ) : (
+            <div className="flex h-full min-h-0 flex-col items-center justify-start rounded-xl border bg-muted/30 p-1.5">
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-7 w-7"
-                onClick={onToggleRight}
-                aria-label={rightVisible ? 'Collapse right sidebar' : 'Expand right sidebar'}
-              >
-                {rightVisible ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-              </Button>
-              {rightVisible ? (
-                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  Context
-                </span>
-              ) : (
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">R</span>
-              )}
-            </div>
-            <div className={`min-h-0 flex-1 overflow-auto ${rightVisible ? '' : 'hidden'}`}>
-              {rightPanel}
-            </div>
-            {!rightVisible && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-9 w-full border-t"
+                className="h-8 w-8 rounded-md"
                 onClick={onToggleRight}
                 aria-label="Expand right sidebar"
               >
-                <ChevronLeft className="h-4 w-4" />
+                <PanelRight className="h-4 w-4" />
               </Button>
-            )}
-          </Card>
+              <span className="mt-2 text-[10px] uppercase tracking-wider text-muted-foreground">Ops</span>
+            </div>
+          )}
         </div>
       </div>
     </div>
