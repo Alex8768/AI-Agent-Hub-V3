@@ -16,6 +16,7 @@ export interface ShellLayoutState {
   density: LayoutDensity
   showReasoningSummaries: boolean
   showExecutionEvents: boolean
+  showTraceShortcut: boolean
   canvas: CanvasState
 }
 
@@ -31,6 +32,7 @@ export const DEFAULT_LAYOUT_STATE: ShellLayoutState = {
   density: 'comfortable',
   showReasoningSummaries: true,
   showExecutionEvents: true,
+  showTraceShortcut: true,
   canvas: DEFAULT_CANVAS_STATE,
 }
 
@@ -74,6 +76,7 @@ export function readLayoutState(): ShellLayoutState {
       density: parsed.density === 'compact' ? 'compact' : 'comfortable',
       showReasoningSummaries: parsed.showReasoningSummaries !== false,
       showExecutionEvents: parsed.showExecutionEvents !== false,
+      showTraceShortcut: parsed.showTraceShortcut !== false,
       canvas: normalizeCanvasState(parsed.canvas),
     }
 

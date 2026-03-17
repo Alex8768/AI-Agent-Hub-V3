@@ -1,9 +1,13 @@
-import SettingsDialog, { type AgentSettings } from '../SettingsDialog'
-import { ModeToggle } from '@/components/ui/ModeToggle'
-import type { AppMode } from './layoutState'
 import { PanelLeft, PanelRight } from 'lucide-react'
+import type { AppSettingsState, LayoutDensity } from '../settings/settingsTypes'
+import AgentBehaviorModal from '../settings/AgentBehaviorModal'
+import ConnectionModelModal from '../settings/ConnectionModelModal'
+import QuickSettingsPopover from '../settings/QuickSettingsPopover'
+import WorkspaceSettingsModal from '../settings/WorkspaceSettingsModal'
+import { ModeToggle } from '@/components/ui/ModeToggle'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import type { AppMode } from './layoutState'
 
 type HealthState = 'checking' | 'healthy' | 'unreachable'
 
@@ -11,10 +15,18 @@ interface TopBarProps {
   title: string
   workspaceId: string
   sessionId: string
-  settings: AgentSettings
-  onSettingsChange: (next: AgentSettings) => void
-  localeMode: 'auto' | 'en' | 'ru'
-  onLocaleModeChange: (next: 'auto' | 'en' | 'ru') => void
+  settings: AppSettingsState
+  onConnectionSettingsChange: (next: AppSettingsState['connection']) => void
+  onBehaviorSettingsChange: (next: AppSettingsState['behavior']) => void
+  onWorkspaceSettingsChange: (next: AppSettingsState['workspace']) => void
+  density: LayoutDensity
+  onDensityChange: (next: LayoutDensity) => void
+  showReasoningSummaries: boolean
+  onShowReasoningSummariesChange: (next: boolean) => void
+  showExecutionEvents: boolean
+  onShowExecutionEventsChange: (next: boolean) => void
+  traceShortcutVisible: boolean
+  onTraceShortcutVisibleChange: (next: boolean) => void
   healthStatus: HealthState
   appMode: AppMode
   onAppModeChange: (mode: AppMode) => void
@@ -35,9 +47,17 @@ export default function TopBar({
   workspaceId,
   sessionId,
   settings,
-  onSettingsChange,
-  localeMode,
-  onLocaleModeChange,
+  onConnectionSettingsChange,
+  onBehaviorSettingsChange,
+  onWorkspaceSettingsChange,
+  density,
+  onDensityChange,
+  showReasoningSummaries,
+  onShowReasoningSummariesChange,
+  showExecutionEvents,
+  onShowExecutionEventsChange,
+  traceShortcutVisible,
+  onTraceShortcutVisibleChange,
   healthStatus,
   appMode,
   onAppModeChange,
@@ -97,17 +117,30 @@ export default function TopBar({
               <PanelRight className="h-4 w-4" />
             </Button>
           </div>
-          <Badge variant={healthStatus === 'healthy' ? 'secondary' : 'destructive'}>
-            {healthStatus === 'healthy' ? 'Connected' : healthStatus === 'checking' ? 'Checking' : 'Offline'}
-          </Badge>
+
+          <div className="hidden items-center gap-1.5 xl:flex">
+            <Badge variant={healthStatus === 'healthy' ? 'secondary' : 'destructive'}>
+              {healthStatus === 'healthy' ? 'Connected' : healthStatus === 'checking' ? 'Checking' : 'Offline'}
+            </Badge>
+            <Badge variant="outline">{settings.connection.provider}:{settings.connection.model || 'default'}</Badge>
+            <Badge variant="outline">{workspaceId}/{sessionId}</Badge>
+            <Badge variant="outline">Mode: {appMode}</Badge>
+          </div>
+
           <ModeToggle />
-          <SettingsDialog
-            settings={settings}
-            onChange={onSettingsChange}
-            localeMode={localeMode}
-            onLocaleModeChange={onLocaleModeChange}
-            iconOnly
+          <QuickSettingsPopover
+            density={density}
+            onDensityChange={onDensityChange}
+            showReasoningSummaries={showReasoningSummaries}
+            onShowReasoningSummariesChange={onShowReasoningSummariesChange}
+            showExecutionEvents={showExecutionEvents}
+            onShowExecutionEventsChange={onShowExecutionEventsChange}
+            traceShortcutVisible={traceShortcutVisible}
+            onTraceShortcutVisibleChange={onTraceShortcutVisibleChange}
           />
+          <ConnectionModelModal value={settings.connection} onChange={onConnectionSettingsChange} />
+          <AgentBehaviorModal value={settings.behavior} onChange={onBehaviorSettingsChange} />
+          <WorkspaceSettingsModal value={settings.workspace} onChange={onWorkspaceSettingsChange} />
         </div>
       </div>
     </header>

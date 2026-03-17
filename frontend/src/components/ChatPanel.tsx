@@ -29,6 +29,8 @@ interface ChatPanelProps {
     reasoningMode: 'standard' | 'deep'
     forceSearch: boolean
     showReasoning: boolean
+    showExecutionEvents?: boolean
+    showTraceShortcut?: boolean
     apiBaseUrl: string
   }
 }
@@ -310,6 +312,7 @@ export default function ChatPanel({
             }
 
             if (item.kind === 'execution_event') {
+              if (settings.showExecutionEvents === false) return null
               return (
                 <Card key={item.id}>
                   <CardContent className="flex items-start justify-between gap-3 p-3">
@@ -443,6 +446,7 @@ export default function ChatPanel({
                             mode: 'split',
                           })
                         }
+                        showTraceAction={settings.showTraceShortcut !== false}
                         onShowContext={() =>
                           onOpenCanvasView?.({
                             view: 'document',

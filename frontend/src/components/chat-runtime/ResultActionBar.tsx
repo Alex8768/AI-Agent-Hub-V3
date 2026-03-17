@@ -9,6 +9,7 @@ interface ResultActionBarProps {
   onOpenDiff: () => void
   onOpenArtifact: () => void
   onShowTrace: () => void
+  showTraceAction?: boolean
   onShowContext: () => void
   onExport: () => void
 }
@@ -21,6 +22,7 @@ export default function ResultActionBar({
   onOpenDiff,
   onOpenArtifact,
   onShowTrace,
+  showTraceAction = true,
   onShowContext,
   onExport,
 }: ResultActionBarProps) {
@@ -48,10 +50,12 @@ export default function ResultActionBar({
       <Button size="sm" variant="ghost" onClick={onOpenArtifact}>
         Open Artifact
       </Button>
-      <Button size="sm" variant="ghost" onClick={onShowTrace}>
-        <ScrollText className="mr-1 h-3.5 w-3.5" />
-        Show Trace
-      </Button>
+      {showTraceAction && (
+        <Button size="sm" variant="ghost" onClick={onShowTrace}>
+          <ScrollText className="mr-1 h-3.5 w-3.5" />
+          Show Trace
+        </Button>
+      )}
       <Button size="sm" variant="ghost" onClick={onShowContext}>
         <Search className="mr-1 h-3.5 w-3.5" />
         Show Context

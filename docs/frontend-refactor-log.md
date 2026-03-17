@@ -197,6 +197,57 @@ Polish shell composition so collapsed sidebars, top controls, and panel framing 
 ### Next patch
 - Patch 5: settings/modal architecture and final UX polish.
 
+## Patch 5 — Settings IA and modal architecture
+
+### Goal
+Move settings from a monolithic dialog into clear interaction surfaces: lightweight quick popover in top bar plus dedicated modals for connection/model, agent behavior, and workspace configuration.
+
+### Scope
+- frontend/src/App.tsx
+- frontend/src/components/shell/TopBar.tsx
+- frontend/src/components/SettingsDialog.tsx
+- frontend/src/components/ChatPanel.tsx
+- frontend/src/components/chat-runtime/ResultActionBar.tsx
+- frontend/src/components/shell/layoutState.ts
+- frontend/src/components/settings/settingsTypes.ts
+- frontend/src/components/settings/QuickSettingsPopover.tsx
+- frontend/src/components/settings/ConnectionModelModal.tsx
+- frontend/src/components/settings/AgentBehaviorModal.tsx
+- frontend/src/components/settings/WorkspaceSettingsModal.tsx
+- docs/frontend-refactor-log.md
+
+### Changes
+- Introduced typed settings state `AppSettingsState` with explicit domains:
+  - `connection` (provider/model/endpoint)
+  - `behavior` (reasoning/search/approval/detail/auto-open flags)
+  - `workspace` (root/policy/profile/session preferences)
+- Replaced top bar monolithic settings entry with:
+  - lightweight `QuickSettingsPopover` (theme, density, runtime visibility toggles)
+  - `ConnectionModelModal`
+  - `AgentBehaviorModal`
+  - `WorkspaceSettingsModal`
+- Kept top bar status compact and scoped to key signals only:
+  - backend status
+  - active provider/model
+  - active workspace/session
+  - active mode
+- Added `showTraceShortcut` into persisted shell layout state and wired it to runtime action bar visibility.
+- Updated runtime UI to respect quick toggles:
+  - hide/show execution event cards
+  - hide/show trace action in result action bar
+- Converted old `SettingsDialog` into a deprecated compatibility adapter (legacy mapping wrapper), no longer primary architecture.
+
+### Why
+- Settings UX needed correct information architecture: quick operational toggles in a popover and deeper config in dedicated modals.
+- A typed domain state enables cleaner ownership boundaries and future backend reintegration without reintroducing a monolithic dialog.
+
+### Validation
+- npm run build
+- npm run lint
+
+### Result
+- done
+
 ## Patch 4.7c — Split handle and pane control consistency
 
 ### Goal

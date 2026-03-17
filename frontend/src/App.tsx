@@ -2,12 +2,11 @@ import { useEffect, useMemo, useState } from 'react'
 import AppLayout from './components/AppLayout'
 import RightPanel from './components/RightPanel'
 import ChatPanel from './components/ChatPanel'
-import type { AgentSettings } from './components/SettingsDialog'
 import { AppProvider } from './context/AppContext'
 import { useAppContext } from './context/useAppContext'
 import { getHealth } from './lib/apiClient'
 import { ThemeProvider } from '@/components/theme-provider'
-import { readLocalePreference, resolveLocale, writeLocalePreference, type UiLocale } from './lib/uiPreferences'
+import { readLocalePreference, resolveLocale, type UiLocale } from './lib/uiPreferences'
 import GlobalModalHost from './components/shell/GlobalModalHost'
 import LeftSidebar from './components/shell/LeftSidebar'
 import MainWorkspace from './components/shell/MainWorkspace'
@@ -19,6 +18,7 @@ import SavedSection from './components/left-sidebar/SavedSection'
 import ViewsSection from './components/left-sidebar/ViewsSection'
 import CanvasHost from './components/canvas/CanvasHost'
 import type { CanvasViewType } from './components/canvas/canvasState'
+import { DEFAULT_APP_SETTINGS, toLegacyAgentSettings, type AppSettingsState } from './components/settings/settingsTypes'
 import {
   readLayoutState,
   writeLayoutState,
@@ -36,17 +36,11 @@ function AppContent() {
   const [workspaceId] = useState('default')
   const [sessionId] = useState('default')
   const [lastUsedSession, setLastUsedSession] = useState('default:default')
-  const [localeMode, setLocaleMode] = useState<UiLocale | 'auto'>(() => readLocalePreference())
-  const [settings, setSettings] = useState<AgentSettings>({
-    apiProvider: 'openai',
-    selectedModel: '',
-    reasoningMode: 'standard',
-    forceSearch: false,
-    showReasoning: true,
-    apiBaseUrl: '',
-  })
+  const [localeMode] = useState<UiLocale | 'auto'>(() => readLocalePreference())
+  const [settings, setSettings] = useState<AppSettingsState>(DEFAULT_APP_SETTINGS)
 
   const { lastGraph } = useAppContext()
+  const legacySettings = useMemo(() => toLegacyAgentSettings(settings), [settings])
   const locale = useMemo(() => resolveLocale(localeMode), [localeMode])
 
   useEffect(() => {
@@ -124,12 +118,17 @@ function AppContent() {
         workspaceId={workspaceId}
         sessionId={sessionId}
         settings={settings}
-        onSettingsChange={setSettings}
-        localeMode={localeMode}
-        onLocaleModeChange={(next) => {
-          setLocaleMode(next)
-          writeLocalePreference(next)
-        }}
+        onConnectionSettingsChange={(next) => setSettings((prev) => ({ ...prev, connection: next }))}
+        onBehaviorSettingsChange={(next) => setSettings((prev) => ({ ...prev, behavior: next }))}
+        onWorkspaceSettingsChange={(next) => setSettings((prev) => ({ ...prev, workspace: next }))}
+        density={layoutState.density}
+        onDensityChange={(next) => updateLayout({ density: next })}
+        showReasoningSummaries={layoutState.showReasoningSummaries}
+        onShowReasoningSummariesChange={(next) => updateLayout({ showReasoningSummaries: next })}
+        showExecutionEvents={layoutState.showExecutionEvents}
+        onShowExecutionEventsChange={(next) => updateLayout({ showExecutionEvents: next })}
+        traceShortcutVisible={layoutState.showTraceShortcut}
+        onTraceShortcutVisibleChange={(next) => updateLayout({ showTraceShortcut: next })}
         healthStatus={healthStatus}
         appMode={layoutState.appMode}
         onAppModeChange={setAppMode}
@@ -172,7 +171,12 @@ function AppContent() {
                   sessionId={sessionId}
                   onSessionUsed={onSessionUsed}
                   locale={locale}
-                  settings={settings}
+                  settings={{
+                    ...legacySettings,
+                    showReasoning: layoutState.showReasoningSummaries,
+                    showExecutionEvents: layoutState.showExecutionEvents,
+                    showTraceShortcut: layoutState.showTraceShortcut,
+                  }}
                   onOpenCanvasView={(request) => {
                     if (request.title?.toLowerCase().includes('trace')) {
                       updateLayout({ rightSidebarOpen: true })
