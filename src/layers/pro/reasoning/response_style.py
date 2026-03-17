@@ -110,6 +110,24 @@ def _query_topic_hint(query: str) -> str:
     return " ".join(words[:8]).strip()
 
 
+def _query_keywords(query: str) -> list[str]:
+    stop = {
+        "как", "что", "ты", "вы", "это", "для", "with", "that", "this", "and", "the", "или", "ли",
+        "мне", "тебе", "нужно", "нужна", "please", "help",
+    }
+    lowered = str(query or "").lower().replace("?", " ").replace("!", " ")
+    parts = [p.strip(".,:;()[]{}\"'") for p in lowered.split() if p.strip()]
+    return [p for p in parts if len(p) >= 4 and p not in stop][:6]
+
+
+def _is_contextual_to_query(answer: str, query: str) -> bool:
+    keywords = _query_keywords(query)
+    if not keywords:
+        return True
+    lowered = str(answer or "").lower()
+    return any(k in lowered for k in keywords)
+
+
 def is_substantive_query(query: str) -> bool:
     lowered = str(query or "").strip().lower()
     if not lowered:
@@ -193,6 +211,8 @@ def is_template_like_answer(answer: str) -> bool:
         "i am here to help step by step",
         "готова помочь. если дадите тему или цель",
         "ready to help. share your topic or goal",
+        "ready to help. share your goal and target format",
+        "готова помочь. дайте цель и желаемый формат результата",
     ]
     return any(marker in lowered for marker in markers)
 
@@ -345,42 +365,62 @@ async def build_natural_safe_terminal_response(
         else:
             instructions = "Provide a concise, useful, context-aware answer without generic assistant boilerplate."
 
-        prompt = (
-            "You are an operations AI assistant. "
-            "Generate a natural, non-template response in the user's language. "
-            "Do not use canned intros like 'I am here to help'. "
-            "Do not invent facts. "
-            f"Risk tier: {tier}. "
-            f"Instruction: {instructions} "
-            f"User query: {str(query or '').strip()}"
-        )
-        try:
-            candidate = str(await llm.generate(prompt)).strip()
-        except Exception:
-            candidate = ""
+        attempts = 2 if tier in {"L0", "L1"} else 1
+        for attempt in range(attempts):
+            prompt = (
+                "You are an operations AI assistant. "
+                "Generate a natural, non-template response in the user's language. "
+                "Do not use canned intros like 'I am here to help'. "
+                "Do not invent facts. "
+                "Reference at least one concrete term from the user query. "
+                f"Risk tier: {tier}. "
+                f"Instruction: {instructions} "
+                f"Retry: {attempt}. "
+                f"User query: {str(query or '').strip()}"
+            )
+            try:
+                candidate = str(await llm.generate(prompt)).strip()
+            except Exception:
+                candidate = ""
 
-        if (
-            candidate
-            and not is_reasoning_stub_answer(candidate)
-            and not is_unknown_style_answer(candidate)
-            and not is_template_like_answer(candidate)
-            and _answer_language(candidate) == target_language
-        ):
-            lowered = candidate.lower()
-            if tier == "L2":
-                if any(token in lowered for token in ["подтвержд", "confirm", "confirmation"]):
+            if (
+                candidate
+                and not is_reasoning_stub_answer(candidate)
+                and not is_unknown_style_answer(candidate)
+                and not is_template_like_answer(candidate)
+                and _answer_language(candidate) == target_language
+            ):
+                lowered = candidate.lower()
+                if tier == "L2":
+                    if any(token in lowered for token in ["подтвержд", "confirm", "confirmation"]):
+                        return candidate
+                    continue
+                if tier == "L3":
+                    if any(token in lowered for token in ["не могу", "cannot", "can't", "refuse", "blocked"]):
+                        return candidate
+                    continue
+                if _is_contextual_to_query(candidate, query):
                     return candidate
-            elif tier == "L3":
-                if any(token in lowered for token in ["не могу", "cannot", "can't", "refuse", "blocked"]):
-                    return candidate
-            else:
-                return candidate
 
-    return build_safe_terminal_response(
+    fallback = build_safe_terminal_response(
         query=query,
         language=target_language,
         current_answer=current_answer,
     )
+    if tier in {"L0", "L1"} and not is_simple_greeting_query(query):
+        if _is_contextual_to_query(fallback, query) and not is_template_like_answer(fallback):
+            return fallback
+        hint = _query_topic_hint(query) or str(query or "").strip()[:80]
+        if target_language == "ru":
+            return (
+                f"По вашему запросу ({hint}) предлагаю рабочий подход: "
+                "сначала уточним цель и ограничения, затем соберем краткий план шагов и первый черновик результата."
+            )
+        return (
+            f"For your request ({hint}), here is a practical approach: "
+            "first clarify goal and constraints, then build a short step plan and a first draft."
+        )
+    return fallback
 
 
 async def build_assistant_chat_recovery_answer(

@@ -125,3 +125,30 @@ async def test_build_natural_safe_terminal_response_l2_requires_confirm_semantic
         current_answer="fallback",
     )
     assert "подтверждение" in out.lower()
+
+
+@pytest.mark.asyncio
+async def test_build_natural_safe_terminal_response_retries_after_template_candidate():
+    from src.layers.pro.reasoning.response_style import build_natural_safe_terminal_response
+
+    class _LLM:
+        def __init__(self):
+            self.calls = 0
+
+        async def generate(self, prompt: str) -> str:
+            _ = prompt
+            self.calls += 1
+            if self.calls == 1:
+                return "Ready to help. Share your goal and target format."
+            return "По презентации по истории: сначала цель, затем структура слайда, затем черновик вывода."
+
+    llm = _LLM()
+    out = await build_natural_safe_terminal_response(
+        query="Нужна помощь с презентацией по истории",
+        language="ru",
+        llm=llm,
+        risk_tier="L1",
+        current_answer="",
+    )
+    assert "презентации по истории" in out.lower()
+    assert llm.calls >= 2

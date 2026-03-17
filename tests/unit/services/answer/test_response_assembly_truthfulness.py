@@ -17,6 +17,18 @@ class _Req:
         self.query = query
 
 
+class _LLMTemplateThenNatural:
+    def __init__(self) -> None:
+        self.calls = 0
+
+    async def generate(self, prompt: str) -> str:
+        _ = prompt
+        self.calls += 1
+        if self.calls == 1:
+            return "Ready to help. Share your goal and target format."
+        return "По запросу о таблице: сначала определим поля, затем построим структуру и пример записи."
+
+
 @pytest.mark.asyncio
 async def test_response_assembly_wires_truthfulness_guard_warn_reason() -> None:
     resp = _Resp(answer="This will definitely always work.", diagnostics={"retrieved_provenance_count": 0})
@@ -174,3 +186,39 @@ async def test_response_assembly_l2_contract_replaces_empty_terminal() -> None:
     answer = str(getattr(out, "answer", "") or "")
     assert "подтвержд" in answer or "план" in answer
     assert "quality_trace:tier_contract_l2_enforced" in list(diag.get("quality_trace") or [])
+
+
+@pytest.mark.asyncio
+async def test_response_assembly_rewrites_template_answer_for_l1_non_greeting() -> None:
+    resp = _Resp(
+        answer="Ready to help. Share your goal and target format.",
+        diagnostics={"retrieved_provenance_count": 0, "assistant_plan": {"intent": "general_query"}},
+    )
+    req = _Req(query="Нужна помощь с таблицей расходов")
+    llm = _LLMTemplateThenNatural()
+
+    out = await run_answer_response_assembly(
+        resp=resp,
+        req=req,
+        llm=llm,
+        assistant_mode_enabled=True,
+        assistant_response_language="ru",
+        build_assistant_recovery_policy_contract=lambda: {"contract_version": "v1"},
+        apply_assistant_recovery_policy_guards=lambda **kwargs: (False, {"applied_reason_codes": []}),
+        build_assistant_chat_recovery_answer=lambda **kwargs: kwargs.get("current_answer", ""),
+        normalize_low_evidence_friendliness=lambda **kwargs: str(kwargs.get("answer", "") or ""),
+        build_conversational_runtime_parity_bundle=lambda **kwargs: {"reason_codes": []},
+        build_truthfulness_guard_bundle=lambda **kwargs: {
+            "contract_version": "v1",
+            "status": "ok",
+            "reason_codes": ["truthfulness_guard_evaluated"],
+        },
+        calibrate_confidence_with_truthfulness_guard=lambda **kwargs: (
+            kwargs.get("confidence", 0.0),
+            {"reason_codes": []},
+        ),
+    )
+    diag = dict(getattr(out, "diagnostics", None) or {})
+    assert "assistant_template_answer_rewritten" in list(diag.get("planning_reason_codes") or [])
+    assert "quality_trace:template_answer_rewritten" in list(diag.get("quality_trace") or [])
+    assert "таблицей расходов" in str(getattr(out, "answer", "")).lower()

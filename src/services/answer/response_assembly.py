@@ -6,6 +6,7 @@ from src.adapters.logging_adapter import get_logger
 from src.layers.pro.reasoning.response_style import (
     build_natural_safe_terminal_response,
     is_reasoning_stub_answer,
+    is_simple_greeting_query,
     is_substantive_query,
     is_template_like_answer,
     is_unknown_style_answer,
@@ -84,6 +85,26 @@ async def run_answer_response_assembly(
                 diag["assistant_chat_recovery_applied"] = True
                 _append_quality_trace(diag, "quality_trace:assistant_recovery_applied")
         current_answer = str(getattr(resp, "answer", "") or "")
+        # Anti-template routing: if final candidate still looks canned for non-greeting L0/L1, regenerate naturally.
+        if (
+            risk_tier in {"L0", "L1"}
+            and current_answer.strip()
+            and is_template_like_answer(current_answer)
+            and not is_simple_greeting_query(query_text)
+        ):
+            resp.answer = await build_natural_safe_terminal_response(
+                query=query_text,
+                language=str(assistant_response_language or "auto"),
+                llm=llm,
+                risk_tier=risk_tier,
+                current_answer="",
+            )
+            reason_codes = [str(x) for x in list(diag.get("planning_reason_codes") or []) if str(x or "").strip()]
+            reason_codes.append("assistant_template_answer_rewritten")
+            diag["planning_reason_codes"] = sorted(set(reason_codes))
+            _append_quality_trace(diag, "quality_trace:template_answer_rewritten")
+            current_answer = str(getattr(resp, "answer", "") or "")
+
         # L2 contract first: empty/stub -> plan/preview + confirm-required (do not overwrite with generic)
         if risk_tier == "L2" and (
             not current_answer.strip() or is_reasoning_stub_answer(current_answer)
