@@ -40,6 +40,7 @@ from src.services.answer.reasoning.llm_planner_policy import (
     build_llm_planner_policy_contract as _build_llm_planner_policy_contract,
     build_tool_selection_policy_contract as _build_tool_selection_policy_contract,
 )
+from src.services.answer.classifier import classify_query_type
 
 async def apply_answer_diagnostics(
     *,
@@ -86,6 +87,12 @@ async def apply_answer_diagnostics(
         diag.setdefault("used_edges_count", int(len(getattr(resp, "used_edges", []) or [])))
         diag.setdefault("has_llm", bool(llm is not None))
         diag.setdefault("query_len", int(len(req.query or "")))
+        query_type, query_type_reason = await classify_query_type(
+            query=str(getattr(req, "query", "") or ""),
+            llm=llm,
+        )
+        diag.setdefault("query_type", str(query_type.value))
+        diag.setdefault("query_type_reason", str(query_type_reason))
         diag.setdefault("k", int(req.k or 0))
         diag.setdefault("graph_depth", int(req.graph_depth or 0))
         diag.setdefault("session_id", str(getattr(req, "session_id", "") or ""))

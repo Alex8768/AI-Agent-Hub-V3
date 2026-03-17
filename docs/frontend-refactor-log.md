@@ -32,6 +32,39 @@ Stabilize the application shell with a single typed layout state and predictable
 ### Result
 - done
 
+---
+
+## Anchor A1 / Patch A1.1 — Query classifier + diagnostics wiring
+
+### Goal
+Introduce an explicit query router signal (`dialog|advice|action`) in a dedicated module and expose it in diagnostics without changing the existing orchestration path.
+
+### Scope
+- src/services/answer/classifier.py (new)
+- src/services/answer/diagnostics/runtime_apply.py
+- tests/unit/services/answer/test_classifier.py (new)
+- tests/unit/services/answer/test_answer_service_debug_snapshot.py
+
+### Changes
+- Added `QueryType` enum and `classify_query_type()` in `src/services/answer/classifier.py`.
+- Implemented layered classification strategy:
+  - rule-first markers for action/advice/dialog;
+  - optional LLM fallback for ambiguous queries;
+  - safe fallback behavior if LLM classification fails.
+- Wired diagnostics in `runtime_apply`:
+  - `query_type`
+  - `query_type_reason`
+- Added classifier unit tests (rules + LLM fallback path).
+- Updated diagnostics snapshot keyset test for new fields.
+
+### Validation
+- `uv run pytest tests/unit/services/answer/test_classifier.py`
+- `uv run pytest tests/unit/services/answer/test_answer_service_debug_snapshot.py::test_answer_service_populates_debug_snapshot_fields`
+- `uv run pytest tests/unit/services/answer/test_answer_service_debug_snapshot.py::test_answer_service_diagnostics_keyset_stable_when_proactive_flag_changes`
+
+### Result
+- done
+
 ### Next patch
 - Patch 2: rebuild left/right sidebars by roles (navigation vs operational context) with dedicated section/tab components.
 

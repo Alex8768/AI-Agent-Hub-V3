@@ -23,7 +23,7 @@ Build a thinking assistant layer (not scripted behavior) with two contours:
 
 ## Anchors
 - [x] A0: governance baseline + single-line execution document.
-- [ ] A1: query router/classifier (`dialog`, `advice`, `action`) + diagnostics.
+- [x] A1: query router/classifier (`dialog`, `advice`, `action`) + diagnostics.
 - [ ] A2: unified LLM core for generation-first behavior.
 - [ ] A3: containers split (`dialog` vs `action/advice`) wired in answer service.
 - [ ] A4: memory-lite integration (session context first, expandable).
@@ -32,11 +32,12 @@ Build a thinking assistant layer (not scripted behavior) with two contours:
 - [ ] A7: acceptance matrix + canary feature flag rollout.
 
 ## Active Patch
-- Anchor: A0
-- Patch: A0.1
+- Anchor: A1
+- Patch: A1.1
 - Scope:
-  - create this control document,
-  - enforce per-patch workflow and sync discipline.
+  - add modular query classifier (`dialog|advice|action`),
+  - wire `query_type` and `query_type_reason` into diagnostics,
+  - cover with unit tests and snapshot-keyset update.
 - Status: done
 
 ## Patch Reporting Template

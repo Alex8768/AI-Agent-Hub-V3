@@ -130,6 +130,8 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
         "used_edges_count",
         "has_llm",
         "query_len",
+        "query_type",
+        "query_type_reason",
         "k",
         "graph_depth",
         "session_id",
