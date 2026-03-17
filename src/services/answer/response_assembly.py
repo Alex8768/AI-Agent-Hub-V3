@@ -3,8 +3,25 @@ from __future__ import annotations
 from typing import Any
 
 from src.adapters.logging_adapter import get_logger
+from src.layers.pro.reasoning.response_style import (
+    build_helpful_safe_alternative,
+    is_reasoning_stub_answer,
+    is_substantive_query,
+    is_template_like_answer,
+)
+from src.services.answer.risk_tier import build_risk_tier_reason, classify_risk_tier
 
 _LOGGER = get_logger()
+
+
+def _append_quality_trace(diag: dict[str, Any], marker: str) -> None:
+    trace = [str(x) for x in list(diag.get("quality_trace") or []) if str(x or "").strip()]
+    trace.append(str(marker))
+    diag["quality_trace"] = sorted(set(trace))
+
+
+def _is_substantive_query(query: str) -> bool:
+    return bool(is_substantive_query(query))
 
 
 async def run_answer_response_assembly(
@@ -24,6 +41,10 @@ async def run_answer_response_assembly(
 ) -> object:
     try:
         diag = dict(getattr(resp, "diagnostics", None) or {})
+        query_text = str(getattr(req, "query", "") or "")
+        risk_tier = classify_risk_tier(query_text)
+        diag["risk_tier"] = risk_tier
+        diag["risk_tier_reason"] = build_risk_tier_reason(query_text, risk_tier)
         has_evidence = int(diag.get("retrieved_provenance_count", 0) or 0) > 0
         plan_intent = str((dict(diag.get("assistant_plan") or {})).get("intent", "general_query") or "general_query")
         recovery_policy = build_assistant_recovery_policy_contract()
@@ -32,7 +53,7 @@ async def run_answer_response_assembly(
             assistant_mode_enabled=assistant_mode_enabled,
             has_evidence=has_evidence,
             plan_intent=plan_intent,
-            query=str(getattr(req, "query", "") or ""),
+            query=query_text,
             target_language=str(assistant_response_language or "auto"),
         )
         diag["assistant_recovery_policy"] = recovery_policy_eval
@@ -41,6 +62,8 @@ async def run_answer_response_assembly(
             reason_codes = [str(x) for x in list(diag.get("planning_reason_codes") or []) if str(x or "").strip()]
             reason_codes.extend(policy_reasons)
             diag["planning_reason_codes"] = sorted(set(reason_codes))
+            if "assistant_chat_recovery_policy_forced_fallback" in policy_reasons:
+                _append_quality_trace(diag, "quality_trace:recovery_policy_forced_fallback")
         if allow_recovery:
             recovered = await build_assistant_chat_recovery_answer(
                 query=str(getattr(req, "query", "") or ""),
@@ -54,17 +77,39 @@ async def run_answer_response_assembly(
                 reason_codes.append("assistant_chat_recovery_applied")
                 diag["planning_reason_codes"] = sorted(set(reason_codes))
                 diag["assistant_chat_recovery_applied"] = True
-        if assistant_mode_enabled and not has_evidence:
-            normalized_low_evidence_answer = normalize_low_evidence_friendliness(
-                query=str(getattr(req, "query", "") or ""),
+                _append_quality_trace(diag, "quality_trace:assistant_recovery_applied")
+        current_answer = str(getattr(resp, "answer", "") or "")
+        should_replace_terminal = is_reasoning_stub_answer(current_answer) or (
+            risk_tier in {"L0", "L1"} and is_template_like_answer(current_answer) and _is_substantive_query(query_text)
+        )
+        if should_replace_terminal:
+            resp.answer = build_helpful_safe_alternative(
+                query=query_text,
                 language=str(assistant_response_language or "auto"),
-                answer=str(getattr(resp, "answer", "") or ""),
+                current_answer=current_answer,
             )
-            if normalized_low_evidence_answer.strip() != str(getattr(resp, "answer", "") or "").strip():
-                resp.answer = normalized_low_evidence_answer
-                reason_codes = [str(x) for x in list(diag.get("planning_reason_codes") or []) if str(x or "").strip()]
-                reason_codes.append("assistant_low_evidence_friendliness_applied")
-                diag["planning_reason_codes"] = sorted(set(reason_codes))
+            reason_codes = [str(x) for x in list(diag.get("planning_reason_codes") or []) if str(x or "").strip()]
+            reason_codes.append("assistant_terminal_answer_replaced")
+            diag["planning_reason_codes"] = sorted(set(reason_codes))
+            if is_reasoning_stub_answer(current_answer):
+                _append_quality_trace(diag, "quality_trace:stub_terminal_replaced")
+            else:
+                _append_quality_trace(diag, "quality_trace:template_terminal_replaced")
+        if assistant_mode_enabled and not has_evidence:
+            if not _is_substantive_query(query_text):
+                normalized_low_evidence_answer = normalize_low_evidence_friendliness(
+                    query=query_text,
+                    language=str(assistant_response_language or "auto"),
+                    answer=str(getattr(resp, "answer", "") or ""),
+                )
+                if normalized_low_evidence_answer.strip() != str(getattr(resp, "answer", "") or "").strip():
+                    resp.answer = normalized_low_evidence_answer
+                    reason_codes = [str(x) for x in list(diag.get("planning_reason_codes") or []) if str(x or "").strip()]
+                    reason_codes.append("assistant_low_evidence_friendliness_applied")
+                    diag["planning_reason_codes"] = sorted(set(reason_codes))
+                    _append_quality_trace(diag, "quality_trace:low_evidence_normalized")
+            else:
+                _append_quality_trace(diag, "quality_trace:substantive_query_preserved")
         conversational_runtime_parity = build_conversational_runtime_parity_bundle(
             diagnostics=diag,
             query=str(getattr(req, "query", "") or ""),

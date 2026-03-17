@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from src.services.answer.response.language import normalize_language_tag
+from src.services.answer.risk_tier import build_risk_tier_reason, classify_risk_tier
 
 _DEFAULT_ALLOWED_INTENTS: tuple[str, ...] = (
     "start_project",
@@ -18,9 +19,9 @@ def _default_assistant_recovery_policy_contract() -> dict[str, object]:
         "allow_low_evidence_only": True,
         "allowed_intents": ["general_chat", "general_query"],
         "block_greeting_queries": True,
-        "allowed_languages": ["ru", "en"],
+        "allowed_languages": ["ru", "en", "de", "fr"],
         "require_assistant_mode": True,
-        "fallback_on_policy_violation": True,
+        "fallback_on_policy_violation": False,
     }
 
 
@@ -308,8 +309,8 @@ def wire_assistant_recovery_runtime_diagnostics(
     policy["allowed_languages"] = [
         language
         for language in [str(x).strip().lower() for x in list(policy.get("allowed_languages") or []) if str(x or "").strip()]
-        if language in {"ru", "en"}
-    ] or ["ru", "en"]
+        if language in {"ru", "en", "de", "fr"}
+    ] or ["ru", "en", "de", "fr"]
     policy["target_language"] = target_language
 
     known_violations = {
@@ -325,8 +326,14 @@ def wire_assistant_recovery_runtime_diagnostics(
 
     if len(violations) != len(raw_violations):
         policy_reasons.append("assistant_chat_recovery_runtime_unknown_violation_removed")
-    if violations and "assistant_chat_recovery_policy_forced_fallback" not in policy_reasons:
+    if (
+        violations
+        and bool(policy.get("fallback_on_policy_violation", True))
+        and "assistant_chat_recovery_policy_forced_fallback" not in policy_reasons
+    ):
         policy_reasons.append("assistant_chat_recovery_policy_forced_fallback")
+    if violations and not bool(policy.get("fallback_on_policy_violation", True)):
+        policy_reasons.append("assistant_chat_recovery_policy_non_forced_violation")
     policy_reasons.append("assistant_chat_recovery_runtime_wired")
 
     recovery_applied = bool(diag.get("assistant_chat_recovery_applied", False))
@@ -340,6 +347,16 @@ def wire_assistant_recovery_runtime_diagnostics(
         planning_reasons.append("assistant_chat_recovery_applied")
     diag["planning_reason_codes"] = sorted(set(planning_reasons))
 
+    quality_trace = [str(x) for x in list(diag.get("quality_trace") or []) if str(x or "").strip()]
+    if "assistant_chat_recovery_policy_forced_fallback" in set(policy_reasons):
+        quality_trace.append("quality_trace:recovery_policy_forced_fallback")
+    if bool(diag.get("assistant_chat_recovery_applied", False)):
+        quality_trace.append("quality_trace:recovery_applied")
+    if "assistant_chat_recovery_language_not_allowlisted" in set(violations):
+        quality_trace.append("quality_trace:language_policy_mismatch")
+    if quality_trace:
+        diag["quality_trace"] = sorted(set(quality_trace))
+
     policy["violations"] = sorted(set(violations))
     policy["applied_reason_codes"] = sorted(set(policy_reasons))
     diag["assistant_recovery_policy"] = policy
@@ -351,6 +368,13 @@ def wire_runtime_diagnostics(
     diagnostics: dict[str, object],
 ) -> dict[str, object]:
     diag = wire_planner_runtime_diagnostics(diagnostics=diagnostics)
+    query_text = str(diag.get("query", "") or "")
+    risk_tier = classify_risk_tier(query_text)
+    diag["risk_tier"] = str(diag.get("risk_tier", risk_tier) or risk_tier)
+    diag["risk_tier_reason"] = str(
+        diag.get("risk_tier_reason", build_risk_tier_reason(query_text, str(diag.get("risk_tier", risk_tier) or risk_tier)))
+        or build_risk_tier_reason(query_text, str(diag.get("risk_tier", risk_tier) or risk_tier))
+    )
     diag = wire_tool_selection_runtime_diagnostics(diagnostics=diag)
     diag = wire_feedback_runtime_diagnostics(diagnostics=diag)
     diag = wire_feedback_adaptation_runtime_diagnostics(diagnostics=diag)
