@@ -305,6 +305,187 @@ Separate control surfaces from status surfaces: keep top bar focused on active c
 ### Result
 - done
 
+## Patch 7 — Runtime UX and action polish
+
+### Goal
+Turn chat into a clearer agent runtime console by improving execution readability, approval clarity, and result/action ergonomics without touching backend contracts or shell/settings/canvas architecture.
+
+### Scope
+- frontend/src/components/ChatPanel.tsx
+- frontend/src/components/chat-runtime/types.ts
+- frontend/src/components/chat-runtime/RuntimeCard.tsx
+- frontend/src/components/chat-runtime/ResultActionBar.tsx
+- docs/frontend-refactor-log.md
+
+### Changes
+- Introduced a unified runtime card system (`RuntimeCard`) with variants:
+  - execution
+  - file activity
+  - tool activity
+  - approval
+  - warning
+  - result
+  - reasoning
+  - plan.
+- Expanded runtime timeline model with dedicated activity types:
+  - `file_activity`
+  - `tool_activity`
+  - `warning`
+  - richer approval/result metadata.
+- Added visual phase grouping layer for execution flow:
+  - Analyze / Discover / Plan / Execute / Finalize
+  - phase grouping is render-only (no new runtime state machine).
+- Added summary-first execution rendering:
+  - compact primary line in flow
+  - collapsible `Details / Inspect` for lower-level telemetry.
+- Improved approval gate UX:
+  - always distinct visual block
+  - risk badge + target summary
+  - explicit `Approve / Review / Deny` actions
+  - no auto-collapse behavior.
+- Improved result card hierarchy and contextual action bar:
+  - structured result header/body/footer
+  - action visibility now contextual instead of always-on
+  - consistent button size/height in action group.
+- Clarified trace/context reveal:
+  - explicit companion-opened runtime events
+  - clearer labels (`Trace Companion`, `Context Companion`)
+  - no duplicate interaction surfaces.
+
+### Why
+- Runtime UI needed to feel like a workstream console, not a generic chat feed.
+- Summary-first rendering reduces noise while keeping inspectability.
+- Contextual actions and stronger approval semantics improve decision confidence.
+
+### Validation
+- npm run build
+- npm run lint
+
+### Result
+- done
+
+## Patch 7.1 — Run-centric streaming correction
+
+### Goal
+Replace event-feed runtime perception with run-centric execution UX where one user request maps to one live runtime block plus one terminal result card.
+
+### Scope
+- frontend/src/components/ChatPanel.tsx
+- frontend/src/components/chat-runtime/types.ts
+- docs/frontend-refactor-log.md
+
+### Changes
+- Switched runtime rendering model from many top-level execution cards to a single `runtime_run` block per user request.
+- Aggregated execution phases inside run block:
+  - Analyze / Discover / Plan / Execute / Finalize
+  - each phase has status + summary + collapsible details.
+- Kept phase progression visually alive with:
+  - active-phase spinner
+  - phase-by-phase status transitions
+  - run progress bar updates.
+- Embedded approvals directly inside the run block as blocking gate UI (not separate feed message).
+- Ensured terminal outcomes always render as distinct final result cards:
+  - successful completion -> answer result card
+  - failed/denied run -> failed terminal result card.
+- Preserved summary-first UX while keeping tool/file/warning details inspectable within relevant phase details.
+
+### Why
+- Previous patch still looked like a styled event stream instead of a coherent run lifecycle.
+- Run-centric aggregation better matches user mental model: process first, outcome second.
+
+### Validation
+- npm run build
+- npm run lint
+
+### Result
+- done
+
+## Patch 7.2a.1 — Backend quality recovery
+
+### Goal
+Restore response usefulness for safe/general queries by reducing over-restrictive degradation paths in backend policy/assembly while preserving hard safety boundaries for destructive actions.
+
+### Scope
+- src/services/answer/reasoning/llm_planner_policy.py
+- src/services/answer/response_assembly.py
+- src/services/answer/failure_policy.py
+- src/services/answer/diagnostics/runtime_wiring.py
+- src/services/answer/response/language.py
+- src/layers/pro/reasoning/response_style.py
+- tests/unit/layers/pro/test_reasoning_response_style.py
+- docs/frontend-refactor-log.md
+
+### Changes
+- Relaxed plan guard from narrow `prepare_*_draft` allowlist to safe non-destructive planning actions while keeping destructive markers blocked.
+- Added controlled safe degradation for empty-ready plans (`general_query` / `general_chat`) via synthetic `prepare_safe_outline_draft` instead of hard blank guard outcome.
+- Expanded assistant recovery language policy to `ru/en/de/fr` across planner contract, runtime wiring, and language helpers.
+- Disabled policy-level "forced fallback" by default for recovery violations (`fallback_on_policy_violation=false`) to avoid unnecessary hard degradation in non-destructive contexts.
+- Narrowed low-evidence normalization behavior:
+  - preserve substantive answers when they are already useful;
+  - keep normalization for greeting/capability/ambiguous contexts;
+  - generate a safe structured outline when substantive query has weak/empty answer.
+- Upgraded controlled fallback response quality in failure policy:
+  - short fallback for simple prompts;
+  - structured "what can be done safely now" response for substantive prompts.
+- Added explicit quality-trace markers in diagnostics (`quality_trace:*`) to expose when degradation paths were applied or bypassed.
+- Added regression tests for substantive low-evidence behavior in response style.
+
+### Why
+- Main quality loss came from backend post-processing and policy clamps, not only frontend rendering.
+- The patch keeps safety constraints but shifts behavior from hard refusal toward bounded useful assistance for safe scenarios.
+
+### Validation
+- `uv run pytest tests/unit/layers/pro/test_reasoning_response_style.py tests/unit/services/answer/test_response_assembly_truthfulness.py tests/unit/services/answer/test_answer_service_debug_snapshot.py::test_wire_assistant_recovery_runtime_diagnostics_normalizes_policy`
+
+### Result
+- done
+
+## Patch 7.2a.2 — Eliminate stub finalization
+
+### Goal
+Remove terminal `"(reasoning layer stub)"` outcomes for safe/general requests and replace them with useful safe responses, while keeping destructive safety blocks intact.
+
+### Scope
+- src/layers/pro/reasoning/response_style.py
+- src/layers/pro/reasoning/evaluation/runtime_productization.py
+- src/layers/pro/reasoning/graph/nodes.py
+- src/services/answer/response_assembly.py
+- src/services/answer/diagnostics/runtime_wiring.py
+- tests/unit/layers/pro/test_reasoning_engine_synthesize.py
+- tests/unit/layers/pro/test_reasoning_engine_synthesize_llm_fallback.py
+- tests/unit/layers/pro/test_reasoning_engine_synthesize_llm_timeout.py
+- tests/unit/services/answer/test_answer_service_debug_snapshot.py
+- docs/frontend-refactor-log.md
+
+### Changes
+- Added safe terminal response helpers in reasoning style layer:
+  - `is_reasoning_stub_answer`
+  - `is_destructive_request`
+  - `build_safe_terminal_response`
+- Replaced direct stub returns in fallback runtime productization with safe terminal response generation.
+- Replaced graph answer-node exception fallback from raw stub to safe terminal response.
+- Added final stub-replacement guard in response assembly, so stub answers are converted before response finalization.
+- Updated assistant fallback routing:
+  - greetings keep friendly greeting behavior;
+  - non-greeting safe/general requests now route to useful safe terminal responses (including structured baseline plan for substantive asks).
+- Adjusted assistant recovery diagnostics wiring so `assistant_chat_recovery_policy_forced_fallback` is only added when `fallback_on_policy_violation=true`.
+- Updated reasoning-engine unit tests from strict stub expectation to safe non-stub expectation.
+- Updated debug snapshot assertions for greeting recovery policy to match non-forced fallback default.
+
+### Why
+- Quality bottleneck was no longer only policy constraints; terminal answer paths still emitted stub placeholders.
+- The patch introduces a narrow terminal safety net to guarantee useful safe output for safe/general paths without enabling destructive behavior.
+
+### Validation
+- `uv run pytest tests/unit/layers/pro/test_reasoning_engine_synthesize.py tests/unit/layers/pro/test_reasoning_engine_synthesize_llm_fallback.py tests/unit/layers/pro/test_reasoning_engine_synthesize_llm_timeout.py tests/unit/services/answer/test_response_assembly_truthfulness.py tests/unit/services/answer/test_answer_service_debug_snapshot.py::test_answer_service_assistant_fallback_localizes_russian tests/unit/services/answer/test_answer_service_debug_snapshot.py::test_answer_service_recovery_policy_blocks_recovery_for_greeting tests/unit/services/answer/test_answer_service_debug_snapshot.py::test_wire_assistant_recovery_runtime_diagnostics_normalizes_policy`
+- Live prompt check on patched backend (`:8010`) with 3 prompts:
+  - safe/general substantive -> structured safe outline (no stub),
+  - light ambiguous -> concise useful response (no stub),
+  - destructive request -> explicit refusal with safe alternative (still blocked).
+
+### Result
+- done
+
 ## Patch 4.7c — Split handle and pane control consistency
 
 ### Goal
@@ -446,3 +627,115 @@ Convert left and right sidebars from persistent layout columns into overlay desk
 
 ### Next patch
 - Patch 5: settings/modal architecture and final UX polish.
+
+---
+
+## Natural Behavior Recovery — Stage 1 (Truth baseline)
+
+### Goal
+Stabilize environment (single backend port, frontend proxy), then capture a truth baseline on 10–15 key prompts for later comparison.
+
+### Scope
+- scripts/baseline_stage1.py (new)
+- docs/baseline-stage1.json, docs/baseline-stage1.md (generated)
+- docs/frontend-refactor-log.md
+
+### Changes
+- Added `scripts/baseline_stage1.py`: health check, POST /api/v1/answer for 12 prompts (safe/general, ambiguous, planning-with-operational-words, destructive).
+- Saves per-response: answer, answer_preview, planning_reason_codes, quality_trace, assistant_recovery_policy slice; writes docs/baseline-stage1.json and docs/baseline-stage1.md.
+
+### Baseline snapshot (2026-03-17)
+- **Порт:** backend 8000, frontend proxy 8000 — ок.
+- **Результаты:** stub-строка «(reasoning layer stub)» не встречается; многие safe/general запросы (1,2,3,5,9) дают короткий ответ «Я не знаю.» при violations `assistant_chat_recovery_intent_not_allowlisted`, `assistant_chat_recovery_requires_low_evidence`.
+- Деструктивные (11, 12) корректно блокируются длинным сообщением.
+- **Для Этапа 2:** убрать жёсткую перезапись на «Я не знаю» для safe/general; условная перезапись только при stub/empty/unknown.
+
+### Validation
+- `uv run python scripts/baseline_stage1.py --base-url http://127.0.0.1:8000` — все 12 запросов успешны, файлы записаны.
+
+### Next
+- Этап 2: условная перезапись fallback в оркестраторе, reason-codes preserve/fallback, smoke по 3 промптам.
+
+---
+
+## Natural Behavior Recovery — Stage 2 (Core routing fix)
+
+### Goal
+Убрать жёсткую перезапись полезных ответов и оставить fallback только для реально плохих терминальных исходов (stub/empty/unknown), сохранив safety-блок для destructive.
+
+### Scope
+- src/services/answer/orchestrator.py
+- tests/unit/services/answer/test_answer_soft_failure_observability.py
+- tests/unit/services/answer/test_answer_service_debug_snapshot.py
+- docs/frontend-refactor-log.md
+
+### Changes
+- Подтверждена и закреплена условная перезапись в оркестраторе только для:
+  - stub (`(reasoning layer stub)`),
+  - unknown-style (`я не знаю`/`i don't know`),
+  - empty answer.
+- Сохранён reason-code контракт:
+  - `assistant_orchestrator_fallback_applied`,
+  - `assistant_orchestrator_answer_preserved`,
+  - `assistant_orchestrator_template_answer_preserved`.
+- Добавлен safety guard: для destructive-запросов без provenance оркестратор не сохраняет generic low-evidence ответ, а переводит в fallback-path (явный отказ + безопасная альтернатива).
+- Обновлён snapshot-тест английского assistant fallback под новый preserve-контракт (не принудительный fallback при полезном ответе).
+- Добавлен unit-тест: destructive-запрос без provenance должен получать fallback и reason code `assistant_orchestrator_fallback_applied`.
+
+### Validation
+- `uv run pytest tests/unit/services/answer/test_answer_soft_failure_observability.py tests/unit/services/answer/test_answer_service_debug_snapshot.py` -> 61 passed.
+- Smoke (3 prompts, live API):
+  - safe/general: структурный план вместо `Я не знаю`.
+  - light ambiguous: короткий полезный ответ.
+  - destructive: явный блок с безопасной альтернативой.
+
+### Result
+- done
+
+### Next
+- Этап 3: risk-tier policy (вынос в `src/services/answer/risk_tier.py` + diagnostics wiring `risk_tier`/`risk_tier_reason`), только после подтверждения.
+
+---
+
+## Natural Behavior Recovery — Stage 3 (Steps 3–5: tier terminal contract)
+
+### Goal
+Привязать risk_tier к контракту терминального ответа: L0/L1 — без stub/empty/unknown; L2 — plan/preview + confirm; L3 — block + safe alternative (уже в оркестраторе).
+
+### Scope
+- src/services/answer/risk_tier.py (build_l2_safe_terminal)
+- src/services/answer/response_assembly.py (tier contract enforcement)
+- tests/unit/services/answer/test_risk_tier.py, test_response_assembly_truthfulness.py, test_answer_service_debug_snapshot.py
+
+### Changes
+- В response_assembly: сначала L2 — при пустом/stub ответе подставляется build_l2_safe_terminal (план + подтверждение); иначе для L0/L1 при stub/empty/unknown_style — build_helpful_safe_alternative с current_answer="".
+- Добавлены quality_trace: tier_contract_l2_enforced, tier_contract_l0_l1_enforced; reason_codes: assistant_l2_terminal_contract_enforced, assistant_terminal_answer_replaced.
+- Тесты: L1 — замена unknown_style на полезную структуру; L2 — пустой терминал заменяется на L2-сообщение с план/подтверждение; тест normalize_unknown_low_evidence допускает либо low_evidence_friendliness, либо terminal_answer_replaced.
+
+### Validation
+- `uv run pytest tests/unit/services/answer/` — 125 passed.
+
+### Result
+- done
+
+---
+
+## Anchor A0 / Patch A0.1 — Single execution line governance
+
+### Goal
+Create one authoritative execution document to keep anchor-by-anchor delivery synchronized and prevent scope drift.
+
+### Scope
+- docs/agent-anchor-plan.md (new)
+
+### Changes
+- Added a mandatory execution protocol document:
+  - read before every anchor/patch,
+  - strict sequential anchor order,
+  - commit after each patch,
+  - push only after all anchors and user verification.
+- Added anchor checklist with statuses and active patch tracking.
+- Added patch reporting template to standardize updates.
+
+### Result
+- done
