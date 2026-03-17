@@ -99,3 +99,17 @@ def should_force_fallback(*, risk_tier: str, policy_violations: list[str], runti
     if risk_tier == "L3":
         return True
     return bool(policy_violations) and risk_tier == "L2"
+
+
+def build_l2_safe_terminal(query: str, language: str) -> str:
+    """L2 contract: proposed action + plan/preview + confirm required before execution."""
+    lang = (language or "").strip().lower()
+    if lang == "ru" or (query and any("\u0400" <= c <= "\u04FF" for c in query)):
+        return (
+            "Могу предложить план действий по вашему запросу и черновик изменений. "
+            "Перед выполнением команд или изменением файлов потребуется ваше явное подтверждение."
+        )
+    return (
+        "I can propose a plan and a draft of changes for your request. "
+        "Your explicit confirmation will be required before executing commands or changing files."
+    )

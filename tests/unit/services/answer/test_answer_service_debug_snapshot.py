@@ -1265,9 +1265,14 @@ async def test_answer_service_normalizes_unknown_low_evidence_friendliness(monke
     req = AnswerRequest(query="Ты готова помочь с задачей?")
     resp = await AnswerService().handle(http, req, workspace_id="default")
     diag = dict(getattr(resp, "diagnostics", {}) or {})
+    reason_codes = list(diag.get("planning_reason_codes") or [])
 
     assert "извините, я не знаю" not in str(getattr(resp, "answer", "")).lower()
-    assert "assistant_low_evidence_friendliness_applied" in list(diag.get("planning_reason_codes") or [])
+    # Tier contract (L0/L1) or low-evidence normalization may replace unknown-style answer
+    assert (
+        "assistant_low_evidence_friendliness_applied" in reason_codes
+        or "assistant_terminal_answer_replaced" in reason_codes
+    )
 
 
 @pytest.mark.asyncio

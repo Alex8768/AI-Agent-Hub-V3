@@ -8,8 +8,13 @@ from src.layers.pro.reasoning.response_style import (
     is_reasoning_stub_answer,
     is_substantive_query,
     is_template_like_answer,
+    is_unknown_style_answer,
 )
-from src.services.answer.risk_tier import build_risk_tier_reason, classify_risk_tier
+from src.services.answer.risk_tier import (
+    build_l2_safe_terminal,
+    build_risk_tier_reason,
+    classify_risk_tier,
+)
 
 _LOGGER = get_logger()
 
@@ -79,22 +84,43 @@ async def run_answer_response_assembly(
                 diag["assistant_chat_recovery_applied"] = True
                 _append_quality_trace(diag, "quality_trace:assistant_recovery_applied")
         current_answer = str(getattr(resp, "answer", "") or "")
-        should_replace_terminal = is_reasoning_stub_answer(current_answer) or (
-            risk_tier in {"L0", "L1"} and is_template_like_answer(current_answer) and _is_substantive_query(query_text)
-        )
-        if should_replace_terminal:
-            resp.answer = build_helpful_safe_alternative(
-                query=query_text,
-                language=str(assistant_response_language or "auto"),
-                current_answer=current_answer,
+        # L2 contract first: empty/stub -> plan/preview + confirm-required (do not overwrite with generic)
+        if risk_tier == "L2" and (
+            not current_answer.strip() or is_reasoning_stub_answer(current_answer)
+        ):
+            resp.answer = build_l2_safe_terminal(
+                query_text,
+                str(assistant_response_language or "auto"),
             )
             reason_codes = [str(x) for x in list(diag.get("planning_reason_codes") or []) if str(x or "").strip()]
-            reason_codes.append("assistant_terminal_answer_replaced")
+            reason_codes.append("assistant_l2_terminal_contract_enforced")
             diag["planning_reason_codes"] = sorted(set(reason_codes))
-            if is_reasoning_stub_answer(current_answer):
-                _append_quality_trace(diag, "quality_trace:stub_terminal_replaced")
-            else:
-                _append_quality_trace(diag, "quality_trace:template_terminal_replaced")
+            _append_quality_trace(diag, "quality_trace:tier_contract_l2_enforced")
+        else:
+            # Tier contract: L0/L1 — no stub, empty, or clarification-only terminal
+            should_replace_terminal = is_reasoning_stub_answer(current_answer) or (
+                risk_tier in {"L0", "L1"}
+                and (
+                    is_template_like_answer(current_answer) and _is_substantive_query(query_text)
+                    or not current_answer.strip()
+                    or is_unknown_style_answer(current_answer)
+                )
+            )
+            if should_replace_terminal:
+                resp.answer = build_helpful_safe_alternative(
+                    query=query_text,
+                    language=str(assistant_response_language or "auto"),
+                    current_answer="",  # force fresh safe response so unknown_style/stub are not re-used
+                )
+                reason_codes = [str(x) for x in list(diag.get("planning_reason_codes") or []) if str(x or "").strip()]
+                reason_codes.append("assistant_terminal_answer_replaced")
+                diag["planning_reason_codes"] = sorted(set(reason_codes))
+                if is_reasoning_stub_answer(current_answer):
+                    _append_quality_trace(diag, "quality_trace:stub_terminal_replaced")
+                elif is_unknown_style_answer(current_answer) or not current_answer.strip():
+                    _append_quality_trace(diag, "quality_trace:tier_contract_l0_l1_enforced")
+                else:
+                    _append_quality_trace(diag, "quality_trace:template_terminal_replaced")
         if assistant_mode_enabled and not has_evidence:
             if not _is_substantive_query(query_text):
                 normalized_low_evidence_answer = normalize_low_evidence_friendliness(
