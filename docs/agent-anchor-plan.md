@@ -25,19 +25,19 @@ Build a thinking assistant layer (not scripted behavior) with two contours:
 - [x] A0: governance baseline + single-line execution document.
 - [x] A1: query router/classifier (`dialog`, `advice`, `action`) + diagnostics.
 - [x] A2: unified LLM core for generation-first behavior.
-- [ ] A3: containers split (`dialog` vs `action/advice`) wired in answer service.
+- [x] A3: containers split (`dialog` vs `action/advice`) wired in answer service.
 - [ ] A4: memory-lite integration (session context first, expandable).
 - [ ] A5: reflection-lite + quality gate (bounded retries).
 - [ ] A6: action/disclaimer policy contract hardening.
 - [ ] A7: acceptance matrix + canary feature flag rollout.
 
 ## Active Patch
-- Anchor: A2
-- Patch: A2.1
+- Anchor: A3
+- Patch: A3.1
 - Scope:
-  - add unified `llm_core.py` generation wrapper,
-  - move natural terminal generation path to `llm_core`,
-  - keep existing safety/terminal contracts unchanged.
+  - add container split (`dialog` and `action/advice`),
+  - route by `QueryType` in `AnswerService`,
+  - keep execution pipeline behavior unchanged.
 - Status: done
 
 ## Patch Reporting Template

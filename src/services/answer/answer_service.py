@@ -61,6 +61,9 @@ from src.services.answer.diagnostics.runtime_wiring import (
     wire_runtime_diagnostics as _wire_runtime_diagnostics,
     wire_tool_selection_runtime_diagnostics as _wire_tool_selection_runtime_diagnostics,
 )
+from src.services.answer.classifier import QueryType, classify_query_type
+from src.services.answer.containers.action import run_action_container
+from src.services.answer.containers.dialog import run_dialog_container
 from src.services.answer.orchestrator import run_answer_orchestration_core
 from src.services.answer.context.runtime_context import (
     build_answer_service_runtime_context as _build_answer_service_runtime_context,
@@ -809,31 +812,32 @@ class AnswerService:
         act_read_only = importlib.import_module("src.services.answer.act_read_only")
         reason_code_policy = importlib.import_module("src.services.answer.reason_code_policy")
         runtime_mode_route = runtime_mode_router.resolve_answer_runtime_mode(req=req, runtime_context=runtime_context)
+        query_type, _query_type_reason = await classify_query_type(
+            query=str(getattr(req, "query", "") or ""),
+            llm=None,
+        )
         engine = engine or getattr(http.app.state, "rag_engine", None)
         hybrid = retriever or getattr(http.app.state, "hybrid_retriever", None)
         if engine is None or hybrid is None:
             from fastapi import HTTPException
             raise HTTPException(status_code=503, detail="Reasoning stack not initialized")
         try:
-            pipeline = await _run_answer_primary_pipeline(
-                http=http, req=req, workspace_id=workspace_id, settings=s, runtime_context=runtime_context, engine=engine,
-                hybrid=hybrid, get_reasoning_engine=get_reasoning_engine, get_memory_store=get_memory_store,
-            )
-            resp = await run_answer_post_orchestration_flow(
-                req=req, http=http, resp=pipeline.resp, workspace_id=workspace_id,
-                assistant_mode_enabled=pipeline.assistant_mode_enabled,
-                assistant_proactive_enabled=pipeline.assistant_proactive_enabled,
-                assistant_actions_enabled=pipeline.assistant_actions_enabled,
-                assistant_response_language=pipeline.assistant_response_language,
-                loaded_durable_approval=pipeline.loaded_durable_approval,
-                loaded_durable_idempotency=pipeline.loaded_durable_idempotency,
-                get_memory_store=get_memory_store, deps=_build_post_orchestration_deps(),
-            )
-            resp = await run_answer_diagnostics_merge_flow(
-                req=req, resp=resp, workspace_id=workspace_id,
-                loaded_durable_approval=pipeline.loaded_durable_approval,
-                loaded_durable_idempotency=pipeline.loaded_durable_idempotency,
-                get_memory_store=get_memory_store, deps=_build_diagnostics_merge_deps(),
+            container_runner = run_dialog_container if query_type == QueryType.DIALOG else run_action_container
+            resp = await container_runner(
+                req=req,
+                http=http,
+                workspace_id=workspace_id,
+                settings=s,
+                runtime_context=runtime_context,
+                engine=engine,
+                hybrid=hybrid,
+                get_reasoning_engine=get_reasoning_engine,
+                get_memory_store=get_memory_store,
+                run_primary_pipeline=_run_answer_primary_pipeline,
+                run_post_orchestration_flow=run_answer_post_orchestration_flow,
+                run_diagnostics_merge_flow=run_answer_diagnostics_merge_flow,
+                build_post_orchestration_deps=_build_post_orchestration_deps,
+                build_diagnostics_merge_deps=_build_diagnostics_merge_deps,
             )
         except Exception as e:
             _LOGGER.warning(

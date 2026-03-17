@@ -99,6 +99,41 @@ Introduce a single generation wrapper (`llm_core`) so natural response paths use
 ### Result
 - done
 
+---
+
+## Anchor A3 / Patch A3.1 — Container split in AnswerService
+
+### Goal
+Split answer execution into dedicated containers (`dialog` vs `action/advice`) and make `AnswerService` responsible for routing, not container internals.
+
+### Scope
+- src/services/answer/containers/shared.py (new)
+- src/services/answer/containers/dialog.py (new)
+- src/services/answer/containers/action.py (new)
+- src/services/answer/containers/__init__.py (new)
+- src/services/answer/answer_service.py
+- tests/unit/services/answer/test_answer_service_containers.py (new)
+
+### Changes
+- Added container layer:
+  - `run_dialog_container()`
+  - `run_action_container()`
+  - shared execution helper `run_container_pipeline()`
+- Refactored `AnswerService.handle_contract()`:
+  - classifies query via `classify_query_type()`,
+  - routes `DIALOG` to dialog container,
+  - routes `ADVICE/ACTION` to action container.
+- Kept existing orchestration/post-processing/diagnostics merge behavior unchanged by reusing the same pipeline callbacks.
+- Added routing unit tests for dialog/action container selection.
+
+### Validation
+- `uv run pytest tests/unit/services/answer/test_answer_service_containers.py`
+- `uv run pytest tests/unit/services/answer/test_classifier.py`
+- `uv run pytest tests/unit/services/answer/test_answer_service_debug_snapshot.py::test_answer_service_populates_debug_snapshot_fields`
+
+### Result
+- done
+
 ### Next patch
 - Patch 2: rebuild left/right sidebars by roles (navigation vs operational context) with dedicated section/tab components.
 
