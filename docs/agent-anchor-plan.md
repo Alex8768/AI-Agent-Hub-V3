@@ -29,16 +29,15 @@ Build a thinking assistant layer (not scripted behavior) with two contours:
 - [x] A4: memory-lite integration (session context first, expandable).
 - [x] A5: reflection-lite + quality gate (bounded retries).
 - [x] A6: action/disclaimer policy contract hardening.
-- [ ] A7: acceptance matrix + canary feature flag rollout.
+- [x] A7: acceptance matrix + canary feature flag rollout.
 
 ## Active Patch
-- Anchor: A6
-- Patch: A6.1
+- Anchor: A7
+- Patch: A7.1
 - Scope:
-  - enforce query-type tool policy route contract (`dialog/advice/action`),
-  - block tool execution in `dialog`,
-  - require idempotency gate for `action`,
-  - add advisory disclaimer contract for `advice`.
+  - add canary flag `FEATURE_AGENT_ROUTER_V1`,
+  - support old/new route comparison via request override,
+  - add acceptance matrix script and reports.
 - Status: done
 
 ## Patch Reporting Template

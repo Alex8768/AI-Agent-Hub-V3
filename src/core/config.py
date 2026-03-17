@@ -470,6 +470,11 @@ class Settings(BaseSettings):
         description="Enable assistant draft action planning/execution contracts (A2.34)",
     )
 
+    feature_agent_router_v1: bool = Field(
+        default=True,
+        description="Enable agent router v1 path (A1-A6 containers, memory-lite, reflection-lite, tool policy)",
+    )
+
 
 
     

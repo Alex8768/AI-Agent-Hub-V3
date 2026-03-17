@@ -121,3 +121,46 @@ async def test_answer_service_routes_action_to_action_container(monkeypatch):
     assert called["dialog"] == 0
     assert called["action"] == 1
 
+
+@pytest.mark.asyncio
+async def test_answer_service_canary_override_disables_agent_router(monkeypatch):
+    class _S:
+        feature_reasoning = True
+        feature_graphrag = True
+        feature_reasoning_llm_enabled = False
+        feature_agent_router_v1 = True
+
+    monkeypatch.setattr("src.core.config.get_settings", lambda: _S())
+    monkeypatch.setattr("src.core.providers.get_reasoning_engine", lambda **kwargs: object())
+    monkeypatch.setattr("src.core.providers.get_memory_store", lambda: object())
+
+    called = {"dialog": 0, "action": 0}
+
+    async def _fake_dialog_container(**kwargs):
+        _ = kwargs
+        called["dialog"] += 1
+        return _Resp()
+
+    async def _fake_action_container(**kwargs):
+        _ = kwargs
+        called["action"] += 1
+        return _Resp()
+
+    monkeypatch.setattr("src.services.answer.answer_service.run_dialog_container", _fake_dialog_container)
+    monkeypatch.setattr("src.services.answer.answer_service.run_action_container", _fake_action_container)
+
+    http = _DummyHTTP(request_id="rid-3", rag_engine=object(), hybrid_retriever=object())
+    req = AnswerRequest(
+        query="Привет, кто ты?",
+        k=4,
+        graph_depth=1,
+        filters={"feature_agent_router_v1": "false"},
+    )
+
+    out = await AnswerService().handle(http, req, workspace_id="default")
+    assert called["dialog"] == 0
+    assert called["action"] == 1
+    diag = dict(getattr(out, "diagnostics", {}) or {})
+    marker = dict(diag.get("agent_router_v1") or {})
+    assert marker.get("enabled") is False
+

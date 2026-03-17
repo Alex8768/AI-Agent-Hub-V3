@@ -821,23 +821,40 @@ class AnswerService:
         act_read_only = importlib.import_module("src.services.answer.act_read_only")
         reason_code_policy = importlib.import_module("src.services.answer.reason_code_policy")
         runtime_mode_route = runtime_mode_router.resolve_answer_runtime_mode(req=req, runtime_context=runtime_context)
+        filters = dict(getattr(req, "filters", None) or {})
+        canary_override = str(filters.get("feature_agent_router_v1", "") or "").strip().lower()
+        if canary_override in {"1", "true", "yes", "on"}:
+            agent_router_v1_enabled = True
+            agent_router_source = "request_override_true"
+        elif canary_override in {"0", "false", "no", "off"}:
+            agent_router_v1_enabled = False
+            agent_router_source = "request_override_false"
+        else:
+            agent_router_v1_enabled = bool(runtime_context.get("agent_router_v1_enabled", True))
+            agent_router_source = "settings"
         query_type, _query_type_reason = await classify_query_type(
             query=str(getattr(req, "query", "") or ""),
             llm=None,
         )
-        runtime_mode_route = _apply_tool_policy_route_contract(
-            req=req,
-            route=runtime_mode_route,
-            query_type=query_type,
-        )
-        memory_lite_context = _attach_memory_lite_context(req=req, query_type=query_type)
+        effective_query_type = query_type if agent_router_v1_enabled else QueryType.ADVICE
+        if agent_router_v1_enabled:
+            runtime_mode_route = _apply_tool_policy_route_contract(
+                req=req,
+                route=runtime_mode_route,
+                query_type=effective_query_type,
+            )
+            memory_lite_context = _attach_memory_lite_context(req=req, query_type=effective_query_type)
+        else:
+            memory_lite_context = {}
         engine = engine or getattr(http.app.state, "rag_engine", None)
         hybrid = retriever or getattr(http.app.state, "hybrid_retriever", None)
         if engine is None or hybrid is None:
             from fastapi import HTTPException
             raise HTTPException(status_code=503, detail="Reasoning stack not initialized")
         try:
-            container_runner = run_dialog_container if query_type == QueryType.DIALOG else run_action_container
+            container_runner = (
+                run_dialog_container if agent_router_v1_enabled and effective_query_type == QueryType.DIALOG else run_action_container
+            )
             resp = await container_runner(
                 req=req,
                 http=http,
@@ -866,21 +883,66 @@ class AnswerService:
                 error=e,
                 route=runtime_mode_route,
             )
-        resp = _apply_memory_lite_runtime_diagnostics(
-            resp=resp,
-            req=req,
-            query_type=query_type,
-            context=memory_lite_context,
-        )
-        resp = _apply_reflection_lite(
-            resp=resp,
-            req=req,
-            query_type=query_type,
-            max_retries=1,
-        )
+        if agent_router_v1_enabled:
+            resp = _apply_memory_lite_runtime_diagnostics(
+                resp=resp,
+                req=req,
+                query_type=effective_query_type,
+                context=memory_lite_context,
+            )
+            resp = _apply_reflection_lite(
+                resp=resp,
+                req=req,
+                query_type=effective_query_type,
+                max_retries=1,
+            )
+        else:
+            diagnostics = dict(getattr(resp, "diagnostics", None) or {})
+            diagnostics.setdefault(
+                "memory_lite",
+                {
+                    "contract_version": "v1",
+                    "mode": "session_context_first",
+                    "status": "disabled",
+                    "reason_codes": ["memory_lite_disabled_by_agent_router_flag"],
+                },
+            )
+            diagnostics.setdefault(
+                "reflection_lite",
+                {
+                    "contract_version": "v1",
+                    "mode": "post_answer_reflection",
+                    "status": "disabled",
+                    "reason_codes": ["reflection_lite_disabled_by_agent_router_flag"],
+                },
+            )
+            setattr(resp, "diagnostics", diagnostics)
         runtime_mode_router.apply_runtime_mode_diagnostics(resp=resp, route=runtime_mode_route)
         resp = await act_read_only.apply_act_read_only_runtime(resp=resp, req=req, http=http, workspace_id=workspace_id, route=runtime_mode_route)
-        resp = _apply_tool_policy_response_contract(resp=resp, query_type=query_type)
+        if agent_router_v1_enabled:
+            resp = _apply_tool_policy_response_contract(resp=resp, query_type=effective_query_type)
+        else:
+            diagnostics = dict(getattr(resp, "diagnostics", None) or {})
+            diagnostics.setdefault(
+                "tool_policy_contract",
+                {
+                    "contract_version": "v1",
+                    "query_type": str(effective_query_type.value),
+                    "reason_codes": ["tool_policy_disabled_by_agent_router_flag"],
+                },
+            )
+            setattr(resp, "diagnostics", diagnostics)
+        diagnostics = dict(getattr(resp, "diagnostics", None) or {})
+        diagnostics.setdefault(
+            "agent_router_v1",
+            {
+                "enabled": bool(agent_router_v1_enabled),
+                "source": agent_router_source,
+                "query_type": str(query_type.value),
+                "effective_query_type": str(effective_query_type.value),
+            },
+        )
+        setattr(resp, "diagnostics", diagnostics)
         resp = reason_code_policy.apply_reason_code_closure(resp=resp)
         resp = response_presenter.present_answer_response(req=req, resp=resp)
 

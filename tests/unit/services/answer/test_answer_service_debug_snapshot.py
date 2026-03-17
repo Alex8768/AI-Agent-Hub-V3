@@ -158,6 +158,7 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
         "memory_lite",
         "reflection_lite",
         "tool_policy_contract",
+        "agent_router_v1",
         "memory_consistency",
         "memory_consistency_strategy",
         "governance_subcore",

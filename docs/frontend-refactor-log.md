@@ -234,6 +234,52 @@ Harden tool policy behavior by query type:
 ### Result
 - done
 
+---
+
+## Anchor A7 / Patch A7.1 — Acceptance matrix + canary rollout
+
+### Goal
+Finalize rollout mechanics with a canary feature flag and produce an old/new comparison matrix for the agent-router path.
+
+### Scope
+- src/core/config.py
+- src/services/answer/context/runtime_context.py
+- src/services/answer/answer_service.py
+- scripts/acceptance_matrix_agent_router_v1.py (new)
+- docs/agent-router-v1-matrix.json (new generated)
+- docs/agent-router-v1-matrix.md (new generated)
+- tests/unit/services/answer/test_runtime_context.py (new)
+- tests/unit/services/answer/test_answer_service_containers.py
+- tests/unit/services/answer/test_answer_service_debug_snapshot.py
+
+### Changes
+- Added canary flag `feature_agent_router_v1` (`FEATURE_AGENT_ROUTER_V1`) into settings and runtime context.
+- Added per-request override via `filters.feature_agent_router_v1` (`true/false`) to compare old/new route behavior without restart.
+- Implemented dual-path handling in `AnswerService`:
+  - flag `on`: full A1-A6 path (router containers + memory-lite + reflection-lite + tool-policy contracts),
+  - flag `off`: legacy-compatible path with diagnostics markers showing disabled contracts.
+- Added `diagnostics.agent_router_v1` marker (`enabled`, `source`, `query_type`, `effective_query_type`).
+- Added acceptance matrix runner script producing side-by-side old/new outputs for 16 prompts.
+- Generated matrix artifacts:
+  - `docs/agent-router-v1-matrix.json`
+  - `docs/agent-router-v1-matrix.md`
+
+### Validation
+- `uv run pytest tests/unit/services/answer/test_runtime_context.py`
+- `uv run pytest tests/unit/services/answer/test_answer_service_containers.py`
+- `uv run pytest tests/unit/services/answer/test_tool_policy_contract.py`
+- `uv run pytest tests/unit/services/answer/test_answer_service_debug_snapshot.py::test_answer_service_populates_debug_snapshot_fields`
+- `uv run python scripts/acceptance_matrix_agent_router_v1.py --base-url http://127.0.0.1:8000`
+
+### Matrix outcome
+- Improved low-quality cases: `0/16` (baseline and canary both returned non-stub answers in this run).
+- Structural delta confirmed:
+  - old path maps many `dialog/action` requests to effective `advice`,
+  - canary path preserves intended `dialog/advice/action` effective routing.
+
+### Result
+- done
+
 ### Next patch
 - Patch 2: rebuild left/right sidebars by roles (navigation vs operational context) with dedicated section/tab components.
 

@@ -1,0 +1,721 @@
+{
+  "ts": "2026-03-17T14:21:57Z",
+  "base_url": "http://127.0.0.1:8000",
+  "feature_flag": "FEATURE_AGENT_ROUTER_V1",
+  "prompts_count": 16,
+  "results": [
+    {
+      "query": "Привет",
+      "old": {
+        "answer": "Помогаю с практическими задачами: 1) быстро структурирую запрос, 2) предложу рабочий план, 3) подготовлю черновик следующего шага. Если хотите, начну с краткого плана прямо сейчас.",
+        "answer_len": 180,
+        "low_quality": false,
+        "query_type": "dialog",
+        "effective_query_type": "advice",
+        "router_enabled": false,
+        "reflection_retries_used": 0,
+        "tool_policy_reasons": [
+          "tool_policy_disabled_by_agent_router_flag"
+        ],
+        "planning_reason_codes": [
+          "assistant_chat_recovery_policy_non_forced_violation",
+          "assistant_chat_recovery_runtime_wired",
+          "assistant_orchestrator_answer_preserved",
+          "conversational_runtime_assistant_enabled",
+          "conversational_runtime_language_aligned",
+          "conversational_runtime_low_evidence_style_ok",
+          "conversational_runtime_parity_evaluated"
+        ]
+      },
+      "new": {
+        "answer": "Помогаю с практическими задачами: 1) быстро структурирую запрос, 2) предложу рабочий план, 3) подготовлю черновик следующего шага. Если хотите, начну с краткого плана прямо сейчас.",
+        "answer_len": 180,
+        "low_quality": false,
+        "query_type": "dialog",
+        "effective_query_type": "dialog",
+        "router_enabled": true,
+        "reflection_retries_used": 0,
+        "tool_policy_reasons": [
+          "tool_policy_response_contract_evaluated"
+        ],
+        "planning_reason_codes": [
+          "assistant_chat_recovery_policy_non_forced_violation",
+          "assistant_chat_recovery_runtime_wired",
+          "assistant_orchestrator_answer_preserved",
+          "conversational_runtime_assistant_enabled",
+          "conversational_runtime_language_aligned",
+          "conversational_runtime_low_evidence_style_ok",
+          "conversational_runtime_parity_evaluated"
+        ]
+      },
+      "improved_quality": false
+    },
+    {
+      "query": "Кто ты?",
+      "old": {
+        "answer": "Я AI-ассистент этой платформы. Помогаю думать по задаче, структурировать решение, готовить черновики и пошаговые планы. Можем сразу перейти к вашей текущей цели.",
+        "answer_len": 161,
+        "low_quality": false,
+        "query_type": "dialog",
+        "effective_query_type": "advice",
+        "router_enabled": false,
+        "reflection_retries_used": 0,
+        "tool_policy_reasons": [
+          "tool_policy_disabled_by_agent_router_flag"
+        ],
+        "planning_reason_codes": [
+          "assistant_chat_recovery_runtime_wired",
+          "assistant_orchestrator_answer_preserved",
+          "conversational_runtime_assistant_enabled",
+          "conversational_runtime_language_aligned",
+          "conversational_runtime_low_evidence_style_ok",
+          "conversational_runtime_parity_evaluated"
+        ]
+      },
+      "new": {
+        "answer": "Я AI-ассистент этой платформы. Помогаю думать по задаче, структурировать решение, готовить черновики и пошаговые планы. Можем сразу перейти к вашей текущей цели.",
+        "answer_len": 161,
+        "low_quality": false,
+        "query_type": "dialog",
+        "effective_query_type": "dialog",
+        "router_enabled": true,
+        "reflection_retries_used": 0,
+        "tool_policy_reasons": [
+          "tool_policy_response_contract_evaluated"
+        ],
+        "planning_reason_codes": [
+          "assistant_chat_recovery_runtime_wired",
+          "assistant_orchestrator_answer_preserved",
+          "conversational_runtime_assistant_enabled",
+          "conversational_runtime_language_aligned",
+          "conversational_runtime_low_evidence_style_ok",
+          "conversational_runtime_parity_evaluated"
+        ]
+      },
+      "improved_quality": false
+    },
+    {
+      "query": "Что ты умеешь?",
+      "old": {
+        "answer": "Помогаю с практическими задачами: 1) быстро структурирую запрос, 2) предложу рабочий план, 3) подготовлю черновик следующего шага. Если хотите, начну с краткого плана прямо сейчас.",
+        "answer_len": 180,
+        "low_quality": false,
+        "query_type": "dialog",
+        "effective_query_type": "advice",
+        "router_enabled": false,
+        "reflection_retries_used": 0,
+        "tool_policy_reasons": [
+          "tool_policy_disabled_by_agent_router_flag"
+        ],
+        "planning_reason_codes": [
+          "assistant_chat_recovery_runtime_wired",
+          "assistant_orchestrator_answer_preserved",
+          "conversational_runtime_assistant_enabled",
+          "conversational_runtime_language_aligned",
+          "conversational_runtime_low_evidence_style_ok",
+          "conversational_runtime_parity_evaluated"
+        ]
+      },
+      "new": {
+        "answer": "Помогаю с практическими задачами: 1) быстро структурирую запрос, 2) предложу рабочий план, 3) подготовлю черновик следующего шага. Если хотите, начну с краткого плана прямо сейчас.",
+        "answer_len": 180,
+        "low_quality": false,
+        "query_type": "dialog",
+        "effective_query_type": "dialog",
+        "router_enabled": true,
+        "reflection_retries_used": 0,
+        "tool_policy_reasons": [
+          "tool_policy_response_contract_evaluated"
+        ],
+        "planning_reason_codes": [
+          "assistant_chat_recovery_runtime_wired",
+          "assistant_orchestrator_answer_preserved",
+          "conversational_runtime_assistant_enabled",
+          "conversational_runtime_language_aligned",
+          "conversational_runtime_low_evidence_style_ok",
+          "conversational_runtime_parity_evaluated"
+        ]
+      },
+      "improved_quality": false
+    },
+    {
+      "query": "Какой план презентации по степям Краснодарского края?",
+      "old": {
+        "answer": "Вот безопасный базовый план, который можно сразу использовать и уточнять по вашим материалам:\n1) Введение и цель\n2) Ключевые блоки темы\n3) Факты и примеры\n4) Выводы и практическая ценность\nЕсли нужно, адаптирую структуру под конкретный формат (школа, вуз, бизнес).",
+        "answer_len": 264,
+        "low_quality": false,
+        "query_type": "advice",
+        "effective_query_type": "advice",
+        "router_enabled": false,
+        "reflection_retries_used": 0,
+        "tool_policy_reasons": [
+          "tool_policy_disabled_by_agent_router_flag"
+        ],
+        "planning_reason_codes": [
+          "assistant_chat_recovery_runtime_wired",
+          "assistant_orchestrator_answer_preserved",
+          "conversational_runtime_assistant_enabled",
+          "conversational_runtime_language_aligned",
+          "conversational_runtime_low_evidence_style_ok",
+          "conversational_runtime_parity_evaluated"
+        ]
+      },
+      "new": {
+        "answer": "Это рекомендация (без авто-выполнения): Вот безопасный базовый план, который можно сразу использовать и уточнять по вашим материалам:\n1) Введение и цель\n2) Ключевые блоки темы\n3) Факты и примеры\n4) Выводы и практическая ценность\nЕсли нужно, адаптирую структуру под конкретный формат (школа, вуз, бизнес).",
+        "answer_len": 304,
+        "low_quality": false,
+        "query_type": "advice",
+        "effective_query_type": "advice",
+        "router_enabled": true,
+        "reflection_retries_used": 0,
+        "tool_policy_reasons": [
+          "tool_policy_advice_disclaimer_applied",
+          "tool_policy_response_contract_evaluated"
+        ],
+        "planning_reason_codes": [
+          "assistant_chat_recovery_runtime_wired",
+          "assistant_orchestrator_answer_preserved",
+          "conversational_runtime_assistant_enabled",
+          "conversational_runtime_language_aligned",
+          "conversational_runtime_low_evidence_style_ok",
+          "conversational_runtime_parity_evaluated"
+        ]
+      },
+      "improved_quality": false
+    },
+    {
+      "query": "Сделай краткий outline доклада про экосистемы степей.",
+      "old": {
+        "answer": "Вот безопасный базовый план, который можно сразу использовать и уточнять по вашим материалам:\n1) Введение и цель\n2) Ключевые блоки темы\n3) Факты и примеры\n4) Выводы и практическая ценность\nЕсли нужно, адаптирую структуру под конкретный формат (школа, вуз, бизнес).",
+        "answer_len": 264,
+        "low_quality": false,
+        "query_type": "dialog",
+        "effective_query_type": "advice",
+        "router_enabled": false,
+        "reflection_retries_used": 0,
+        "tool_policy_reasons": [
+          "tool_policy_disabled_by_agent_router_flag"
+        ],
+        "planning_reason_codes": [
+          "assistant_chat_recovery_runtime_wired",
+          "assistant_orchestrator_answer_preserved",
+          "conversational_runtime_assistant_enabled",
+          "conversational_runtime_language_aligned",
+          "conversational_runtime_low_evidence_style_ok",
+          "conversational_runtime_parity_evaluated"
+        ]
+      },
+      "new": {
+        "answer": "Вот безопасный базовый план, который можно сразу использовать и уточнять по вашим материалам:\n1) Введение и цель\n2) Ключевые блоки темы\n3) Факты и примеры\n4) Выводы и практическая ценность\nЕсли нужно, адаптирую структуру под конкретный формат (школа, вуз, бизнес).",
+        "answer_len": 264,
+        "low_quality": false,
+        "query_type": "dialog",
+        "effective_query_type": "dialog",
+        "router_enabled": true,
+        "reflection_retries_used": 0,
+        "tool_policy_reasons": [
+          "tool_policy_response_contract_evaluated"
+        ],
+        "planning_reason_codes": [
+          "assistant_chat_recovery_runtime_wired",
+          "assistant_orchestrator_answer_preserved",
+          "conversational_runtime_assistant_enabled",
+          "conversational_runtime_language_aligned",
+          "conversational_runtime_low_evidence_style_ok",
+          "conversational_runtime_parity_evaluated"
+        ]
+      },
+      "improved_quality": false
+    },
+    {
+      "query": "Сравни три подхода к исследовательскому проекту.",
+      "old": {
+        "answer": "Готова помочь по теме: Сравни три подхода к исследовательскому проекту.. Дайте цель и желаемый формат результата — сразу предложу компактный план и первый черновик.",
+        "answer_len": 164,
+        "low_quality": false,
+        "query_type": "dialog",
+        "effective_query_type": "advice",
+        "router_enabled": false,
+        "reflection_retries_used": 0,
+        "tool_policy_reasons": [
+          "tool_policy_disabled_by_agent_router_flag"
+        ],
+        "planning_reason_codes": [
+          "assistant_chat_recovery_policy_non_forced_violation",
+          "assistant_chat_recovery_runtime_wired",
+          "assistant_orchestrator_answer_preserved",
+          "conversational_runtime_assistant_enabled",
+          "conversational_runtime_language_aligned",
+          "conversational_runtime_low_evidence_style_ok",
+          "conversational_runtime_parity_evaluated"
+        ]
+      },
+      "new": {
+        "answer": "Готова помочь по теме: Сравни три подхода к исследовательскому проекту.. Дайте цель и желаемый формат результата — сразу предложу компактный план и первый черновик.",
+        "answer_len": 164,
+        "low_quality": false,
+        "query_type": "dialog",
+        "effective_query_type": "dialog",
+        "router_enabled": true,
+        "reflection_retries_used": 0,
+        "tool_policy_reasons": [
+          "tool_policy_response_contract_evaluated"
+        ],
+        "planning_reason_codes": [
+          "assistant_chat_recovery_policy_non_forced_violation",
+          "assistant_chat_recovery_runtime_wired",
+          "assistant_orchestrator_answer_preserved",
+          "conversational_runtime_assistant_enabled",
+          "conversational_runtime_language_aligned",
+          "conversational_runtime_low_evidence_style_ok",
+          "conversational_runtime_parity_evaluated"
+        ]
+      },
+      "improved_quality": false
+    },
+    {
+      "query": "Как сделать безопасный бэкап перед изменениями?",
+      "old": {
+        "answer": "Готова помочь по теме: Как сделать безопасный бэкап перед изменениями. Дайте цель и желаемый формат результата — сразу предложу компактный план и первый черновик.",
+        "answer_len": 162,
+        "low_quality": false,
+        "query_type": "advice",
+        "effective_query_type": "advice",
+        "router_enabled": false,
+        "reflection_retries_used": 0,
+        "tool_policy_reasons": [
+          "tool_policy_disabled_by_agent_router_flag"
+        ],
+        "planning_reason_codes": [
+          "assistant_chat_recovery_runtime_wired",
+          "assistant_orchestrator_answer_preserved",
+          "conversational_runtime_assistant_enabled",
+          "conversational_runtime_language_aligned",
+          "conversational_runtime_low_evidence_style_ok",
+          "conversational_runtime_parity_evaluated"
+        ]
+      },
+      "new": {
+        "answer": "Это рекомендация (без авто-выполнения): Готова помочь по теме: Как сделать безопасный бэкап перед изменениями. Дайте цель и желаемый формат результата — сразу предложу компактный план и первый черновик.",
+        "answer_len": 202,
+        "low_quality": false,
+        "query_type": "advice",
+        "effective_query_type": "advice",
+        "router_enabled": true,
+        "reflection_retries_used": 0,
+        "tool_policy_reasons": [
+          "tool_policy_advice_disclaimer_applied",
+          "tool_policy_response_contract_evaluated"
+        ],
+        "planning_reason_codes": [
+          "assistant_chat_recovery_runtime_wired",
+          "assistant_orchestrator_answer_preserved",
+          "conversational_runtime_assistant_enabled",
+          "conversational_runtime_language_aligned",
+          "conversational_runtime_low_evidence_style_ok",
+          "conversational_runtime_parity_evaluated"
+        ]
+      },
+      "improved_quality": false
+    },
+    {
+      "query": "Как составить план очистки устаревших черновиков?",
+      "old": {
+        "answer": "Вот безопасный базовый план, который можно сразу использовать и уточнять по вашим материалам:\n1) Введение и цель\n2) Ключевые блоки темы\n3) Факты и примеры\n4) Выводы и практическая ценность\nЕсли нужно, адаптирую структуру под конкретный формат (школа, вуз, бизнес).",
+        "answer_len": 264,
+        "low_quality": false,
+        "query_type": "advice",
+        "effective_query_type": "advice",
+        "router_enabled": false,
+        "reflection_retries_used": 0,
+        "tool_policy_reasons": [
+          "tool_policy_disabled_by_agent_router_flag"
+        ],
+        "planning_reason_codes": [
+          "assistant_chat_recovery_runtime_wired",
+          "assistant_orchestrator_answer_preserved",
+          "conversational_runtime_assistant_enabled",
+          "conversational_runtime_language_aligned",
+          "conversational_runtime_low_evidence_style_ok",
+          "conversational_runtime_parity_evaluated"
+        ]
+      },
+      "new": {
+        "answer": "Это рекомендация (без авто-выполнения): Вот безопасный базовый план, который можно сразу использовать и уточнять по вашим материалам:\n1) Введение и цель\n2) Ключевые блоки темы\n3) Факты и примеры\n4) Выводы и практическая ценность\nЕсли нужно, адаптирую структуру под конкретный формат (школа, вуз, бизнес).",
+        "answer_len": 304,
+        "low_quality": false,
+        "query_type": "advice",
+        "effective_query_type": "advice",
+        "router_enabled": true,
+        "reflection_retries_used": 0,
+        "tool_policy_reasons": [
+          "tool_policy_advice_disclaimer_applied",
+          "tool_policy_response_contract_evaluated"
+        ],
+        "planning_reason_codes": [
+          "assistant_chat_recovery_runtime_wired",
+          "assistant_orchestrator_answer_preserved",
+          "conversational_runtime_assistant_enabled",
+          "conversational_runtime_language_aligned",
+          "conversational_runtime_low_evidence_style_ok",
+          "conversational_runtime_parity_evaluated"
+        ]
+      },
+      "improved_quality": false
+    },
+    {
+      "query": "Напиши черновик структуры отчета по запуску фичи.",
+      "old": {
+        "answer": "Вот безопасный базовый план, который можно сразу использовать и уточнять по вашим материалам:\n1) Введение и цель\n2) Ключевые блоки темы\n3) Факты и примеры\n4) Выводы и практическая ценность\nЕсли нужно, адаптирую структуру под конкретный формат (школа, вуз, бизнес).",
+        "answer_len": 264,
+        "low_quality": false,
+        "query_type": "dialog",
+        "effective_query_type": "advice",
+        "router_enabled": false,
+        "reflection_retries_used": 0,
+        "tool_policy_reasons": [
+          "tool_policy_disabled_by_agent_router_flag"
+        ],
+        "planning_reason_codes": [
+          "assistant_chat_recovery_runtime_wired",
+          "assistant_orchestrator_answer_preserved",
+          "conversational_runtime_assistant_enabled",
+          "conversational_runtime_language_aligned",
+          "conversational_runtime_low_evidence_style_ok",
+          "conversational_runtime_parity_evaluated"
+        ]
+      },
+      "new": {
+        "answer": "Вот безопасный базовый план, который можно сразу использовать и уточнять по вашим материалам:\n1) Введение и цель\n2) Ключевые блоки темы\n3) Факты и примеры\n4) Выводы и практическая ценность\nЕсли нужно, адаптирую структуру под конкретный формат (школа, вуз, бизнес).",
+        "answer_len": 264,
+        "low_quality": false,
+        "query_type": "dialog",
+        "effective_query_type": "dialog",
+        "router_enabled": true,
+        "reflection_retries_used": 0,
+        "tool_policy_reasons": [
+          "tool_policy_response_contract_evaluated"
+        ],
+        "planning_reason_codes": [
+          "assistant_chat_recovery_runtime_wired",
+          "assistant_orchestrator_answer_preserved",
+          "conversational_runtime_assistant_enabled",
+          "conversational_runtime_language_aligned",
+          "conversational_runtime_low_evidence_style_ok",
+          "conversational_runtime_parity_evaluated"
+        ]
+      },
+      "improved_quality": false
+    },
+    {
+      "query": "Дай пошаговый план внедрения CI в небольшой команде.",
+      "old": {
+        "answer": "Вот безопасный базовый план, который можно сразу использовать и уточнять по вашим материалам:\n1) Введение и цель\n2) Ключевые блоки темы\n3) Факты и примеры\n4) Выводы и практическая ценность\nЕсли нужно, адаптирую структуру под конкретный формат (школа, вуз, бизнес).",
+        "answer_len": 264,
+        "low_quality": false,
+        "query_type": "advice",
+        "effective_query_type": "advice",
+        "router_enabled": false,
+        "reflection_retries_used": 0,
+        "tool_policy_reasons": [
+          "tool_policy_disabled_by_agent_router_flag"
+        ],
+        "planning_reason_codes": [
+          "assistant_chat_recovery_runtime_wired",
+          "assistant_orchestrator_answer_preserved",
+          "conversational_runtime_assistant_enabled",
+          "conversational_runtime_language_aligned",
+          "conversational_runtime_low_evidence_style_ok",
+          "conversational_runtime_parity_evaluated"
+        ]
+      },
+      "new": {
+        "answer": "Это рекомендация (без авто-выполнения): Вот безопасный базовый план, который можно сразу использовать и уточнять по вашим материалам:\n1) Введение и цель\n2) Ключевые блоки темы\n3) Факты и примеры\n4) Выводы и практическая ценность\nЕсли нужно, адаптирую структуру под конкретный формат (школа, вуз, бизнес).",
+        "answer_len": 304,
+        "low_quality": false,
+        "query_type": "advice",
+        "effective_query_type": "advice",
+        "router_enabled": true,
+        "reflection_retries_used": 0,
+        "tool_policy_reasons": [
+          "tool_policy_advice_disclaimer_applied",
+          "tool_policy_response_contract_evaluated"
+        ],
+        "planning_reason_codes": [
+          "assistant_chat_recovery_runtime_wired",
+          "assistant_orchestrator_answer_preserved",
+          "conversational_runtime_assistant_enabled",
+          "conversational_runtime_language_aligned",
+          "conversational_runtime_low_evidence_style_ok",
+          "conversational_runtime_parity_evaluated"
+        ]
+      },
+      "improved_quality": false
+    },
+    {
+      "query": "Запусти команду ls",
+      "old": {
+        "answer": "Готова помочь по теме: Запусти команду ls. Дайте цель и желаемый формат результата — сразу предложу компактный план и первый черновик.",
+        "answer_len": 134,
+        "low_quality": false,
+        "query_type": "dialog",
+        "effective_query_type": "advice",
+        "router_enabled": false,
+        "reflection_retries_used": 0,
+        "tool_policy_reasons": [
+          "tool_policy_disabled_by_agent_router_flag"
+        ],
+        "planning_reason_codes": [
+          "assistant_chat_recovery_runtime_wired",
+          "assistant_orchestrator_answer_preserved",
+          "conversational_runtime_assistant_enabled",
+          "conversational_runtime_language_aligned",
+          "conversational_runtime_low_evidence_style_ok",
+          "conversational_runtime_parity_evaluated"
+        ]
+      },
+      "new": {
+        "answer": "Готова помочь по теме: Запусти команду ls. Дайте цель и желаемый формат результата — сразу предложу компактный план и первый черновик.",
+        "answer_len": 134,
+        "low_quality": false,
+        "query_type": "dialog",
+        "effective_query_type": "dialog",
+        "router_enabled": true,
+        "reflection_retries_used": 0,
+        "tool_policy_reasons": [
+          "tool_policy_response_contract_evaluated"
+        ],
+        "planning_reason_codes": [
+          "assistant_chat_recovery_runtime_wired",
+          "assistant_orchestrator_answer_preserved",
+          "conversational_runtime_assistant_enabled",
+          "conversational_runtime_language_aligned",
+          "conversational_runtime_low_evidence_style_ok",
+          "conversational_runtime_parity_evaluated"
+        ]
+      },
+      "improved_quality": false
+    },
+    {
+      "query": "Сохрани файл report.md с текстом 'draft'",
+      "old": {
+        "answer": "Готова помочь по теме: Сохрани файл report.md с текстом 'draft'. Дайте цель и желаемый формат результата — сразу предложу компактный план и первый черновик.",
+        "answer_len": 156,
+        "low_quality": false,
+        "query_type": "dialog",
+        "effective_query_type": "advice",
+        "router_enabled": false,
+        "reflection_retries_used": 0,
+        "tool_policy_reasons": [
+          "tool_policy_disabled_by_agent_router_flag"
+        ],
+        "planning_reason_codes": [
+          "assistant_chat_recovery_runtime_wired",
+          "assistant_orchestrator_answer_preserved",
+          "conversational_runtime_assistant_enabled",
+          "conversational_runtime_language_aligned",
+          "conversational_runtime_low_evidence_style_ok",
+          "conversational_runtime_parity_evaluated"
+        ]
+      },
+      "new": {
+        "answer": "Готова помочь по теме: Сохрани файл report.md с текстом 'draft'. Дайте цель и желаемый формат результата — сразу предложу компактный план и первый черновик.",
+        "answer_len": 156,
+        "low_quality": false,
+        "query_type": "dialog",
+        "effective_query_type": "dialog",
+        "router_enabled": true,
+        "reflection_retries_used": 0,
+        "tool_policy_reasons": [
+          "tool_policy_response_contract_evaluated"
+        ],
+        "planning_reason_codes": [
+          "assistant_chat_recovery_runtime_wired",
+          "assistant_orchestrator_answer_preserved",
+          "conversational_runtime_assistant_enabled",
+          "conversational_runtime_language_aligned",
+          "conversational_runtime_low_evidence_style_ok",
+          "conversational_runtime_parity_evaluated"
+        ]
+      },
+      "improved_quality": false
+    },
+    {
+      "query": "Удалить все файлы в workspace",
+      "old": {
+        "answer": "Я не могу помогать с удалением всех файлов или другими разрушительными действиями. Если хотите, предложу безопасный вариант: сначала инвентаризация, бэкап и точечные изменения по подтвержденному списку.",
+        "answer_len": 202,
+        "low_quality": false,
+        "query_type": "action",
+        "effective_query_type": "advice",
+        "router_enabled": false,
+        "reflection_retries_used": 0,
+        "tool_policy_reasons": [
+          "tool_policy_disabled_by_agent_router_flag"
+        ],
+        "planning_reason_codes": [
+          "assistant_chat_recovery_runtime_wired",
+          "assistant_orchestrator_fallback_applied",
+          "conversational_runtime_assistant_enabled",
+          "conversational_runtime_language_aligned",
+          "conversational_runtime_low_evidence_style_ok",
+          "conversational_runtime_parity_evaluated"
+        ]
+      },
+      "new": {
+        "answer": "Я не могу помогать с удалением всех файлов или другими разрушительными действиями. Если хотите, предложу безопасный вариант: сначала инвентаризация, бэкап и точечные изменения по подтвержденному списку.",
+        "answer_len": 202,
+        "low_quality": false,
+        "query_type": "action",
+        "effective_query_type": "action",
+        "router_enabled": true,
+        "reflection_retries_used": 0,
+        "tool_policy_reasons": [
+          "tool_policy_response_contract_evaluated"
+        ],
+        "planning_reason_codes": [
+          "assistant_chat_recovery_runtime_wired",
+          "assistant_orchestrator_fallback_applied",
+          "conversational_runtime_assistant_enabled",
+          "conversational_runtime_language_aligned",
+          "conversational_runtime_low_evidence_style_ok",
+          "conversational_runtime_parity_evaluated"
+        ]
+      },
+      "improved_quality": false
+    },
+    {
+      "query": "Выполни rm -rf /",
+      "old": {
+        "answer": "Я не могу помогать с удалением всех файлов или другими разрушительными действиями. Если хотите, предложу безопасный вариант: сначала инвентаризация, бэкап и точечные изменения по подтвержденному списку.",
+        "answer_len": 202,
+        "low_quality": false,
+        "query_type": "action",
+        "effective_query_type": "advice",
+        "router_enabled": false,
+        "reflection_retries_used": 0,
+        "tool_policy_reasons": [
+          "tool_policy_disabled_by_agent_router_flag"
+        ],
+        "planning_reason_codes": [
+          "assistant_chat_recovery_runtime_wired",
+          "assistant_orchestrator_fallback_applied",
+          "conversational_runtime_assistant_enabled",
+          "conversational_runtime_language_aligned",
+          "conversational_runtime_low_evidence_style_ok",
+          "conversational_runtime_parity_evaluated"
+        ]
+      },
+      "new": {
+        "answer": "Я не могу помогать с удалением всех файлов или другими разрушительными действиями. Если хотите, предложу безопасный вариант: сначала инвентаризация, бэкап и точечные изменения по подтвержденному списку.",
+        "answer_len": 202,
+        "low_quality": false,
+        "query_type": "action",
+        "effective_query_type": "action",
+        "router_enabled": true,
+        "reflection_retries_used": 0,
+        "tool_policy_reasons": [
+          "tool_policy_response_contract_evaluated"
+        ],
+        "planning_reason_codes": [
+          "assistant_chat_recovery_runtime_wired",
+          "assistant_orchestrator_fallback_applied",
+          "conversational_runtime_assistant_enabled",
+          "conversational_runtime_language_aligned",
+          "conversational_runtime_low_evidence_style_ok",
+          "conversational_runtime_parity_evaluated"
+        ]
+      },
+      "improved_quality": false
+    },
+    {
+      "query": "Подготовь безопасный план миграции базы данных.",
+      "old": {
+        "answer": "Вот безопасный базовый план, который можно сразу использовать и уточнять по вашим материалам:\n1) Введение и цель\n2) Ключевые блоки темы\n3) Факты и примеры\n4) Выводы и практическая ценность\nЕсли нужно, адаптирую структуру под конкретный формат (школа, вуз, бизнес).",
+        "answer_len": 264,
+        "low_quality": false,
+        "query_type": "advice",
+        "effective_query_type": "advice",
+        "router_enabled": false,
+        "reflection_retries_used": 0,
+        "tool_policy_reasons": [
+          "tool_policy_disabled_by_agent_router_flag"
+        ],
+        "planning_reason_codes": [
+          "assistant_chat_recovery_runtime_wired",
+          "assistant_orchestrator_answer_preserved",
+          "conversational_runtime_assistant_enabled",
+          "conversational_runtime_language_aligned",
+          "conversational_runtime_low_evidence_style_ok",
+          "conversational_runtime_parity_evaluated"
+        ]
+      },
+      "new": {
+        "answer": "Это рекомендация (без авто-выполнения): Вот безопасный базовый план, который можно сразу использовать и уточнять по вашим материалам:\n1) Введение и цель\n2) Ключевые блоки темы\n3) Факты и примеры\n4) Выводы и практическая ценность\nЕсли нужно, адаптирую структуру под конкретный формат (школа, вуз, бизнес).",
+        "answer_len": 304,
+        "low_quality": false,
+        "query_type": "advice",
+        "effective_query_type": "advice",
+        "router_enabled": true,
+        "reflection_retries_used": 0,
+        "tool_policy_reasons": [
+          "tool_policy_advice_disclaimer_applied",
+          "tool_policy_response_contract_evaluated"
+        ],
+        "planning_reason_codes": [
+          "assistant_chat_recovery_runtime_wired",
+          "assistant_orchestrator_answer_preserved",
+          "conversational_runtime_assistant_enabled",
+          "conversational_runtime_language_aligned",
+          "conversational_runtime_low_evidence_style_ok",
+          "conversational_runtime_parity_evaluated"
+        ]
+      },
+      "improved_quality": false
+    },
+    {
+      "query": "Нужны next steps для запуска демо версии продукта.",
+      "old": {
+        "answer": "Вот безопасный базовый план, который можно сразу использовать и уточнять по вашим материалам:\n1) Введение и цель\n2) Ключевые блоки темы\n3) Факты и примеры\n4) Выводы и практическая ценность\nЕсли нужно, адаптирую структуру под конкретный формат (школа, вуз, бизнес).",
+        "answer_len": 264,
+        "low_quality": false,
+        "query_type": "dialog",
+        "effective_query_type": "advice",
+        "router_enabled": false,
+        "reflection_retries_used": 0,
+        "tool_policy_reasons": [
+          "tool_policy_disabled_by_agent_router_flag"
+        ],
+        "planning_reason_codes": [
+          "assistant_chat_recovery_runtime_wired",
+          "assistant_orchestrator_answer_preserved",
+          "conversational_runtime_assistant_enabled",
+          "conversational_runtime_language_aligned",
+          "conversational_runtime_low_evidence_style_ok",
+          "conversational_runtime_parity_evaluated"
+        ]
+      },
+      "new": {
+        "answer": "Вот безопасный базовый план, который можно сразу использовать и уточнять по вашим материалам:\n1) Введение и цель\n2) Ключевые блоки темы\n3) Факты и примеры\n4) Выводы и практическая ценность\nЕсли нужно, адаптирую структуру под конкретный формат (школа, вуз, бизнес).",
+        "answer_len": 264,
+        "low_quality": false,
+        "query_type": "dialog",
+        "effective_query_type": "dialog",
+        "router_enabled": true,
+        "reflection_retries_used": 0,
+        "tool_policy_reasons": [
+          "tool_policy_response_contract_evaluated"
+        ],
+        "planning_reason_codes": [
+          "assistant_chat_recovery_runtime_wired",
+          "assistant_orchestrator_answer_preserved",
+          "conversational_runtime_assistant_enabled",
+          "conversational_runtime_language_aligned",
+          "conversational_runtime_low_evidence_style_ok",
+          "conversational_runtime_parity_evaluated"
+        ]
+      },
+      "improved_quality": false
+    }
+  ]
+}
