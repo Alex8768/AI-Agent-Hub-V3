@@ -100,6 +100,7 @@ from src.services.answer.post_orchestration import (
 from src.services.answer.reasoning.runtime_adapter import (
     build_reasoning_runtime_adapter as _build_reasoning_runtime_adapter,
 )
+from src.services.answer.reflection_lite import apply_reflection_lite as _apply_reflection_lite
 from src.services.answer.reasoning.llm_planner_policy import (
     apply_assistant_recovery_policy_guards as _apply_assistant_recovery_policy_guards_impl,
     apply_feedback_adaptation_policy_guards as _apply_feedback_adaptation_policy_guards,
@@ -861,6 +862,12 @@ class AnswerService:
             req=req,
             query_type=query_type,
             context=memory_lite_context,
+        )
+        resp = _apply_reflection_lite(
+            resp=resp,
+            req=req,
+            query_type=query_type,
+            max_retries=1,
         )
         runtime_mode_router.apply_runtime_mode_diagnostics(resp=resp, route=runtime_mode_route)
         resp = await act_read_only.apply_act_read_only_runtime(resp=resp, req=req, http=http, workspace_id=workspace_id, route=runtime_mode_route)

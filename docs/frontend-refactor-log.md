@@ -165,6 +165,38 @@ Add a modular memory-lite layer that reuses existing session memory and exposes 
 ### Result
 - done
 
+---
+
+## Anchor A5 / Patch A5.1 — Reflection-lite quality gate
+
+### Goal
+Add a post-answer reflection step that detects low-quality terminal outcomes (stub/template/low-info/unknown-style) and allows at most one safe rewrite attempt.
+
+### Scope
+- src/services/answer/reflection_lite.py (new)
+- src/services/answer/answer_service.py
+- tests/unit/services/answer/test_reflection_lite.py (new)
+- tests/unit/services/answer/test_answer_service_debug_snapshot.py
+
+### Changes
+- Added `apply_reflection_lite()`:
+  - evaluates answer quality markers (`stub`, `unknown`, `low-information`, `template`),
+  - applies one bounded rewrite attempt (`max_retries=1`) via safe terminal builder,
+  - writes diagnostics payload `reflection_lite`,
+  - appends planning reason code when retry is applied.
+- Integrated reflection-lite into `AnswerService` after memory-lite diagnostics and before runtime/presentation stages.
+- Updated debug snapshot keyset to include `reflection_lite`.
+- Added unit tests for rewrite path and skip path.
+
+### Validation
+- `uv run pytest tests/unit/services/answer/test_reflection_lite.py`
+- `uv run pytest tests/unit/services/answer/test_memory_lite.py`
+- `uv run pytest tests/unit/services/answer/test_answer_service_containers.py`
+- `uv run pytest tests/unit/services/answer/test_answer_service_debug_snapshot.py::test_answer_service_populates_debug_snapshot_fields`
+
+### Result
+- done
+
 ### Next patch
 - Patch 2: rebuild left/right sidebars by roles (navigation vs operational context) with dedicated section/tab components.
 
