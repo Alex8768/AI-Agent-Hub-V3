@@ -1,5 +1,5 @@
 export type UiThemeMode = 'system' | 'light' | 'dark';
-export type UiLocale = 'en' | 'ru';
+export type UiLocale = 'en' | 'ru' | 'de' | 'fr';
 export type ResolvedTheme = 'light' | 'dark';
 
 const THEME_STORAGE_KEY = 'ui.themeMode';
@@ -33,7 +33,7 @@ export function resolveThemeMode(mode: UiThemeMode): ResolvedTheme {
 export function readLocalePreference(): UiLocale | 'auto' {
   if (!canUseBrowser()) return 'auto';
   const value = (window.localStorage.getItem(LOCALE_STORAGE_KEY) || '').trim().toLowerCase();
-  if (value === 'en' || value === 'ru' || value === 'auto') return value;
+  if (value === 'en' || value === 'ru' || value === 'de' || value === 'fr' || value === 'auto') return value;
   return 'auto';
 }
 
@@ -46,7 +46,10 @@ export function resolveSystemLocale(): UiLocale {
   if (!canUseBrowser()) return 'en';
   const langs = Array.isArray(window.navigator.languages) ? window.navigator.languages : [];
   const pool = [...langs, window.navigator.language].filter(Boolean).map((x) => String(x).toLowerCase());
-  return pool.some((x) => x.startsWith('ru')) ? 'ru' : 'en';
+  if (pool.some((x) => x.startsWith('ru'))) return 'ru';
+  if (pool.some((x) => x.startsWith('de'))) return 'de';
+  if (pool.some((x) => x.startsWith('fr'))) return 'fr';
+  return 'en';
 }
 
 export function resolveLocale(mode: UiLocale | 'auto'): UiLocale {

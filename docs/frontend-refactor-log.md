@@ -248,6 +248,63 @@ Move settings from a monolithic dialog into clear interaction surfaces: lightwei
 ### Result
 - done
 
+## Patch 5.1 / 6 — Control vs status consolidation
+
+### Goal
+Separate control surfaces from status surfaces: keep top bar focused on active controls, move passive telemetry to a lightweight bottom status strip, and consolidate settings into one canonical hub.
+
+### Scope
+- frontend/src/components/shell/TopBar.tsx
+- frontend/src/components/shell/BottomStatusBar.tsx
+- frontend/src/components/settings/SettingsHub.tsx
+- frontend/src/App.tsx
+- frontend/src/lib/uiPreferences.ts
+- frontend/src/components/ChatPanel.tsx
+- docs/frontend-refactor-log.md
+
+### Changes
+- Reworked `TopBar` to control-first layout:
+  - left panel toggle pinned to left edge
+  - centered workspace context (title + meta)
+  - mode switch near center
+  - single `Settings` entry point
+  - compact connection indicator
+  - right panel toggle pinned to right edge.
+- Added `BottomStatusBar` as read-mostly status strip for:
+  - session
+  - mode
+  - provider/model
+  - backend state
+  - runtime state
+  - workspace short label
+  - language.
+- Added canonical `SettingsHub` with sections:
+  - General
+  - Appearance
+  - Models
+  - Behavior
+  - Workspace.
+- Restored language preferences to settings system with explicit options:
+  - English
+  - Русский
+  - Deutsch
+  - Français
+  - System (auto).
+- Extended locale utilities to support `de` and `fr` in storage and system resolution.
+- Kept previously added settings surfaces as non-canonical remnants (no longer exposed from top bar).
+
+### Why
+- Top bar had mixed concerns and high visual noise.
+- Product interaction model is clearer when active controls and passive status are separated.
+- A single settings entry point prevents duplicate and conflicting mental models.
+
+### Validation
+- npm run build
+- npm run lint
+
+### Result
+- done
+
 ## Patch 4.7c — Split handle and pane control consistency
 
 ### Goal

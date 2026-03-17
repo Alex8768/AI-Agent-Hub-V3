@@ -6,8 +6,9 @@ import { AppProvider } from './context/AppContext'
 import { useAppContext } from './context/useAppContext'
 import { getHealth } from './lib/apiClient'
 import { ThemeProvider } from '@/components/theme-provider'
-import { readLocalePreference, resolveLocale, type UiLocale } from './lib/uiPreferences'
+import { readLocalePreference, resolveLocale, writeLocalePreference, type UiLocale } from './lib/uiPreferences'
 import GlobalModalHost from './components/shell/GlobalModalHost'
+import BottomStatusBar from './components/shell/BottomStatusBar'
 import LeftSidebar from './components/shell/LeftSidebar'
 import MainWorkspace from './components/shell/MainWorkspace'
 import RightSidebar from './components/shell/RightSidebar'
@@ -36,7 +37,7 @@ function AppContent() {
   const [workspaceId] = useState('default')
   const [sessionId] = useState('default')
   const [lastUsedSession, setLastUsedSession] = useState('default:default')
-  const [localeMode] = useState<UiLocale | 'auto'>(() => readLocalePreference())
+  const [localeMode, setLocaleMode] = useState<UiLocale | 'auto'>(() => readLocalePreference())
   const [settings, setSettings] = useState<AppSettingsState>(DEFAULT_APP_SETTINGS)
 
   const { lastGraph } = useAppContext()
@@ -114,15 +115,20 @@ function AppContent() {
   return (
     <div className="flex h-screen flex-col bg-background">
       <TopBar
-        title="AI Agent Hub"
-        workspaceId={workspaceId}
-        sessionId={sessionId}
+        productName="AI Agent Hub"
+        workspaceTitle={workspaceId}
+        workspaceMeta={settings.workspace.workspaceRoot || `Session: ${sessionId}`}
         settings={settings}
         onConnectionSettingsChange={(next) => setSettings((prev) => ({ ...prev, connection: next }))}
         onBehaviorSettingsChange={(next) => setSettings((prev) => ({ ...prev, behavior: next }))}
         onWorkspaceSettingsChange={(next) => setSettings((prev) => ({ ...prev, workspace: next }))}
         density={layoutState.density}
         onDensityChange={(next) => updateLayout({ density: next })}
+        localeMode={localeMode}
+        onLocaleModeChange={(next) => {
+          setLocaleMode(next)
+          writeLocalePreference(next)
+        }}
         showReasoningSummaries={layoutState.showReasoningSummaries}
         onShowReasoningSummariesChange={(next) => updateLayout({ showReasoningSummaries: next })}
         showExecutionEvents={layoutState.showExecutionEvents}
@@ -216,6 +222,14 @@ function AppContent() {
           }
         />
       </main>
+      <BottomStatusBar
+        sessionId={sessionId}
+        appMode={layoutState.appMode}
+        settings={settings}
+        healthStatus={healthStatus}
+        runtimeActive={layoutState.showExecutionEvents}
+        localeMode={localeMode}
+      />
       <GlobalModalHost />
     </div>
   )

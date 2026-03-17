@@ -16,7 +16,7 @@ interface ChatPanelProps {
   workspaceId: string
   sessionId: string
   onSessionUsed: (ws: string, sid: string) => void
-  locale?: 'en' | 'ru'
+  locale?: 'en' | 'ru' | 'de' | 'fr'
   onOpenCanvasView?: (request: {
     view: CanvasViewType
     title?: string
