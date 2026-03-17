@@ -4,7 +4,7 @@ from typing import Any
 
 from src.adapters.logging_adapter import get_logger
 from src.layers.pro.reasoning.response_style import (
-    build_helpful_safe_alternative,
+    build_natural_safe_terminal_response,
     is_reasoning_stub_answer,
     is_substantive_query,
     is_template_like_answer,
@@ -88,9 +88,15 @@ async def run_answer_response_assembly(
         if risk_tier == "L2" and (
             not current_answer.strip() or is_reasoning_stub_answer(current_answer)
         ):
-            resp.answer = build_l2_safe_terminal(
-                query_text,
-                str(assistant_response_language or "auto"),
+            resp.answer = await build_natural_safe_terminal_response(
+                query=query_text,
+                language=str(assistant_response_language or "auto"),
+                llm=llm,
+                risk_tier=risk_tier,
+                current_answer=build_l2_safe_terminal(
+                    query_text,
+                    str(assistant_response_language or "auto"),
+                ),
             )
             reason_codes = [str(x) for x in list(diag.get("planning_reason_codes") or []) if str(x or "").strip()]
             reason_codes.append("assistant_l2_terminal_contract_enforced")
@@ -107,9 +113,11 @@ async def run_answer_response_assembly(
                 )
             )
             if should_replace_terminal:
-                resp.answer = build_helpful_safe_alternative(
+                resp.answer = await build_natural_safe_terminal_response(
                     query=query_text,
                     language=str(assistant_response_language or "auto"),
+                    llm=llm,
+                    risk_tier=risk_tier,
                     current_answer="",  # force fresh safe response so unknown_style/stub are not re-used
                 )
                 reason_codes = [str(x) for x in list(diag.get("planning_reason_codes") or []) if str(x or "").strip()]

@@ -73,8 +73,11 @@ def is_capability_check_query(query: str) -> bool:
         "готов",
         "можешь",
         "можете",
+        "умеешь",
+        "что ты умеешь",
         "ты тут",
         "can you",
+        "what can you do",
         "are you ready",
     ]
     return any(marker in lowered for marker in markers)
@@ -98,6 +101,13 @@ def is_ambiguous_reference_query(query: str) -> bool:
     ]
     token_count = len([t for t in lowered.replace("?", " ").split() if t.strip()])
     return token_count <= 8 and any(p in lowered for p in pronouns)
+
+
+def _query_topic_hint(query: str) -> str:
+    words = [w for w in str(query or "").replace("?", " ").replace("!", " ").split() if w.strip()]
+    if not words:
+        return ""
+    return " ".join(words[:8]).strip()
 
 
 def is_substantive_query(query: str) -> bool:
@@ -260,12 +270,18 @@ def build_safe_terminal_response(
     if is_capability_check_query(query) or is_simple_greeting_query(query):
         if target_language == "ru":
             return (
-                "Помогаю с практическими задачами: разбор запроса, структурирование ответа, план действий и аккуратная доработка шаг за шагом. "
-                "Могу начать с короткого плана под вашу текущую задачу."
+                "Помогаю с практическими задачами: "
+                "1) быстро структурирую запрос, "
+                "2) предложу рабочий план, "
+                "3) подготовлю черновик следующего шага. "
+                "Если хотите, начну с краткого плана прямо сейчас."
             )
         return (
-            "I can help with practical tasks: clarify your request, structure an answer, and propose step-by-step next actions. "
-            "I can start with a short plan for your current goal."
+            "I help with practical work: "
+            "1) clarify and structure your request, "
+            "2) propose a concrete plan, "
+            "3) draft the next actionable step. "
+            "If you want, I can start with a short plan right now."
         )
 
     if is_ambiguous_reference_query(query):
@@ -280,10 +296,91 @@ def build_safe_terminal_response(
         )
 
     if target_language == "ru":
+        hint = _query_topic_hint(query)
+        if hint:
+            return (
+                f"Готова помочь по теме: {hint}. "
+                "Дайте цель и желаемый формат результата — сразу предложу компактный план и первый черновик."
+            )
         return (
-            "Готова помочь. Если дадите тему или цель, сразу предложу компактный план и следующие шаги."
+            "Готова помочь. Дайте цель и желаемый формат результата — сразу предложу компактный план и первый черновик."
         )
-    return "Ready to help. Share your topic or goal and I will provide a compact plan with next steps."
+    hint = _query_topic_hint(query)
+    if hint:
+        return (
+            f"Ready to help with: {hint}. "
+            "Share your goal and target format, and I will provide a compact plan with a first draft."
+        )
+    return "Ready to help. Share your goal and target format, and I will provide a compact plan with a first draft."
+
+
+async def build_natural_safe_terminal_response(
+    *,
+    query: str,
+    language: str,
+    llm: object | None,
+    risk_tier: str,
+    current_answer: str = "",
+) -> str:
+    """Prefer LLM-generated safe response over static template."""
+    target_language = _normalize_language_tag(language, query=query)
+    tier = str(risk_tier or "L0").strip().upper()
+
+    if llm is not None and hasattr(llm, "generate"):
+        if tier == "L3":
+            instructions = (
+                "Refuse destructive execution clearly, then offer a safe alternative workflow "
+                "(inventory/backup/targeted plan) in 2-4 short sentences."
+            )
+        elif tier == "L2":
+            instructions = (
+                "Provide preparation-only output: concise plan/preview and explicit confirmation-before-execution semantics. "
+                "Do not claim that actions were executed."
+            )
+        elif tier == "L1":
+            instructions = (
+                "Provide a useful structured response (outline/plan/explanation) with concrete next steps. "
+                "Avoid generic assistant boilerplate."
+            )
+        else:
+            instructions = "Provide a concise, useful, context-aware answer without generic assistant boilerplate."
+
+        prompt = (
+            "You are an operations AI assistant. "
+            "Generate a natural, non-template response in the user's language. "
+            "Do not use canned intros like 'I am here to help'. "
+            "Do not invent facts. "
+            f"Risk tier: {tier}. "
+            f"Instruction: {instructions} "
+            f"User query: {str(query or '').strip()}"
+        )
+        try:
+            candidate = str(await llm.generate(prompt)).strip()
+        except Exception:
+            candidate = ""
+
+        if (
+            candidate
+            and not is_reasoning_stub_answer(candidate)
+            and not is_unknown_style_answer(candidate)
+            and not is_template_like_answer(candidate)
+            and _answer_language(candidate) == target_language
+        ):
+            lowered = candidate.lower()
+            if tier == "L2":
+                if any(token in lowered for token in ["подтвержд", "confirm", "confirmation"]):
+                    return candidate
+            elif tier == "L3":
+                if any(token in lowered for token in ["не могу", "cannot", "can't", "refuse", "blocked"]):
+                    return candidate
+            else:
+                return candidate
+
+    return build_safe_terminal_response(
+        query=query,
+        language=target_language,
+        current_answer=current_answer,
+    )
 
 
 async def build_assistant_chat_recovery_answer(
@@ -325,12 +422,12 @@ async def build_assistant_chat_recovery_answer(
 
     if target_language == "ru":
         return (
-            "Да, конечно. Я рядом и готова помогать по задачам шаг за шагом: "
-            "разобрать запрос, предложить понятный план и аккуратно довести до результата."
+            "Да, конечно. Помогу по шагам: "
+            "уточню задачу, предложу рабочий план и подготовлю черновик следующего действия."
         )
     return (
-        "Absolutely. I am here to help step by step: "
-        "clarify your request, propose a clear plan, and move it forward safely."
+        "Absolutely. I can help step by step: "
+        "clarify your goal, propose a practical plan, and draft the next action safely."
     )
 
 
@@ -394,12 +491,12 @@ def normalize_low_evidence_friendliness(
     if is_capability_check_query(query):
         if target_language == "ru":
             return (
-                "Да, конечно. Я рядом и готова помочь. "
-                "Можем вместе уточнить задачу и сразу наметить понятные шаги."
+                "Да, конечно. Могу быстро: "
+                "уточнить цель, выдать структурный план и подготовить черновик следующего шага."
             )
         return (
-            "Absolutely. I am here to help. "
-            "We can clarify your goal and map clear next steps right away."
+            "Absolutely. I can quickly: "
+            "clarify your goal, provide a structured plan, and draft the next concrete step."
         )
     if is_ambiguous_reference_query(query):
         if target_language == "ru":
@@ -413,10 +510,10 @@ def normalize_low_evidence_friendliness(
         )
     if target_language == "ru":
         return (
-            "Да, конечно. Я рядом и готова помочь. "
-            "Можем вместе уточнить задачу и сразу наметить понятные шаги."
+            "Да, конечно. Готова помочь: "
+            "уточним цель, выберем формат результата и сразу соберем рабочий план."
         )
     return (
-        "Absolutely. I am here to help. "
-        "We can clarify your goal and map clear next steps right away."
+        "Absolutely. I can help: "
+        "we define your goal, pick the output format, and build a practical plan right away."
     )
