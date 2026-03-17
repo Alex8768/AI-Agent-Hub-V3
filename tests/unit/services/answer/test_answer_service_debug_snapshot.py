@@ -1161,7 +1161,7 @@ async def test_answer_service_assistant_fallback_localizes_russian(monkeypatch):
     assert conversational_parity.get("contract_version") == "v1"
     assert conversational_parity.get("mode") == "conversational_runtime_parity_guarded"
     assert "assistant_chat_recovery_greeting_blocked" in list(recovery_policy.get("violations") or [])
-    assert "assistant_chat_recovery_policy_forced_fallback" in list(recovery_policy.get("applied_reason_codes") or [])
+    assert "assistant_chat_recovery_policy_forced_fallback" not in list(recovery_policy.get("applied_reason_codes") or [])
     assert diag.get("assistant_mode_enabled") is True
 
 
@@ -1190,10 +1190,11 @@ async def test_answer_service_assistant_fallback_localizes_english(monkeypatch):
     resp = await AnswerService().handle(http, req, workspace_id="default")
     diag = dict(getattr(resp, "diagnostics", {}) or {})
 
-    assert "Hi!" in str(getattr(resp, "answer", ""))
+    assert str(getattr(resp, "answer", "")) == "ok"
     assert diag.get("response_mode") == "assistant_fallback"
     assert diag.get("response_language") == "en"
     assert diag.get("assistant_mode_enabled") is True
+    assert "assistant_orchestrator_answer_preserved" in list(diag.get("planning_reason_codes") or [])
 
 
 @pytest.mark.asyncio
@@ -1319,7 +1320,7 @@ async def test_answer_service_recovery_policy_blocks_recovery_for_greeting(monke
     policy = dict(diag.get("assistant_recovery_policy") or {})
 
     assert "assistant_chat_recovery_greeting_blocked" in list(policy.get("violations") or [])
-    assert "assistant_chat_recovery_policy_forced_fallback" in list(policy.get("applied_reason_codes") or [])
+    assert "assistant_chat_recovery_policy_forced_fallback" not in list(policy.get("applied_reason_codes") or [])
     assert diag.get("assistant_chat_recovery_applied") is not True
 
 

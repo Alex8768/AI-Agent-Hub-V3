@@ -8,6 +8,12 @@ from fastapi import HTTPException, Request
 
 from src.adapters.logging_adapter import get_logger
 from src.observability.request_context import get_request_id
+from src.layers.pro.reasoning.response_style import (
+    is_destructive_request,
+    is_reasoning_stub_answer,
+    is_template_like_answer,
+    is_unknown_style_answer,
+)
 
 _LOGGER = get_logger()
 
@@ -83,11 +89,27 @@ async def run_answer_orchestration_core(
     resp = await reasoning.synthesize(req)
     total_ms = (perf_counter() - t0) * 1000.0
     if assistant_mode_enabled and not list(getattr(resp, "provenance", []) or []):
-        assistant_response_language = detect_response_language(str(getattr(req, "query", "") or ""))
-        resp.answer = build_assistant_fallback_answer(
-            query=str(getattr(req, "query", "") or ""),
-            language=assistant_response_language,
+        query_text = str(getattr(req, "query", "") or "")
+        assistant_response_language = detect_response_language(query_text)
+        current_answer = str(getattr(resp, "answer", "") or "")
+        should_replace_answer = (
+            is_reasoning_stub_answer(current_answer)
+            or is_unknown_style_answer(current_answer)
+            or not current_answer.strip()
+            # High-risk destructive requests must not pass through generic low-evidence preserves.
+            or is_destructive_request(query_text)
         )
+        if should_replace_answer:
+            resp.answer = build_assistant_fallback_answer(
+                query=query_text,
+                language=assistant_response_language,
+            )
+            _append_planning_reason_codes(resp=resp, reason_codes=["assistant_orchestrator_fallback_applied"])
+        else:
+            if is_template_like_answer(current_answer):
+                _append_planning_reason_codes(resp=resp, reason_codes=["assistant_orchestrator_template_answer_preserved"])
+            else:
+                _append_planning_reason_codes(resp=resp, reason_codes=["assistant_orchestrator_answer_preserved"])
 
     try:
         resp.request_id = get_request_id(http) or ""
