@@ -28,16 +28,17 @@ Build a thinking assistant layer (not scripted behavior) with two contours:
 - [x] A3: containers split (`dialog` vs `action/advice`) wired in answer service.
 - [x] A4: memory-lite integration (session context first, expandable).
 - [x] A5: reflection-lite + quality gate (bounded retries).
-- [ ] A6: action/disclaimer policy contract hardening.
+- [x] A6: action/disclaimer policy contract hardening.
 - [ ] A7: acceptance matrix + canary feature flag rollout.
 
 ## Active Patch
-- Anchor: A5
-- Patch: A5.1
+- Anchor: A6
+- Patch: A6.1
 - Scope:
-  - add reflection-lite post-check module,
-  - enforce bounded retry (`max_retries=1`) on low-quality terminal answers,
-  - expose `reflection_lite` diagnostics and reason codes.
+  - enforce query-type tool policy route contract (`dialog/advice/action`),
+  - block tool execution in `dialog`,
+  - require idempotency gate for `action`,
+  - add advisory disclaimer contract for `advice`.
 - Status: done
 
 ## Patch Reporting Template

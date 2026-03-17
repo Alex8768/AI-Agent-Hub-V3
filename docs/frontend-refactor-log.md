@@ -197,6 +197,43 @@ Add a post-answer reflection step that detects low-quality terminal outcomes (st
 ### Result
 - done
 
+---
+
+## Anchor A6 / Patch A6.1 — Tool policy + confirm contract
+
+### Goal
+Harden tool policy behavior by query type:
+- `DIALOG`: no tool execution
+- `ADVICE`: explicit advisory disclaimer
+- `ACTION`: strict idempotency gate before act-mode execution
+
+### Scope
+- src/services/answer/tool_policy_contract.py (new)
+- src/services/answer/answer_service.py
+- tests/unit/services/answer/test_tool_policy_contract.py (new)
+- tests/unit/services/answer/test_answer_service_debug_snapshot.py
+
+### Changes
+- Added route-level contract in `apply_tool_policy_route_contract()`:
+  - blocks `act` mode for `dialog`,
+  - requires `act_idempotency_key` for `action` when `act` mode is requested.
+- Added response-level contract in `apply_tool_policy_response_contract()`:
+  - prepends advisory disclaimer for `advice` responses.
+- Wired both contracts into `AnswerService`:
+  - route contract applied immediately after query classification,
+  - response contract applied after `act_read_only` runtime.
+- Added diagnostics payload `tool_policy_contract` with reason codes.
+- Added unit tests for dialog/action/advice contract behavior.
+
+### Validation
+- `uv run pytest tests/unit/services/answer/test_tool_policy_contract.py`
+- `uv run pytest tests/unit/services/answer/test_reflection_lite.py`
+- `uv run pytest tests/unit/services/answer/test_answer_service_containers.py`
+- `uv run pytest tests/unit/services/answer/test_answer_service_debug_snapshot.py::test_answer_service_populates_debug_snapshot_fields`
+
+### Result
+- done
+
 ### Next patch
 - Patch 2: rebuild left/right sidebars by roles (navigation vs operational context) with dedicated section/tab components.
 

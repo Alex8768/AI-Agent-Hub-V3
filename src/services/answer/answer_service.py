@@ -101,6 +101,10 @@ from src.services.answer.reasoning.runtime_adapter import (
     build_reasoning_runtime_adapter as _build_reasoning_runtime_adapter,
 )
 from src.services.answer.reflection_lite import apply_reflection_lite as _apply_reflection_lite
+from src.services.answer.tool_policy_contract import (
+    apply_tool_policy_response_contract as _apply_tool_policy_response_contract,
+    apply_tool_policy_route_contract as _apply_tool_policy_route_contract,
+)
 from src.services.answer.reasoning.llm_planner_policy import (
     apply_assistant_recovery_policy_guards as _apply_assistant_recovery_policy_guards_impl,
     apply_feedback_adaptation_policy_guards as _apply_feedback_adaptation_policy_guards,
@@ -821,6 +825,11 @@ class AnswerService:
             query=str(getattr(req, "query", "") or ""),
             llm=None,
         )
+        runtime_mode_route = _apply_tool_policy_route_contract(
+            req=req,
+            route=runtime_mode_route,
+            query_type=query_type,
+        )
         memory_lite_context = _attach_memory_lite_context(req=req, query_type=query_type)
         engine = engine or getattr(http.app.state, "rag_engine", None)
         hybrid = retriever or getattr(http.app.state, "hybrid_retriever", None)
@@ -871,6 +880,7 @@ class AnswerService:
         )
         runtime_mode_router.apply_runtime_mode_diagnostics(resp=resp, route=runtime_mode_route)
         resp = await act_read_only.apply_act_read_only_runtime(resp=resp, req=req, http=http, workspace_id=workspace_id, route=runtime_mode_route)
+        resp = _apply_tool_policy_response_contract(resp=resp, query_type=query_type)
         resp = reason_code_policy.apply_reason_code_closure(resp=resp)
         resp = response_presenter.present_answer_response(req=req, resp=resp)
 
