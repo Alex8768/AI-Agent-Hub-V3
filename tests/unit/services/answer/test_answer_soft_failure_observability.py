@@ -51,6 +51,18 @@ class _ReasoningAdapterWithStubAnswer:
         return _StubRespWithDiagnostics()
 
 
+class _LowInfoRespWithDiagnostics(_RespWithDiagnostics):
+    def __init__(self):
+        super().__init__()
+        self.answer = "Извините, но у меня недостаточно информации, чтобы ответить на этот вопрос."
+
+
+class _ReasoningAdapterWithLowInfoAnswer:
+    async def synthesize(self, req):
+        _ = req
+        return _LowInfoRespWithDiagnostics()
+
+
 class _ReasoningAdapterWithFailingRequestIdFallback:
     async def synthesize(self, req):
         _ = req
@@ -337,6 +349,57 @@ async def test_orchestrator_replaces_stub_answer_when_no_provenance():
         load_durable_records=_load_durable_records,
         retriever_adapter_cls=_RetrieverAdapter,
         build_reasoning_runtime_adapter=lambda **kwargs: _ReasoningAdapterWithStubAnswer(),
+        detect_response_language=lambda _query: "ru",
+        build_assistant_fallback_answer=lambda **kwargs: "fallback",
+        apply_diagnostics=_apply_diagnostics,
+    )
+
+    assert str(getattr(out.resp, "answer", "") or "") == "fallback"
+    reason_codes = list((dict(getattr(out.resp, "diagnostics", None) or {})).get("planning_reason_codes") or [])
+    assert "assistant_orchestrator_fallback_applied" in reason_codes
+
+
+@pytest.mark.asyncio
+async def test_orchestrator_replaces_low_information_answer_when_no_provenance():
+    http = SimpleNamespace(state=SimpleNamespace(request_id="rid-soft"), headers={})
+    req = SimpleNamespace(query="Привет, кто ты?", session_id="s1")
+
+    async def _build_llm_adapter(*, settings):
+        _ = settings
+        return None, False, "", "", ""
+
+    async def _load_session_memory(**kwargs):
+        _ = kwargs
+        return False, False
+
+    async def _load_durable_records(**kwargs):
+        _ = kwargs
+        return {}, {}
+
+    async def _apply_diagnostics(**kwargs):
+        resp = kwargs["resp"]
+        resp.diagnostics = dict(getattr(resp, "diagnostics", None) or {})
+
+    out = await run_answer_orchestration_core(
+        http=http,
+        req=req,
+        workspace_id="default",
+        settings=SimpleNamespace(),
+        engine=object(),
+        hybrid=object(),
+        runtime_context={
+            "assistant_mode_enabled": True,
+            "assistant_proactive_enabled": False,
+            "assistant_actions_enabled": False,
+            "assistant_response_language": "auto",
+        },
+        get_reasoning_engine=lambda **kwargs: _ReasoningAdapterWithLowInfoAnswer(),
+        get_memory_store=lambda: None,
+        build_llm_adapter=_build_llm_adapter,
+        load_session_memory=_load_session_memory,
+        load_durable_records=_load_durable_records,
+        retriever_adapter_cls=_RetrieverAdapter,
+        build_reasoning_runtime_adapter=lambda **kwargs: _ReasoningAdapterWithLowInfoAnswer(),
         detect_response_language=lambda _query: "ru",
         build_assistant_fallback_answer=lambda **kwargs: "fallback",
         apply_diagnostics=_apply_diagnostics,

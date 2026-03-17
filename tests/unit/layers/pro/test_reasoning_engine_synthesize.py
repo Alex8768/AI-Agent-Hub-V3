@@ -47,8 +47,9 @@ async def test_reasoning_engine_synthesize_stub_orchestration():
     # retriever called exactly once with the same request
     assert retriever.calls == [req]
 
-    # deterministic stub
-    assert resp.answer == "(reasoning layer stub)"
+    # terminal fallback should be useful, not a raw stub
+    assert resp.answer != "(reasoning layer stub)"
+    assert str(resp.answer).strip()
     assert resp.confidence == 0.9
 
     # best-effort ids collected
@@ -75,7 +76,7 @@ async def test_reasoning_engine_uses_session_memory_when_retrieval_context_empty
 
     resp = await eng.synthesize(req)
 
-    assert resp.answer == "(reasoning layer stub)"
+    assert resp.answer != "(reasoning layer stub)"
     assert resp.context_preview == "previous answer from session"
 
 

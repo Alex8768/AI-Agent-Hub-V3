@@ -19,7 +19,8 @@ interface RequestContext {
 
 async function parseJson<T>(response: Response): Promise<T> {
   if (!response.ok) {
-    throw new Error(`Request failed: ${response.status}`)
+    const text = await response.text().catch(() => '')
+    throw new Error(`Request failed (${response.status}): ${text.slice(0, 200)}`)
   }
   return (await response.json()) as T
 }
@@ -85,12 +86,7 @@ export async function searchDocuments(payload: SearchRequestDto, ctx: RequestCon
 export async function askAnswer(payload: AnswerRequestDto, ctx: RequestContext = {}): Promise<AnswerResponseDto> {
   const headers = buildWorkspaceHeaders(ctx.workspaceId)
   headers['Content-Type'] = 'application/json'
-  const filters: Record<string, unknown> = {
-    ...(payload.filters ?? {}),
-  }
-  if (payload.diagnostics_view) {
-    filters.diagnostics_view = payload.diagnostics_view
-  }
+
   const response = await fetch(`${API_BASE}/api/v1/answer`, {
     method: 'POST',
     headers,
@@ -99,31 +95,27 @@ export async function askAnswer(payload: AnswerRequestDto, ctx: RequestContext =
       k: payload.k ?? 8,
       graph_depth: payload.graph_depth ?? 1,
       session_id: payload.session_id ?? 'default',
-      filters,
+      filters: payload.filters ?? {},
     }),
   })
   return parseJson<AnswerResponseDto>(response)
 }
 
-
 export async function sendMessage(
   workspaceId: string,
   sessionId: string,
   query: string,
-  diagnosticsView: 'compact' | 'full' = 'compact',
   extraFilters: Record<string, unknown> = {},
 ): Promise<AnswerResponseDto> {
   const normalizedWorkspace = (workspaceId || '').trim() || 'default'
   const normalizedSession = (sessionId || '').trim() || 'default'
-  const scopedSessionId = `${normalizedWorkspace}:${normalizedSession}`
 
   return askAnswer(
     {
       query: query.trim(),
       k: 8,
       graph_depth: 1,
-      session_id: scopedSessionId,
-      diagnostics_view: diagnosticsView,
+      session_id: normalizedSession,
       filters: extraFilters,
     },
     { workspaceId: normalizedWorkspace },
@@ -160,4 +152,3 @@ export async function getToolSchema(toolName: string, ctx: RequestContext = {}):
 }
 
 export { API_BASE }
-

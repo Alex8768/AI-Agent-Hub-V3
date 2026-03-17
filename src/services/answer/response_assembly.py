@@ -5,6 +5,7 @@ from typing import Any
 from src.adapters.logging_adapter import get_logger
 from src.layers.pro.reasoning.response_style import (
     build_natural_safe_terminal_response,
+    is_low_information_answer,
     is_reasoning_stub_answer,
     is_simple_greeting_query,
     is_substantive_query,
@@ -131,6 +132,7 @@ async def run_answer_response_assembly(
                     is_template_like_answer(current_answer) and _is_substantive_query(query_text)
                     or not current_answer.strip()
                     or is_unknown_style_answer(current_answer)
+                    or is_low_information_answer(current_answer)
                 )
             )
             if should_replace_terminal:
@@ -146,7 +148,7 @@ async def run_answer_response_assembly(
                 diag["planning_reason_codes"] = sorted(set(reason_codes))
                 if is_reasoning_stub_answer(current_answer):
                     _append_quality_trace(diag, "quality_trace:stub_terminal_replaced")
-                elif is_unknown_style_answer(current_answer) or not current_answer.strip():
+                elif is_unknown_style_answer(current_answer) or is_low_information_answer(current_answer) or not current_answer.strip():
                     _append_quality_trace(diag, "quality_trace:tier_contract_l0_l1_enforced")
                 else:
                     _append_quality_trace(diag, "quality_trace:template_terminal_replaced")

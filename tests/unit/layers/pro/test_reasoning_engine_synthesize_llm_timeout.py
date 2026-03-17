@@ -31,6 +31,7 @@ async def test_synthesize_times_out_and_falls_back():
     req = AnswerRequest(query="Q?")
     resp = await eng.synthesize(req)
 
-    assert resp.answer == "(reasoning layer stub)"
+    assert resp.answer != "(reasoning layer stub)"
+    assert str(resp.answer).strip()
     assert resp.context_preview == "doc:T#1"
     assert resp.confidence == 0.4

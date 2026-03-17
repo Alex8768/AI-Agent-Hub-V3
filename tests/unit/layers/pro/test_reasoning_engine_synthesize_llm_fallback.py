@@ -29,8 +29,9 @@ async def test_synthesize_falls_back_when_llm_fails():
     req = AnswerRequest(query="Q?")
     resp = await eng.synthesize(req)
 
-    # fallback answer is deterministic stub
-    assert resp.answer == "(reasoning layer stub)"
+    # fallback answer should be safe and useful, not raw stub
+    assert resp.answer != "(reasoning layer stub)"
+    assert str(resp.answer).strip()
 
     # evidence-derived fields still computed
     assert resp.context_preview == "doc:Z#9"

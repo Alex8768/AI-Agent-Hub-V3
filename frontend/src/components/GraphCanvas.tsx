@@ -91,6 +91,7 @@ function outboundPush(outgoing: Map<string, string[]>, source: string, target: s
 const GraphCanvas: React.FC<GraphCanvasProps> = ({ nodes = [], edges = [] }) => {
   const [flowNodes, setNodes, onNodesChange] = useNodesState([]);
   const [flowEdges, setEdges, onEdgesChange] = useEdgesState([]);
+  const isEmpty = nodes.length === 0;
 
   useEffect(() => {
     const normalizedNodeIds = nodes.map(normalizeNodeId);
@@ -139,7 +140,13 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ nodes = [], edges = [] }) => 
   }, [nodes, edges, setNodes, setEdges]);
 
   return (
-    <div style={{ height: '100%', width: '100%' }}>
+    <div className="relative h-full w-full bg-background">
+      {isEmpty && (
+        <div className="pointer-events-none absolute left-3 top-3 z-10 max-w-xs rounded-md border bg-card/90 p-3 shadow-sm">
+          <h3 className="text-sm font-semibold">Canvas is ready</h3>
+          <p className="mt-1 text-xs text-muted-foreground">Send a query that returns graph data to populate nodes and edges.</p>
+        </div>
+      )}
       <ReactFlow
         nodes={flowNodes}
         edges={flowEdges}

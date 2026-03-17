@@ -1,32 +1,52 @@
 import React from 'react';
-import * as Tabs from '@radix-ui/react-tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface ChatTabsProps {
   chatContent: React.ReactNode;
   canvasContent: React.ReactNode;
   metaContent?: React.ReactNode;
+  locale?: 'en' | 'ru';
+  labels?: {
+    split?: string;
+    meta?: string;
+  };
 }
 
-const ChatTabs: React.FC<ChatTabsProps> = ({ chatContent, canvasContent, metaContent }) => {
+const ChatTabs: React.FC<ChatTabsProps> = ({ chatContent, canvasContent, metaContent, locale = 'en', labels }) => {
+  const splitLabel = labels?.split || (locale === 'ru' ? 'Сплит' : 'Split');
+  const metaLabel = labels?.meta || 'Meta';
   return (
-    <Tabs.Root defaultValue="chat" className="tabs-root">
-      <Tabs.List className="tabs-list">
-        <Tabs.Trigger value="chat" className="tabs-trigger">Chat</Tabs.Trigger>
-        <Tabs.Trigger value="canvas" className="tabs-trigger">Canvas</Tabs.Trigger>
-        {metaContent && <Tabs.Trigger value="meta" className="tabs-trigger">Meta</Tabs.Trigger>}
-      </Tabs.List>
-      <Tabs.Content value="chat" className="tabs-content">
+    <Tabs defaultValue="chat" className="flex h-full min-h-0 flex-col">
+      <div className="border-b px-3 py-2">
+        <TabsList className="h-8 bg-muted/60">
+          <TabsTrigger value="chat" className="text-xs">Chat</TabsTrigger>
+          <TabsTrigger value="canvas" className="text-xs">Canvas</TabsTrigger>
+          <TabsTrigger value="split" className="text-xs">{splitLabel}</TabsTrigger>
+          {metaContent && <TabsTrigger value="meta" className="text-xs">{metaLabel}</TabsTrigger>}
+        </TabsList>
+      </div>
+      <TabsContent value="chat" className="mt-0 min-h-0 flex-1 overflow-hidden">
         {chatContent}
-      </Tabs.Content>
-      <Tabs.Content value="canvas" className="tabs-content">
+      </TabsContent>
+      <TabsContent value="canvas" className="mt-0 min-h-0 flex-1 overflow-hidden">
         {canvasContent}
-      </Tabs.Content>
+      </TabsContent>
+      <TabsContent value="split" className="mt-0 min-h-0 flex-1 overflow-hidden">
+        <div className="grid h-full min-h-0 grid-cols-[1.2fr_1fr] gap-2 p-2">
+          <section className="min-h-0 overflow-hidden rounded-md border">
+            {chatContent}
+          </section>
+          <section className="min-h-0 overflow-hidden rounded-md border">
+            {canvasContent}
+          </section>
+        </div>
+      </TabsContent>
       {metaContent && (
-        <Tabs.Content value="meta" className="tabs-content">
+        <TabsContent value="meta" className="mt-0 min-h-0 flex-1 overflow-hidden">
           {metaContent}
-        </Tabs.Content>
+        </TabsContent>
       )}
-    </Tabs.Root>
+    </Tabs>
   );
 };
 

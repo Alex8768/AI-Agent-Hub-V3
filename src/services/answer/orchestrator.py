@@ -9,6 +9,7 @@ from fastapi import HTTPException, Request
 from src.adapters.logging_adapter import get_logger
 from src.observability.request_context import get_request_id
 from src.layers.pro.reasoning.response_style import (
+    is_low_information_answer,
     is_destructive_request,
     is_reasoning_stub_answer,
     is_template_like_answer,
@@ -95,6 +96,7 @@ async def run_answer_orchestration_core(
         should_replace_answer = (
             is_reasoning_stub_answer(current_answer)
             or is_unknown_style_answer(current_answer)
+            or is_low_information_answer(current_answer)
             or not current_answer.strip()
             # High-risk destructive requests must not pass through generic low-evidence preserves.
             or is_destructive_request(query_text)

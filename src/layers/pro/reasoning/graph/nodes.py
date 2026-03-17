@@ -33,6 +33,7 @@ trace = _TraceShim()
 
 from src.layers.pro.reasoning.graph.state import AgentState
 from src.layers.pro.reasoning.prompt_builder import build_reasoning_prompt
+from src.layers.pro.reasoning.response_style import build_safe_terminal_response
 from src.core.exceptions import LLMError
 
 # Получаем трейсер
@@ -306,6 +307,9 @@ async def answer_node(state: AgentState, llm: Any) -> AgentState:
             span.set_attribute("error", True)
             span.set_attribute("error.message", str(e))
             state.error = f"Answer node failed: {str(e)}"
-            state.final_answer = "(reasoning layer stub)"
+            state.final_answer = build_safe_terminal_response(
+                query=str(getattr(state, "query", "") or ""),
+                language="auto",
+            )
         
         return state

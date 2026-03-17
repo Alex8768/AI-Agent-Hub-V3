@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 
+from src.layers.pro.reasoning.response_style import build_safe_terminal_response
 from src.layers.pro.meta_cognition.gaps import build_gap_map
 from src.layers.pro.meta_cognition.reflection import build_reflection_report
 from src.layers.pro.meta_cognition.uncertainty import build_uncertainty_summary
@@ -319,10 +320,16 @@ async def build_fallback_answer_text(
                 timeout=float(llm_timeout_s),
             )
         except Exception:
-            return "(reasoning layer stub)"
+            return build_safe_terminal_response(
+                query=str(getattr(request, "query", "") or ""),
+                language="auto",
+            )
     if dry_run:
         return str(dry_run_builder_fn(provenance, context_preview))
-    return "(reasoning layer stub)"
+    return build_safe_terminal_response(
+        query=str(getattr(request, "query", "") or ""),
+        language="auto",
+    )
 
 
 async def build_fallback_answer_text_with_runtime_adapter(

@@ -1,139 +1,71 @@
-:root {
-  color-scheme: dark;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-  /* Default theme: graphite dark */
-  --bg-app: #1f2125;
-  --bg-main: #25282d;
-  --bg-panel: #2b2f36;
-  --bg-panel-alt: #31363f;
-  --bg-sidebar: #23262b;
-  --bg-elevated: #383e47;
-  --bg-hover: #3f4652;
-  --bg-active: #4a5361;
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 215 20.2% 65.1%;
+    --radius: 0.5rem;
+  }
 
-  --border-subtle: #3a404a;
-  --border-strong: #4b5360;
+  .dark {
+    --background: 220 14% 12%;
+    --foreground: 210 22% 95%;
+    --card: 220 14% 15%;
+    --card-foreground: 210 22% 95%;
+    --popover: 220 14% 15%;
+    --popover-foreground: 210 22% 95%;
+    --primary: 210 22% 95%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 220 12% 22%;
+    --secondary-foreground: 210 22% 95%;
+    --muted: 220 12% 22%;
+    --muted-foreground: 215 14% 74%;
+    --accent: 220 12% 22%;
+    --accent-foreground: 210 22% 95%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 22% 95%;
+    --border: 220 10% 30%;
+    --input: 220 10% 30%;
+    --ring: 220 12% 62%;
+  }
 
-  --text-main: #eef2f7;
-  --text-soft: #d7dde7;
-  --text-muted: #9ca6b5;
+  * {
+    @apply border-border;
+  }
 
-  --accent: #5aa2ff;
-  --accent-strong: #7bb5ff;
-  --accent-soft: rgba(90, 162, 255, 0.16);
+  html,
+  body,
+  #root {
+    @apply h-full overflow-hidden;
+  }
 
-  --danger: #ff7b72;
-  --danger-soft: rgba(255, 123, 114, 0.14);
-  --success: #7bd88f;
-  --success-soft: rgba(123, 216, 143, 0.14);
-  --warning: #f2c879;
-
-  --shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.18);
-
-  --radius-sm: 8px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-
-  --font-mono: 'SF Mono', 'JetBrains Mono', 'Fira Code', monospace;
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
 }
 
-[data-theme='dark'] {
-  color-scheme: dark;
-}
-
-[data-theme='light'] {
-  color-scheme: light;
-
-  --bg-app: #f3f5f9;
-  --bg-main: #ffffff;
-  --bg-panel: #f8f9fc;
-  --bg-panel-alt: #eef1f7;
-  --bg-sidebar: #f6f8fc;
-  --bg-elevated: #e8ecf5;
-  --bg-hover: #dde4f1;
-  --bg-active: #d2dced;
-
-  --border-subtle: #d7deea;
-  --border-strong: #b8c4d8;
-
-  --text-main: #1d2836;
-  --text-soft: #2d3b4f;
-  --text-muted: #5d6f87;
-
-  --accent: #397ce3;
-  --accent-strong: #2c6fda;
-  --accent-soft: rgba(57, 124, 227, 0.16);
-
-  --danger: #c94a4a;
-  --danger-soft: rgba(201, 74, 74, 0.14);
-  --success: #2e8f57;
-  --success-soft: rgba(46, 143, 87, 0.14);
-  --warning: #a87a27;
-}
-
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-html,
-body,
-#root {
-  height: 100%;
-}
-
-body {
-  background: var(--bg-app);
-  color: var(--text-main);
-  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  overflow: hidden;
-}
-
-button,
-input,
-select,
-textarea {
-  font: inherit;
-}
-
-button {
-  color: inherit;
-}
-
-input,
-textarea,
-select {
-  background: var(--bg-panel-alt);
-  color: var(--text-main);
-}
-
-::selection {
-  background: rgba(90, 162, 255, 0.28);
-}
-
-*:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
-}
-
-::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #4b5360;
-  border: 2px solid transparent;
-  border-radius: 999px;
-  background-clip: padding-box;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #606977;
-  background-clip: padding-box;
+@layer utilities {
+  .min-h-0 {
+    min-height: 0;
+  }
 }

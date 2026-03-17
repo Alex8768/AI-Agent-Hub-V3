@@ -89,6 +89,28 @@ def test_build_safe_terminal_response_uses_topic_hint_for_generic_query():
     assert "презентацией по истории" in lowered
 
 
+def test_is_low_information_answer_detects_insufficient_info_phrases():
+    from src.layers.pro.reasoning.response_style import is_low_information_answer
+
+    assert is_low_information_answer("Извините, но у меня недостаточно информации, чтобы ответить на этот вопрос.")
+    assert is_low_information_answer("Извините, но предоставленный контекст недостаточен для ответа.")
+    assert is_low_information_answer("There is not enough information to answer this question.")
+    assert not is_low_information_answer("Вот план: 1) цель, 2) структура, 3) черновик.")
+
+
+def test_build_safe_terminal_response_identity_query_is_not_generic():
+    from src.layers.pro.reasoning.response_style import build_safe_terminal_response
+
+    out = build_safe_terminal_response(
+        query="Кто ты?",
+        language="ru",
+        current_answer="",
+    )
+    lowered = out.lower()
+    assert "ai-ассистент" in lowered or "ассистент" in lowered
+    assert "цели" in lowered or "задач" in lowered
+
+
 @pytest.mark.asyncio
 async def test_build_natural_safe_terminal_response_prefers_llm_candidate():
     from src.layers.pro.reasoning.response_style import build_natural_safe_terminal_response

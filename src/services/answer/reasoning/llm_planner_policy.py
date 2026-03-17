@@ -965,13 +965,41 @@ def apply_plan_policy_guards(
     blocked_steps_count = 0
     truncated = False
 
+    plan_intent = str(plan.get("intent", "general_query") or "general_query").strip() or "general_query"
     allowed_steps: list[dict[str, object]] = []
+    safe_action_markers = (
+        "prepare_",
+        "draft",
+        "outline",
+        "plan",
+        "explain",
+        "compare",
+        "summary",
+        "summarize",
+        "proposal",
+        "next_steps",
+        "clarification",
+        "context",
+    )
+    unsafe_action_markers = (
+        "execute",
+        "delete",
+        "write",
+        "send",
+        "publish",
+        "rm",
+        "truncate",
+        "drop",
+        "invoke_tool",
+        "run_command",
+        "apply_patch",
+    )
     for row in rows:
         action = str(row.get("action", "") or "")
         action_lower = action.lower()
-        is_prepare_draft = action_lower.startswith("prepare_") and action_lower.endswith("_draft")
-        has_unsafe_marker = any(x in action_lower for x in ["execute", "delete", "write", "send", "publish"])
-        if is_prepare_draft and not has_unsafe_marker:
+        is_safe_non_destructive_action = any(marker in action_lower for marker in safe_action_markers)
+        has_unsafe_marker = any(marker in action_lower for marker in unsafe_action_markers)
+        if is_safe_non_destructive_action and not has_unsafe_marker:
             allowed_steps.append(row)
             continue
         blocked_steps_count += 1
@@ -986,8 +1014,21 @@ def apply_plan_policy_guards(
 
     status = str(plan.get("status", "idle") or "idle")
     if status == "ready" and not allowed_steps:
-        status = "guarded"
-        reason_codes.append("plan_guard_blocked_all_steps")
+        if plan_intent in {"general_query", "general_chat"}:
+            allowed_steps = [
+                {
+                    "step_id": "step:1",
+                    "role": "assistant",
+                    "action": "prepare_safe_outline_draft",
+                    "parameters": {"mode": "safe_degradation"},
+                    "depends_on": [],
+                }
+            ]
+            reason_codes.append("plan_guard_degraded_to_safe_outline")
+            status = "ready"
+        else:
+            status = "guarded"
+            reason_codes.append("plan_guard_blocked_all_steps")
 
     guarded_plan = {
         **plan,
@@ -1000,7 +1041,7 @@ def apply_plan_policy_guards(
         "max_steps": int(max_steps),
         "blocked_steps_count": int(blocked_steps_count),
         "truncated": bool(truncated),
-        "allowed_action_pattern": "prepare_*_draft",
+        "allowed_action_pattern": "safe_non_destructive_planning",
         "reason_codes": reason_codes,
     }
     return guarded_plan, policy
@@ -1012,9 +1053,9 @@ def build_assistant_recovery_policy_contract() -> dict[str, object]:
         "allow_low_evidence_only": True,
         "allowed_intents": ["general_chat", "general_query"],
         "block_greeting_queries": True,
-        "allowed_languages": ["ru", "en"],
+        "allowed_languages": ["ru", "en", "de", "fr"],
         "require_assistant_mode": True,
-        "fallback_on_policy_violation": True,
+        "fallback_on_policy_violation": False,
     }
 
 
