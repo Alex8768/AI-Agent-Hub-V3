@@ -26,18 +26,18 @@ Build a thinking assistant layer (not scripted behavior) with two contours:
 - [x] A1: query router/classifier (`dialog`, `advice`, `action`) + diagnostics.
 - [x] A2: unified LLM core for generation-first behavior.
 - [x] A3: containers split (`dialog` vs `action/advice`) wired in answer service.
-- [ ] A4: memory-lite integration (session context first, expandable).
+- [x] A4: memory-lite integration (session context first, expandable).
 - [ ] A5: reflection-lite + quality gate (bounded retries).
 - [ ] A6: action/disclaimer policy contract hardening.
 - [ ] A7: acceptance matrix + canary feature flag rollout.
 
 ## Active Patch
-- Anchor: A3
-- Patch: A3.1
+- Anchor: A4
+- Patch: A4.1
 - Scope:
-  - add container split (`dialog` and `action/advice`),
-  - route by `QueryType` in `AnswerService`,
-  - keep execution pipeline behavior unchanged.
+  - add memory-lite session context module,
+  - attach context in `AnswerService` before container routing,
+  - expose `memory_lite` diagnostics for observability.
 - Status: done
 
 ## Patch Reporting Template

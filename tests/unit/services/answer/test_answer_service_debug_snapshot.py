@@ -155,6 +155,7 @@ async def test_answer_service_populates_debug_snapshot_fields(monkeypatch):
         "planner_runtime_parity",
         "session_memory_loaded",
         "session_memory_hit",
+        "memory_lite",
         "memory_consistency",
         "memory_consistency_strategy",
         "governance_subcore",

@@ -134,6 +134,37 @@ Split answer execution into dedicated containers (`dialog` vs `action/advice`) a
 ### Result
 - done
 
+---
+
+## Anchor A4 / Patch A4.1 — Memory-lite (session context first)
+
+### Goal
+Add a modular memory-lite layer that reuses existing session memory and exposes a stable session-context payload for routing-time observability.
+
+### Scope
+- src/services/answer/context/memory_lite.py (new)
+- src/services/answer/answer_service.py
+- tests/unit/services/answer/test_memory_lite.py (new)
+- tests/unit/services/answer/test_answer_service_debug_snapshot.py
+
+### Changes
+- Added `memory_lite` module with:
+  - `attach_memory_lite_context()` (builds session-context payload from `session_id` and `session_memory_last_answer`)
+  - `apply_memory_lite_runtime_diagnostics()` (writes `diagnostics.memory_lite`)
+- Integrated memory-lite into `AnswerService`:
+  - builds context right after query classification,
+  - applies `memory_lite` diagnostics before final presenter stage.
+- Updated debug snapshot keyset to include `memory_lite`.
+- Added unit tests for memory-lite payload construction and diagnostics wiring.
+
+### Validation
+- `uv run pytest tests/unit/services/answer/test_memory_lite.py`
+- `uv run pytest tests/unit/services/answer/test_answer_service_containers.py`
+- `uv run pytest tests/unit/services/answer/test_answer_service_debug_snapshot.py::test_answer_service_populates_debug_snapshot_fields`
+
+### Result
+- done
+
 ### Next patch
 - Patch 2: rebuild left/right sidebars by roles (navigation vs operational context) with dedicated section/tab components.
 

@@ -68,6 +68,10 @@ from src.services.answer.orchestrator import run_answer_orchestration_core
 from src.services.answer.context.runtime_context import (
     build_answer_service_runtime_context as _build_answer_service_runtime_context,
 )
+from src.services.answer.context.memory_lite import (
+    apply_memory_lite_runtime_diagnostics as _apply_memory_lite_runtime_diagnostics,
+    attach_memory_lite_context as _attach_memory_lite_context,
+)
 from src.services.answer.context.session_text import clip_text as _clip_text
 from src.services.answer.execution.durable_keys import (
     apply_durable_confirmation_token_guards as _apply_durable_confirmation_token_guards_impl,
@@ -816,6 +820,7 @@ class AnswerService:
             query=str(getattr(req, "query", "") or ""),
             llm=None,
         )
+        memory_lite_context = _attach_memory_lite_context(req=req, query_type=query_type)
         engine = engine or getattr(http.app.state, "rag_engine", None)
         hybrid = retriever or getattr(http.app.state, "hybrid_retriever", None)
         if engine is None or hybrid is None:
@@ -851,6 +856,12 @@ class AnswerService:
                 error=e,
                 route=runtime_mode_route,
             )
+        resp = _apply_memory_lite_runtime_diagnostics(
+            resp=resp,
+            req=req,
+            query_type=query_type,
+            context=memory_lite_context,
+        )
         runtime_mode_router.apply_runtime_mode_diagnostics(resp=resp, route=runtime_mode_route)
         resp = await act_read_only.apply_act_read_only_runtime(resp=resp, req=req, http=http, workspace_id=workspace_id, route=runtime_mode_route)
         resp = reason_code_policy.apply_reason_code_closure(resp=resp)
