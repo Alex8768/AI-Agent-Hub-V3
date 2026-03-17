@@ -65,6 +65,40 @@ Introduce an explicit query router signal (`dialog|advice|action`) in a dedicate
 ### Result
 - done
 
+---
+
+## Anchor A2 / Patch A2.1 — Unified LLM core (generation-first)
+
+### Goal
+Introduce a single generation wrapper (`llm_core`) so natural response paths use one bounded LLM entry with retry, quality guard, and emergency fallback hooks.
+
+### Scope
+- src/services/answer/llm_core.py (new)
+- src/layers/pro/reasoning/response_style.py
+- tests/unit/services/answer/test_llm_core.py (new)
+
+### Changes
+- Added `LLMCoreMode` and `generate_with_llm_core()` in `src/services/answer/llm_core.py`.
+- Implemented unified generation behavior:
+  - mode-aware prompting (`dialog|advice|action`),
+  - bounded retries,
+  - pluggable `quality_guard`,
+  - emergency fallback hook,
+  - optional disable of default fallback.
+- Refactored `build_natural_safe_terminal_response()` to route LLM generation through `llm_core` while preserving existing tier contracts:
+  - `L0/L1`: contextual useful answer
+  - `L2`: confirmation semantics required
+  - `L3`: explicit refusal semantics required
+- Added unit tests for `llm_core` core behavior.
+
+### Validation
+- `uv run pytest tests/unit/services/answer/test_llm_core.py`
+- `uv run pytest tests/unit/layers/pro/test_reasoning_response_style.py`
+- `uv run pytest tests/unit/services/answer/test_response_assembly_truthfulness.py`
+
+### Result
+- done
+
 ### Next patch
 - Patch 2: rebuild left/right sidebars by roles (navigation vs operational context) with dedicated section/tab components.
 

@@ -24,7 +24,7 @@ Build a thinking assistant layer (not scripted behavior) with two contours:
 ## Anchors
 - [x] A0: governance baseline + single-line execution document.
 - [x] A1: query router/classifier (`dialog`, `advice`, `action`) + diagnostics.
-- [ ] A2: unified LLM core for generation-first behavior.
+- [x] A2: unified LLM core for generation-first behavior.
 - [ ] A3: containers split (`dialog` vs `action/advice`) wired in answer service.
 - [ ] A4: memory-lite integration (session context first, expandable).
 - [ ] A5: reflection-lite + quality gate (bounded retries).
@@ -32,12 +32,12 @@ Build a thinking assistant layer (not scripted behavior) with two contours:
 - [ ] A7: acceptance matrix + canary feature flag rollout.
 
 ## Active Patch
-- Anchor: A1
-- Patch: A1.1
+- Anchor: A2
+- Patch: A2.1
 - Scope:
-  - add modular query classifier (`dialog|advice|action`),
-  - wire `query_type` and `query_type_reason` into diagnostics,
-  - cover with unit tests and snapshot-keyset update.
+  - add unified `llm_core.py` generation wrapper,
+  - move natural terminal generation path to `llm_core`,
+  - keep existing safety/terminal contracts unchanged.
 - Status: done
 
 ## Patch Reporting Template

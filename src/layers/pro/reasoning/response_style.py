@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from src.services.answer.llm_core import LLMCoreMode, generate_with_llm_core
+
 
 def _detect_response_language(query: str) -> str:
     text = str(query or "")
@@ -75,10 +77,25 @@ def is_capability_check_query(query: str) -> bool:
         "можете",
         "умеешь",
         "что ты умеешь",
+        "кто ты",
         "ты тут",
         "can you",
+        "who are you",
         "what can you do",
         "are you ready",
+    ]
+    return any(marker in lowered for marker in markers)
+
+
+def is_identity_query(query: str) -> bool:
+    lowered = str(query or "").strip().lower()
+    if not lowered:
+        return False
+    markers = [
+        "кто ты",
+        "представься",
+        "who are you",
+        "introduce yourself",
     ]
     return any(marker in lowered for marker in markers)
 
@@ -185,6 +202,23 @@ def is_unknown_style_answer(answer: str) -> bool:
     return any(marker in lowered for marker in markers)
 
 
+def is_low_information_answer(answer: str) -> bool:
+    lowered = str(answer or "").strip().lower()
+    if not lowered:
+        return True
+    markers = [
+        "недостаточно информации",
+        "недостаточно данных",
+        "insufficient information",
+        "not enough information",
+        "not enough context",
+        "insufficient context",
+        "контекст недостаточен",
+        "предоставленный контекст недостаточен",
+    ]
+    return any(marker in lowered for marker in markers)
+
+
 def is_generic_assistant_fallback_answer(answer: str) -> bool:
     lowered = str(answer or "").strip().lower()
     if not lowered:
@@ -287,6 +321,19 @@ def build_safe_terminal_response(
             "4) Brief takeaway and what to explore next"
         )
 
+    if is_identity_query(query):
+        if target_language == "ru":
+            return (
+                "Я AI-ассистент этой платформы. "
+                "Помогаю думать по задаче, структурировать решение, готовить черновики и пошаговые планы. "
+                "Можем сразу перейти к вашей текущей цели."
+            )
+        return (
+            "I am the platform's AI assistant. "
+            "I help reason through tasks, structure solutions, and draft practical next steps. "
+            "We can jump straight to your current goal."
+        )
+
     if is_capability_check_query(query) or is_simple_greeting_query(query):
         if target_language == "ru":
             return (
@@ -346,61 +393,55 @@ async def build_natural_safe_terminal_response(
     target_language = _normalize_language_tag(language, query=query)
     tier = str(risk_tier or "L0").strip().upper()
 
-    if llm is not None and hasattr(llm, "generate"):
+    if tier == "L3":
+        instructions = (
+            "Risk tier: L3. Refuse destructive execution clearly, then offer a safe alternative workflow "
+            "(inventory/backup/targeted plan) in 2-4 short sentences."
+        )
+    elif tier == "L2":
+        instructions = (
+            "Risk tier: L2. Provide preparation-only output: concise plan/preview and explicit "
+            "confirmation-before-execution semantics. Do not claim that actions were executed."
+        )
+    elif tier == "L1":
+        instructions = (
+            "Risk tier: L1. Provide a useful structured response (outline/plan/explanation) with concrete next steps. "
+            "Avoid generic assistant boilerplate."
+        )
+    else:
+        instructions = "Risk tier: L0. Provide a concise, useful, context-aware answer without generic assistant boilerplate."
+
+    def _llm_core_quality_guard(candidate_text: str) -> bool:
+        candidate = str(candidate_text or "").strip()
+        if (
+            not candidate
+            or is_reasoning_stub_answer(candidate)
+            or is_unknown_style_answer(candidate)
+            or is_low_information_answer(candidate)
+            or is_template_like_answer(candidate)
+            or _answer_language(candidate) != target_language
+        ):
+            return False
+        lowered = candidate.lower()
+        if tier == "L2":
+            return any(token in lowered for token in ["подтвержд", "confirm", "confirmation"])
         if tier == "L3":
-            instructions = (
-                "Refuse destructive execution clearly, then offer a safe alternative workflow "
-                "(inventory/backup/targeted plan) in 2-4 short sentences."
-            )
-        elif tier == "L2":
-            instructions = (
-                "Provide preparation-only output: concise plan/preview and explicit confirmation-before-execution semantics. "
-                "Do not claim that actions were executed."
-            )
-        elif tier == "L1":
-            instructions = (
-                "Provide a useful structured response (outline/plan/explanation) with concrete next steps. "
-                "Avoid generic assistant boilerplate."
-            )
-        else:
-            instructions = "Provide a concise, useful, context-aware answer without generic assistant boilerplate."
+            return any(token in lowered for token in ["не могу", "cannot", "can't", "refuse", "blocked"])
+        return _is_contextual_to_query(candidate, query)
 
-        attempts = 2 if tier in {"L0", "L1"} else 1
-        for attempt in range(attempts):
-            prompt = (
-                "You are an operations AI assistant. "
-                "Generate a natural, non-template response in the user's language. "
-                "Do not use canned intros like 'I am here to help'. "
-                "Do not invent facts. "
-                "Reference at least one concrete term from the user query. "
-                f"Risk tier: {tier}. "
-                f"Instruction: {instructions} "
-                f"Retry: {attempt}. "
-                f"User query: {str(query or '').strip()}"
-            )
-            try:
-                candidate = str(await llm.generate(prompt)).strip()
-            except Exception:
-                candidate = ""
-
-            if (
-                candidate
-                and not is_reasoning_stub_answer(candidate)
-                and not is_unknown_style_answer(candidate)
-                and not is_template_like_answer(candidate)
-                and _answer_language(candidate) == target_language
-            ):
-                lowered = candidate.lower()
-                if tier == "L2":
-                    if any(token in lowered for token in ["подтвержд", "confirm", "confirmation"]):
-                        return candidate
-                    continue
-                if tier == "L3":
-                    if any(token in lowered for token in ["не могу", "cannot", "can't", "refuse", "blocked"]):
-                        return candidate
-                    continue
-                if _is_contextual_to_query(candidate, query):
-                    return candidate
+    attempts = 2 if tier in {"L0", "L1"} else 1
+    candidate = await generate_with_llm_core(
+        query=query,
+        llm=llm,
+        mode=LLMCoreMode.ACTION if tier in {"L2", "L3"} else LLMCoreMode.ADVICE,
+        instruction=instructions,
+        context={"language": target_language, "risk_tier": tier},
+        quality_guard=_llm_core_quality_guard,
+        max_retries=attempts,
+        allow_default_fallback=False,
+    )
+    if candidate and _llm_core_quality_guard(candidate):
+        return candidate
 
     fallback = build_safe_terminal_response(
         query=query,
